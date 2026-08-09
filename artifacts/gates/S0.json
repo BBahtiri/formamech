@@ -1,0 +1,256 @@
+{
+  "gate_id": "G0",
+  "step": "S0",
+  "commit": "b5ad5990653db266326b90a27945badf0ec8f90a",
+  "execution_profile_hash": "7d12def33ebbfd5facb10ea9e14b131db4238245c4260be7e670e87af2ae0ab4",
+  "execution_profile_hash_algorithm": "SHA-256 of execution_profile serialized as sorted-key compact JSON",
+  "execution_profile": {
+    "lock_generation": {
+      "platform": "windows-x86_64",
+      "python": "3.13.11",
+      "uv": "0.12.3"
+    },
+    "toolchain": {
+      "coverage": "7.15.4",
+      "mypy": "2.3.0",
+      "pip": "26.2.1",
+      "pip_audit": "2.10.1",
+      "pytest": "9.1.1",
+      "pytest_cov": "7.1.0",
+      "ruff": "0.16.2",
+      "setuptools": "84.0.0"
+    },
+    "verification_cells": [
+      {
+        "environment": "Microsoft Windows NT 10.0.26200.0",
+        "os": "windows",
+        "python": "3.11.15"
+      },
+      {
+        "environment": "Microsoft Windows NT 10.0.26200.0",
+        "os": "windows",
+        "python": "3.12.13"
+      },
+      {
+        "environment": "Ubuntu 26.04 WSL2 x86_64",
+        "os": "linux",
+        "python": "3.11.15"
+      },
+      {
+        "environment": "Ubuntu 26.04 WSL2 x86_64",
+        "os": "linux",
+        "python": "3.12.13"
+      }
+    ],
+    "hosted_ci": {
+      "provider": "GitHub Actions",
+      "repository": "BBahtiri/PI-GINOT-Agentic-Framework",
+      "workflow": "CI",
+      "run_id": 31331370923,
+      "run_attempt": 1,
+      "commit": "b5ad5990653db266326b90a27945badf0ec8f90a"
+    }
+  },
+  "timestamp_utc": "2026-08-09T19:22:29.303Z",
+  "checks": [
+    {
+      "id": "G0.install",
+      "status": "PASS",
+      "measured": {
+        "windows": {
+          "status": "PASS",
+          "clean_venvs": 2,
+          "python_versions": [
+            "3.11.15",
+            "3.12.13"
+          ],
+          "command": "python -m pip install -e \".[dev]\"",
+          "exit_codes": [
+            0,
+            0
+          ]
+        },
+        "linux": {
+          "status": "PASS",
+          "clean_venvs": 2,
+          "python_versions": [
+            "3.11.15",
+            "3.12.13"
+          ],
+          "command": "python -m pip install -e \".[dev]\"",
+          "exit_codes": [
+            0,
+            0
+          ]
+        }
+      },
+      "threshold": "pip install -e \".[dev]\" succeeds in a clean venv on Linux and Windows",
+      "comparison": "all"
+    },
+    {
+      "id": "G0.lint",
+      "status": "PASS",
+      "measured": {
+        "verification_profiles": 4,
+        "ruff_check_profiles_passed": 4,
+        "ruff_format_profiles_passed": 4,
+        "local_formatted_files": 13,
+        "hosted_profiles_passed": 4,
+        "hosted_formatted_files_per_profile": 12
+      },
+      "threshold": "ruff check . and ruff format --check . both clean",
+      "comparison": "all"
+    },
+    {
+      "id": "G0.types",
+      "status": "PASS",
+      "measured": {
+        "verification_profiles": 4,
+        "profiles_passed": 4,
+        "hosted_profiles_passed": 4,
+        "issues": 0,
+        "source_files_checked": 2
+      },
+      "threshold": "mypy --strict src/ reports zero issues",
+      "comparison": "eq"
+    },
+    {
+      "id": "G0.tests",
+      "status": "PASS",
+      "measured": {
+        "verification_profiles": 4,
+        "profiles_passed": 4,
+        "hosted_profiles_passed": 4,
+        "passed_per_profile": 9,
+        "failed_per_profile": 0,
+        "coverage_percent_per_profile": 92.86
+      },
+      "threshold": {
+        "passed": 3,
+        "coverage_percent": 80
+      },
+      "comparison": "gte"
+    },
+    {
+      "id": "G0.ci",
+      "status": "PASS",
+      "measured": {
+        "hosted_matrix_cells_defined": 4,
+        "hosted_matrix_cells_executed": 4,
+        "hosted_matrix_cells_green": 4,
+        "workflow_run_id": 31331370923,
+        "workflow_run_number": 1,
+        "workflow_run_attempt": 1,
+        "workflow_status": "completed",
+        "workflow_conclusion": "success",
+        "workflow_url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/31331370923",
+        "jobs": [
+          {
+            "name": "ubuntu-latest / Python 3.11",
+            "job_id": 93290042632,
+            "conclusion": "success",
+            "url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/31331370923/job/93290042632"
+          },
+          {
+            "name": "ubuntu-latest / Python 3.12",
+            "job_id": 93290042639,
+            "conclusion": "success",
+            "url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/31331370923/job/93290042639"
+          },
+          {
+            "name": "windows-latest / Python 3.11",
+            "job_id": 93290042638,
+            "conclusion": "success",
+            "url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/31331370923/job/93290042638"
+          },
+          {
+            "name": "windows-latest / Python 3.12",
+            "job_id": 93290042637,
+            "conclusion": "success",
+            "url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/31331370923/job/93290042637"
+          }
+        ]
+      },
+      "threshold": "All four hosted Linux/Windows by Python 3.11/3.12 CI matrix cells are green",
+      "comparison": "eq"
+    },
+    {
+      "id": "G0.guards",
+      "status": "PASS",
+      "measured": {
+        "guard_files_present": 2,
+        "verification_profiles": 4,
+        "hosted_profiles_passed": 4,
+        "fixture_guard_tests_passed_per_profile": 1,
+        "spike_isolation_tests_passed_per_profile": 4
+      },
+      "threshold": "Both guard files are present and their standalone pytest commands pass",
+      "comparison": "all"
+    },
+    {
+      "id": "G0.location",
+      "status": "PASS",
+      "measured": {
+        "resolved_path": "C:\\Users\\betim\\Documents\\Data_Science\\pi_ginot_large",
+        "under_onedrive": false,
+        "under_synced_documents": false,
+        "reparse_ancestor": false
+      },
+      "threshold": "Working directory is outside OneDrive, Dropbox, iCloud, and other detected sync roots",
+      "comparison": "all_false"
+    },
+    {
+      "id": "G0.actions",
+      "status": "PASS",
+      "measured": {
+        "external_actions": 2,
+        "full_sha_pins": 2,
+        "unpinned_actions": 0
+      },
+      "threshold": "Every external GitHub Action is pinned to a full 40-character SHA",
+      "comparison": "eq"
+    },
+    {
+      "id": "G0.audit",
+      "status": "PASS",
+      "measured": {
+        "verification_profiles": 4,
+        "profiles_passed": 4,
+        "hosted_profiles_passed": 4,
+        "known_vulnerabilities": 0,
+        "skipped_local_projects": [
+          "piginot==0.1.0"
+        ],
+        "remediated_finding": {
+          "advisory": "PYSEC-2026-3447",
+          "failing_version": "setuptools==79.0.1",
+          "constraint": "setuptools>=83",
+          "verified_version": "setuptools==84.0.0"
+        }
+      },
+      "threshold": "pip-audit reports zero known vulnerabilities",
+      "comparison": "eq"
+    },
+    {
+      "id": "G0.lock",
+      "status": "PASS",
+      "measured": {
+        "uv_available": true,
+        "uv_version": "0.12.3",
+        "uv_lock_created": true,
+        "resolved_packages": 92,
+        "lock_lines": 1590,
+        "lock_bytes": 233020,
+        "lock_sha256": "4c9f28882a96c486885a513f37501e8d7c4ae5ce452c3de1e2012a580e584fbc",
+        "uv_lock_check_exit_code": 0,
+        "locked_sync_exit_code": 0,
+        "locked_sync_python": "3.12.13",
+        "locked_sync_packages_installed": 63
+      },
+      "threshold": "Lockfile is generated by uv when uv is available and passes uv lock --check",
+      "comparison": "all"
+    }
+  ],
+  "verdict": "PASS",
+  "verdict_reason": "Every required G0 check passed for commit b5ad5990653db266326b90a27945badf0ec8f90a, including all four hosted GitHub Actions matrix cells."
+}
