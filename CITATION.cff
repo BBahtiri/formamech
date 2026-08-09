@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use PI-GINOT, please cite the software using this metadata."
+title: "PI-GINOT"
+type: software
+version: 0.1.0
+authors:
+  - name: "PI-GINOT contributors"
+license: MIT
+abstract: >-
+  An open-source project for verified, problem-specific physics-informed neural
+  operators in 2D finite-strain elasticity.
