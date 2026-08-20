@@ -3,6 +3,7 @@
   "step": "S2",
   "commit": "e2ccd609d2721761f7200edb9f85e5cfaf2a3f79",
   "execution_profile_hash": "16e0cb44baf77ebb60ba13937c5ea087dafe1710dc0ba9996efd302a845e951b",
+  "execution_profile_hash_domain": "content",
   "timestamp_utc": "2026-08-20T11:30:57.4715157Z",
   "execution_profile": {
     "python_version": "3.13.11",
@@ -67,7 +68,7 @@
     {
       "id": "G-CODE.ruff-check",
       "status": "PASS",
-      "measured": "All checks passed",
+      "measured": "All checks passed; the exact role=LEGACY closeout directories experiments/spike/_closeout_phaseA, _closeout_phaseB, and _closeout_phaseC are excluded by Ruff configuration because S2 is prohibited from modifying that separate workstream",
       "threshold": "ruff check . clean",
       "command": "ruff check ."
     },
