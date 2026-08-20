@@ -20,7 +20,7 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
 ]
-dependencies = []
+dependencies = ["rfc8785>=0.1.4,<0.2"]
 
 [project.optional-dependencies]
 fem = ["scikit-fem>=11,<13"]
@@ -65,7 +65,12 @@ strict = true
 [tool.ruff]
 line-length = 88
 target-version = "py311"
-extend-exclude = ["experiments/spike/upstream_pi_ginot"]
+extend-exclude = [
+  "experiments/spike/_closeout_phaseA",
+  "experiments/spike/_closeout_phaseB",
+  "experiments/spike/_closeout_phaseC",
+  "experiments/spike/upstream_pi_ginot",
+]
 
 [tool.ruff.lint]
 select = ["E4", "E7", "E9", "F", "I", "UP", "B"]

@@ -35,6 +35,8 @@ jobs:
       - name: Type-check
         run: python -m mypy --strict src/
       - name: Test with coverage
-        run: python -m pytest --cov=src/piginot --cov-fail-under=80
+        run: python -m pytest --cov=src/piginot --cov-fail-under=90
+      - name: Check S2 contract coverage
+        run: python -m pytest tests/contracts --cov=src/piginot/contracts --cov-fail-under=90
       - name: Audit dependencies
         run: python -m pip_audit
