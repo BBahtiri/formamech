@@ -7,7 +7,7 @@
   "superseded_vector_set": "tests/fixtures/canonical/vectors-v1.json",
   "execution_profile_hash": "122c78bd3cb1c2e4a57adf265e11b59c474acfcc929dcd1ee67847bc329352d1",
   "execution_profile_hash_domain": "content",
-  "timestamp_utc": "2026-08-20T12:00:57.6075638Z",
+  "timestamp_utc": "2026-08-20T12:19:28.3478525Z",
   "execution_profile": {
     "python_version": "3.13.11",
     "library_versions": {
@@ -22,13 +22,50 @@
     "seed": 0,
     "container_digest": null
   },
+  "ci_evidence": {
+    "workflow": "CI",
+    "run_id": 32368096854,
+    "run_url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/32368096854",
+    "event": "push",
+    "head_branch": "codex/s2-contracts",
+    "head_sha": "fbb0bab29a5fd9b245e86f13f421d809cc32a1d3",
+    "status": "completed",
+    "conclusion": "success",
+    "started_at_utc": "2026-08-20T12:17:39Z",
+    "completed_at_utc": "2026-08-20T12:18:59Z",
+    "jobs": [
+      {
+        "id": 96422072503,
+        "name": "ubuntu-latest / Python 3.11",
+        "url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/32368096854/job/96422072503",
+        "conclusion": "success"
+      },
+      {
+        "id": 96422072132,
+        "name": "ubuntu-latest / Python 3.12",
+        "url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/32368096854/job/96422072132",
+        "conclusion": "success"
+      },
+      {
+        "id": 96422072357,
+        "name": "windows-latest / Python 3.11",
+        "url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/32368096854/job/96422072357",
+        "conclusion": "success"
+      },
+      {
+        "id": 96422072411,
+        "name": "windows-latest / Python 3.12",
+        "url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/32368096854/job/96422072411",
+        "conclusion": "success"
+      }
+    ]
+  },
   "checks": [
     {
       "id": "G2.vectors",
-      "status": "NOT_RUN",
-      "measured": "local active vectors-v2 tests/contracts/test_vectors.py passed on Windows Python 3.13.11 only; active vectors-v2 digests also matched an independent hashlib.blake2b(digest_size=32) check",
-      "threshold": "byte-identical active vectors-v2 canonical JSON and BLAKE2b-256 hashes on Linux and Windows, Python 3.11 and 3.12",
-      "reason": "requires the full CI matrix; this local environment cannot provide Linux/Windows x Python 3.11/3.12 evidence"
+      "status": "PASS",
+      "measured": "CI run 32368096854 passed active vectors-v2 and the full suite on ubuntu-latest and windows-latest under Python 3.11 and 3.12; all four jobs tested head SHA fbb0bab29a5fd9b245e86f13f421d809cc32a1d3",
+      "threshold": "byte-identical active vectors-v2 canonical JSON and BLAKE2b-256 hashes on Linux and Windows, Python 3.11 and 3.12"
     },
     {
       "id": "G2.strict",
@@ -119,6 +156,6 @@
       "command": "python -m pytest tests/test_spike_isolation.py"
     }
   ],
-  "verdict": "FAIL",
-  "verdict_reason": "1 required check NOT_RUN: G2.vectors needs Linux/Windows x Python 3.11/3.12 CI evidence"
+  "verdict": "PASS",
+  "verdict_reason": "all required G2 checks passed, including active vectors-v2 on Linux/Windows x Python 3.11/3.12"
 }
