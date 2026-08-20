@@ -1,5 +1,5 @@
 --- /mnt/user-data/uploads/pi_ginot_large/experiments/spike/fem.py	2026-08-17 08:17:43.658513248 +0000
-+++ /tmp/work/experiments/spike/fem.py	2026-08-19 08:37:34.100314449 +0000
++++ /tmp/work/experiments/spike/fem.py	2026-08-20 06:02:55.601961578 +0000
 @@ -13,6 +13,7 @@
      Basis,
      BilinearForm,
@@ -202,7 +202,7 @@
      if not converged:
          return SanityResult(False, reason, math.nan, math.inf, math.inf, math.inf)
 --- /mnt/user-data/uploads/pi_ginot_large/experiments/spike/geometry.py	2026-08-17 08:17:43.662513248 +0000
-+++ /tmp/work/experiments/spike/geometry.py	2026-08-19 08:38:13.876190732 +0000
++++ /tmp/work/experiments/spike/geometry.py	2026-08-20 06:02:55.602378819 +0000
 @@ -11,7 +11,7 @@
  import hashlib
  import json

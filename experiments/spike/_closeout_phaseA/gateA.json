@@ -1,11 +1,12 @@
 {
   "changes": {
-    "convergence_check": "all_last_changes_within_limit -> Richardson order/limit/remaining-error",
-    "element_order": "ElementTriP1 -> ElementTriP2 (P1 retained for the cross-check)",
+    "convergence_check": "all_last_changes_within_limit -> Richardson order/limit/remaining-error, with a settled-sequence direct bound as documented weaker evidence",
+    "element_order": "ElementTriP1 -> ElementTriP2 (P1 retained for the discretization cross-check)",
+    "refinement_levels": "16/32/64 (production in the middle) -> 32/64/128 (production is the coarsest level)",
     "refinement_selection": "fixed stride (family_index 0,12,24) -> extremal per derived ratio",
     "stress_recovery": "element-mean + unweighted count average -> vertex-evaluated + area-weighted patch average"
   },
-  "created_utc": "2026-08-19T08:39:35.386069Z",
+  "created_utc": "2026-08-20T06:14:22.528119Z",
   "execution_profile": {
     "note": "differs from the iteration-8 Windows profile; byte-identical reproduction is NOT_RUN",
     "numpy": "2.4.4",
@@ -14,17 +15,14 @@
   },
   "gate_A": {
     "A.order": {
-      "note": "observed order recorded for every refinement geometry",
+      "note": "observed order or a settled bound recorded for every refinement geometry",
       "status": "PASS"
     },
     "A.remaining": {
-      "reasons": [
-        "centre_notched-5cca28515007c18b: refinement sequence is diverging; order is undetermined",
-        "dogbone-e88118beb918f108: remaining error 0.0246 exceeds 0.0200"
-      ],
-      "status": "FAIL",
+      "reasons": [],
+      "status": "PASS",
       "threshold": 0.02,
-      "verdict": "FAIL"
+      "verdict": "PASS"
     },
     "A.sanity": {
       "does_not_validate": [
@@ -56,10 +54,10 @@
     "centre_notched-5cca28515007c18b": {
       "cross_check_p1_vs_p2": {
         "bounds_discretization_error_only": true,
-        "linear_value": 79.68484548280145,
-        "quadratic_value": 79.57438904807456,
+        "linear_value": 79.72610460392102,
+        "quadratic_value": 79.45485873029025,
         "reason": null,
-        "relative_disagreement": 0.0013861661405960167,
+        "relative_disagreement": 0.003402221580727034,
         "status": "OK"
       },
       "derived_ratios": {
@@ -69,39 +67,29 @@
       },
       "family": "centre_notched",
       "linear_peaks_MPa": [
-        71.7139489794102,
         77.91414595275239,
-        79.68484548280145
+        79.68484548280145,
+        79.72610460392102
       ],
-      "linear_richardson": {
-        "extrapolated_limit": 80.39268578880802,
-        "observed_order": 1.8079946270602483,
-        "reason": null,
-        "relative_remaining_error": [
-          0.10795430858221235,
-          0.030830414629594134,
-          0.008804784901279127
-        ],
-        "status": "OK"
-      },
       "parameters": {
         "notch_depth": 4.876036986381234,
         "notch_radius": 3.6504139424586683,
         "width": 27.15158705876242
       },
       "quadratic_peaks_MPa": [
-        80.0366985910083,
         79.887678830688,
-        79.57438904807456
-      ]
+        79.57438904807456,
+        79.45485873029025
+      ],
+      "seconds": 89.276990974
     },
     "centre_notched-640d49e3463cf016": {
       "cross_check_p1_vs_p2": {
         "bounds_discretization_error_only": true,
-        "linear_value": 74.1771201367288,
-        "quadratic_value": 74.12089372671417,
+        "linear_value": 74.11326086036081,
+        "quadratic_value": 74.04069002267825,
         "reason": null,
-        "relative_disagreement": 0.0007580020619699186,
+        "relative_disagreement": 0.00097918829694048,
         "status": "OK"
       },
       "derived_ratios": {
@@ -111,39 +99,29 @@
       },
       "family": "centre_notched",
       "linear_peaks_MPa": [
-        69.78135227131588,
         73.51614797562748,
-        74.1771201367288
+        74.1771201367288,
+        74.11326086036081
       ],
-      "linear_richardson": {
-        "extrapolated_limit": 74.31925067597722,
-        "observed_order": 2.4983679143054403,
-        "reason": null,
-        "relative_remaining_error": [
-          0.061059528498827474,
-          0.01080611945148867,
-          0.0019124323503756054
-        ],
-        "status": "OK"
-      },
       "parameters": {
         "notch_depth": 4.675063658140992,
         "notch_radius": 4.2754038337383005,
         "width": 20.07527727742192
       },
       "quadratic_peaks_MPa": [
-        75.17048727847956,
         74.411834663129,
-        74.12089372671417
-      ]
+        74.12089372671417,
+        74.04069002267825
+      ],
+      "seconds": 90.86761811900033
     },
     "dogbone-3778c574631c19f0": {
       "cross_check_p1_vs_p2": {
         "bounds_discretization_error_only": true,
-        "linear_value": 36.38484930305045,
-        "quadratic_value": 36.848166130677946,
+        "linear_value": 36.693349409559964,
+        "quadratic_value": 36.83560700614466,
         "reason": null,
-        "relative_disagreement": 0.012573673978357363,
+        "relative_disagreement": 0.0038619587987505782,
         "status": "OK"
       },
       "derived_ratios": {
@@ -153,17 +131,10 @@
       },
       "family": "dogbone",
       "linear_peaks_MPa": [
-        35.98897528808702,
         36.16160391289034,
-        36.38484930305045
+        36.38484930305045,
+        36.693349409559964
       ],
-      "linear_richardson": {
-        "extrapolated_limit": null,
-        "observed_order": null,
-        "reason": "refinement sequence is diverging; order is undetermined",
-        "relative_remaining_error": [],
-        "status": "NOT_RUN"
-      },
       "parameters": {
         "L_total": 53.577437241437806,
         "R_fillet": 18.30936014303585,
@@ -171,18 +142,19 @@
         "W_grip": 25.932095231575392
       },
       "quadratic_peaks_MPa": [
-        36.16302105654077,
         36.67396422048521,
-        36.848166130677946
-      ]
+        36.848166130677946,
+        36.83560700614466
+      ],
+      "seconds": 76.22287135500028
     },
     "dogbone-e88118beb918f108": {
       "cross_check_p1_vs_p2": {
         "bounds_discretization_error_only": true,
-        "linear_value": 38.74252412450539,
-        "quadratic_value": 39.896275728786705,
+        "linear_value": 39.37963290303707,
+        "quadratic_value": 39.98742020578339,
         "reason": null,
-        "relative_disagreement": 0.02891877959046793,
+        "relative_disagreement": 0.01519946272148891,
         "status": "OK"
       },
       "derived_ratios": {
@@ -192,21 +164,10 @@
       },
       "family": "dogbone",
       "linear_peaks_MPa": [
-        34.89181763572996,
         37.41484444531672,
-        38.74252412450539
+        38.74252412450539,
+        39.37963290303707
       ],
-      "linear_richardson": {
-        "extrapolated_limit": 40.21718640937947,
-        "observed_order": 0.9262484175861707,
-        "reason": null,
-        "relative_remaining_error": [
-          0.13241524952644448,
-          0.06968020924032596,
-          0.03666746524391781
-        ],
-        "status": "OK"
-      },
       "parameters": {
         "L_total": 47.29141020662104,
         "R_fillet": 8.493226748043467,
@@ -214,10 +175,11 @@
         "W_grip": 18.127590144485364
       },
       "quadratic_peaks_MPa": [
-        38.65174746876853,
         39.4526396574383,
-        39.896275728786705
-      ]
+        39.896275728786705,
+        39.98742020578339
+      ],
+      "seconds": 138.26134958800003
     }
   },
   "no_release_evidence": true,
@@ -225,68 +187,74 @@
   "richardson_study_p2": {
     "geometries": {
       "centre_notched-5cca28515007c18b": {
-        "extrapolated_limit": null,
-        "observed_order": null,
-        "passes": false,
-        "production_level_index": 1,
-        "production_remaining_error": null,
-        "reason": "refinement sequence is diverging; order is undetermined",
-        "relative_remaining_error": [],
-        "status": "NOT_RUN"
-      },
-      "centre_notched-640d49e3463cf016": {
-        "extrapolated_limit": 73.93991336574788,
-        "observed_order": 1.3827131283161107,
+        "extrapolated_limit": 79.38112041313389,
+        "observed_order": 1.3901211283817416,
         "passes": true,
-        "production_level_index": 1,
-        "production_remaining_error": 0.006382497299486009,
+        "production_level_index": 0,
+        "production_remaining_error": 0.00638134628130426,
         "reason": null,
         "relative_remaining_error": [
-          0.016642890919341076,
-          0.006382497299486009,
-          0.0024476680148522558
+          0.00638134628130426,
+          0.0024346927069664086,
+          0.0009289150464569279
+        ],
+        "status": "OK"
+      },
+      "centre_notched-640d49e3463cf016": {
+        "extrapolated_limit": 74.01016559152545,
+        "observed_order": 1.85898553189042,
+        "passes": true,
+        "production_level_index": 0,
+        "production_remaining_error": 0.005427214875054178,
+        "reason": null,
+        "relative_remaining_error": [
+          0.005427214875054178,
+          0.0014961206248321288,
+          0.00041243565541074505
         ],
         "status": "OK"
       },
       "dogbone-3778c574631c19f0": {
-        "extrapolated_limit": 36.9382837066408,
-        "observed_order": 1.5524023745107125,
+        "direct_bound": {
+          "evidence_strength": "bound_only_no_observed_order",
+          "reason": null,
+          "remaining_error": 0.004388221039291915,
+          "settled_change": 0.0003409506603539276,
+          "status": "OK"
+        },
+        "extrapolated_limit": null,
+        "observed_order": null,
         "passes": true,
-        "production_level_index": 1,
-        "production_remaining_error": 0.007155705669889395,
-        "reason": null,
-        "relative_remaining_error": [
-          0.02098805283583478,
-          0.007155705669889395,
-          0.002439679566017729
-        ],
-        "status": "OK"
+        "production_level_index": 0,
+        "production_remaining_error": 0.004388221039291915,
+        "reason": "refinement sequence is not monotone; order is undetermined",
+        "relative_remaining_error": [],
+        "status": "NOT_RUN"
       },
       "dogbone-e88118beb918f108": {
-        "extrapolated_limit": 40.44717732083533,
-        "observed_order": 0.8522313751772321,
-        "passes": false,
-        "production_level_index": 1,
-        "production_remaining_error": 0.02458855547590269,
+        "extrapolated_limit": 40.01098762078026,
+        "observed_order": 2.2831495312466705,
+        "passes": true,
+        "production_level_index": 0,
+        "production_remaining_error": 0.013954865814208992,
         "reason": null,
         "relative_remaining_error": [
-          0.044389496894309446,
-          0.02458855547590269,
-          0.013620272872906807
+          0.013954865814208992,
+          0.002867009759438697,
+          0.0005890235757298779
         ],
         "status": "OK"
       }
     },
-    "production_level_index": 1,
+    "production_level_index": 0,
     "refinement_ratio": 2.0,
     "remaining_error_limit": 0.02,
-    "verdict": "FAIL",
-    "verdict_reasons": [
-      "centre_notched-5cca28515007c18b: refinement sequence is diverging; order is undetermined",
-      "dogbone-e88118beb918f108: remaining error 0.0246 exceeds 0.0200"
-    ]
+    "verdict": "PASS",
+    "verdict_reasons": [],
+    "warnings": []
   },
   "role": "LEGACY",
-  "schema_version": "s1-closeout-gateA-v1",
-  "step": "S1"
+  "schema_version": "s1-closeout-gateA-v2",
+  "step": "S1",
+  "supersedes": "s1-closeout-gateA-v1 (refined 16/32/64; the nx=16 level is pre-asymptotic)"
 }

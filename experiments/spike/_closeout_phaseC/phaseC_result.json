@@ -1,0 +1,1739 @@
+{
+ "role": "LEGACY",
+ "no_release_evidence": true,
+ "phase": "C",
+ "preregistration_commit": "431c39b7037031eac3f95a09f4c390f609b058fb",
+ "solver_element_order": 2,
+ "epochs": 1500,
+ "final_loss": 0.027376514673233033,
+ "switches": {
+  "peak_supervised_p_weight": 1.0,
+  "traction_free": 1.0,
+  "supervised_sampling": "stratified_qoi",
+  "qoi_fraction": 0.25
+ },
+ "training_envelope": {
+  "dogbone": {
+   "width_ratio": [
+    1.4801265003625035,
+    4.132415914618929
+   ],
+   "fillet_ratio": [
+    0.8054032086391608,
+    2.7000785206108016
+   ],
+   "gauge_slenderness": [
+    4.223081747928322,
+    11.164186055099792
+   ]
+  },
+  "centre_notched": {
+   "net_section_factor": [
+    1.1691379122641623,
+    2.604139207839555
+   ],
+   "notch_sharpness": [
+    0.32336198363790897,
+    2.34936909937124
+   ],
+   "relative_depth": [
+    0.1446689141545401,
+    0.6159959509884958
+   ]
+  }
+ },
+ "training_coverage": {
+  "centre_notched": {
+   "net_section_factor": {
+    "min": 1.1691379122641623,
+    "max": 2.604139207839555,
+    "count": 20,
+    "stratum_counts": [
+     4,
+     4,
+     6,
+     2,
+     4
+    ],
+    "empty_strata": 0
+   },
+   "notch_sharpness": {
+    "min": 0.32336198363790897,
+    "max": 2.34936909937124,
+    "count": 20,
+    "stratum_counts": [
+     5,
+     5,
+     5,
+     3,
+     2
+    ],
+    "empty_strata": 0
+   },
+   "relative_depth": {
+    "min": 0.1446689141545401,
+    "max": 0.6159959509884958,
+    "count": 20,
+    "stratum_counts": [
+     2,
+     2,
+     4,
+     6,
+     6
+    ],
+    "empty_strata": 0
+   }
+  },
+  "dogbone": {
+   "width_ratio": {
+    "min": 1.4801265003625035,
+    "max": 4.132415914618929,
+    "count": 20,
+    "stratum_counts": [
+     5,
+     5,
+     2,
+     4,
+     4
+    ],
+    "empty_strata": 0
+   },
+   "fillet_ratio": {
+    "min": 0.8054032086391608,
+    "max": 2.7000785206108016,
+    "count": 20,
+    "stratum_counts": [
+     2,
+     4,
+     4,
+     7,
+     3
+    ],
+    "empty_strata": 0
+   },
+   "gauge_slenderness": {
+    "min": 4.223081747928322,
+    "max": 11.164186055099792,
+    "count": 20,
+    "stratum_counts": [
+     4,
+     8,
+     4,
+     1,
+     3
+    ],
+    "empty_strata": 0
+   }
+  }
+ },
+ "rows": [
+  {
+   "arm": "phaseC",
+   "geometry_id": "dogbone-33381a73727e164a",
+   "family": "dogbone",
+   "status": "out_of_envelope",
+   "err": 602.7471679828598,
+   "ref": 138263.29210035136,
+   "signed_peak_rel": -0.06662246027213828,
+   "inference_seconds": 0.019520106998243136,
+   "fem_solve_seconds": 2.0120867530004034,
+   "ratios": {
+    "width_ratio": 1.8139096349212434,
+    "fillet_ratio": 1.0224611290897223,
+    "gauge_slenderness": 4.174621851214897
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "dogbone-370febec2c78f832",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 118.3945075159636,
+   "ref": 72949.20170051347,
+   "signed_peak_rel": -0.057281349397021224,
+   "inference_seconds": 0.01566817100137996,
+   "fem_solve_seconds": 2.0849541790012154,
+   "ratios": {
+    "width_ratio": 2.690339822645772,
+    "fillet_ratio": 1.5893010261101912,
+    "gauge_slenderness": 8.046143530653767
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "dogbone-aa8d131cc15f12b2",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 236.513610513206,
+   "ref": 83623.88742603647,
+   "signed_peak_rel": -0.008765532253385286,
+   "inference_seconds": 0.01824294800098869,
+   "fem_solve_seconds": 2.142211956999745,
+   "ratios": {
+    "width_ratio": 2.1040311784151657,
+    "fillet_ratio": 1.2133955475676126,
+    "gauge_slenderness": 6.917029622420382
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "dogbone-3f9e07a0fe593d30",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 1212.302282302894,
+   "ref": 98689.41281680738,
+   "signed_peak_rel": -0.07043011882170963,
+   "inference_seconds": 0.016496001000632532,
+   "fem_solve_seconds": 2.0621197460004623,
+   "ratios": {
+    "width_ratio": 2.8696526097812014,
+    "fillet_ratio": 1.657391862685595,
+    "gauge_slenderness": 6.186835783593688
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "dogbone-f3ee750aa3f2cb97",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 418.9823628996456,
+   "ref": 102825.92121713488,
+   "signed_peak_rel": -0.07485553451856082,
+   "inference_seconds": 0.01608793499872263,
+   "fem_solve_seconds": 2.0112701170000946,
+   "ratios": {
+    "width_ratio": 1.5388667128936,
+    "fillet_ratio": 0.9933188989274501,
+    "gauge_slenderness": 5.496305477378443
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "dogbone-73b3325b7f4ec180",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 843.7443189275807,
+   "ref": 102211.34426872866,
+   "signed_peak_rel": 0.006162964312796036,
+   "inference_seconds": 0.0149886429990147,
+   "fem_solve_seconds": 1.9937749069995334,
+   "ratios": {
+    "width_ratio": 1.6025240275025978,
+    "fillet_ratio": 1.3418511086210878,
+    "gauge_slenderness": 5.584885658458697
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "dogbone-0e2966fde4622bbc",
+   "family": "dogbone",
+   "status": "out_of_envelope",
+   "err": 245.7668084793757,
+   "ref": 55085.01204261267,
+   "signed_peak_rel": 0.015484908690173447,
+   "inference_seconds": 0.015597790999891004,
+   "fem_solve_seconds": 1.995687758000713,
+   "ratios": {
+    "width_ratio": 3.8512795338538006,
+    "fillet_ratio": 2.4140695284754634,
+    "gauge_slenderness": 11.303623116417574
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "dogbone-02b4673e28d5d00e",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 1092.259272343447,
+   "ref": 84345.54505083975,
+   "signed_peak_rel": -0.13155806804429787,
+   "inference_seconds": 0.015309512999010622,
+   "fem_solve_seconds": 1.9663962770009675,
+   "ratios": {
+    "width_ratio": 2.860685101675267,
+    "fillet_ratio": 1.1015298310339803,
+    "gauge_slenderness": 6.9081260093538095
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "dogbone-6a42ebd749cee756",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 551.3422986709706,
+   "ref": 89164.71806564918,
+   "signed_peak_rel": -0.07244424141189787,
+   "inference_seconds": 0.015105681000932236,
+   "fem_solve_seconds": 1.9106882759988366,
+   "ratios": {
+    "width_ratio": 1.7547250854025682,
+    "fillet_ratio": 2.0104344230075313,
+    "gauge_slenderness": 6.50906235198312
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "dogbone-a51983a6a5aad7c5",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 490.3264738935833,
+   "ref": 123693.58705348751,
+   "signed_peak_rel": -0.04779375472020424,
+   "inference_seconds": 0.015588120999382227,
+   "fem_solve_seconds": 2.0301577810005256,
+   "ratios": {
+    "width_ratio": 2.2111522536226658,
+    "fillet_ratio": 1.268503662770637,
+    "gauge_slenderness": 4.772936943986887
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "dogbone-3390b9213c11f831",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 441.0999101075025,
+   "ref": 135956.92619147897,
+   "signed_peak_rel": -0.04380811430015055,
+   "inference_seconds": 0.016491173000758863,
+   "fem_solve_seconds": 1.9758811020001303,
+   "ratios": {
+    "width_ratio": 1.750825045474692,
+    "fillet_ratio": 1.563392645661955,
+    "gauge_slenderness": 4.296296926927202
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "dogbone-44b76c386b3580da",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 716.8300273871587,
+   "ref": 97667.28342999402,
+   "signed_peak_rel": -0.05703963767063816,
+   "inference_seconds": 0.017177296000227216,
+   "fem_solve_seconds": 2.0250068440000177,
+   "ratios": {
+    "width_ratio": 2.4632687781311584,
+    "fillet_ratio": 2.1456190012979803,
+    "gauge_slenderness": 6.280523968031027
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "dogbone-6035e27fd34f2c47",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 416.7638792064318,
+   "ref": 101585.05701859367,
+   "signed_peak_rel": -0.032873746641709105,
+   "inference_seconds": 0.01614439399963885,
+   "fem_solve_seconds": 1.9539663460000156,
+   "ratios": {
+    "width_ratio": 1.9667511043552366,
+    "fillet_ratio": 2.2907238002286667,
+    "gauge_slenderness": 5.835386191025312
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "dogbone-18e5c406d84d544a",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 1024.3402466926402,
+   "ref": 59594.210671326946,
+   "signed_peak_rel": -0.10020541969410349,
+   "inference_seconds": 0.015740242999527254,
+   "fem_solve_seconds": 1.9971647699985624,
+   "ratios": {
+    "width_ratio": 4.10192581407908,
+    "fillet_ratio": 1.6064072596026933,
+    "gauge_slenderness": 10.020781069188992
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "dogbone-f808d87bad7bbcb4",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 2333.080395544301,
+   "ref": 77091.14442536783,
+   "signed_peak_rel": -0.2911331016411352,
+   "inference_seconds": 0.02075529700050538,
+   "fem_solve_seconds": 2.016918851999435,
+   "ratios": {
+    "width_ratio": 3.2262670783605154,
+    "fillet_ratio": 1.1865652597936818,
+    "gauge_slenderness": 7.558192788997239
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "dogbone-a554e0ae1fb73d30",
+   "family": "dogbone",
+   "status": "out_of_envelope",
+   "err": 597.5462490087187,
+   "ref": 62942.9232053107,
+   "signed_peak_rel": -0.037796591216654254,
+   "inference_seconds": 0.01609956699940085,
+   "fem_solve_seconds": 2.0534919149995403,
+   "ratios": {
+    "width_ratio": 4.175572063710951,
+    "fillet_ratio": 2.4048798832123928,
+    "gauge_slenderness": 10.06724620691363
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "dogbone-35ef425c6a0466f8",
+   "family": "dogbone",
+   "status": "out_of_envelope",
+   "err": 1027.0223552136904,
+   "ref": 57124.08522631455,
+   "signed_peak_rel": 0.031215479610195163,
+   "inference_seconds": 0.015209679999315995,
+   "fem_solve_seconds": 1.994627849000608,
+   "ratios": {
+    "width_ratio": 2.914543344230754,
+    "fillet_ratio": 2.8119483867698647,
+    "gauge_slenderness": 10.73924058824764
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "dogbone-446c15bc64c9afea",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 400.4291172411402,
+   "ref": 88110.91288948039,
+   "signed_peak_rel": -0.03133573871401846,
+   "inference_seconds": 0.014964527999836719,
+   "fem_solve_seconds": 2.0345564039998862,
+   "ratios": {
+    "width_ratio": 3.0928130418636135,
+    "fillet_ratio": 1.7188462719647977,
+    "gauge_slenderness": 6.894503659958129
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "dogbone-cd1b41a544a20c87",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 507.79002485586,
+   "ref": 98263.2616872687,
+   "signed_peak_rel": -0.034727591068034455,
+   "inference_seconds": 0.015420261999679497,
+   "fem_solve_seconds": 2.0212294200009637,
+   "ratios": {
+    "width_ratio": 2.823001505566802,
+    "fillet_ratio": 2.275386275877143,
+    "gauge_slenderness": 6.392297215992431
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "dogbone-5251baffe6fdbbbd",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 156.72536047429716,
+   "ref": 64252.467014861875,
+   "signed_peak_rel": -0.0024580299763979616,
+   "inference_seconds": 0.015820353000890464,
+   "fem_solve_seconds": 2.0274465790007525,
+   "ratios": {
+    "width_ratio": 3.996715354954168,
+    "fillet_ratio": 1.8693845440863792,
+    "gauge_slenderness": 9.522015601936264
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "dogbone-21cde2be699ac8fc",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 627.063213924843,
+   "ref": 87490.8166427354,
+   "signed_peak_rel": -0.05725551181897738,
+   "inference_seconds": 0.021473770999364206,
+   "fem_solve_seconds": 2.0154484520007827,
+   "ratios": {
+    "width_ratio": 3.351890364214821,
+    "fillet_ratio": 1.4521255662539092,
+    "gauge_slenderness": 6.800068501704688
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "dogbone-6e05ec2ea13817f8",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 930.4990521129376,
+   "ref": 107654.68485305436,
+   "signed_peak_rel": -0.019999824375144942,
+   "inference_seconds": 0.019261204999565962,
+   "fem_solve_seconds": 2.0636838280006486,
+   "ratios": {
+    "width_ratio": 2.4097470570828134,
+    "fillet_ratio": 2.163011054454588,
+    "gauge_slenderness": 5.701714696535963
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "dogbone-130b137d72dbb5ac",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 258.48621897911676,
+   "ref": 91045.344381507,
+   "signed_peak_rel": -0.04104554782727284,
+   "inference_seconds": 0.014535019001414184,
+   "fem_solve_seconds": 2.100562538000304,
+   "ratios": {
+    "width_ratio": 3.7640910394221727,
+    "fillet_ratio": 2.4280214401668,
+    "gauge_slenderness": 7.207315888182087
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "dogbone-2aa4a4f24821a0e2",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 906.8220415977015,
+   "ref": 96946.70070352015,
+   "signed_peak_rel": -0.03632834710384536,
+   "inference_seconds": 0.015215330999126309,
+   "fem_solve_seconds": 1.8373402470006113,
+   "ratios": {
+    "width_ratio": 3.3119169301843687,
+    "fillet_ratio": 2.576818335895074,
+    "gauge_slenderness": 6.773875841098702
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "dogbone-719d8dbcb82f997d",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 1163.2650010466593,
+   "ref": 101872.81278579801,
+   "signed_peak_rel": -0.055042620582039924,
+   "inference_seconds": 0.020046056999490247,
+   "fem_solve_seconds": 2.083662205001019,
+   "ratios": {
+    "width_ratio": 2.3932443630878293,
+    "fillet_ratio": 1.9632675736323106,
+    "gauge_slenderness": 5.940282067054428
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "centre_notched-69aec8e15102aad9",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 1154.440324110098,
+   "ref": 218600.68318129875,
+   "signed_peak_rel": 0.09319959473036522,
+   "inference_seconds": 0.015547936000075424,
+   "fem_solve_seconds": 1.9595481989999826,
+   "ratios": {
+    "net_section_factor": 1.684133886533028,
+    "notch_sharpness": 0.6552368279612556,
+    "relative_depth": 0.40622298025330494
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "centre_notched-65e83b2998676358",
+   "family": "centre_notched",
+   "status": "out_of_envelope",
+   "err": 16308.907623895786,
+   "ref": 306915.7215158824,
+   "signed_peak_rel": 0.13485829082978326,
+   "inference_seconds": 0.01774740499968175,
+   "fem_solve_seconds": 1.9192563990000053,
+   "ratios": {
+    "net_section_factor": 1.0986040521311624,
+    "notch_sharpness": 0.3204931644572565,
+    "relative_depth": 0.08975394905915565
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "centre_notched-f3015e7796d961eb",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 491.8767641252256,
+   "ref": 159412.06947489947,
+   "signed_peak_rel": 0.11705074439686947,
+   "inference_seconds": 0.021360419999837177,
+   "fem_solve_seconds": 1.9634824360000493,
+   "ratios": {
+    "net_section_factor": 1.9271200751410928,
+    "notch_sharpness": 0.6978152862239093,
+    "relative_depth": 0.4810909746105023
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "centre_notched-9c2ca3098853cd5a",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 486.74305566690356,
+   "ref": 204633.00178417267,
+   "signed_peak_rel": -0.039401845985807996,
+   "inference_seconds": 0.016680796001310227,
+   "fem_solve_seconds": 1.9695724960001826,
+   "ratios": {
+    "net_section_factor": 1.676711527893135,
+    "notch_sharpness": 1.192395366657739,
+    "relative_depth": 0.40359448637145956
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "centre_notched-a900da4b82c2bf1d",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 3567.6787230311384,
+   "ref": 297098.96260809054,
+   "signed_peak_rel": 0.0752459048541808,
+   "inference_seconds": 0.015320382999561843,
+   "fem_solve_seconds": 1.9352122120017157,
+   "ratios": {
+    "net_section_factor": 1.2837199683905085,
+    "notch_sharpness": 0.7789428799179844,
+    "relative_depth": 0.22101390908971252
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "centre_notched-1586779519b885e5",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 4332.255408380952,
+   "ref": 263997.06271513435,
+   "signed_peak_rel": 0.045669705901876065,
+   "inference_seconds": 0.030107585998848663,
+   "fem_solve_seconds": 1.97227177700006,
+   "ratios": {
+    "net_section_factor": 1.3847687027193227,
+    "notch_sharpness": 1.2777700027663583,
+    "relative_depth": 0.2778577404036774
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "centre_notched-9668b0e4d07f81f9",
+   "family": "centre_notched",
+   "status": "out_of_envelope",
+   "err": 8426.275241326099,
+   "ref": 240282.34478611872,
+   "signed_peak_rel": 0.42560058976154946,
+   "inference_seconds": 0.016091753999717184,
+   "fem_solve_seconds": 2.0091931210008624,
+   "ratios": {
+    "net_section_factor": 1.1814377101193894,
+    "notch_sharpness": 0.2707183123051804,
+    "relative_depth": 0.15357365738821252
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "centre_notched-6112b994d72ee5c3",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 1158.5747602293297,
+   "ref": 220038.17913714732,
+   "signed_peak_rel": -0.18177382429596503,
+   "inference_seconds": 0.015598195999700692,
+   "fem_solve_seconds": 2.0156744289997732,
+   "ratios": {
+    "net_section_factor": 1.7022329537230756,
+    "notch_sharpness": 1.3233913307141396,
+    "relative_depth": 0.4125363406854341
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "centre_notched-ec43612334e2d76c",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 675.0829852964424,
+   "ref": 150396.47322729498,
+   "signed_peak_rel": 0.11087020522973709,
+   "inference_seconds": 0.016384779000873095,
+   "fem_solve_seconds": 2.1135629239997797,
+   "ratios": {
+    "net_section_factor": 1.7980180243680692,
+    "notch_sharpness": 0.6634322669365714,
+    "relative_depth": 0.4438320492635442
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "centre_notched-5e0513b0aef58c74",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 512.4692409768197,
+   "ref": 178525.1566199374,
+   "signed_peak_rel": 0.07434629121632355,
+   "inference_seconds": 0.015283057999113225,
+   "fem_solve_seconds": 1.9419280750007601,
+   "ratios": {
+    "net_section_factor": 1.6713415103899858,
+    "notch_sharpness": 0.9373213283670905,
+    "relative_depth": 0.40167823644452955
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "centre_notched-f982f6f1eaff8bdf",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 919.2104657619369,
+   "ref": 227464.31715437857,
+   "signed_peak_rel": -0.1653976877741478,
+   "inference_seconds": 0.017096374000175274,
+   "fem_solve_seconds": 1.9630851140009327,
+   "ratios": {
+    "net_section_factor": 1.5164490325885522,
+    "notch_sharpness": 1.539247278506504,
+    "relative_depth": 0.34056471499538804
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "centre_notched-b58c19f1b4f87777",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 682.7539807104703,
+   "ref": 153541.83215443284,
+   "signed_peak_rel": 0.05881133743730245,
+   "inference_seconds": 0.01763759000095888,
+   "fem_solve_seconds": 1.9766672419991664,
+   "ratios": {
+    "net_section_factor": 1.7960684821461308,
+    "notch_sharpness": 1.0603076394864022,
+    "relative_depth": 0.4432283568580329
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "centre_notched-18348bbc4212e95f",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 4514.052112700579,
+   "ref": 127317.50612394747,
+   "signed_peak_rel": -0.3512517791637336,
+   "inference_seconds": 0.018883863000155543,
+   "fem_solve_seconds": 2.002703623000343,
+   "ratios": {
+    "net_section_factor": 2.4872792317232943,
+    "notch_sharpness": 0.6216542537675607,
+    "relative_depth": 0.5979542677614218
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "centre_notched-b0f6f2c1fe41df47",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 807.4926113404466,
+   "ref": 140913.20687118714,
+   "signed_peak_rel": -0.043275595061573476,
+   "inference_seconds": 0.01740456000152335,
+   "fem_solve_seconds": 2.096225884000887,
+   "ratios": {
+    "net_section_factor": 2.312693686884592,
+    "notch_sharpness": 1.2502284300980546,
+    "relative_depth": 0.5676037835572204
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "centre_notched-a87cb30269f6fc15",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 1166.0862864638266,
+   "ref": 130054.37385002895,
+   "signed_peak_rel": -0.1913606252072502,
+   "inference_seconds": 0.017950703999304096,
+   "fem_solve_seconds": 2.066879987998618,
+   "ratios": {
+    "net_section_factor": 2.4308000838836428,
+    "notch_sharpness": 0.6754620260263237,
+    "relative_depth": 0.5886128165660093
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "centre_notched-19d0c29b390f2328",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 3236.0579169030325,
+   "ref": 268169.57846788556,
+   "signed_peak_rel": -0.06984757380561214,
+   "inference_seconds": 0.0193494869999995,
+   "fem_solve_seconds": 2.019124151000142,
+   "ratios": {
+    "net_section_factor": 1.4145234742014372,
+    "notch_sharpness": 1.9702537368696607,
+    "relative_depth": 0.2930481407779072
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "centre_notched-278655cd9a3da26a",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 712.691891748059,
+   "ref": 263852.9364051592,
+   "signed_peak_rel": -0.11575014182990306,
+   "inference_seconds": 0.017714990999593283,
+   "fem_solve_seconds": 2.0875870729996677,
+   "ratios": {
+    "net_section_factor": 1.3801378979004808,
+    "notch_sharpness": 1.5849988855717596,
+    "relative_depth": 0.27543472176132633
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "centre_notched-b81b2c490c9e774c",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 1002.9685206941809,
+   "ref": 146900.5115311767,
+   "signed_peak_rel": 0.1350509362394603,
+   "inference_seconds": 0.01626397700056259,
+   "fem_solve_seconds": 2.069952870000634,
+   "ratios": {
+    "net_section_factor": 2.144509689591971,
+    "notch_sharpness": 1.15465692683726,
+    "relative_depth": 0.5336929439613458
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "centre_notched-d89beb9cadf50615",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 725.3982473185631,
+   "ref": 173132.55176102708,
+   "signed_peak_rel": -0.10866496650204943,
+   "inference_seconds": 0.015290156001356081,
+   "fem_solve_seconds": 1.9914449539992347,
+   "ratios": {
+    "net_section_factor": 1.7795601227563436,
+    "notch_sharpness": 1.9582748407757509,
+    "relative_depth": 0.43806338026325875
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "centre_notched-637cf529c288d84b",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 1855.7133644273913,
+   "ref": 138707.04516971557,
+   "signed_peak_rel": -0.24946157616403083,
+   "inference_seconds": 0.016723600998375332,
+   "fem_solve_seconds": 1.9471872300000541,
+   "ratios": {
+    "net_section_factor": 2.259459724660257,
+    "notch_sharpness": 0.6484350068375844,
+    "relative_depth": 0.5574163198902052
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "centre_notched-80f62d4d1ec5b7ae",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 970.3935036211825,
+   "ref": 197699.72415689012,
+   "signed_peak_rel": -0.06194803194012889,
+   "inference_seconds": 0.01718103799976234,
+   "fem_solve_seconds": 2.0298607299992,
+   "ratios": {
+    "net_section_factor": 1.7655831398972957,
+    "notch_sharpness": 1.323760858771661,
+    "relative_depth": 0.43361489051250784
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "centre_notched-6f23be61e1ebbe88",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 1695.0242069729277,
+   "ref": 209458.8197524447,
+   "signed_peak_rel": -0.22102194726153096,
+   "inference_seconds": 0.023903250999865122,
+   "fem_solve_seconds": 2.018798090999553,
+   "ratios": {
+    "net_section_factor": 1.7289008019800214,
+    "notch_sharpness": 1.495503809323699,
+    "relative_depth": 0.4215978158754098
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "centre_notched-98455bf31d293bee",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 1129.973853249434,
+   "ref": 259948.7787735509,
+   "signed_peak_rel": -0.024667227591166258,
+   "inference_seconds": 0.015162845000304515,
+   "fem_solve_seconds": 1.9851861119987007,
+   "ratios": {
+    "net_section_factor": 1.340154691446808,
+    "notch_sharpness": 1.3487736962726973,
+    "relative_depth": 0.25381748362167267
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "centre_notched-6a77dcd61c86571a",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 1125.2084614026217,
+   "ref": 161530.44404605357,
+   "signed_peak_rel": -0.20192509669515848,
+   "inference_seconds": 0.017103226999097387,
+   "fem_solve_seconds": 1.9843878209994728,
+   "ratios": {
+    "net_section_factor": 2.1359791931652548,
+    "notch_sharpness": 1.7724247304081748,
+    "relative_depth": 0.5318306455419518
+   }
+  },
+  {
+   "arm": "phaseC",
+   "geometry_id": "centre_notched-33e6854e3ae99ca4",
+   "family": "centre_notched",
+   "status": "out_of_envelope",
+   "err": 1487.2023652563323,
+   "ref": 130953.47396383276,
+   "signed_peak_rel": -0.20402808843608047,
+   "inference_seconds": 0.015638151999155525,
+   "fem_solve_seconds": 1.9654643980011315,
+   "ratios": {
+    "net_section_factor": 2.6372669432118583,
+    "notch_sharpness": 1.6462680206983644,
+    "relative_depth": 0.6208195751385993
+   }
+  }
+ ],
+ "baseline_rows": [
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "dogbone-33381a73727e164a",
+   "family": "dogbone",
+   "status": "out_of_envelope",
+   "err": 461.66995441877503,
+   "ref": 138263.29210035136,
+   "signed_peak_rel": -0.1507122167607647,
+   "inference_seconds": 0.01612692499838886,
+   "fem_solve_seconds": 2.0034666339997784,
+   "ratios": {
+    "width_ratio": 1.8139096349212434,
+    "fillet_ratio": 1.0224611290897223,
+    "gauge_slenderness": 4.174621851214897
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "dogbone-370febec2c78f832",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 532.3165098993038,
+   "ref": 72949.20170051347,
+   "signed_peak_rel": -0.12903157550656877,
+   "inference_seconds": 0.015057859000080498,
+   "fem_solve_seconds": 1.9809815949993208,
+   "ratios": {
+    "width_ratio": 2.690339822645772,
+    "fillet_ratio": 1.5893010261101912,
+    "gauge_slenderness": 8.046143530653767
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "dogbone-aa8d131cc15f12b2",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 410.1090513328679,
+   "ref": 83623.88742603647,
+   "signed_peak_rel": -0.16358843740381204,
+   "inference_seconds": 0.015256300001055934,
+   "fem_solve_seconds": 1.97540747200037,
+   "ratios": {
+    "width_ratio": 2.1040311784151657,
+    "fillet_ratio": 1.2133955475676126,
+    "gauge_slenderness": 6.917029622420382
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "dogbone-3f9e07a0fe593d30",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 189.48883471779388,
+   "ref": 98689.41281680738,
+   "signed_peak_rel": -0.12016304758125443,
+   "inference_seconds": 0.014764809999178397,
+   "fem_solve_seconds": 1.9091457310005353,
+   "ratios": {
+    "width_ratio": 2.8696526097812014,
+    "fillet_ratio": 1.657391862685595,
+    "gauge_slenderness": 6.186835783593688
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "dogbone-f3ee750aa3f2cb97",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 1878.45157626618,
+   "ref": 102825.92121713488,
+   "signed_peak_rel": -0.43084590554294894,
+   "inference_seconds": 0.015007754000180284,
+   "fem_solve_seconds": 1.9012365529997624,
+   "ratios": {
+    "width_ratio": 1.5388667128936,
+    "fillet_ratio": 0.9933188989274501,
+    "gauge_slenderness": 5.496305477378443
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "dogbone-73b3325b7f4ec180",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 750.3779948603282,
+   "ref": 102211.34426872866,
+   "signed_peak_rel": -0.17426269281914375,
+   "inference_seconds": 0.015184354000666644,
+   "fem_solve_seconds": 1.8968532050002977,
+   "ratios": {
+    "width_ratio": 1.6025240275025978,
+    "fillet_ratio": 1.3418511086210878,
+    "gauge_slenderness": 5.584885658458697
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "dogbone-0e2966fde4622bbc",
+   "family": "dogbone",
+   "status": "out_of_envelope",
+   "err": 1033.9422012148607,
+   "ref": 55085.01204261267,
+   "signed_peak_rel": -0.13485428177522368,
+   "inference_seconds": 0.01562107300014759,
+   "fem_solve_seconds": 1.9225636350001878,
+   "ratios": {
+    "width_ratio": 3.8512795338538006,
+    "fillet_ratio": 2.4140695284754634,
+    "gauge_slenderness": 11.303623116417574
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "dogbone-02b4673e28d5d00e",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 1145.9890610824336,
+   "ref": 84345.54505083975,
+   "signed_peak_rel": -0.2386401412772299,
+   "inference_seconds": 0.015285448000213364,
+   "fem_solve_seconds": 2.021756291998827,
+   "ratios": {
+    "width_ratio": 2.860685101675267,
+    "fillet_ratio": 1.1015298310339803,
+    "gauge_slenderness": 6.9081260093538095
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "dogbone-6a42ebd749cee756",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 146.84950954068785,
+   "ref": 89164.71806564918,
+   "signed_peak_rel": -0.07698665086633726,
+   "inference_seconds": 0.0177550060016074,
+   "fem_solve_seconds": 1.9558846449999692,
+   "ratios": {
+    "width_ratio": 1.7547250854025682,
+    "fillet_ratio": 2.0104344230075313,
+    "gauge_slenderness": 6.50906235198312
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "dogbone-a51983a6a5aad7c5",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 331.7608801489905,
+   "ref": 123693.58705348751,
+   "signed_peak_rel": -0.12853724760580187,
+   "inference_seconds": 0.015667613999539753,
+   "fem_solve_seconds": 1.9704717209988303,
+   "ratios": {
+    "width_ratio": 2.2111522536226658,
+    "fillet_ratio": 1.268503662770637,
+    "gauge_slenderness": 4.772936943986887
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "dogbone-3390b9213c11f831",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 344.8186870200981,
+   "ref": 135956.92619147897,
+   "signed_peak_rel": -0.11864420376870324,
+   "inference_seconds": 0.015732742000182043,
+   "fem_solve_seconds": 1.9421882730002835,
+   "ratios": {
+    "width_ratio": 1.750825045474692,
+    "fillet_ratio": 1.563392645661955,
+    "gauge_slenderness": 4.296296926927202
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "dogbone-44b76c386b3580da",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 330.7236018725773,
+   "ref": 97667.28342999402,
+   "signed_peak_rel": -0.1076701229343746,
+   "inference_seconds": 0.017973152000195114,
+   "fem_solve_seconds": 1.9675678610001341,
+   "ratios": {
+    "width_ratio": 2.4632687781311584,
+    "fillet_ratio": 2.1456190012979803,
+    "gauge_slenderness": 6.280523968031027
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "dogbone-6035e27fd34f2c47",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 567.0767478432758,
+   "ref": 101585.05701859367,
+   "signed_peak_rel": -0.060595583144554585,
+   "inference_seconds": 0.015323001998694963,
+   "fem_solve_seconds": 2.0031861900006334,
+   "ratios": {
+    "width_ratio": 1.9667511043552366,
+    "fillet_ratio": 2.2907238002286667,
+    "gauge_slenderness": 5.835386191025312
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "dogbone-18e5c406d84d544a",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 1413.3592352914466,
+   "ref": 59594.210671326946,
+   "signed_peak_rel": -0.2630582108476441,
+   "inference_seconds": 0.019404965998546686,
+   "fem_solve_seconds": 2.0155480400007946,
+   "ratios": {
+    "width_ratio": 4.10192581407908,
+    "fillet_ratio": 1.6064072596026933,
+    "gauge_slenderness": 10.020781069188992
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "dogbone-f808d87bad7bbcb4",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 1999.732761456249,
+   "ref": 77091.14442536783,
+   "signed_peak_rel": -0.3343473907102649,
+   "inference_seconds": 0.016164307000508416,
+   "fem_solve_seconds": 2.0058067059999303,
+   "ratios": {
+    "width_ratio": 3.2262670783605154,
+    "fillet_ratio": 1.1865652597936818,
+    "gauge_slenderness": 7.558192788997239
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "dogbone-a554e0ae1fb73d30",
+   "family": "dogbone",
+   "status": "out_of_envelope",
+   "err": 1078.5001360084318,
+   "ref": 62942.9232053107,
+   "signed_peak_rel": -0.12130274019315562,
+   "inference_seconds": 0.01846756200029631,
+   "fem_solve_seconds": 2.0503012429999217,
+   "ratios": {
+    "width_ratio": 4.175572063710951,
+    "fillet_ratio": 2.4048798832123928,
+    "gauge_slenderness": 10.06724620691363
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "dogbone-35ef425c6a0466f8",
+   "family": "dogbone",
+   "status": "out_of_envelope",
+   "err": 331.8385223599059,
+   "ref": 57124.08522631455,
+   "signed_peak_rel": -0.07378931507014182,
+   "inference_seconds": 0.018673642000067048,
+   "fem_solve_seconds": 1.978059046999988,
+   "ratios": {
+    "width_ratio": 2.914543344230754,
+    "fillet_ratio": 2.8119483867698647,
+    "gauge_slenderness": 10.73924058824764
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "dogbone-446c15bc64c9afea",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 1028.5522558422983,
+   "ref": 88110.91288948039,
+   "signed_peak_rel": -0.13667946618935276,
+   "inference_seconds": 0.01509801100110053,
+   "fem_solve_seconds": 2.027735933999793,
+   "ratios": {
+    "width_ratio": 3.0928130418636135,
+    "fillet_ratio": 1.7188462719647977,
+    "gauge_slenderness": 6.894503659958129
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "dogbone-cd1b41a544a20c87",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 336.33758265414514,
+   "ref": 98263.2616872687,
+   "signed_peak_rel": -0.10369267624371918,
+   "inference_seconds": 0.015198528999462724,
+   "fem_solve_seconds": 1.9715944089984987,
+   "ratios": {
+    "width_ratio": 2.823001505566802,
+    "fillet_ratio": 2.275386275877143,
+    "gauge_slenderness": 6.392297215992431
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "dogbone-5251baffe6fdbbbd",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 822.6634651250699,
+   "ref": 64252.467014861875,
+   "signed_peak_rel": -0.1290093146784148,
+   "inference_seconds": 0.01546612499987532,
+   "fem_solve_seconds": 1.9397314899997582,
+   "ratios": {
+    "width_ratio": 3.996715354954168,
+    "fillet_ratio": 1.8693845440863792,
+    "gauge_slenderness": 9.522015601936264
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "dogbone-21cde2be699ac8fc",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 929.9978941941124,
+   "ref": 87490.8166427354,
+   "signed_peak_rel": -0.13126812126779716,
+   "inference_seconds": 0.01806397600012133,
+   "fem_solve_seconds": 2.006957756999327,
+   "ratios": {
+    "width_ratio": 3.351890364214821,
+    "fillet_ratio": 1.4521255662539092,
+    "gauge_slenderness": 6.800068501704688
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "dogbone-6e05ec2ea13817f8",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 416.2680303020893,
+   "ref": 107654.68485305436,
+   "signed_peak_rel": -0.10231974523888464,
+   "inference_seconds": 0.015145667000979302,
+   "fem_solve_seconds": 1.9444973310000933,
+   "ratios": {
+    "width_ratio": 2.4097470570828134,
+    "fillet_ratio": 2.163011054454588,
+    "gauge_slenderness": 5.701714696535963
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "dogbone-130b137d72dbb5ac",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 2161.0445584757636,
+   "ref": 91045.344381507,
+   "signed_peak_rel": -0.14158524809177014,
+   "inference_seconds": 0.014628453998739133,
+   "fem_solve_seconds": 1.9164528759993118,
+   "ratios": {
+    "width_ratio": 3.7640910394221727,
+    "fillet_ratio": 2.4280214401668,
+    "gauge_slenderness": 7.207315888182087
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "dogbone-2aa4a4f24821a0e2",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 1034.216280853153,
+   "ref": 96946.70070352015,
+   "signed_peak_rel": -0.1225920004394814,
+   "inference_seconds": 0.015716825999334105,
+   "fem_solve_seconds": 1.7607060669997736,
+   "ratios": {
+    "width_ratio": 3.3119169301843687,
+    "fillet_ratio": 2.576818335895074,
+    "gauge_slenderness": 6.773875841098702
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "dogbone-719d8dbcb82f997d",
+   "family": "dogbone",
+   "status": "in_envelope",
+   "err": 307.13693808505155,
+   "ref": 101872.81278579801,
+   "signed_peak_rel": -0.10641753831336902,
+   "inference_seconds": 0.014760657999431714,
+   "fem_solve_seconds": 1.9599447100008547,
+   "ratios": {
+    "width_ratio": 2.3932443630878293,
+    "fillet_ratio": 1.9632675736323106,
+    "gauge_slenderness": 5.940282067054428
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "centre_notched-69aec8e15102aad9",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 1592.7023275375866,
+   "ref": 218600.68318129875,
+   "signed_peak_rel": -0.19315506116061668,
+   "inference_seconds": 0.01553748500009533,
+   "fem_solve_seconds": 1.91400338999847,
+   "ratios": {
+    "net_section_factor": 1.684133886533028,
+    "notch_sharpness": 0.6552368279612556,
+    "relative_depth": 0.40622298025330494
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "centre_notched-65e83b2998676358",
+   "family": "centre_notched",
+   "status": "out_of_envelope",
+   "err": 18307.62051106542,
+   "ref": 306915.7215158824,
+   "signed_peak_rel": -0.41127175293595897,
+   "inference_seconds": 0.015788533999511856,
+   "fem_solve_seconds": 1.9356294200006232,
+   "ratios": {
+    "net_section_factor": 1.0986040521311624,
+    "notch_sharpness": 0.3204931644572565,
+    "relative_depth": 0.08975394905915565
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "centre_notched-f3015e7796d961eb",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 316.83731326380945,
+   "ref": 159412.06947489947,
+   "signed_peak_rel": -0.05849917129534224,
+   "inference_seconds": 0.015142271000513574,
+   "fem_solve_seconds": 1.9579978170004324,
+   "ratios": {
+    "net_section_factor": 1.9271200751410928,
+    "notch_sharpness": 0.6978152862239093,
+    "relative_depth": 0.4810909746105023
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "centre_notched-9c2ca3098853cd5a",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 665.5253723556605,
+   "ref": 204633.00178417267,
+   "signed_peak_rel": -0.21417152756957222,
+   "inference_seconds": 0.015062734000821365,
+   "fem_solve_seconds": 1.9624196559998381,
+   "ratios": {
+    "net_section_factor": 1.676711527893135,
+    "notch_sharpness": 1.192395366657739,
+    "relative_depth": 0.40359448637145956
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "centre_notched-a900da4b82c2bf1d",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 1636.514908799552,
+   "ref": 297098.96260809054,
+   "signed_peak_rel": -0.1459231047640705,
+   "inference_seconds": 0.016147550000823685,
+   "fem_solve_seconds": 1.970397209001021,
+   "ratios": {
+    "net_section_factor": 1.2837199683905085,
+    "notch_sharpness": 0.7789428799179844,
+    "relative_depth": 0.22101390908971252
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "centre_notched-1586779519b885e5",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 2113.393603023618,
+   "ref": 263997.06271513435,
+   "signed_peak_rel": -0.41528383405732167,
+   "inference_seconds": 0.01996915499876195,
+   "fem_solve_seconds": 2.036505304000457,
+   "ratios": {
+    "net_section_factor": 1.3847687027193227,
+    "notch_sharpness": 1.2777700027663583,
+    "relative_depth": 0.2778577404036774
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "centre_notched-9668b0e4d07f81f9",
+   "family": "centre_notched",
+   "status": "out_of_envelope",
+   "err": 6182.105831678185,
+   "ref": 240282.34478611872,
+   "signed_peak_rel": -0.2240592442611833,
+   "inference_seconds": 0.01596058900031494,
+   "fem_solve_seconds": 2.021534325000175,
+   "ratios": {
+    "net_section_factor": 1.1814377101193894,
+    "notch_sharpness": 0.2707183123051804,
+    "relative_depth": 0.15357365738821252
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "centre_notched-6112b994d72ee5c3",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 1901.3247144660434,
+   "ref": 220038.17913714732,
+   "signed_peak_rel": -0.33120816320361796,
+   "inference_seconds": 0.01587382699835871,
+   "fem_solve_seconds": 2.002830744999301,
+   "ratios": {
+    "net_section_factor": 1.7022329537230756,
+    "notch_sharpness": 1.3233913307141396,
+    "relative_depth": 0.4125363406854341
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "centre_notched-ec43612334e2d76c",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 564.6415144830898,
+   "ref": 150396.47322729498,
+   "signed_peak_rel": -0.029203744012233714,
+   "inference_seconds": 0.018524213999626227,
+   "fem_solve_seconds": 1.9851268450001953,
+   "ratios": {
+    "net_section_factor": 1.7980180243680692,
+    "notch_sharpness": 0.6634322669365714,
+    "relative_depth": 0.4438320492635442
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "centre_notched-5e0513b0aef58c74",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 430.47520677919016,
+   "ref": 178525.1566199374,
+   "signed_peak_rel": -0.13605663457054182,
+   "inference_seconds": 0.020757999998750165,
+   "fem_solve_seconds": 1.953248675001305,
+   "ratios": {
+    "net_section_factor": 1.6713415103899858,
+    "notch_sharpness": 0.9373213283670905,
+    "relative_depth": 0.40167823644452955
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "centre_notched-f982f6f1eaff8bdf",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 801.6312210673021,
+   "ref": 227464.31715437857,
+   "signed_peak_rel": -0.3387681291174436,
+   "inference_seconds": 0.017041679999238113,
+   "fem_solve_seconds": 1.9707541930001753,
+   "ratios": {
+    "net_section_factor": 1.5164490325885522,
+    "notch_sharpness": 1.539247278506504,
+    "relative_depth": 0.34056471499538804
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "centre_notched-b58c19f1b4f87777",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 1161.2531034893693,
+   "ref": 153541.83215443284,
+   "signed_peak_rel": -0.28069542976513084,
+   "inference_seconds": 0.016262916000414407,
+   "fem_solve_seconds": 2.0156431579998753,
+   "ratios": {
+    "net_section_factor": 1.7960684821461308,
+    "notch_sharpness": 1.0603076394864022,
+    "relative_depth": 0.4432283568580329
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "centre_notched-18348bbc4212e95f",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 2982.54716122678,
+   "ref": 127317.50612394747,
+   "signed_peak_rel": -0.18365966556341368,
+   "inference_seconds": 0.017522135000035632,
+   "fem_solve_seconds": 2.031120830000873,
+   "ratios": {
+    "net_section_factor": 2.4872792317232943,
+    "notch_sharpness": 0.6216542537675607,
+    "relative_depth": 0.5979542677614218
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "centre_notched-b0f6f2c1fe41df47",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 1565.9831222715495,
+   "ref": 140913.20687118714,
+   "signed_peak_rel": -0.26801492893024853,
+   "inference_seconds": 0.01616276300046593,
+   "fem_solve_seconds": 1.9588566769998579,
+   "ratios": {
+    "net_section_factor": 2.312693686884592,
+    "notch_sharpness": 1.2502284300980546,
+    "relative_depth": 0.5676037835572204
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "centre_notched-a87cb30269f6fc15",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 1783.2744064964334,
+   "ref": 130054.37385002895,
+   "signed_peak_rel": -0.18436996543328682,
+   "inference_seconds": 0.015330741000070702,
+   "fem_solve_seconds": 1.89550234699891,
+   "ratios": {
+    "net_section_factor": 2.4308000838836428,
+    "notch_sharpness": 0.6754620260263237,
+    "relative_depth": 0.5886128165660093
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "centre_notched-19d0c29b390f2328",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 3569.027502693657,
+   "ref": 268169.57846788556,
+   "signed_peak_rel": -0.5173555006485501,
+   "inference_seconds": 0.015599472999383579,
+   "fem_solve_seconds": 1.8813629309988755,
+   "ratios": {
+    "net_section_factor": 1.4145234742014372,
+    "notch_sharpness": 1.9702537368696607,
+    "relative_depth": 0.2930481407779072
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "centre_notched-278655cd9a3da26a",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 1867.6338108742514,
+   "ref": 263852.9364051592,
+   "signed_peak_rel": -0.44910710679000704,
+   "inference_seconds": 0.018137226999897393,
+   "fem_solve_seconds": 1.9049965320009505,
+   "ratios": {
+    "net_section_factor": 1.3801378979004808,
+    "notch_sharpness": 1.5849988855717596,
+    "relative_depth": 0.27543472176132633
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "centre_notched-b81b2c490c9e774c",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 1876.27677458912,
+   "ref": 146900.5115311767,
+   "signed_peak_rel": -0.30517436517922025,
+   "inference_seconds": 0.014709652999954415,
+   "fem_solve_seconds": 1.949401620999197,
+   "ratios": {
+    "net_section_factor": 2.144509689591971,
+    "notch_sharpness": 1.15465692683726,
+    "relative_depth": 0.5336929439613458
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "centre_notched-d89beb9cadf50615",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 1043.0605511805234,
+   "ref": 173132.55176102708,
+   "signed_peak_rel": -0.37389030866623807,
+   "inference_seconds": 0.016630551999696763,
+   "fem_solve_seconds": 1.9530927799987694,
+   "ratios": {
+    "net_section_factor": 1.7795601227563436,
+    "notch_sharpness": 1.9582748407757509,
+    "relative_depth": 0.43806338026325875
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "centre_notched-637cf529c288d84b",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 861.4744279300268,
+   "ref": 138707.04516971557,
+   "signed_peak_rel": -0.11494629504801285,
+   "inference_seconds": 0.014872191999529605,
+   "fem_solve_seconds": 1.8930073700012144,
+   "ratios": {
+    "net_section_factor": 2.259459724660257,
+    "notch_sharpness": 0.6484350068375844,
+    "relative_depth": 0.5574163198902052
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "centre_notched-80f62d4d1ec5b7ae",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 1069.268854959049,
+   "ref": 197699.72415689012,
+   "signed_peak_rel": -0.2637226741194585,
+   "inference_seconds": 0.016380189999836148,
+   "fem_solve_seconds": 2.0429121350007335,
+   "ratios": {
+    "net_section_factor": 1.7655831398972957,
+    "notch_sharpness": 1.323760858771661,
+    "relative_depth": 0.43361489051250784
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "centre_notched-6f23be61e1ebbe88",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 2097.1141231792603,
+   "ref": 209458.8197524447,
+   "signed_peak_rel": -0.3436623372476472,
+   "inference_seconds": 0.01494930299850239,
+   "fem_solve_seconds": 1.9463612969993846,
+   "ratios": {
+    "net_section_factor": 1.7289008019800214,
+    "notch_sharpness": 1.495503809323699,
+    "relative_depth": 0.4215978158754098
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "centre_notched-98455bf31d293bee",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 1383.2630644786736,
+   "ref": 259948.7787735509,
+   "signed_peak_rel": -0.4059574177811726,
+   "inference_seconds": 0.015605806998792104,
+   "fem_solve_seconds": 1.8953595130005851,
+   "ratios": {
+    "net_section_factor": 1.340154691446808,
+    "notch_sharpness": 1.3487736962726973,
+    "relative_depth": 0.25381748362167267
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "centre_notched-6a77dcd61c86571a",
+   "family": "centre_notched",
+   "status": "in_envelope",
+   "err": 1521.0178696413207,
+   "ref": 161530.44404605357,
+   "signed_peak_rel": -0.3257526134184083,
+   "inference_seconds": 0.01696250299937674,
+   "fem_solve_seconds": 1.9776966819990776,
+   "ratios": {
+    "net_section_factor": 2.1359791931652548,
+    "notch_sharpness": 1.7724247304081748,
+    "relative_depth": 0.5318306455419518
+   }
+  },
+  {
+   "arm": "phaseB_treatment_vs_P2",
+   "geometry_id": "centre_notched-33e6854e3ae99ca4",
+   "family": "centre_notched",
+   "status": "out_of_envelope",
+   "err": 6351.026760876804,
+   "ref": 130953.47396383276,
+   "signed_peak_rel": -0.4809163572178174,
+   "inference_seconds": 0.01572334200136538,
+   "fem_solve_seconds": 1.9327382709998346,
+   "ratios": {
+    "net_section_factor": 2.6372669432118583,
+    "notch_sharpness": 1.6462680206983644,
+    "relative_depth": 0.6208195751385993
+   }
+  }
+ ],
+ "attribution": {
+  "baseline": "Phase B treatment (covering DOE, switches OFF)",
+  "arm": "same DOE, switches ON",
+  "shared": "same fresh 50-case campaign, same P2 ground truth, same seeds and protocol",
+  "target": "median signed peak error, the top carried risk in ADR 0001"
+ }
+}

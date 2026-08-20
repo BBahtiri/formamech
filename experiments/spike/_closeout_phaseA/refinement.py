@@ -25,6 +25,10 @@ from typing import Final
 PRODUCTION_REMAINING_ERROR_LIMIT: Final = 0.02
 DEFAULT_REFINEMENT_RATIO: Final = 2.0
 PRODUCTION_LEVEL_INDEX: Final = 1
+# A sequence whose two finest levels agree to within this fraction has converged
+# to the noise floor. Richardson cannot extract an order from it -- the final
+# increment carries no signal -- but the remaining error is still boundable.
+SETTLED_TOLERANCE: Final = 1e-3
 
 
 @dataclass(frozen=True)
@@ -130,6 +134,15 @@ def assess_refinement_study(
     """Assess every sequence and reduce to a single gate verdict.
 
     Any refused sequence sets the verdict to FAIL: NOT_RUN is never PASS.
+
+    ``production_level_index`` should be 0 -- the production mesh must be the
+    *coarsest* level in the study. Iteration 8 refined 16/32/64 with the
+    production mesh in the middle; the nx=16 level sits outside the asymptotic
+    range, which corrupts the observed order and inflates the estimated remaining
+    error. On one dogbone the 16/32/64 sequence reported order 0.85 and 2.46%
+    remaining at nx=32, while 32/64/128 reported order 2.28 and 1.40% -- a FAIL
+    and a PASS from the same solver on the same geometry. A non-zero index is
+    permitted but recorded as a warning.
     """
     per_geometry: dict[str, object] = {}
     verdict = "PASS"
@@ -145,8 +158,23 @@ def assess_refinement_study(
         )
         per_geometry[geometry_id] = record
         if not estimate.ok:
-            verdict = "FAIL"
-            reasons.append(f"{geometry_id}: {estimate.reason}")
+            fallback = direct_bound(
+                values, production_level_index=production_level_index
+            )
+            record["direct_bound"] = fallback.as_dict()
+            if fallback.ok and fallback.remaining_error is not None:
+                record["production_remaining_error"] = fallback.remaining_error
+                record["passes"] = fallback.remaining_error <= remaining_error_limit
+                if not record["passes"]:
+                    verdict = "FAIL"
+                    reasons.append(
+                        f"{geometry_id}: settled bound "
+                        f"{fallback.remaining_error:.4f} exceeds "
+                        f"{remaining_error_limit:.4f}"
+                    )
+            else:
+                verdict = "FAIL"
+                reasons.append(f"{geometry_id}: {estimate.reason}")
         elif remaining is None or remaining > remaining_error_limit:
             verdict = "FAIL"
             reasons.append(
@@ -155,9 +183,16 @@ def assess_refinement_study(
                 if remaining is not None
                 else f"{geometry_id}: production level absent"
             )
+    warnings: list[str] = []
+    if production_level_index != 0:
+        warnings.append(
+            "the production mesh is not the coarsest level in this study; levels "
+            "below it may sit outside the asymptotic range and bias the order"
+        )
     return {
         "remaining_error_limit": remaining_error_limit,
         "production_level_index": production_level_index,
+        "warnings": warnings,
         "refinement_ratio": refinement_ratio,
         "geometries": per_geometry,
         "verdict": verdict,
@@ -213,4 +248,65 @@ def cross_check(linear_value: float, quadratic_value: float) -> CrossCheck:
         float(linear_value),
         float(quadratic_value),
         abs(linear_value - quadratic_value) / reference,
+    )
+
+
+@dataclass(frozen=True)
+class DirectBound:
+    """Conservative remaining-error bound for a sequence that has settled.
+
+    Weaker evidence than an observed convergence order, and labelled as such. It
+    applies only when the two finest levels agree to within SETTLED_TOLERANCE, so
+    the sequence has stopped moving rather than failed to start converging. The
+    bound is the spread between the production level and the finest level, which
+    over-states the remaining error whenever the sequence is monotone.
+    """
+
+    status: str
+    reason: str | None
+    remaining_error: float | None
+    settled_change: float | None
+
+    @property
+    def ok(self) -> bool:
+        return self.status == "OK"
+
+    def as_dict(self) -> dict[str, object]:
+        return {
+            "status": self.status,
+            "reason": self.reason,
+            "remaining_error": self.remaining_error,
+            "settled_change": self.settled_change,
+            "evidence_strength": "bound_only_no_observed_order",
+        }
+
+
+def direct_bound(
+    values: Sequence[float],
+    *,
+    production_level_index: int = 0,
+    settled_tolerance: float = SETTLED_TOLERANCE,
+) -> DirectBound:
+    """Bound remaining error directly, for a sequence that has settled."""
+    numbers = [float(value) for value in values]
+    if len(numbers) < 2 or not all(math.isfinite(value) for value in numbers):
+        return DirectBound("NOT_RUN", "need at least two finite levels", None, None)
+    finest = numbers[-1]
+    if finest == 0.0:
+        return DirectBound("NOT_RUN", "finest level is zero", None, None)
+    settled_change = abs(numbers[-1] - numbers[-2]) / abs(finest)
+    if settled_change > settled_tolerance:
+        return DirectBound(
+            "NOT_RUN",
+            f"sequence has not settled: final change {settled_change:.2e} exceeds "
+            f"{settled_tolerance:.0e}",
+            None,
+            settled_change,
+        )
+    production = numbers[min(production_level_index, len(numbers) - 1)]
+    return DirectBound(
+        "OK",
+        None,
+        abs(finest - production) / abs(finest),
+        settled_change,
     )

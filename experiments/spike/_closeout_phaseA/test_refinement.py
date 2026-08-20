@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from experiments.spike.refinement import (
+    PRODUCTION_REMAINING_ERROR_LIMIT,
     assess_refinement_study,
     richardson,
 )
@@ -118,3 +119,56 @@ def test_a_refused_sequence_fails_the_study_because_not_run_is_never_pass() -> N
 def test_a_converged_study_passes() -> None:
     study = assess_refinement_study({"fine": [99.0, 99.90, 99.975]})
     assert study["verdict"] == "PASS"
+
+
+def test_study_warns_when_the_production_mesh_is_not_the_coarsest_level() -> None:
+    mid = assess_refinement_study({"a": [99.0, 99.90, 99.975]}, production_level_index=1)
+    assert mid["warnings"]
+    coarsest = assess_refinement_study({"a": [99.0, 99.90, 99.975]}, production_level_index=0)
+    assert coarsest["warnings"] == []
+
+
+def test_a_pre_asymptotic_coarse_level_can_flip_the_verdict() -> None:
+    """The real dogbone-e88118be sequence, measured both ways."""
+    peaks = [38.652, 39.453, 39.896, 39.987]          # nx = 16, 32, 64, 128
+    with_coarse = richardson(peaks[0:3])               # 16/32/64
+    asymptotic = richardson(peaks[1:4])                # 32/64/128
+    assert with_coarse.observed_order < 1.0
+    assert asymptotic.observed_order > 2.0
+    remaining_pessimistic = abs(with_coarse.extrapolated_limit - peaks[1]) / abs(
+        with_coarse.extrapolated_limit
+    )
+    remaining_asymptotic = abs(asymptotic.extrapolated_limit - peaks[1]) / abs(
+        asymptotic.extrapolated_limit
+    )
+    assert remaining_pessimistic > PRODUCTION_REMAINING_ERROR_LIMIT
+    assert remaining_asymptotic <= PRODUCTION_REMAINING_ERROR_LIMIT
+
+
+def test_direct_bound_applies_only_to_a_settled_sequence() -> None:
+    from experiments.spike.refinement import direct_bound
+
+    settled = direct_bound([36.67, 36.85, 36.84])
+    assert settled.status == "OK"
+    assert settled.remaining_error == pytest.approx(abs(36.84 - 36.67) / 36.84)
+
+    still_moving = direct_bound([50.0, 60.0, 55.0])
+    assert still_moving.status == "NOT_RUN"
+    assert "not settled" in (still_moving.reason or "")
+
+
+def test_a_settled_sequence_passes_the_study_on_the_bound() -> None:
+    study = assess_refinement_study({"settled": [36.67, 36.85, 36.84]},
+                                    production_level_index=0)
+    record = study["geometries"]["settled"]
+    assert record["status"] == "NOT_RUN"
+    assert record["direct_bound"]["status"] == "OK"
+    assert record["direct_bound"]["evidence_strength"] == "bound_only_no_observed_order"
+    assert record["passes"] is True
+    assert study["verdict"] == "PASS"
+
+
+def test_an_unsettled_refusal_still_fails_the_study() -> None:
+    study = assess_refinement_study({"osc": [50.0, 60.0, 55.0]}, production_level_index=0)
+    assert study["verdict"] == "FAIL"
+    assert study["geometries"]["osc"]["passes"] is False

@@ -1,0 +1,822 @@
+{
+  "schema_version": "s1-closeout-phaseB-attribution-v1",
+  "step": "S1",
+  "phase": "B",
+  "role": "LEGACY",
+  "no_release_evidence": true,
+  "attribution_only": true,
+  "claim": "NOT a result. Diagnostic attribution of the iteration-8 centre-notched deficit.",
+  "method": "frozen iteration-8 incumbent, unchanged; fresh stratified 50-case campaign disjoint from training; P1 ground truth matching the incumbent's own training targets; cases labelled against the declared training envelope in derived-ratio space",
+  "slices": {
+    "dogbone": {
+      "all": {
+        "n": 25,
+        "pooled_relative_l2_P": 0.08936378124324494,
+        "median_signed_peak_relative_error": -0.08982301051667367
+      },
+      "in_envelope": {
+        "n": 21,
+        "pooled_relative_l2_P": 0.08882162091167933,
+        "median_signed_peak_relative_error": -0.08982301051667367
+      },
+      "out_of_envelope": {
+        "n": 4,
+        "pooled_relative_l2_P": 0.09395168997075552,
+        "median_signed_peak_relative_error": -0.08731182888866468
+      }
+    },
+    "centre_notched": {
+      "all": {
+        "n": 25,
+        "pooled_relative_l2_P": 0.2324413279045031,
+        "median_signed_peak_relative_error": -0.47981859590343634
+      },
+      "in_envelope": {
+        "n": 3,
+        "pooled_relative_l2_P": 0.0852942356764465,
+        "median_signed_peak_relative_error": -0.13985265616261594
+      },
+      "out_of_envelope": {
+        "n": 22,
+        "pooled_relative_l2_P": 0.2510477853791502,
+        "median_signed_peak_relative_error": -0.49114620711613466
+      }
+    }
+  },
+  "rows": [
+    {
+      "geometry_id": "dogbone-33381a73727e164a",
+      "family": "dogbone",
+      "status": "in_envelope",
+      "violations": [],
+      "err": 209.13215430692392,
+      "ref": 138025.6457073065,
+      "signed_peak_rel": -0.0862551950002713,
+      "ratios": {
+        "width_ratio": 1.8139096349212434,
+        "fillet_ratio": 1.0224611290897223,
+        "gauge_slenderness": 4.174621851214897
+      }
+    },
+    {
+      "geometry_id": "dogbone-370febec2c78f832",
+      "family": "dogbone",
+      "status": "in_envelope",
+      "violations": [],
+      "err": 850.804142518826,
+      "ref": 72818.0529080808,
+      "signed_peak_rel": -0.1305712787297171,
+      "ratios": {
+        "width_ratio": 2.690339822645772,
+        "fillet_ratio": 1.5893010261101912,
+        "gauge_slenderness": 8.046143530653767
+      }
+    },
+    {
+      "geometry_id": "dogbone-aa8d131cc15f12b2",
+      "family": "dogbone",
+      "status": "in_envelope",
+      "violations": [],
+      "err": 489.7146302059389,
+      "ref": 83509.44634279501,
+      "signed_peak_rel": -0.1516798893488271,
+      "ratios": {
+        "width_ratio": 2.1040311784151657,
+        "fillet_ratio": 1.2133955475676126,
+        "gauge_slenderness": 6.917029622420382
+      }
+    },
+    {
+      "geometry_id": "dogbone-3f9e07a0fe593d30",
+      "family": "dogbone",
+      "status": "in_envelope",
+      "violations": [],
+      "err": 158.46327713759422,
+      "ref": 98435.06417749179,
+      "signed_peak_rel": -0.05630114659608198,
+      "ratios": {
+        "width_ratio": 2.8696526097812014,
+        "fillet_ratio": 1.657391862685595,
+        "gauge_slenderness": 6.186835783593688
+      }
+    },
+    {
+      "geometry_id": "dogbone-f3ee750aa3f2cb97",
+      "family": "dogbone",
+      "status": "in_envelope",
+      "violations": [],
+      "err": 1148.7328711190028,
+      "ref": 102730.34580666013,
+      "signed_peak_rel": -0.18577576540752064,
+      "ratios": {
+        "width_ratio": 1.5388667128936,
+        "fillet_ratio": 0.9933188989274501,
+        "gauge_slenderness": 5.496305477378443
+      }
+    },
+    {
+      "geometry_id": "dogbone-73b3325b7f4ec180",
+      "family": "dogbone",
+      "status": "in_envelope",
+      "violations": [],
+      "err": 236.1520712060213,
+      "ref": 102104.48107075857,
+      "signed_peak_rel": -0.05517388585070616,
+      "ratios": {
+        "width_ratio": 1.6025240275025978,
+        "fillet_ratio": 1.3418511086210878,
+        "gauge_slenderness": 5.584885658458697
+      }
+    },
+    {
+      "geometry_id": "dogbone-0e2966fde4622bbc",
+      "family": "dogbone",
+      "status": "out_of_envelope",
+      "violations": [
+        "gauge_slenderness"
+      ],
+      "err": 425.1084704004254,
+      "ref": 54957.978012227206,
+      "signed_peak_rel": -0.09558279408068356,
+      "ratios": {
+        "width_ratio": 3.8512795338538006,
+        "fillet_ratio": 2.4140695284754634,
+        "gauge_slenderness": 11.303623116417574
+      }
+    },
+    {
+      "geometry_id": "dogbone-02b4673e28d5d00e",
+      "family": "dogbone",
+      "status": "in_envelope",
+      "violations": [],
+      "err": 1165.3371772861915,
+      "ref": 84236.28427869506,
+      "signed_peak_rel": -0.22964811319119613,
+      "ratios": {
+        "width_ratio": 2.860685101675267,
+        "fillet_ratio": 1.1015298310339803,
+        "gauge_slenderness": 6.9081260093538095
+      }
+    },
+    {
+      "geometry_id": "dogbone-6a42ebd749cee756",
+      "family": "dogbone",
+      "status": "in_envelope",
+      "violations": [],
+      "err": 416.3940866394922,
+      "ref": 89059.60850218032,
+      "signed_peak_rel": -0.01893527242433183,
+      "ratios": {
+        "width_ratio": 1.7547250854025682,
+        "fillet_ratio": 2.0104344230075313,
+        "gauge_slenderness": 6.50906235198312
+      }
+    },
+    {
+      "geometry_id": "dogbone-a51983a6a5aad7c5",
+      "family": "dogbone",
+      "status": "in_envelope",
+      "violations": [],
+      "err": 620.5687737563419,
+      "ref": 123424.03717058325,
+      "signed_peak_rel": -0.10122357228170338,
+      "ratios": {
+        "width_ratio": 2.2111522536226658,
+        "fillet_ratio": 1.268503662770637,
+        "gauge_slenderness": 4.772936943986887
+      }
+    },
+    {
+      "geometry_id": "dogbone-3390b9213c11f831",
+      "family": "dogbone",
+      "status": "in_envelope",
+      "violations": [],
+      "err": 610.0602483826872,
+      "ref": 135720.66212720468,
+      "signed_peak_rel": -0.07127131443067614,
+      "ratios": {
+        "width_ratio": 1.750825045474692,
+        "fillet_ratio": 1.563392645661955,
+        "gauge_slenderness": 4.296296926927202
+      }
+    },
+    {
+      "geometry_id": "dogbone-44b76c386b3580da",
+      "family": "dogbone",
+      "status": "in_envelope",
+      "violations": [],
+      "err": 335.5661489863029,
+      "ref": 97424.0211797051,
+      "signed_peak_rel": -0.08692034389882301,
+      "ratios": {
+        "width_ratio": 2.4632687781311584,
+        "fillet_ratio": 2.1456190012979803,
+        "gauge_slenderness": 6.280523968031027
+      }
+    },
+    {
+      "geometry_id": "dogbone-6035e27fd34f2c47",
+      "family": "dogbone",
+      "status": "in_envelope",
+      "violations": [],
+      "err": 219.26098419133785,
+      "ref": 101403.90275551632,
+      "signed_peak_rel": -0.0486826293430439,
+      "ratios": {
+        "width_ratio": 1.9667511043552366,
+        "fillet_ratio": 2.2907238002286667,
+        "gauge_slenderness": 5.835386191025312
+      }
+    },
+    {
+      "geometry_id": "dogbone-18e5c406d84d544a",
+      "family": "dogbone",
+      "status": "out_of_envelope",
+      "violations": [
+        "width_ratio"
+      ],
+      "err": 544.4962099277168,
+      "ref": 59522.11460264655,
+      "signed_peak_rel": -0.12693072702073344,
+      "ratios": {
+        "width_ratio": 4.10192581407908,
+        "fillet_ratio": 1.6064072596026933,
+        "gauge_slenderness": 10.020781069188992
+      }
+    },
+    {
+      "geometry_id": "dogbone-f808d87bad7bbcb4",
+      "family": "dogbone",
+      "status": "in_envelope",
+      "violations": [],
+      "err": 1316.360274045076,
+      "ref": 77004.33852580658,
+      "signed_peak_rel": -0.25672192421795303,
+      "ratios": {
+        "width_ratio": 3.2262670783605154,
+        "fillet_ratio": 1.1865652597936818,
+        "gauge_slenderness": 7.558192788997239
+      }
+    },
+    {
+      "geometry_id": "dogbone-a554e0ae1fb73d30",
+      "family": "dogbone",
+      "status": "out_of_envelope",
+      "violations": [
+        "width_ratio"
+      ],
+      "err": 678.0729206339813,
+      "ref": 62770.151350025364,
+      "signed_peak_rel": -0.07904086369664579,
+      "ratios": {
+        "width_ratio": 4.175572063710951,
+        "fillet_ratio": 2.4048798832123928,
+        "gauge_slenderness": 10.06724620691363
+      }
+    },
+    {
+      "geometry_id": "dogbone-35ef425c6a0466f8",
+      "family": "dogbone",
+      "status": "out_of_envelope",
+      "violations": [
+        "gauge_slenderness"
+      ],
+      "err": 420.10631514447334,
+      "ref": 57008.58071886535,
+      "signed_peak_rel": -0.040597868133956445,
+      "ratios": {
+        "width_ratio": 2.914543344230754,
+        "fillet_ratio": 2.8119483867698647,
+        "gauge_slenderness": 10.73924058824764
+      }
+    },
+    {
+      "geometry_id": "dogbone-446c15bc64c9afea",
+      "family": "dogbone",
+      "status": "in_envelope",
+      "violations": [],
+      "err": 337.29250012998375,
+      "ref": 87889.87019411297,
+      "signed_peak_rel": -0.08427377802078936,
+      "ratios": {
+        "width_ratio": 3.0928130418636135,
+        "fillet_ratio": 1.7188462719647977,
+        "gauge_slenderness": 6.894503659958129
+      }
+    },
+    {
+      "geometry_id": "dogbone-cd1b41a544a20c87",
+      "family": "dogbone",
+      "status": "in_envelope",
+      "violations": [],
+      "err": 1065.9345455391901,
+      "ref": 97958.99790348407,
+      "signed_peak_rel": -0.09276402596638982,
+      "ratios": {
+        "width_ratio": 2.823001505566802,
+        "fillet_ratio": 2.275386275877143,
+        "gauge_slenderness": 6.392297215992431
+      }
+    },
+    {
+      "geometry_id": "dogbone-5251baffe6fdbbbd",
+      "family": "dogbone",
+      "status": "in_envelope",
+      "violations": [],
+      "err": 935.2861399282891,
+      "ref": 64124.62832933859,
+      "signed_peak_rel": -0.16290549502234616,
+      "ratios": {
+        "width_ratio": 3.996715354954168,
+        "fillet_ratio": 1.8693845440863792,
+        "gauge_slenderness": 9.522015601936264
+      }
+    },
+    {
+      "geometry_id": "dogbone-21cde2be699ac8fc",
+      "family": "dogbone",
+      "status": "in_envelope",
+      "violations": [],
+      "err": 293.05471818275095,
+      "ref": 87312.9505669343,
+      "signed_peak_rel": -0.09023996768010262,
+      "ratios": {
+        "width_ratio": 3.351890364214821,
+        "fillet_ratio": 1.4521255662539092,
+        "gauge_slenderness": 6.800068501704688
+      }
+    },
+    {
+      "geometry_id": "dogbone-6e05ec2ea13817f8",
+      "family": "dogbone",
+      "status": "in_envelope",
+      "violations": [],
+      "err": 984.3181997648926,
+      "ref": 107364.96447282245,
+      "signed_peak_rel": -0.07050693882507429,
+      "ratios": {
+        "width_ratio": 2.4097470570828134,
+        "fillet_ratio": 2.163011054454588,
+        "gauge_slenderness": 5.701714696535963
+      }
+    },
+    {
+      "geometry_id": "dogbone-130b137d72dbb5ac",
+      "family": "dogbone",
+      "status": "in_envelope",
+      "violations": [],
+      "err": 3510.960947073836,
+      "ref": 90691.22044728712,
+      "signed_peak_rel": -0.12955979474327126,
+      "ratios": {
+        "width_ratio": 3.7640910394221727,
+        "fillet_ratio": 2.4280214401668,
+        "gauge_slenderness": 7.207315888182087
+      }
+    },
+    {
+      "geometry_id": "dogbone-2aa4a4f24821a0e2",
+      "family": "dogbone",
+      "status": "in_envelope",
+      "violations": [],
+      "err": 920.3362610442372,
+      "ref": 96572.19620398132,
+      "signed_peak_rel": -0.08982301051667367,
+      "ratios": {
+        "width_ratio": 3.3119169301843687,
+        "fillet_ratio": 2.576818335895074,
+        "gauge_slenderness": 6.773875841098702
+      }
+    },
+    {
+      "geometry_id": "dogbone-719d8dbcb82f997d",
+      "family": "dogbone",
+      "status": "in_envelope",
+      "violations": [],
+      "err": 265.9487812652325,
+      "ref": 101624.84914933081,
+      "signed_peak_rel": -0.04520507280685432,
+      "ratios": {
+        "width_ratio": 2.3932443630878293,
+        "fillet_ratio": 1.9632675736323106,
+        "gauge_slenderness": 5.940282067054428
+      }
+    },
+    {
+      "geometry_id": "centre_notched-69aec8e15102aad9",
+      "family": "centre_notched",
+      "status": "out_of_envelope",
+      "violations": [
+        "net_section_factor",
+        "relative_depth"
+      ],
+      "err": 14036.103135491325,
+      "ref": 218061.84283079766,
+      "signed_peak_rel": -0.44921737895577407,
+      "ratios": {
+        "net_section_factor": 1.684133886533028,
+        "notch_sharpness": 0.6552368279612556,
+        "relative_depth": 0.40622298025330494
+      }
+    },
+    {
+      "geometry_id": "centre_notched-65e83b2998676358",
+      "family": "centre_notched",
+      "status": "out_of_envelope",
+      "violations": [
+        "net_section_factor",
+        "relative_depth"
+      ],
+      "err": 4261.035128705193,
+      "ref": 306693.62627048895,
+      "signed_peak_rel": 0.3299947437382444,
+      "ratios": {
+        "net_section_factor": 1.0986040521311624,
+        "notch_sharpness": 0.3204931644572565,
+        "relative_depth": 0.08975394905915565
+      }
+    },
+    {
+      "geometry_id": "centre_notched-f3015e7796d961eb",
+      "family": "centre_notched",
+      "status": "out_of_envelope",
+      "violations": [
+        "net_section_factor",
+        "relative_depth"
+      ],
+      "err": 18905.38338800137,
+      "ref": 159047.63142590405,
+      "signed_peak_rel": -0.5062524852942757,
+      "ratios": {
+        "net_section_factor": 1.9271200751410928,
+        "notch_sharpness": 0.6978152862239093,
+        "relative_depth": 0.4810909746105023
+      }
+    },
+    {
+      "geometry_id": "centre_notched-9c2ca3098853cd5a",
+      "family": "centre_notched",
+      "status": "out_of_envelope",
+      "violations": [
+        "net_section_factor",
+        "relative_depth"
+      ],
+      "err": 3486.5848270258466,
+      "ref": 204000.74915837092,
+      "signed_peak_rel": -0.40614545232679267,
+      "ratios": {
+        "net_section_factor": 1.676711527893135,
+        "notch_sharpness": 1.192395366657739,
+        "relative_depth": 0.40359448637145956
+      }
+    },
+    {
+      "geometry_id": "centre_notched-a900da4b82c2bf1d",
+      "family": "centre_notched",
+      "status": "in_envelope",
+      "violations": [],
+      "err": 708.2309315677346,
+      "ref": 296409.82981445943,
+      "signed_peak_rel": -0.13985265616261594,
+      "ratios": {
+        "net_section_factor": 1.2837199683905085,
+        "notch_sharpness": 0.7789428799179844,
+        "relative_depth": 0.22101390908971252
+      }
+    },
+    {
+      "geometry_id": "centre_notched-1586779519b885e5",
+      "family": "centre_notched",
+      "status": "in_envelope",
+      "violations": [],
+      "err": 3903.0603260042863,
+      "ref": 263196.4676504623,
+      "signed_peak_rel": -0.47981859590343634,
+      "ratios": {
+        "net_section_factor": 1.3847687027193227,
+        "notch_sharpness": 1.2777700027663583,
+        "relative_depth": 0.2778577404036774
+      }
+    },
+    {
+      "geometry_id": "centre_notched-9668b0e4d07f81f9",
+      "family": "centre_notched",
+      "status": "in_envelope",
+      "violations": [],
+      "err": 1206.573129382179,
+      "ref": 240088.42525748326,
+      "signed_peak_rel": 0.4235183372823002,
+      "ratios": {
+        "net_section_factor": 1.1814377101193894,
+        "notch_sharpness": 0.2707183123051804,
+        "relative_depth": 0.15357365738821252
+      }
+    },
+    {
+      "geometry_id": "centre_notched-6112b994d72ee5c3",
+      "family": "centre_notched",
+      "status": "out_of_envelope",
+      "violations": [
+        "net_section_factor",
+        "relative_depth"
+      ],
+      "err": 21198.14224070505,
+      "ref": 219261.71547053315,
+      "signed_peak_rel": -0.5806435050769545,
+      "ratios": {
+        "net_section_factor": 1.7022329537230756,
+        "notch_sharpness": 1.3233913307141396,
+        "relative_depth": 0.4125363406854341
+      }
+    },
+    {
+      "geometry_id": "centre_notched-ec43612334e2d76c",
+      "family": "centre_notched",
+      "status": "out_of_envelope",
+      "violations": [
+        "net_section_factor",
+        "relative_depth"
+      ],
+      "err": 4596.169796048385,
+      "ref": 150109.36243274662,
+      "signed_peak_rel": -0.41353323361281685,
+      "ratios": {
+        "net_section_factor": 1.7980180243680692,
+        "notch_sharpness": 0.6634322669365714,
+        "relative_depth": 0.4438320492635442
+      }
+    },
+    {
+      "geometry_id": "centre_notched-5e0513b0aef58c74",
+      "family": "centre_notched",
+      "status": "out_of_envelope",
+      "violations": [
+        "net_section_factor",
+        "relative_depth"
+      ],
+      "err": 3616.585504964342,
+      "ref": 178093.7791648922,
+      "signed_peak_rel": -0.41839283638302405,
+      "ratios": {
+        "net_section_factor": 1.6713415103899858,
+        "notch_sharpness": 0.9373213283670905,
+        "relative_depth": 0.40167823644452955
+      }
+    },
+    {
+      "geometry_id": "centre_notched-f982f6f1eaff8bdf",
+      "family": "centre_notched",
+      "status": "out_of_envelope",
+      "violations": [
+        "notch_sharpness"
+      ],
+      "err": 2141.0583035359114,
+      "ref": 226713.95841851202,
+      "signed_peak_rel": -0.42779631105038174,
+      "ratios": {
+        "net_section_factor": 1.5164490325885522,
+        "notch_sharpness": 1.539247278506504,
+        "relative_depth": 0.34056471499538804
+      }
+    },
+    {
+      "geometry_id": "centre_notched-b58c19f1b4f87777",
+      "family": "centre_notched",
+      "status": "out_of_envelope",
+      "violations": [
+        "net_section_factor",
+        "relative_depth"
+      ],
+      "err": 3732.109572018268,
+      "ref": 153167.21303694832,
+      "signed_peak_rel": -0.41907904335770135,
+      "ratios": {
+        "net_section_factor": 1.7960684821461308,
+        "notch_sharpness": 1.0603076394864022,
+        "relative_depth": 0.4432283568580329
+      }
+    },
+    {
+      "geometry_id": "centre_notched-18348bbc4212e95f",
+      "family": "centre_notched",
+      "status": "out_of_envelope",
+      "violations": [
+        "net_section_factor",
+        "relative_depth"
+      ],
+      "err": 20397.76218807487,
+      "ref": 126974.76766854305,
+      "signed_peak_rel": -0.5014322470244066,
+      "ratios": {
+        "net_section_factor": 2.4872792317232943,
+        "notch_sharpness": 0.6216542537675607,
+        "relative_depth": 0.5979542677614218
+      }
+    },
+    {
+      "geometry_id": "centre_notched-b0f6f2c1fe41df47",
+      "family": "centre_notched",
+      "status": "out_of_envelope",
+      "violations": [
+        "net_section_factor",
+        "relative_depth"
+      ],
+      "err": 22663.02722017809,
+      "ref": 140451.64781944331,
+      "signed_peak_rel": -0.6014353570984953,
+      "ratios": {
+        "net_section_factor": 2.312693686884592,
+        "notch_sharpness": 1.2502284300980546,
+        "relative_depth": 0.5676037835572204
+      }
+    },
+    {
+      "geometry_id": "centre_notched-a87cb30269f6fc15",
+      "family": "centre_notched",
+      "status": "out_of_envelope",
+      "violations": [
+        "net_section_factor",
+        "relative_depth"
+      ],
+      "err": 21244.41744135858,
+      "ref": 129704.25668603234,
+      "signed_peak_rel": -0.5113892311958096,
+      "ratios": {
+        "net_section_factor": 2.4308000838836428,
+        "notch_sharpness": 0.6754620260263237,
+        "relative_depth": 0.5886128165660093
+      }
+    },
+    {
+      "geometry_id": "centre_notched-19d0c29b390f2328",
+      "family": "centre_notched",
+      "status": "out_of_envelope",
+      "violations": [
+        "notch_sharpness"
+      ],
+      "err": 937.2366818222291,
+      "ref": 267196.99479375023,
+      "signed_peak_rel": -0.3335022818937322,
+      "ratios": {
+        "net_section_factor": 1.4145234742014372,
+        "notch_sharpness": 1.9702537368696607,
+        "relative_depth": 0.2930481407779072
+      }
+    },
+    {
+      "geometry_id": "centre_notched-278655cd9a3da26a",
+      "family": "centre_notched",
+      "status": "out_of_envelope",
+      "violations": [
+        "notch_sharpness"
+      ],
+      "err": 646.3991342789982,
+      "ref": 263003.73425864946,
+      "signed_peak_rel": -0.2773781682328705,
+      "ratios": {
+        "net_section_factor": 1.3801378979004808,
+        "notch_sharpness": 1.5849988855717596,
+        "relative_depth": 0.27543472176132633
+      }
+    },
+    {
+      "geometry_id": "centre_notched-b81b2c490c9e774c",
+      "family": "centre_notched",
+      "status": "out_of_envelope",
+      "violations": [
+        "net_section_factor",
+        "relative_depth"
+      ],
+      "err": 21532.37047977167,
+      "ref": 146458.0427614241,
+      "signed_peak_rel": -0.5705101836927432,
+      "ratios": {
+        "net_section_factor": 2.144509689591971,
+        "notch_sharpness": 1.15465692683726,
+        "relative_depth": 0.5336929439613458
+      }
+    },
+    {
+      "geometry_id": "centre_notched-d89beb9cadf50615",
+      "family": "centre_notched",
+      "status": "out_of_envelope",
+      "violations": [
+        "net_section_factor",
+        "notch_sharpness",
+        "relative_depth"
+      ],
+      "err": 4203.280755434901,
+      "ref": 172538.62911061334,
+      "signed_peak_rel": -0.5225290233384937,
+      "ratios": {
+        "net_section_factor": 1.7795601227563436,
+        "notch_sharpness": 1.9582748407757509,
+        "relative_depth": 0.43806338026325875
+      }
+    },
+    {
+      "geometry_id": "centre_notched-637cf529c288d84b",
+      "family": "centre_notched",
+      "status": "out_of_envelope",
+      "violations": [
+        "net_section_factor",
+        "relative_depth"
+      ],
+      "err": 18989.669495097674,
+      "ref": 138359.26847252704,
+      "signed_peak_rel": -0.5222400013633121,
+      "ratios": {
+        "net_section_factor": 2.259459724660257,
+        "notch_sharpness": 0.6484350068375844,
+        "relative_depth": 0.5574163198902052
+      }
+    },
+    {
+      "geometry_id": "centre_notched-80f62d4d1ec5b7ae",
+      "family": "centre_notched",
+      "status": "out_of_envelope",
+      "violations": [
+        "net_section_factor",
+        "relative_depth"
+      ],
+      "err": 15147.02825549972,
+      "ref": 197040.90564938114,
+      "signed_peak_rel": -0.5396617467342137,
+      "ratios": {
+        "net_section_factor": 1.7655831398972957,
+        "notch_sharpness": 1.323760858771661,
+        "relative_depth": 0.43361489051250784
+      }
+    },
+    {
+      "geometry_id": "centre_notched-6f23be61e1ebbe88",
+      "family": "centre_notched",
+      "status": "out_of_envelope",
+      "violations": [
+        "net_section_factor",
+        "notch_sharpness",
+        "relative_depth"
+      ],
+      "err": 5628.371800738403,
+      "ref": 208704.04511225355,
+      "signed_peak_rel": -0.4808601672078628,
+      "ratios": {
+        "net_section_factor": 1.7289008019800214,
+        "notch_sharpness": 1.495503809323699,
+        "relative_depth": 0.4215978158754098
+      }
+    },
+    {
+      "geometry_id": "centre_notched-98455bf31d293bee",
+      "family": "centre_notched",
+      "status": "out_of_envelope",
+      "violations": [
+        "notch_sharpness"
+      ],
+      "err": 1366.090958867323,
+      "ref": 259214.77872919434,
+      "signed_peak_rel": -0.4018311597735781,
+      "ratios": {
+        "net_section_factor": 1.340154691446808,
+        "notch_sharpness": 1.3487736962726973,
+        "relative_depth": 0.25381748362167267
+      }
+    },
+    {
+      "geometry_id": "centre_notched-6a77dcd61c86571a",
+      "family": "centre_notched",
+      "status": "out_of_envelope",
+      "violations": [
+        "net_section_factor",
+        "notch_sharpness",
+        "relative_depth"
+      ],
+      "err": 25972.682893449768,
+      "ref": 160912.27378799158,
+      "signed_peak_rel": -0.6417776253104343,
+      "ratios": {
+        "net_section_factor": 2.1359791931652548,
+        "notch_sharpness": 1.7724247304081748,
+        "relative_depth": 0.5318306455419518
+      }
+    },
+    {
+      "geometry_id": "centre_notched-33e6854e3ae99ca4",
+      "family": "centre_notched",
+      "status": "out_of_envelope",
+      "violations": [
+        "net_section_factor",
+        "notch_sharpness",
+        "relative_depth"
+      ],
+      "err": 27239.886254051926,
+      "ref": 130442.0622502921,
+      "signed_peak_rel": -0.6328026859510564,
+      "ratios": {
+        "net_section_factor": 2.6372669432118583,
+        "notch_sharpness": 1.6462680206983644,
+        "relative_depth": 0.6208195751385993
+      }
+    }
+  ]
+}
