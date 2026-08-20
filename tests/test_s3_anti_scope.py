@@ -9,7 +9,7 @@ from piginot.contracts import CampaignPlan, CanonicalMesh
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_PACKAGE = REPOSITORY_ROOT / "src" / "piginot"
 
-FORBIDDEN_S3_PLUS_MODULES = {
+FORBIDDEN_S4_PLUS_MODULES = {
     "bundle",
     "datasets",
     "doe",
@@ -18,8 +18,6 @@ FORBIDDEN_S3_PLUS_MODULES = {
     "objectives",
     "operator",
     "physics",
-    "retention",
-    "store",
     "training",
     "verification",
 }
@@ -38,12 +36,12 @@ FORBIDDEN_S2_OPERATIONS = {
 }
 
 
-def test_no_s3_or_later_module_exists() -> None:
+def test_no_s4_or_later_module_exists() -> None:
     discovered = {
         path.stem for path in SOURCE_PACKAGE.rglob("*.py") if path.name != "__init__.py"
     }
 
-    assert discovered.isdisjoint(FORBIDDEN_S3_PLUS_MODULES)
+    assert discovered.isdisjoint(FORBIDDEN_S4_PLUS_MODULES)
 
 
 def test_contract_modules_define_no_evaluation_or_workflow_operation() -> None:
@@ -78,14 +76,14 @@ def test_canonical_mesh_exposes_no_geometry_algorithm(algorithm_name: str) -> No
     assert not hasattr(CanonicalMesh, algorithm_name)
 
 
-def test_cli_rejects_s3_plus_subcommands(
+def test_cli_rejects_s4_plus_subcommands(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     assert cli.main([]) == 0
 
-    for command in ("store", "simulate", "train", "bundle"):
+    for command in ("simulate", "train", "bundle"):
         with pytest.raises(SystemExit) as exit_info:
             cli.main([command])
         assert exit_info.value.code == 2
 
-    assert "unrecognized arguments" in capsys.readouterr().err
+    assert "invalid choice" in capsys.readouterr().err
