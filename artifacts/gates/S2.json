@@ -4,7 +4,7 @@
   "commit": "ba74926aa7142da4445bc512e82b5d8a65a219fd",
   "execution_profile_hash": "122c78bd3cb1c2e4a57adf265e11b59c474acfcc929dcd1ee67847bc329352d1",
   "execution_profile_hash_domain": "content",
-  "timestamp_utc": "2026-08-20T12:00:36Z",
+  "timestamp_utc": "2026-08-20T12:00:57.6075638Z",
   "execution_profile": {
     "python_version": "3.13.11",
     "library_versions": {
@@ -23,8 +23,8 @@
     {
       "id": "G2.vectors",
       "status": "NOT_RUN",
-      "measured": "local active vectors-v2 tests/contracts/test_vectors.py passed on Windows Python 3.13.11 only",
-      "threshold": "byte-identical canonical JSON vectors on Linux and Windows, Python 3.11 and 3.12",
+      "measured": "local active vectors-v2 tests/contracts/test_vectors.py passed on Windows Python 3.13.11 only; active vectors-v2 digests also matched an independent hashlib.blake2b(digest_size=32) check",
+      "threshold": "byte-identical active vectors-v2 canonical JSON and BLAKE2b-256 hashes on Linux and Windows, Python 3.11 and 3.12",
       "reason": "requires the full CI matrix; this local environment cannot provide Linux/Windows x Python 3.11/3.12 evidence"
     },
     {
@@ -63,7 +63,7 @@
       "measured": 96.75,
       "threshold": 90,
       "comparison": "gte",
-      "command": "python -m pytest tests/contracts --cov=src/piginot/contracts --cov-fail-under=90"
+      "command": "python -m pytest tests/contracts --cov=src/piginot/contracts --cov-report=term-missing --cov-fail-under=90"
     },
     {
       "id": "G-CODE.ruff-check",
@@ -92,7 +92,7 @@
       "measured": 96.8,
       "threshold": 90,
       "comparison": "gte",
-      "command": "python -m pytest --cov=src/piginot --cov-fail-under=90"
+      "command": "python -m pytest --cov=src/piginot --cov-report=term-missing --cov-fail-under=90"
     },
     {
       "id": "G-CODE.pip-audit",
