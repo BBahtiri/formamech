@@ -27,7 +27,7 @@ jobs:
       - name: Install development environment
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e ".[dev]"
+          python -m pip install -e ".[dev,physics]"
       - name: Lint
         run: python -m ruff check .
       - name: Check formatting
@@ -40,5 +40,7 @@ jobs:
         run: python -m pytest tests/contracts --cov=src/piginot/contracts --cov-fail-under=90
       - name: Check S3 store coverage
         run: python -m pytest tests/store --cov=src/piginot/store --cov-fail-under=85
+      - name: Check S4 physics coverage
+        run: python -m pytest tests/physics --cov=src/piginot/physics --cov-fail-under=95
       - name: Audit dependencies
         run: python -m pip_audit

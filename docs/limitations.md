@@ -11,6 +11,8 @@ the bundle's results.
 Finite verification sampling is evidence about the cases evaluated. It is not a
 mathematical proof of a uniform error bound over every admissible input.
 
-At the current S3 stage, PI-GINOT contains contract and local content-storage
-infrastructure. It does not yet implement geometry construction, constitutive
-physics, FEM, neural-operator training, verification, or inference.
+At the current S4 stage, PI-GINOT contains contract and local content-storage
+infrastructure plus a constitutive physics kernel. The verified S4 material envelope
+is `1 <= E <= 10000 MPa` and `0 <= nu <= 0.49`; values outside it are unsupported.
+The project does not yet implement geometry construction, FEM, neural-operator
+training, verification, or inference.

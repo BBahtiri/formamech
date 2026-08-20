@@ -2,8 +2,9 @@
 
 PI-GINOT is an early-stage open-source project for verified, problem-specific
 physics-informed neural operators in 2D finite-strain elasticity. The repository
-currently implements the S2 contract layer and S3 local content store; it does not
-yet generate, train, verify, or serve neural operators. Read the
+currently implements the S2 contract layer, S3 local content store, and S4
+constitutive physics kernel; it does not yet generate, train, verify, or serve neural
+operators. Read the
 [project limitations](docs/limitations.md) before using or evaluating future
 results.
 
@@ -16,7 +17,7 @@ results.
 
 ```text
 python -m venv .venv
-python -m pip install -e ".[dev]"
+python -m pip install -e ".[dev,physics]"
 ```
 
 Activate the virtual environment using the command appropriate for your shell before
@@ -29,6 +30,7 @@ ruff check .
 ruff format --check .
 mypy --strict src/
 pytest
+pytest tests/physics --cov=src/piginot/physics --cov-fail-under=95
 pip-audit
 ```
 

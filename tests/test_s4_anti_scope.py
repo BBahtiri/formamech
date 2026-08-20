@@ -9,7 +9,7 @@ from piginot.contracts import CampaignPlan, CanonicalMesh
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_PACKAGE = REPOSITORY_ROOT / "src" / "piginot"
 
-FORBIDDEN_S4_PLUS_MODULES = {
+FORBIDDEN_S5_PLUS_MODULES = {
     "bundle",
     "datasets",
     "doe",
@@ -17,9 +17,16 @@ FORBIDDEN_S4_PLUS_MODULES = {
     "geometry",
     "objectives",
     "operator",
-    "physics",
     "training",
     "verification",
+}
+
+FORBIDDEN_PHYSICS_IMPORTS = {
+    "piginot.fem",
+    "piginot.geometry",
+    "torch.nn",
+    "torch.optim",
+    "torch.utils.data",
 }
 
 FORBIDDEN_S2_OPERATIONS = {
@@ -46,12 +53,35 @@ FORBIDDEN_S3_NAME_FRAGMENTS = {
 }
 
 
-def test_no_s4_or_later_module_exists() -> None:
+def test_no_s5_or_later_module_exists() -> None:
     discovered = {
         path.stem for path in SOURCE_PACKAGE.rglob("*.py") if path.name != "__init__.py"
     }
 
-    assert discovered.isdisjoint(FORBIDDEN_S4_PLUS_MODULES)
+    assert discovered.isdisjoint(FORBIDDEN_S5_PLUS_MODULES)
+
+
+def test_physics_contains_no_fem_mesh_or_ml_surface() -> None:
+    physics_root = SOURCE_PACKAGE / "physics"
+    imports: set[str] = set()
+    for path in physics_root.rglob("*.py"):
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                imports.update(alias.name for alias in node.names)
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                imports.add(node.module)
+
+    assert all(
+        not any(
+            imported == forbidden or imported.startswith(f"{forbidden}.")
+            for forbidden in FORBIDDEN_PHYSICS_IMPORTS
+        )
+        for imported in imports
+    )
+    assert not any(
+        path.stem == "_closure_unrolled" for path in physics_root.rglob("*.py")
+    )
 
 
 def test_contract_modules_define_no_evaluation_or_workflow_operation() -> None:

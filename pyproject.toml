@@ -24,6 +24,7 @@ dependencies = ["rfc8785>=0.1.4,<0.2"]
 
 [project.optional-dependencies]
 fem = ["scikit-fem>=11,<13"]
+physics = ["torch>=2.6,<3"]
 ml = ["torch>=2.6,<3"]
 dev = [
   "mkdocs>=1.6,<2",
