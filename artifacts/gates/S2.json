@@ -1,0 +1,120 @@
+{
+  "gate_id": "G2",
+  "step": "S2",
+  "commit": "e2ccd609d2721761f7200edb9f85e5cfaf2a3f79",
+  "execution_profile_hash": "16e0cb44baf77ebb60ba13937c5ea087dafe1710dc0ba9996efd302a845e951b",
+  "timestamp_utc": "2026-08-20T11:30:57.4715157Z",
+  "execution_profile": {
+    "python_version": "3.13.11",
+    "library_versions": {
+      "piginot": "0.1.0",
+      "pytest": "9.1.1",
+      "rfc8785": "0.1.4"
+    },
+    "blas_threads": 1,
+    "device": "cpu",
+    "dtype": "float64",
+    "rng_algorithm": "none",
+    "seed": 0,
+    "container_digest": null
+  },
+  "checks": [
+    {
+      "id": "G2.vectors",
+      "status": "NOT_RUN",
+      "measured": "local tests/contracts/test_vectors.py passed on Windows Python 3.13.11 only",
+      "threshold": "byte-identical canonical JSON vectors on Linux and Windows, Python 3.11 and 3.12",
+      "reason": "requires the full CI matrix; this local environment cannot provide Linux/Windows x Python 3.11/3.12 evidence"
+    },
+    {
+      "id": "G2.strict",
+      "status": "PASS",
+      "measured": "unknown fields, non-finite numbers, and bare dimensional values raise typed errors in the contracts suite",
+      "threshold": "typed errors for unknown field, non-finite number, and bare dimensional value"
+    },
+    {
+      "id": "G2.units",
+      "status": "PASS",
+      "measured": "supported equivalent units hash unequal before DTO conversion and equal after canonical conversion",
+      "threshold": "physically equivalent supported units hash equal after conversion and unequal before conversion"
+    },
+    {
+      "id": "G2.domains",
+      "status": "PASS",
+      "measured": "one payload produced four distinct 64-hex BLAKE2b-256 hashes across problem, recipe, content, and bundle domains",
+      "threshold": "one payload under four domains yields four distinct hashes"
+    },
+    {
+      "id": "G2.immutable",
+      "status": "PASS",
+      "measured": "all declared S2 spec dataclasses reject field mutation; nested caller collections are detached",
+      "threshold": "mutating any frozen spec raises"
+    },
+    {
+      "id": "G2.duplicate",
+      "status": "PASS",
+      "measured": "strict_json_loads rejects duplicate object names before Python can keep the last value",
+      "threshold": "duplicate JSON keys rejected on parse"
+    },
+    {
+      "id": "G2.coverage",
+      "status": "PASS",
+      "measured": 99.62,
+      "threshold": 90,
+      "comparison": "gte",
+      "command": "python -m pytest tests/contracts --cov=src/piginot/contracts --cov-fail-under=90"
+    },
+    {
+      "id": "G-CODE.ruff-check",
+      "status": "PASS",
+      "measured": "All checks passed",
+      "threshold": "ruff check . clean",
+      "command": "ruff check ."
+    },
+    {
+      "id": "G-CODE.ruff-format",
+      "status": "PASS",
+      "measured": "48 files already formatted",
+      "threshold": "ruff format --check . clean",
+      "command": "ruff format --check ."
+    },
+    {
+      "id": "G-CODE.mypy",
+      "status": "PASS",
+      "measured": "Success: no issues found in 10 source files",
+      "threshold": "mypy --strict src/ clean",
+      "command": "python -m mypy --strict src/"
+    },
+    {
+      "id": "G-CODE.pytest-cov",
+      "status": "PASS",
+      "measured": 99.63,
+      "threshold": 90,
+      "comparison": "gte",
+      "command": "python -m pytest --cov=src/piginot --cov-fail-under=90"
+    },
+    {
+      "id": "G-CODE.pip-audit",
+      "status": "PASS",
+      "measured": "No known vulnerabilities found; local editable package piginot skipped because it is not on PyPI",
+      "threshold": "no known dependency vulnerabilities",
+      "command": "pip-audit"
+    },
+    {
+      "id": "G-CODE.no-fixture-names",
+      "status": "PASS",
+      "measured": "tests/test_no_fixture_names.py passed",
+      "threshold": "no dogbone/gauge/fillet/grip fixture names in src",
+      "command": "python -m pytest tests/test_no_fixture_names.py"
+    },
+    {
+      "id": "G-CODE.spike-isolation",
+      "status": "PASS",
+      "measured": "tests/test_spike_isolation.py passed",
+      "threshold": "src has no import path into experiments",
+      "command": "python -m pytest tests/test_spike_isolation.py"
+    }
+  ],
+  "verdict": "FAIL",
+  "verdict_reason": "1 required check NOT_RUN: G2.vectors needs Linux/Windows x Python 3.11/3.12 CI evidence"
+}
