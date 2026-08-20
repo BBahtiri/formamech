@@ -4,7 +4,7 @@
   "commit": "e83c306faac1c587b8595a9de3fbfb6bb09e78f6",
   "execution_profile_hash": "d891da2b3074f8771b360cd0e65de8575b531787373765455b82f935c53bb2f3",
   "execution_profile_hash_domain": "content",
-  "timestamp_utc": "2026-08-20T13:14:30Z",
+  "timestamp_utc": "2026-08-20T13:22:46Z",
   "execution_profile": {
     "python_version": "3.13.11",
     "platform": "Windows 11",
@@ -19,6 +19,44 @@
     "rng_algorithm": "random.Random",
     "seed": 20260820,
     "container_digest": null
+  },
+  "ci_evidence": {
+    "workflow": "CI",
+    "run_id": 32373709601,
+    "run_url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/32373709601",
+    "event": "push",
+    "head_branch": "codex/s3-store-retention",
+    "head_sha": "6a1224061c294c90b6d779e3db058f70ea49b205",
+    "status": "completed",
+    "conclusion": "success",
+    "started_at_utc": "2026-08-20T13:20:29Z",
+    "completed_at_utc": "2026-08-20T13:22:46Z",
+    "jobs": [
+      {
+        "id": 96439945389,
+        "name": "ubuntu-latest / Python 3.11",
+        "url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/32373709601/job/96439945389",
+        "conclusion": "success"
+      },
+      {
+        "id": 96439945595,
+        "name": "windows-latest / Python 3.11",
+        "url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/32373709601/job/96439945595",
+        "conclusion": "success"
+      },
+      {
+        "id": 96439945606,
+        "name": "ubuntu-latest / Python 3.12",
+        "url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/32373709601/job/96439945606",
+        "conclusion": "success"
+      },
+      {
+        "id": 96439945727,
+        "name": "windows-latest / Python 3.12",
+        "url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/32373709601/job/96439945727",
+        "conclusion": "success"
+      }
+    ]
   },
   "checks": [
     {
@@ -126,5 +164,5 @@
     }
   ],
   "verdict": "PASS",
-  "verdict_reason": "all required local G3 checks and universal code checks passed"
+  "verdict_reason": "all required G3 checks passed locally and in Linux/Windows CI on Python 3.11 and 3.12"
 }
