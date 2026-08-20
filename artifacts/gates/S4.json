@@ -1,0 +1,235 @@
+{
+  "gate_id": "G4",
+  "step": "S4",
+  "commit": "4d5a0716e8e326b457aee1c5fc8d162ca0197066",
+  "implementation_commit": "295109872b5e2cd42d640dd0bf849f0d597544aa",
+  "execution_profile_hash": "3d6b04bb1ba4c4c664f3166da0d6cf5c23349d82bd021f37f15b9848d4bbd1da",
+  "execution_profile_hash_domain": "content",
+  "timestamp_utc": "2026-08-20T14:08:45Z",
+  "execution_profile": {
+    "python_version": "3.13.11",
+    "platform": "Windows 11",
+    "library_versions": {
+      "piginot": "0.1.0",
+      "pytest": "9.1.1",
+      "rfc8785": "0.1.4",
+      "torch": "2.13.0"
+    },
+    "blas_threads": 1,
+    "device": "cpu",
+    "dtype": "torch.float64",
+    "rng_algorithm": "torch.Generator(cpu)",
+    "seed": 4101,
+    "container_digest": null
+  },
+  "scientific_contract": {
+    "material_model": "compressible_neo_hookean",
+    "elastic_modulus_mpa": {
+      "minimum": 1.0,
+      "maximum": 10000.0
+    },
+    "poisson_ratio": {
+      "minimum": 0.0,
+      "maximum": 0.49
+    },
+    "determinant_margin": 1e-12,
+    "gate_dtype": "torch.float64",
+    "gate_device": "cpu"
+  },
+  "ci_evidence": {
+    "workflow": "CI",
+    "run_id": 32377705121,
+    "run_url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/32377705121",
+    "event": "push",
+    "head_branch": "codex/s4-physics-kernel",
+    "head_sha": "4d5a0716e8e326b457aee1c5fc8d162ca0197066",
+    "status": "completed",
+    "conclusion": "success",
+    "started_at_utc": "2026-08-20T14:02:02Z",
+    "completed_at_utc": "2026-08-20T14:08:12Z",
+    "jobs": [
+      {
+        "id": 96453005894,
+        "name": "windows-latest / Python 3.11",
+        "url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/32377705121/job/96453005894",
+        "conclusion": "success"
+      },
+      {
+        "id": 96453006121,
+        "name": "windows-latest / Python 3.12",
+        "url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/32377705121/job/96453006121",
+        "conclusion": "success"
+      },
+      {
+        "id": 96453006143,
+        "name": "ubuntu-latest / Python 3.11",
+        "url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/32377705121/job/96453006143",
+        "conclusion": "success"
+      },
+      {
+        "id": 96453006173,
+        "name": "ubuntu-latest / Python 3.12",
+        "url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/32377705121/job/96453006173",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "checks": [
+    {
+      "id": "G4.stress-autodiff",
+      "status": "PASS",
+      "measured": 1.6900885402909662e-16,
+      "metric": "relative_l2_error",
+      "population": 1000,
+      "threshold": 1e-10,
+      "comparison": "lt",
+      "command": "python -m pytest tests/physics/test_kernel.py"
+    },
+    {
+      "id": "G4.tangent",
+      "status": "PASS",
+      "measured": 9.071676140120384e-11,
+      "metric": "relative_l2_error_vs_central_difference",
+      "threshold": 1e-6,
+      "comparison": "lt",
+      "command": "python -m pytest tests/physics/test_kernel.py"
+    },
+    {
+      "id": "G4.objectivity",
+      "status": "PASS",
+      "measured": 1.0231451350580797e-14,
+      "metric": "maximum_samplewise_relative_frobenius_error",
+      "population": 100,
+      "threshold": 1e-12,
+      "comparison": "lt",
+      "command": "python -m pytest tests/physics/test_kernel.py"
+    },
+    {
+      "id": "G4.closure-residual",
+      "status": "PASS",
+      "measured": 3.0240698833949864e-11,
+      "metric": "maximum_absolute_P33_mpa",
+      "population": 1000,
+      "threshold": 1e-10,
+      "comparison": "lt",
+      "command": "python -m pytest tests/physics/test_plane_stress.py"
+    },
+    {
+      "id": "G4.closure-unique",
+      "status": "PASS",
+      "measured": 0.0,
+      "metric": "maximum_root_spread_across_three_starts",
+      "threshold": 1e-12,
+      "comparison": "lt",
+      "command": "python -m pytest tests/physics/test_plane_stress.py"
+    },
+    {
+      "id": "G4.ift-fd",
+      "status": "PASS",
+      "measured": 7.148789609381125e-8,
+      "metric": "maximum_relative_error_vs_central_difference",
+      "threshold": 1e-6,
+      "comparison": "lt",
+      "command": "python -m pytest tests/physics/test_plane_stress.py"
+    },
+    {
+      "id": "G4.ift-oracle",
+      "status": "PASS",
+      "measured": 1.4501797169090312e-16,
+      "metric": "relative_l2_error_vs_unrolled_newton_autodiff",
+      "threshold": 1e-8,
+      "comparison": "lt",
+      "command": "python -m pytest tests/physics/test_plane_stress.py"
+    },
+    {
+      "id": "G4.nu-zero",
+      "status": "PASS",
+      "measured": {
+        "F33_exactly_one": true,
+        "deformation_gradient_exactly_zero": true,
+        "population": 64
+      },
+      "threshold": "F33 == 1 and dF33/dF2D == 0 exactly",
+      "command": "python -m pytest tests/physics/test_plane_stress.py"
+    },
+    {
+      "id": "G4.speed",
+      "status": "PASS",
+      "measured": {
+        "custom_backward_median_ms": 1.0011,
+        "unrolled_backward_median_ms": 4.9579,
+        "speedup": 4.952,
+        "batch_size": 4000,
+        "warmups": 5,
+        "paired_measurements": 21,
+        "torch_threads": 1
+      },
+      "threshold": 3.0,
+      "comparison": "gte",
+      "command": "python -m pytest tests/physics/test_speed.py -q -s"
+    },
+    {
+      "id": "G4.coverage",
+      "status": "PASS",
+      "measured": 100.0,
+      "threshold": 95.0,
+      "comparison": "gte",
+      "command": "python -m pytest tests/physics --cov=src/piginot/physics --cov-report=term-missing --cov-branch --cov-fail-under=95 -q"
+    },
+    {
+      "id": "G-CODE.ruff-check",
+      "status": "PASS",
+      "measured": "All checks passed",
+      "threshold": "ruff check . clean",
+      "command": "python -m ruff check ."
+    },
+    {
+      "id": "G-CODE.ruff-format",
+      "status": "PASS",
+      "measured": "73 files already formatted",
+      "threshold": "ruff format --check . clean",
+      "command": "python -m ruff format --check ."
+    },
+    {
+      "id": "G-CODE.mypy",
+      "status": "PASS",
+      "measured": "Success: no issues found in 19 source files",
+      "threshold": "mypy --strict src clean",
+      "command": "python -m mypy --strict src"
+    },
+    {
+      "id": "G-CODE.pytest-cov",
+      "status": "PASS",
+      "measured": {
+        "tests": "409 passed, 2 skipped",
+        "coverage_percent": 95.5
+      },
+      "threshold": "pytest green and package coverage >=90%",
+      "comparison": "gte",
+      "command": "python -m pytest --cov=src/piginot --cov-report=term-missing --cov-fail-under=90"
+    },
+    {
+      "id": "G-CODE.pip-audit",
+      "status": "PASS",
+      "measured": "No known vulnerabilities found; local editable package piginot skipped because it is not on PyPI",
+      "threshold": "no known dependency vulnerabilities",
+      "command": "python -m pip_audit"
+    },
+    {
+      "id": "G-CODE.documentation",
+      "status": "PASS",
+      "measured": "strict MkDocs build completed",
+      "threshold": "documentation builds without errors",
+      "command": "python -m mkdocs build --strict -f docs/mkdocs.yml"
+    },
+    {
+      "id": "G-CODE.s4-anti-scope",
+      "status": "PASS",
+      "measured": "21 guard and anti-scope tests passed",
+      "threshold": "no fixture-specific names, no experiments import path, no S5+ modules, FEM, mesh, or ML surface",
+      "command": "python -m pytest tests/test_no_fixture_names.py tests/test_spike_isolation.py tests/test_s4_anti_scope.py -q"
+    }
+  ],
+  "verdict": "PASS",
+  "verdict_reason": "all required G4 scientific checks passed locally and in Linux/Windows CI on Python 3.11 and 3.12"
+}
