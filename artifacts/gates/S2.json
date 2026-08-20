@@ -73,21 +73,21 @@
       "status": "PASS",
       "measured": "All checks passed; the exact role=LEGACY closeout directories experiments/spike/_closeout_phaseA, _closeout_phaseB, and _closeout_phaseC are excluded by Ruff configuration because S2 is prohibited from modifying that separate workstream",
       "threshold": "ruff check . clean",
-      "command": "ruff check ."
+      "command": "python -m ruff check ."
     },
     {
       "id": "G-CODE.ruff-format",
       "status": "PASS",
-      "measured": "49 files already formatted",
+      "measured": "49 files already formatted; Ruff reported a non-fatal cache write warning from the local Windows workspace",
       "threshold": "ruff format --check . clean",
-      "command": "ruff format --check ."
+      "command": "python -m ruff format --check ."
     },
     {
       "id": "G-CODE.mypy",
       "status": "PASS",
       "measured": "Success: no issues found in 10 source files",
       "threshold": "mypy --strict src/ clean",
-      "command": "python -m mypy --strict src/"
+      "command": "python -m mypy --strict src"
     },
     {
       "id": "G-CODE.pytest-cov",
