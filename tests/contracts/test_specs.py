@@ -8,6 +8,7 @@ from piginot.contracts import (
     CanonicalMesh,
     DerivedExpression,
     DerivedQuantitySpec,
+    Dimension,
     GeometryFamilySpec,
     LoadSpec,
     MaterialSpec,
@@ -501,6 +502,45 @@ def test_qoi_tolerance_and_campaign_validate_their_public_fields() -> None:
     assert qoi.unit is Unit.MPA
     assert tolerance.limit == _dimensionless(0.15)
     assert campaign.seed == 0
+
+
+def test_qoi_distinguishes_energy_from_moment_on_the_shared_canonical_unit() -> None:
+    energy = QoISpec(
+        "total_energy",
+        "energy",
+        "sum",
+        "domain",
+        Unit.N_MM,
+        dimension=Dimension.ENERGY,
+    )
+    moment = QoISpec(
+        "total_moment",
+        "moment",
+        "sum",
+        "domain",
+        Unit.N_MM,
+        dimension=Dimension.MOMENT,
+    )
+
+    assert energy.dimension is Dimension.ENERGY
+    assert moment.dimension is Dimension.MOMENT
+    assert energy != moment
+
+
+def test_derived_energy_uses_bound_dimension_not_ambiguous_unit_default() -> None:
+    lower = Quantity(1.0, Unit.J).to_canonical()
+    upper = Quantity(2.0, Unit.J).to_canonical()
+    primitive = ParameterSpec("work", lower, upper)
+    derived = DerivedQuantitySpec(
+        name="same_work",
+        expression=DerivedExpression.parse("work"),
+        lower_bound=lower,
+        upper_bound=upper,
+        unit=Unit.N_MM,
+    )
+
+    assert derived.dimension is Dimension.ENERGY
+    assert derived.validate_against((primitive,)) is None
 
 
 @pytest.mark.parametrize("field_name", ["name", "field", "reduction", "region_tag"])

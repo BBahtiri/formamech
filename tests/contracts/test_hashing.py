@@ -1,14 +1,27 @@
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass, field
 
 import pytest
 
-from piginot.contracts.errors import InvalidHashDomainError
+from piginot.contracts import (
+    BoundaryConditionSpec,
+    CanonicalQuantity,
+    LoadSpec,
+    Quantity,
+    Unit,
+)
+from piginot.contracts.errors import ContractValidationError, InvalidHashDomainError
 from piginot.contracts.hashing import hash_spec
-from piginot.contracts.units import Quantity, Unit
 
 HASH_DOMAINS = ("problem", "recipe", "content", "bundle")
+
+
+@dataclass(frozen=True)
+class _CanonicalFieldControls:
+    included: int = field(repr=False, compare=False)
+    excluded: str = field(metadata={"canonical": False})
 
 
 def test_hash_spec_separates_exactly_the_four_supported_domains() -> None:
@@ -46,3 +59,46 @@ def test_raw_unit_dtos_hash_unequal_but_canonical_quantities_hash_equal() -> Non
     assert hash_spec(one_metre.to_canonical(), "problem") == hash_spec(
         one_thousand_millimetres.to_canonical(), "problem"
     )
+
+
+def test_quantity_and_canonical_quantity_have_distinct_hash_identity() -> None:
+    quantity = Quantity(1.0, Unit.MM)
+    canonical_quantity = CanonicalQuantity(1.0, Unit.MM)
+
+    assert hash_spec(quantity, "content") != hash_spec(canonical_quantity, "content")
+
+
+def test_boundary_condition_and_load_have_distinct_hash_identity() -> None:
+    boundary = BoundaryConditionSpec(
+        name="edge_action",
+        boundary_tag="loaded_edge",
+        kind="traction",
+    )
+    load = LoadSpec(
+        name="edge_action",
+        boundary_tag="loaded_edge",
+        kind="traction",
+    )
+
+    assert hash_spec(boundary, "problem") != hash_spec(load, "problem")
+
+
+def test_hash_spec_rejects_mapping_type_tag_spoofing() -> None:
+    forged_quantity = {
+        "$type": "piginot.contracts.CanonicalQuantity",
+        "dimension": "length",
+        "unit": "mm",
+        "value": 1,
+    }
+
+    with pytest.raises(ContractValidationError, match="reserved"):
+        hash_spec(forged_quantity, "content")
+
+
+def test_dataclass_hash_fields_use_explicit_metadata_not_repr_or_compare() -> None:
+    baseline = _CanonicalFieldControls(included=1, excluded="first")
+    changed_identity = _CanonicalFieldControls(included=2, excluded="first")
+    changed_excluded = _CanonicalFieldControls(included=1, excluded="second")
+
+    assert hash_spec(baseline, "content") != hash_spec(changed_identity, "content")
+    assert hash_spec(baseline, "content") == hash_spec(changed_excluded, "content")

@@ -1,5 +1,6 @@
 {
   "schema_version": 1,
+  "status": "superseded-by-vectors-v2.json",
   "sources": [
     "RFC 8785 sections 3.2.2.2-3.2.3 and Appendix B",
     "https://www.rfc-editor.org/rfc/rfc8785",

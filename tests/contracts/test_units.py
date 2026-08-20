@@ -11,6 +11,7 @@ from piginot.contracts.errors import (
     NonFiniteNumberError,
     UnitMismatchError,
 )
+from piginot.contracts.hashing import hash_spec
 from piginot.contracts.units import (
     CanonicalQuantity,
     Dimension,
@@ -35,7 +36,6 @@ from piginot.contracts.units import (
         (Unit.GPA, Dimension.STRESS),
         (Unit.N_MM, Dimension.MOMENT),
         (Unit.N_M, Dimension.MOMENT),
-        (Unit.J, Dimension.MOMENT),
     ],
 )
 def test_each_supported_unit_declares_its_physical_dimension(
@@ -59,7 +59,6 @@ def test_each_supported_unit_declares_its_physical_dimension(
         (Quantity(2.1, Unit.GPA), CanonicalQuantity(2100.0, Unit.MPA)),
         (Quantity(7.0, Unit.N_MM), CanonicalQuantity(7.0, Unit.N_MM)),
         (Quantity(1.5, Unit.N_M), CanonicalQuantity(1500.0, Unit.N_MM)),
-        (Quantity(1.5, Unit.J), CanonicalQuantity(1500.0, Unit.N_MM)),
     ],
 )
 def test_conversion_to_the_internal_unit_system_is_explicit_and_exact(
@@ -82,6 +81,30 @@ def test_equivalent_stress_conversions_have_exact_canonical_identity() -> None:
     from_pascals = Quantity(100.0, Unit.PA).to_canonical()
 
     assert from_kilopascals == from_pascals
+
+
+def test_joule_is_energy_not_moment() -> None:
+    assert Unit.J.dimension is Dimension.ENERGY
+    assert Unit.N_M.dimension is Dimension.MOMENT
+
+
+def test_energy_and_moment_keep_distinct_canonical_identities() -> None:
+    energy = Quantity(1.0, Unit.J).to_canonical()
+    moment = Quantity(1.0, Unit.N_M).to_canonical()
+
+    assert energy.value == moment.value == 1000.0
+    assert energy.unit is moment.unit is Unit.N_MM
+    assert energy.dimension is Dimension.ENERGY
+    assert moment.dimension is Dimension.MOMENT
+    assert energy != moment
+    assert hash_spec(energy, "problem") != hash_spec(moment, "problem")
+
+
+def test_expected_dimension_rejects_energy_and_moment_swaps() -> None:
+    with pytest.raises(UnitMismatchError):
+        Quantity(1.0, Unit.J).to_canonical(expected_dimension=Dimension.MOMENT)
+    with pytest.raises(UnitMismatchError):
+        Quantity(1.0, Unit.N_M).to_canonical(expected_dimension=Dimension.ENERGY)
 
 
 def test_explicit_conversion_can_enforce_the_expected_dimension() -> None:

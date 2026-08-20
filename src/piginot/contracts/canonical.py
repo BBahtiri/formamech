@@ -19,6 +19,8 @@ from piginot.contracts.errors import (
 
 JsonScalar: TypeAlias = None | bool | int | float | str
 JsonValue: TypeAlias = JsonScalar | list["JsonValue"] | dict[str, "JsonValue"]
+_JCS_SAFE_INTEGER = 2**53 - 1
+_TYPE_DISCRIMINATOR = "$type"
 
 
 def _pairs_without_duplicates(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -41,6 +43,15 @@ def _parse_finite_float(token: str) -> float:
     return value
 
 
+def _parse_safe_int(token: str) -> int:
+    value = int(token)
+    if abs(value) > _JCS_SAFE_INTEGER:
+        raise ContractValidationError(
+            f"JSON integer outside RFC 8785 safe integer domain: {token}"
+        )
+    return value
+
+
 def strict_json_loads(document: str | bytes) -> JsonValue:
     """Parse JSON without Python's duplicate-key or non-finite extensions."""
 
@@ -50,6 +61,7 @@ def strict_json_loads(document: str | bytes) -> JsonValue:
             object_pairs_hook=_pairs_without_duplicates,
             parse_constant=_reject_non_finite,
             parse_float=_parse_finite_float,
+            parse_int=_parse_safe_int,
         )
     except UnicodeDecodeError as exc:
         raise ContractValidationError("JSON input must be valid UTF-8") from exc
@@ -74,14 +86,25 @@ def _json_value(value: object) -> JsonValue:
                 raise ContractValidationError(
                     "canonical JSON object names must be strings"
                 )
+            if key == _TYPE_DISCRIMINATOR:
+                raise ContractValidationError(
+                    f"{_TYPE_DISCRIMINATOR!r} is reserved for contract type tags"
+                )
             result[key] = _json_value(item)
         return result
     if is_dataclass(value) and not isinstance(value, type):
-        return {
+        value_type = type(value)
+        namespace = getattr(
+            value_type, "__canonical_namespace__", value_type.__module__
+        )
+        canonical_type = f"{namespace}.{value_type.__qualname__}"
+        result = {
             field.name: _json_value(getattr(value, field.name))
             for field in fields(value)
-            if field.repr or field.compare
+            if field.metadata.get("canonical", True)
         }
+        result[_TYPE_DISCRIMINATOR] = canonical_type
+        return result
     if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return [_json_value(item) for item in value]
     raise ContractValidationError(

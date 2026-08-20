@@ -1,9 +1,17 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import ClassVar
 
 import pytest
 
+from piginot.contracts import (
+    BoundaryConditionSpec,
+    CanonicalQuantity,
+    LoadSpec,
+    Quantity,
+    Unit,
+)
 from piginot.contracts.canonical import canonical_json_bytes, strict_json_loads
 from piginot.contracts.errors import (
     ContractValidationError,
@@ -34,6 +42,14 @@ def test_strict_json_loads_rejects_non_finite_numbers(token: str) -> None:
 def test_strict_json_loads_rejects_number_overflow_as_non_finite() -> None:
     with pytest.raises(NonFiniteNumberError, match="finite"):
         strict_json_loads('{"value": 1e999}')
+
+
+@pytest.mark.parametrize("integer", [str(2**53), "9" * 400])
+def test_strict_json_loads_rejects_integers_outside_jcs_safe_domain(
+    integer: str,
+) -> None:
+    with pytest.raises(ContractValidationError, match="safe integer domain"):
+        strict_json_loads(f'{{"value": {integer}}}')
 
 
 def test_strict_json_loads_accepts_text_and_utf8_bytes() -> None:
@@ -112,6 +128,18 @@ def test_canonical_json_bytes_rejects_non_string_mapping_names() -> None:
         canonical_json_bytes({1: "one"})
 
 
+def test_canonical_json_bytes_rejects_mapping_type_tag_spoofing() -> None:
+    with pytest.raises(ContractValidationError, match="reserved"):
+        canonical_json_bytes(
+            {
+                "$type": "piginot.contracts.CanonicalQuantity",
+                "dimension": "length",
+                "unit": "mm",
+                "value": 1,
+            }
+        )
+
+
 @pytest.mark.parametrize("value", [b"bytes are not JSON", {"sets", "are", "not JSON"}])
 def test_canonical_json_bytes_rejects_unsupported_value_types(value: object) -> None:
     with pytest.raises(ContractValidationError, match="unsupported canonical JSON"):
@@ -128,6 +156,59 @@ def test_canonical_json_bytes_rejects_integers_outside_jcs_safe_domain(
 
 def test_canonical_json_bytes_accepts_jcs_safe_integer_boundary() -> None:
     assert canonical_json_bytes(2**53 - 1) == b"9007199254740991"
+
+
+def test_canonical_json_bytes_has_stable_public_quantity_type_discriminators() -> None:
+    quantity = Quantity(1.0, Unit.MM)
+    canonical_quantity = CanonicalQuantity(1.0, Unit.MM)
+
+    assert canonical_json_bytes(quantity) == (
+        b'{"$type":"piginot.contracts.Quantity","dimension":"length",'
+        b'"unit":"mm","value":1}'
+    )
+    assert canonical_json_bytes(canonical_quantity) == (
+        b'{"$type":"piginot.contracts.CanonicalQuantity","dimension":"length",'
+        b'"unit":"mm","value":1}'
+    )
+
+
+def test_canonical_json_bytes_distinguishes_semantically_distinct_spec_types() -> None:
+    boundary = BoundaryConditionSpec(
+        name="edge_action",
+        boundary_tag="loaded_edge",
+        kind="traction",
+    )
+    load = LoadSpec(
+        name="edge_action",
+        boundary_tag="loaded_edge",
+        kind="traction",
+    )
+
+    assert canonical_json_bytes(boundary) == (
+        b'{"$type":"piginot.contracts.BoundaryConditionSpec",'
+        b'"boundary_tag":"loaded_edge","components":[],"kind":"traction",'
+        b'"name":"edge_action","values":[]}'
+    )
+    assert canonical_json_bytes(load) == (
+        b'{"$type":"piginot.contracts.LoadSpec",'
+        b'"boundary_tag":"loaded_edge","components":[],"kind":"traction",'
+        b'"name":"edge_action","values":[]}'
+    )
+
+
+def test_dataclass_canonical_fields_use_explicit_metadata_not_repr_or_compare() -> None:
+    @dataclass(frozen=True)
+    class CanonicalFieldControls:
+        included: int = field(repr=False, compare=False)
+        excluded: str = field(metadata={"canonical": False})
+
+    canonical = canonical_json_bytes(CanonicalFieldControls(7, "transient"))
+    decoded = strict_json_loads(canonical)
+
+    assert isinstance(decoded, dict)
+    assert decoded["included"] == 7
+    assert "excluded" not in decoded
+    assert "$type" in decoded
 
 
 def test_canonical_json_bytes_serializes_frozen_maps_as_json_objects() -> None:
@@ -152,11 +233,15 @@ def test_canonical_json_bytes_serializes_frozen_maps_as_json_objects() -> None:
 def test_canonical_json_bytes_recursively_normalizes_frozen_dataclasses() -> None:
     @dataclass(frozen=True)
     class Bounds:
+        __canonical_namespace__: ClassVar[str] = "tests.contracts"
+
         upper: float
         lower: float
 
     @dataclass(frozen=True)
     class QuantityContract:
+        __canonical_namespace__: ClassVar[str] = "tests.contracts"
+
         unit: str
         name: str
         bounds: Bounds
@@ -170,6 +255,10 @@ def test_canonical_json_bytes_recursively_normalizes_frozen_dataclasses() -> Non
     )
 
     assert canonical_json_bytes(contract) == (
-        b'{"bounds":{"lower":2,"upper":10},"name":"width",'
-        b'"samples":[2,4,10],"unit":"mm"}'
+        b'{"$type":"tests.contracts.test_canonical_json_bytes_recursively_'
+        b'normalizes_frozen_dataclasses.<locals>.QuantityContract",'
+        b'"bounds":{"$type":"tests.contracts.test_canonical_json_bytes_'
+        b'recursively_normalizes_frozen_dataclasses.<locals>.Bounds",'
+        b'"lower":2,"upper":10},"name":"width","samples":[2,4,10],'
+        b'"unit":"mm"}'
     )

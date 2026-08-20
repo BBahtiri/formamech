@@ -10,7 +10,7 @@ import ast
 import math
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import TypeAlias, cast
+from typing import ClassVar, TypeAlias, cast
 
 from piginot.contracts.errors import (
     ContractValidationError,
@@ -29,10 +29,13 @@ _DIMENSION_VECTORS: dict[Dimension, DimensionVector] = {
     Dimension.FORCE: (0, 1),
     Dimension.STRESS: (-2, 1),
     Dimension.MOMENT: (1, 1),
+    Dimension.ENERGY: (1, 1),
 }
-_VECTOR_DIMENSIONS = {
-    vector: dimension for dimension, vector in _DIMENSION_VECTORS.items()
-}
+_VECTOR_DIMENSIONS: dict[DimensionVector, frozenset[Dimension]] = {}
+for _dimension, _vector in _DIMENSION_VECTORS.items():
+    _VECTOR_DIMENSIONS[_vector] = _VECTOR_DIMENSIONS.get(_vector, frozenset()) | {
+        _dimension
+    }
 
 
 def _number(value: object) -> int | float:
@@ -69,41 +72,72 @@ def _tree(node: ast.AST) -> ExpressionTree:
 
 def _combine(
     tree: ExpressionTree, parameter_dimensions: Mapping[str, Dimension]
-) -> DimensionVector:
+) -> tuple[DimensionVector, frozenset[Dimension]]:
     kind = tree[0]
     if kind == "number":
-        return (0, 0)
+        return (0, 0), frozenset({Dimension.DIMENSIONLESS})
     if kind == "name":
         name = cast(str, tree[1])
         try:
-            return _DIMENSION_VECTORS[parameter_dimensions[name]]
+            dimension = parameter_dimensions[name]
         except KeyError as exc:
             raise UnknownSymbolError(f"unknown parameter {name!r}") from exc
+        try:
+            return _DIMENSION_VECTORS[dimension], frozenset({dimension})
+        except KeyError as exc:
+            raise UnitMismatchError(
+                f"unsupported parameter dimension {dimension!r}"
+            ) from exc
     if kind == "unary":
         return _combine(cast(ExpressionTree, tree[2]), parameter_dimensions)
     if kind != "binary":
         raise ExpressionSyntaxError("invalid canonical expression tree")
     operator = cast(str, tree[1])
-    left = _combine(cast(ExpressionTree, tree[2]), parameter_dimensions)
-    right = _combine(cast(ExpressionTree, tree[3]), parameter_dimensions)
+    left_vector, left_dimensions = _combine(
+        cast(ExpressionTree, tree[2]), parameter_dimensions
+    )
+    right_vector, right_dimensions = _combine(
+        cast(ExpressionTree, tree[3]), parameter_dimensions
+    )
     if operator in {"+", "-"}:
-        if left != right:
+        shared_dimensions = left_dimensions & right_dimensions
+        if left_vector != right_vector or not shared_dimensions:
             raise UnitMismatchError(
                 "addition and subtraction require matching dimensions"
             )
-        return left
+        return left_vector, shared_dimensions
     if operator == "*":
-        return (left[0] + right[0], left[1] + right[1])
-    if operator == "/":
-        return (left[0] - right[0], left[1] - right[1])
-    raise ExpressionSyntaxError(f"unsupported canonical operator {operator!r}")
+        vector = (
+            left_vector[0] + right_vector[0],
+            left_vector[1] + right_vector[1],
+        )
+        if left_vector == (0, 0):
+            return vector, right_dimensions
+        if right_vector == (0, 0):
+            return vector, left_dimensions
+    elif operator == "/":
+        vector = (
+            left_vector[0] - right_vector[0],
+            left_vector[1] - right_vector[1],
+        )
+        if right_vector == (0, 0):
+            return vector, left_dimensions
+    else:
+        raise ExpressionSyntaxError(f"unsupported canonical operator {operator!r}")
+    return vector, _VECTOR_DIMENSIONS.get(vector, frozenset())
 
 
 @dataclass(frozen=True, slots=True)
 class DerivedExpression:
-    """A normalized, immutable syntax tree with static unit validation."""
+    """A canonical structural syntax tree with static unit validation.
 
-    source: str = field(compare=False, repr=False)
+    Whitespace, redundant parentheses, and numeric spelling normalize.  Algebraic
+    equivalence does not: operand order and unary operators remain part of identity.
+    """
+
+    __canonical_namespace__: ClassVar[str] = "piginot.contracts"
+
+    source: str = field(compare=False, repr=False, metadata={"canonical": False})
     canonical_ast: ExpressionTree
 
     @classmethod
@@ -122,12 +156,17 @@ class DerivedExpression:
         parameter_dimensions: Mapping[str, Dimension],
         expected_dimension: Dimension,
     ) -> Dimension:
-        vector = _combine(self.canonical_ast, parameter_dimensions)
-        inferred = _VECTOR_DIMENSIONS.get(vector)
-        if inferred is None:
+        vector, possible_dimensions = _combine(self.canonical_ast, parameter_dimensions)
+        if not possible_dimensions:
             raise UnitMismatchError(f"unsupported derived dimension vector {vector}")
-        if inferred is not expected_dimension:
-            raise UnitMismatchError(
-                f"expression is {inferred.value}, expected {expected_dimension.value}"
+        if expected_dimension not in possible_dimensions:
+            inferred = ", ".join(
+                dimension.value
+                for dimension in sorted(
+                    possible_dimensions, key=lambda dimension: dimension.value
+                )
             )
-        return inferred
+            raise UnitMismatchError(
+                f"expression is {inferred}, expected {expected_dimension.value}"
+            )
+        return expected_dimension

@@ -6,7 +6,7 @@ import math
 from dataclasses import dataclass
 from decimal import Decimal
 from enum import Enum
-from typing import Final
+from typing import ClassVar, Final
 
 from piginot.contracts.errors import (
     BareDimensionalValueError,
@@ -24,6 +24,7 @@ class Dimension(Enum):
     FORCE = "force"
     STRESS = "stress"
     MOMENT = "moment"
+    ENERGY = "energy"
 
 
 class Unit(Enum):
@@ -59,6 +60,9 @@ class Unit(Enum):
     def is_canonical(self) -> bool:
         return self is self.canonical_unit
 
+    def supports_dimension(self, dimension: Dimension) -> bool:
+        return dimension in _UNIT_DIMENSIONS[self]
+
 
 _UNIT_DEFINITIONS: Final[dict[Unit, tuple[Dimension, Unit, float]]] = {
     Unit.ONE: (Dimension.DIMENSIONLESS, Unit.ONE, 1.0),
@@ -73,8 +77,14 @@ _UNIT_DEFINITIONS: Final[dict[Unit, tuple[Dimension, Unit, float]]] = {
     Unit.GPA: (Dimension.STRESS, Unit.MPA, 1000.0),
     Unit.N_MM: (Dimension.MOMENT, Unit.N_MM, 1.0),
     Unit.N_M: (Dimension.MOMENT, Unit.N_MM, 1000.0),
-    Unit.J: (Dimension.MOMENT, Unit.N_MM, 1000.0),
+    Unit.J: (Dimension.ENERGY, Unit.N_MM, 1000.0),
 }
+
+_UNIT_DIMENSIONS: Final[dict[Unit, frozenset[Dimension]]] = {
+    unit: frozenset({definition[0]}) for unit, definition in _UNIT_DEFINITIONS.items()
+}
+_UNIT_DIMENSIONS[Unit.N_MM] = frozenset({Dimension.MOMENT, Dimension.ENERGY})
+_UNIT_DIMENSIONS[Unit.N_M] = frozenset({Dimension.MOMENT, Dimension.ENERGY})
 
 
 def _validated_number(value: object) -> float:
@@ -90,8 +100,11 @@ def _validated_number(value: object) -> float:
 class CanonicalQuantity:
     """A quantity already expressed in the declared internal unit system."""
 
+    __canonical_namespace__: ClassVar[str] = "piginot.contracts"
+
     value: float
     unit: Unit
+    dimension: Dimension | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "value", _validated_number(self.value))
@@ -101,27 +114,40 @@ class CanonicalQuantity:
             raise ContractValidationError(
                 f"{self.unit.value!r} is not a canonical internal unit"
             )
-
-    @property
-    def dimension(self) -> Dimension:
-        return self.unit.dimension
+        dimension = self.unit.dimension if self.dimension is None else self.dimension
+        if not isinstance(dimension, Dimension):
+            raise ContractValidationError(
+                "canonical quantity dimension must be a Dimension"
+            )
+        if dimension not in _UNIT_DIMENSIONS[self.unit]:
+            raise UnitMismatchError(
+                f"{self.unit.value!r} cannot represent {dimension.value}"
+            )
+        object.__setattr__(self, "dimension", dimension)
 
 
 @dataclass(frozen=True, slots=True)
 class Quantity:
     """A DTO-boundary quantity whose source unit remains explicit."""
 
+    __canonical_namespace__: ClassVar[str] = "piginot.contracts"
+
     value: float
     unit: Unit
+    dimension: Dimension | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "value", _validated_number(self.value))
         if not isinstance(self.unit, Unit):
             raise ContractValidationError("quantity unit must be a Unit")
-
-    @property
-    def dimension(self) -> Dimension:
-        return self.unit.dimension
+        dimension = self.unit.dimension if self.dimension is None else self.dimension
+        if not isinstance(dimension, Dimension):
+            raise ContractValidationError("quantity dimension must be a Dimension")
+        if dimension not in _UNIT_DIMENSIONS[self.unit]:
+            raise UnitMismatchError(
+                f"{self.unit.value!r} cannot represent {dimension.value}"
+            )
+        object.__setattr__(self, "dimension", dimension)
 
     def to_canonical(
         self, *, expected_dimension: Dimension | None = None
@@ -138,9 +164,16 @@ def to_canonical(
         raise BareDimensionalValueError(
             "dimensional values require an explicit Quantity and unit"
         )
-    if expected_dimension is not None and value.dimension is not expected_dimension:
+    actual_dimension = value.dimension
+    if not isinstance(actual_dimension, Dimension):
+        raise ContractValidationError("quantity dimension is unresolved")
+    if expected_dimension is not None and actual_dimension is not expected_dimension:
         raise UnitMismatchError(
-            f"expected {expected_dimension.value}, got {value.dimension.value}"
+            f"expected {expected_dimension.value}, got {actual_dimension.value}"
         )
     converted = Decimal(str(value.value)) * Decimal(str(value.unit.canonical_factor))
-    return CanonicalQuantity(value=float(converted), unit=value.unit.canonical_unit)
+    return CanonicalQuantity(
+        value=float(converted),
+        unit=value.unit.canonical_unit,
+        dimension=actual_dimension,
+    )

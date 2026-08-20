@@ -66,6 +66,11 @@ def test_operator_precedence_is_preserved_in_the_canonical_ast() -> None:
     assert multiplied_first.canonical_ast != added_first.canonical_ast
 
 
+def test_canonical_ast_is_structural_not_algebraically_normalized() -> None:
+    assert DerivedExpression.parse("a + b") != DerivedExpression.parse("b + a")
+    assert DerivedExpression.parse("x") != DerivedExpression.parse("+x")
+
+
 @pytest.mark.parametrize(
     ("source", "expected"),
     [
@@ -134,6 +139,23 @@ def test_static_validation_understands_force_times_length_as_moment() -> None:
     )
 
     assert inferred is Dimension.MOMENT
+
+
+def test_static_validation_keeps_declared_energy_and_moment_semantics_distinct() -> (
+    None
+):
+    expression = DerivedExpression.parse("quantity")
+
+    with pytest.raises(UnitMismatchError):
+        expression.validate(
+            parameter_dimensions={"quantity": Dimension.ENERGY},
+            expected_dimension=Dimension.MOMENT,
+        )
+    with pytest.raises(UnitMismatchError):
+        expression.validate(
+            parameter_dimensions={"quantity": Dimension.MOMENT},
+            expected_dimension=Dimension.ENERGY,
+        )
 
 
 def test_static_validation_preserves_dimension_through_unary_operators() -> None:

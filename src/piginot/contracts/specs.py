@@ -6,7 +6,7 @@ import keyword
 import math
 from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, Generic, Self, TypeVar
+from typing import Any, ClassVar, Generic, Self, TypeVar
 
 from piginot.contracts.errors import (
     BareDimensionalValueError,
@@ -38,6 +38,8 @@ def _canonical(value: object, label: str) -> CanonicalQuantity:
 
 class SpecContract:
     """Shared strict mapping boundary for frozen specification dataclasses."""
+
+    __canonical_namespace__: ClassVar[str] = "piginot.contracts"
 
     @classmethod
     def from_mapping(cls, payload: Mapping[str, object]) -> Self:
@@ -126,7 +128,10 @@ class ParameterSpec(SpecContract):
 
     @property
     def dimension(self) -> Dimension:
-        return self.lower_bound.dimension
+        dimension = self.lower_bound.dimension
+        if not isinstance(dimension, Dimension):
+            raise ContractValidationError("parameter dimension is unresolved")
+        return dimension
 
 
 @dataclass(frozen=True, slots=True)
@@ -150,6 +155,10 @@ class DerivedQuantitySpec(SpecContract):
             raise UnitMismatchError(
                 "derived quantity bounds must match its explicit unit"
             )
+        if lower.dimension is not upper.dimension:
+            raise UnitMismatchError(
+                "derived quantity bounds must have matching dimensions"
+            )
         if lower.value > upper.value:
             raise ContractValidationError("lower_bound must not exceed upper_bound")
         if not isinstance(self.description, str):
@@ -169,8 +178,15 @@ class DerivedQuantitySpec(SpecContract):
             dimensions[parameter.name] = parameter.dimension
         self.expression.validate(
             parameter_dimensions=dimensions,
-            expected_dimension=self.unit.dimension,
+            expected_dimension=self.dimension,
         )
+
+    @property
+    def dimension(self) -> Dimension:
+        dimension = self.lower_bound.dimension
+        if not isinstance(dimension, Dimension):
+            raise ContractValidationError("derived quantity dimension is unresolved")
+        return dimension
 
 
 @dataclass(frozen=True, slots=True)
@@ -281,6 +297,7 @@ class QoISpec(SpecContract):
     reduction: str
     region_tag: str
     unit: Unit
+    dimension: Dimension | None = None
 
     def __post_init__(self) -> None:
         _nonempty(self.name, "QoI name")
@@ -289,6 +306,14 @@ class QoISpec(SpecContract):
         _nonempty(self.region_tag, "QoI region tag")
         if not isinstance(self.unit, Unit) or not self.unit.is_canonical:
             raise ContractValidationError("QoI unit must be canonical")
+        dimension = self.unit.dimension if self.dimension is None else self.dimension
+        if not isinstance(dimension, Dimension):
+            raise ContractValidationError("QoI dimension must be a Dimension")
+        if not self.unit.supports_dimension(dimension):
+            raise UnitMismatchError(
+                f"{self.unit.value!r} cannot represent {dimension.value}"
+            )
+        object.__setattr__(self, "dimension", dimension)
 
 
 @dataclass(frozen=True, slots=True)
