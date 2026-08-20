@@ -1,0 +1,50 @@
+{
+  "schema_version": "s1-closeout-phaseC-preregistration-v1",
+  "step": "S1",
+  "phase": "C",
+  "role": "LEGACY",
+  "no_release_evidence": true,
+  "written_before_training": true,
+  "purpose": "One confirmatory arm with every Phase A and Phase B repair in place, plus the three previously disabled loss/sampling paths enabled.",
+  "changes_under_test": {
+    "peak_supervised_p_weight": 1.0,
+    "traction_free_on_P_served": 1.0,
+    "supervised_sampling": "stratified_qoi",
+    "qoi_supervised_fraction": 0.25
+  },
+  "weight_rationale": "Both new terms are set to 1.0 to match every other term in the existing objective (supervised_u, supervised_P, equilibrium, constitutive are all 1.0). No screening grid is run and no selection budget is consumed, so there is no multiple-comparison exposure to declare.",
+  "held_constant_from_phase_B": {
+    "training_design": "stratified_design(count=20 per family, seed=4242)",
+    "protocol": "Adam 1e-3, 1500 epochs, batch 4 geometries",
+    "model_seed": 314159,
+    "sampler_seed": 314179,
+    "initialisation": "pinned upstream checkpoint 6f8dbdff...dca6dd7c85, epoch 1424"
+  },
+  "deliberate_change_from_phase_B": {
+    "solver_element_order": 2,
+    "reason": "Phase C targets the peak bias. Training on P1 targets whose peaks are 1.6-8.9% systematically low would teach the model a biased peak and defeat the purpose. The P1->P2 shift contributes about 4.3% to peak magnitude, against a measured bias of -27%, so it does not make the attribution ambiguous.",
+    "baseline_handling": "The Phase B treatment checkpoint is re-evaluated against P2 ground truth so the evaluation side is like-for-like."
+  },
+  "confirmation_campaign": {
+    "design": "stratified_design(count=25 per family, seed=90210)",
+    "size": 50,
+    "freshness": "geometry ids, mesh ids, mesh-qualified node ids and RNG seeds must be disjoint from every training set and every prior campaign",
+    "consumed_after_use": true,
+    "reuse_for_tuning": "forbidden"
+  },
+  "reported_measures": [
+    "pooled relative L2 on P, per family, split in-envelope and out-of-envelope",
+    "median and distribution of SIGNED relative peak error, with the under/over-prediction split",
+    "declared training envelope in derived-ratio space",
+    "mean seconds per FEM solve and per operator inference"
+  ],
+  "gates": {
+    "C.solves": "all attempted FEM cases converge, or failures recorded with reasons",
+    "C.freshness": "campaign disjoint from training and all prior campaigns, asserted",
+    "C.envelope": "every evaluation case labelled in- or out-of-envelope",
+    "C.no-tuning": "zero optimizer steps and zero backward calls during the campaign",
+    "C.stress": "REPORT ONLY - no pass/fail threshold on the stress numbers",
+    "C.peak-signed": "REPORT ONLY - signed error and under/over split"
+  },
+  "verdict_policy": "This run renders no GO/NO-GO verdict. STEPS-v1.0.md S1 reserves that decision to the human and gives one rule, on the point estimate: <=5% GO, 5-15% GO with contingency, >15% STOP."
+}
