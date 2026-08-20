@@ -38,5 +38,7 @@ jobs:
         run: python -m pytest --cov=src/piginot --cov-fail-under=90
       - name: Check S2 contract coverage
         run: python -m pytest tests/contracts --cov=src/piginot/contracts --cov-fail-under=90
+      - name: Check S3 store coverage
+        run: python -m pytest tests/store --cov=src/piginot/store --cov-fail-under=85
       - name: Audit dependencies
         run: python -m pip_audit

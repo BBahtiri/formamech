@@ -1,10 +1,11 @@
 # PI-GINOT
 
 PI-GINOT is an early-stage open-source project for verified, problem-specific
-physics-informed neural operators in 2D finite-strain elasticity. The repository is
-currently at the S0 foundation stage; it does not yet generate, train, verify, or
-serve neural operators. Read the [project limitations](docs/limitations.md) before
-using or evaluating future results.
+physics-informed neural operators in 2D finite-strain elasticity. The repository
+currently implements the S2 contract layer and S3 local content store; it does not
+yet generate, train, verify, or serve neural operators. Read the
+[project limitations](docs/limitations.md) before using or evaluating future
+results.
 
 ## Requirements
 
@@ -35,9 +36,12 @@ pip-audit
 
 ```text
 piginot --version
+piginot store prune --root PATH
+piginot store prune --root PATH --dry-run
 ```
 
-No other command is implemented in S0.
+The prune command opens an existing marked store and removes only PRUNABLE bytes
+while retaining their identities and recipe lineage.
 
 ## Contributing
 

@@ -35,6 +35,16 @@ FORBIDDEN_S2_OPERATIONS = {
     "sample",
 }
 
+FORBIDDEN_S3_IMPORTS = {"fcntl", "filelock", "msvcrt", "threading"}
+FORBIDDEN_S3_NAME_FRAGMENTS = {
+    "arbitration",
+    "compatibility_policy",
+    "cross_profile",
+    "lock_manager",
+    "narrative_cache",
+    "quarantine",
+}
+
 
 def test_no_s4_or_later_module_exists() -> None:
     discovered = {
@@ -87,3 +97,30 @@ def test_cli_rejects_s4_plus_subcommands(
         assert exit_info.value.code == 2
 
     assert "invalid choice" in capsys.readouterr().err
+
+
+def test_store_contains_no_s3_anti_scope_subsystem() -> None:
+    store_root = SOURCE_PACKAGE / "store"
+    imports: set[str] = set()
+    definitions: set[str] = set()
+    for path in store_root.rglob("*.py"):
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                imports.update(
+                    alias.name.split(".", maxsplit=1)[0] for alias in node.names
+                )
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                imports.add(node.module.split(".", maxsplit=1)[0])
+            elif isinstance(
+                node,
+                ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef,
+            ):
+                definitions.add(node.name.lower())
+
+    assert imports.isdisjoint(FORBIDDEN_S3_IMPORTS)
+    assert all(
+        fragment not in definition
+        for definition in definitions
+        for fragment in FORBIDDEN_S3_NAME_FRAGMENTS
+    )

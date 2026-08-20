@@ -11,6 +11,6 @@ the bundle's results.
 Finite verification sampling is evidence about the cases evaluated. It is not a
 mathematical proof of a uniform error bound over every admissible input.
 
-At the current S0 stage, PI-GINOT contains only repository scaffolding and version
-reporting. It does not yet implement FEM, neural-operator training, verification, or
-inference.
+At the current S3 stage, PI-GINOT contains contract and local content-storage
+infrastructure. It does not yet implement geometry construction, constitutive
+physics, FEM, neural-operator training, verification, or inference.

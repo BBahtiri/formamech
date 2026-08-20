@@ -1,9 +1,11 @@
 import argparse
+import sys
 from collections.abc import Sequence
 from pathlib import Path
 
 from piginot import __version__
-from piginot.store import ObjectStore
+from piginot.contracts.canonical import canonical_json_bytes
+from piginot.store import ObjectStore, StoreError
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -21,10 +23,22 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     prune_parser = store_subparsers.add_parser("prune")
     prune_parser.add_argument("--root", required=True, type=Path)
+    prune_parser.add_argument("--dry-run", action="store_true")
 
     args = parser.parse_args(argv)
     if args.command == "store" and args.store_command == "prune":
-        ObjectStore(args.root).prune()
+        try:
+            result = ObjectStore.open(args.root).prune(dry_run=args.dry_run)
+        except (OSError, StoreError) as exc:
+            print(f"piginot: {exc}", file=sys.stderr)
+            return 1
+        report = {
+            "dry_run": result.dry_run,
+            "object_count": result.object_count,
+            "pruned_bytes": result.pruned_bytes,
+            "pruned_hashes": list(result.pruned_hashes),
+        }
+        print(canonical_json_bytes(report).decode("utf-8"))
         return 0
     return 0
 
