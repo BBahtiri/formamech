@@ -144,3 +144,15 @@ def test_put_tree_is_deterministic_and_rejects_symlinks(tmp_path: Path) -> None:
             pytest.skip(f"symlink creation unavailable: {exc}")
         with pytest.raises(ObjectStoreError, match="symbolic link"):
             store.put_tree(first)
+
+
+def test_put_tree_rejects_source_tree_that_contains_store_root(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "input.txt").write_bytes(b"input")
+    store = ObjectStore(source / ".piginot-store")
+
+    with pytest.raises(ObjectStoreError, match="store root"):
+        store.put_tree(source)

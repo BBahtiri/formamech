@@ -112,6 +112,8 @@ class ObjectStore:
             raise ObjectStoreError("tree root must not be a symbolic link")
         if not root.is_dir():
             raise ObjectStoreError("put_tree path must be a directory")
+        if _is_relative_to(self.root.resolve(strict=False), root.resolve(strict=False)):
+            raise ObjectStoreError("put_tree source must not contain the store root")
 
         files: list[JsonObject] = []
         for candidate in sorted(root.rglob("*"), key=_relative_sort_key(root)):
@@ -279,6 +281,10 @@ def _relative_sort_key(root: Path) -> Callable[[Path], str]:
         return path.relative_to(root).as_posix()
 
     return key
+
+
+def _is_relative_to(path: Path, parent: Path) -> bool:
+    return path == parent or path.is_relative_to(parent)
 
 
 def _atomic_json_write(path: Path, payload: JsonObject) -> None:
