@@ -78,4 +78,3 @@ G3 binds the decision through:
 - pruning tests for all tiers, dry runs, residual cleanup, lineage, and
   rehydration;
 - strict metadata, path, marker, CLI, lint, type, security, and coverage checks.
-
