@@ -3,6 +3,7 @@
   "step": "S3",
   "commit": "e83c306faac1c587b8595a9de3fbfb6bb09e78f6",
   "execution_profile_hash": "d891da2b3074f8771b360cd0e65de8575b531787373765455b82f935c53bb2f3",
+  "execution_profile_hash_domain": "content",
   "timestamp_utc": "2026-08-20T13:14:30Z",
   "execution_profile": {
     "python_version": "3.13.11",
@@ -25,43 +26,43 @@
       "status": "PASS",
       "measured": "1000 deterministic random byte blobs round-tripped byte-identically through ObjectStore.put/get",
       "threshold": "1000 random blobs round-trip byte-identically",
-      "command": "python -m pytest tests/store --cov=piginot.store --cov-report=term-missing --cov-fail-under=85"
+      "command": "python -m pytest tests/store --cov=src/piginot/store --cov-report=term-missing --cov-fail-under=85"
     },
     {
       "id": "G3.corruption",
       "status": "PASS",
       "measured": "byte-flipped object raised ContentCorruptionError and no bytes were returned",
       "threshold": "a byte flipped on disk is detected on read, not returned",
-      "command": "python -m pytest tests/store --cov=piginot.store --cov-report=term-missing --cov-fail-under=85"
+      "command": "python -m pytest tests/store --cov=src/piginot/store --cov-report=term-missing --cov-fail-under=85"
     },
     {
       "id": "G3.atomic",
       "status": "PASS",
       "measured": "subprocesses exited via os._exit during ObjectStore.put before object replacement and after object replacement but before metadata commit; get raised ContentNotFoundError in both cases",
       "threshold": "process killed between write and rename leaves no partial object visible",
-      "command": "python -m pytest tests/store --cov=piginot.store --cov-report=term-missing --cov-fail-under=85"
+      "command": "python -m pytest tests/store --cov=src/piginot/store --cov-report=term-missing --cov-fail-under=85"
     },
     {
       "id": "G3.divergent",
       "status": "PASS",
       "measured": "two different content hashes for one recipe hash persisted as a sorted set and raised DivergentRecipeError without selecting one",
       "threshold": "two different contents under one recipe hash raise",
-      "command": "python -m pytest tests/store --cov=piginot.store --cov-report=term-missing --cov-fail-under=85"
+      "command": "python -m pytest tests/store --cov=src/piginot/store --cov-report=term-missing --cov-fail-under=85"
     },
     {
       "id": "G3.prune",
       "status": "PASS",
       "measured": "PRUNABLE bytes were deleted, RETAINED and PERMANENT bytes remained, content metadata and recipe lineage still resolved, dry-run preserved bytes, and rehydration preserved identity",
       "threshold": "after prune, PRUNABLE bytes are gone, hashes and RETAINED intact, lineage queries still resolve",
-      "command": "python -m pytest tests/store --cov=piginot.store --cov-report=term-missing --cov-fail-under=85"
+      "command": "python -m pytest tests/store --cov=src/piginot/store --cov-report=term-missing --cov-fail-under=85"
     },
     {
       "id": "G3.coverage",
       "status": "PASS",
-      "measured": 96.17,
+      "measured": 91.13,
       "threshold": 85,
       "comparison": "gte",
-      "command": "python -m pytest tests/store --cov=piginot.store --cov-report=term-missing --cov-fail-under=85"
+      "command": "python -m pytest tests/store --cov=src/piginot/store --cov-report=term-missing --cov-fail-under=85"
     },
     {
       "id": "G-CODE.ruff-check",
@@ -89,7 +90,7 @@
       "status": "PASS",
       "measured": {
         "tests": "345 passed, 2 skipped",
-        "coverage_percent": 96.6
+        "coverage_percent": 94.67
       },
       "threshold": "pytest green and package coverage >=90%",
       "comparison": "gte",
@@ -100,26 +101,26 @@
       "status": "PASS",
       "measured": "No known vulnerabilities found; local editable package piginot skipped because it is not on PyPI",
       "threshold": "no known dependency vulnerabilities",
-      "command": "pip-audit"
+      "command": "python -m pip_audit"
     },
     {
       "id": "G-CODE.no-fixture-names",
       "status": "PASS",
-      "measured": "tests/test_no_fixture_names.py passed",
+      "measured": "20 guard and anti-scope tests passed",
       "threshold": "no dogbone/gauge/fillet/grip fixture names in src",
       "command": "python -m pytest tests/test_no_fixture_names.py tests/test_spike_isolation.py tests/test_s3_anti_scope.py"
     },
     {
       "id": "G-CODE.spike-isolation",
       "status": "PASS",
-      "measured": "tests/test_spike_isolation.py passed",
+      "measured": "20 guard and anti-scope tests passed",
       "threshold": "src has no import path into experiments",
       "command": "python -m pytest tests/test_no_fixture_names.py tests/test_spike_isolation.py tests/test_s3_anti_scope.py"
     },
     {
       "id": "G-CODE.s3-anti-scope",
       "status": "PASS",
-      "measured": "tests/test_s3_anti_scope.py passed; S4+ modules, forbidden S3 subsystems, and CLI subcommands remain absent",
+      "measured": "20 guard and anti-scope tests passed; S4+ modules, forbidden S3 subsystems, and CLI subcommands remain absent",
       "threshold": "no S4+ modules, no forbidden S3 anti-scope subsystem, no S4+ CLI subcommands",
       "command": "python -m pytest tests/test_no_fixture_names.py tests/test_spike_isolation.py tests/test_s3_anti_scope.py"
     }
