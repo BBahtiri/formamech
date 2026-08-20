@@ -1,0 +1,2342 @@
+{
+  "artifacts": {
+    "checkpoint": {
+      "path": "C:\\Users\\betim\\Documents\\Data_Science\\pi_ginot_large\\experiments\\spike\\artifacts\\iteration8\\confirmation_fields\\checkpoints\\final_model.pt",
+      "sha256": "1af9118180035e29e5986d96bbefb989ca3b616dbf5a3485086723b3c2f10874"
+    },
+    "comparison_plot_svg_count": 50,
+    "directory": "C:\\Users\\betim\\Documents\\Data_Science\\pi_ginot_large\\experiments\\spike\\artifacts\\iteration8\\confirmation_fields",
+    "plot_geometry_ids": [
+      "centre_notched-07c291cfaa2c0178",
+      "centre_notched-1e6316d5cbbdde9c",
+      "centre_notched-54b36f565917a000",
+      "centre_notched-5850a4e527bda4ee",
+      "centre_notched-5fc356e19c23d895",
+      "centre_notched-6175827239b29a20",
+      "centre_notched-677739b8ad19d0d6",
+      "centre_notched-76ed7308feacfd2c",
+      "centre_notched-794750d3c6119506",
+      "centre_notched-84fd43c7ab4b7713",
+      "centre_notched-8eff0e0860ba9755",
+      "centre_notched-97c212a2b29cbdd6",
+      "centre_notched-97d3d168777d377a",
+      "centre_notched-9e5d04f44d4bef78",
+      "centre_notched-a12bdec3ad94b311",
+      "centre_notched-af5e7d895a2da0d3",
+      "centre_notched-b86273129ec61a70",
+      "centre_notched-b9c497bf3fc6d473",
+      "centre_notched-cb7a87e58a419860",
+      "centre_notched-df025c19161ef560",
+      "centre_notched-e94f38dd4d86a5ad",
+      "centre_notched-ef67129a465437f5",
+      "centre_notched-f82bd86da9b26841",
+      "centre_notched-fab0534fc9598c88",
+      "centre_notched-fb22327759fad808",
+      "dogbone-04b0f7750707ff83",
+      "dogbone-2339a27be0b9ba6f",
+      "dogbone-25bcc462dc2a27ee",
+      "dogbone-277f2dd879939d7d",
+      "dogbone-3397de988ab5d0e5",
+      "dogbone-37b840e5f3d0acdc",
+      "dogbone-3e350cb00da06c00",
+      "dogbone-519116b933cf4d0d",
+      "dogbone-522a7e204654dd58",
+      "dogbone-5d72ef5d30a477f9",
+      "dogbone-674005280f22dcbe",
+      "dogbone-7c66e2fa505393cb",
+      "dogbone-7dc20e0a04ca4c28",
+      "dogbone-8d021760a5c938a9",
+      "dogbone-8dbb02064cc40df2",
+      "dogbone-90588924c7bfb303",
+      "dogbone-9da130af5089bd0c",
+      "dogbone-bbd828de6209f8e0",
+      "dogbone-bdfeae7a76ab4179",
+      "dogbone-be5f5227b79eb5a2",
+      "dogbone-c18bc7426e847c02",
+      "dogbone-ca1a22f8639594f8",
+      "dogbone-ccc6669e83db6594",
+      "dogbone-d115f240f61b0a80",
+      "dogbone-f525e0e2bc3b64b7"
+    ],
+    "prediction_geometry_ids": [
+      "centre_notched-07c291cfaa2c0178",
+      "centre_notched-1e6316d5cbbdde9c",
+      "centre_notched-54b36f565917a000",
+      "centre_notched-5850a4e527bda4ee",
+      "centre_notched-5fc356e19c23d895",
+      "centre_notched-6175827239b29a20",
+      "centre_notched-677739b8ad19d0d6",
+      "centre_notched-76ed7308feacfd2c",
+      "centre_notched-794750d3c6119506",
+      "centre_notched-84fd43c7ab4b7713",
+      "centre_notched-8eff0e0860ba9755",
+      "centre_notched-97c212a2b29cbdd6",
+      "centre_notched-97d3d168777d377a",
+      "centre_notched-9e5d04f44d4bef78",
+      "centre_notched-a12bdec3ad94b311",
+      "centre_notched-af5e7d895a2da0d3",
+      "centre_notched-b86273129ec61a70",
+      "centre_notched-b9c497bf3fc6d473",
+      "centre_notched-cb7a87e58a419860",
+      "centre_notched-df025c19161ef560",
+      "centre_notched-e94f38dd4d86a5ad",
+      "centre_notched-ef67129a465437f5",
+      "centre_notched-f82bd86da9b26841",
+      "centre_notched-fab0534fc9598c88",
+      "centre_notched-fb22327759fad808",
+      "dogbone-04b0f7750707ff83",
+      "dogbone-2339a27be0b9ba6f",
+      "dogbone-25bcc462dc2a27ee",
+      "dogbone-277f2dd879939d7d",
+      "dogbone-3397de988ab5d0e5",
+      "dogbone-37b840e5f3d0acdc",
+      "dogbone-3e350cb00da06c00",
+      "dogbone-519116b933cf4d0d",
+      "dogbone-522a7e204654dd58",
+      "dogbone-5d72ef5d30a477f9",
+      "dogbone-674005280f22dcbe",
+      "dogbone-7c66e2fa505393cb",
+      "dogbone-7dc20e0a04ca4c28",
+      "dogbone-8d021760a5c938a9",
+      "dogbone-8dbb02064cc40df2",
+      "dogbone-90588924c7bfb303",
+      "dogbone-9da130af5089bd0c",
+      "dogbone-bbd828de6209f8e0",
+      "dogbone-bdfeae7a76ab4179",
+      "dogbone-be5f5227b79eb5a2",
+      "dogbone-c18bc7426e847c02",
+      "dogbone-ca1a22f8639594f8",
+      "dogbone-ccc6669e83db6594",
+      "dogbone-d115f240f61b0a80",
+      "dogbone-f525e0e2bc3b64b7"
+    ],
+    "prediction_npz_count": 50
+  },
+  "campaign": {
+    "attempted": 50,
+    "converged": 50,
+    "failed": 0,
+    "failed_cases": [],
+    "families": {
+      "centre_notched": {
+        "attempted": 25,
+        "converged": 25,
+        "failed": 0
+      },
+      "dogbone": {
+        "attempted": 25,
+        "converged": 25,
+        "failed": 0
+      }
+    },
+    "freshness_proof": {
+      "fresh_geometry_ids_unique": true,
+      "fresh_mesh_ids_unique": true,
+      "fresh_node_ids_unique": true,
+      "fresh_rng_seeds_unique": true,
+      "geometry_ids_disjoint": true,
+      "mesh_ids_disjoint": true,
+      "mesh_qualified_node_ids_disjoint": true,
+      "rng_seeds_disjoint": true
+    },
+    "manifest": {
+      "case_count": 50,
+      "cases": [
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-5d72ef5d30a477f9",
+          "mesh_id": "mesh-b144ab71ec91247f",
+          "parameters": {
+            "L_total": 44.30169229382993,
+            "R_fillet": 10.130198821419453,
+            "W_gauge": 12.518426380682142,
+            "W_grip": 18.543098500853404
+          },
+          "point_count": 363,
+          "seed": 5151608841238580864,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-522a7e204654dd58",
+          "mesh_id": "mesh-8c3ca0110b4b9f0f",
+          "parameters": {
+            "L_total": 61.856210508797815,
+            "R_fillet": 15.412288359049988,
+            "W_gauge": 11.421212563139752,
+            "W_grip": 17.741016697246888
+          },
+          "point_count": 363,
+          "seed": 6792752199865919940,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-c18bc7426e847c02",
+          "mesh_id": "mesh-f0a2e00f62baf5b2",
+          "parameters": {
+            "L_total": 57.78830202242548,
+            "R_fillet": 18.637008543306997,
+            "W_gauge": 9.406128992161566,
+            "W_grip": 23.679169583058055
+          },
+          "point_count": 363,
+          "seed": 1105280864400728267,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-8d021760a5c938a9",
+          "mesh_id": "mesh-a198ee011945b671",
+          "parameters": {
+            "L_total": 66.08118671473703,
+            "R_fillet": 8.990826773720709,
+            "W_gauge": 12.470506072092526,
+            "W_grip": 22.63566191316349
+          },
+          "point_count": 363,
+          "seed": 13796473564480256557,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-ccc6669e83db6594",
+          "mesh_id": "mesh-2672c62c11c14049",
+          "parameters": {
+            "L_total": 64.67630246154236,
+            "R_fillet": 12.7824115013906,
+            "W_gauge": 7.274021777672117,
+            "W_grip": 20.5070636943301
+          },
+          "point_count": 363,
+          "seed": 15284097874117972527,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-674005280f22dcbe",
+          "mesh_id": "mesh-c0118a147aba08ff",
+          "parameters": {
+            "L_total": 49.31739715781899,
+            "R_fillet": 15.455262910280503,
+            "W_gauge": 7.6147264391824905,
+            "W_grip": 21.825495907102457
+          },
+          "point_count": 363,
+          "seed": 681860139900529739,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-bbd828de6209f8e0",
+          "mesh_id": "mesh-196532cc828d5cc0",
+          "parameters": {
+            "L_total": 48.3393814669694,
+            "R_fillet": 11.97012364489315,
+            "W_gauge": 12.106911597684446,
+            "W_grip": 21.916497735199517
+          },
+          "point_count": 363,
+          "seed": 2032658976170292926,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-90588924c7bfb303",
+          "mesh_id": "mesh-cb8cbe54792d75d1",
+          "parameters": {
+            "L_total": 46.29923205062352,
+            "R_fillet": 10.605897791204004,
+            "W_gauge": 7.055878739765737,
+            "W_grip": 16.251447676201604
+          },
+          "point_count": 363,
+          "seed": 17716948236814777306,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-d115f240f61b0a80",
+          "mesh_id": "mesh-86d9d7ea19aaa1bd",
+          "parameters": {
+            "L_total": 43.63014349586074,
+            "R_fillet": 8.669124135382836,
+            "W_gauge": 12.851612574737949,
+            "W_grip": 20.867359686209404
+          },
+          "point_count": 363,
+          "seed": 13815420070346126870,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-7dc20e0a04ca4c28",
+          "mesh_id": "mesh-a81591d729bf47ee",
+          "parameters": {
+            "L_total": 64.47694544390026,
+            "R_fillet": 14.072396137312552,
+            "W_gauge": 11.919206291774113,
+            "W_grip": 19.42141458996985
+          },
+          "point_count": 363,
+          "seed": 7305908704451617071,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-519116b933cf4d0d",
+          "mesh_id": "mesh-7e1e16fd63733aa9",
+          "parameters": {
+            "L_total": 44.38250900271456,
+            "R_fillet": 12.239402806047137,
+            "W_gauge": 12.614070594926915,
+            "W_grip": 22.052477096297565
+          },
+          "point_count": 363,
+          "seed": 10690281074362187903,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-04b0f7750707ff83",
+          "mesh_id": "mesh-459f9cd5968f6e93",
+          "parameters": {
+            "L_total": 48.62344423232988,
+            "R_fillet": 15.077883749443973,
+            "W_gauge": 12.290390719491256,
+            "W_grip": 23.447381019813037
+          },
+          "point_count": 363,
+          "seed": 16133095644800674133,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-bdfeae7a76ab4179",
+          "mesh_id": "mesh-342ab0fa6674746c",
+          "parameters": {
+            "L_total": 40.96002538463468,
+            "R_fillet": 8.169478415935505,
+            "W_gauge": 11.303414649545543,
+            "W_grip": 25.91485536683436
+          },
+          "point_count": 363,
+          "seed": 10756062285186043883,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-25bcc462dc2a27ee",
+          "mesh_id": "mesh-477f3e44741a9ead",
+          "parameters": {
+            "L_total": 49.24877729618159,
+            "R_fillet": 15.300554149547036,
+            "W_gauge": 7.554852489155824,
+            "W_grip": 19.58512891177146
+          },
+          "point_count": 363,
+          "seed": 8370868678368811469,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-ca1a22f8639594f8",
+          "mesh_id": "mesh-4d89e39d039509c9",
+          "parameters": {
+            "L_total": 49.08967517817897,
+            "R_fillet": 19.01564011590309,
+            "W_gauge": 9.232414772628367,
+            "W_grip": 24.26926515317925
+          },
+          "point_count": 363,
+          "seed": 4778177316160295388,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-f525e0e2bc3b64b7",
+          "mesh_id": "mesh-e8ea1de474bf35dd",
+          "parameters": {
+            "L_total": 50.734538560077695,
+            "R_fillet": 8.139293521634833,
+            "W_gauge": 11.943071183290755,
+            "W_grip": 17.1260221992811
+          },
+          "point_count": 363,
+          "seed": 4475717467237790913,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-37b840e5f3d0acdc",
+          "mesh_id": "mesh-6e31fcad13b691af",
+          "parameters": {
+            "L_total": 62.71047247674794,
+            "R_fillet": 18.247955308410102,
+            "W_gauge": 10.594251010781973,
+            "W_grip": 23.439202059786318
+          },
+          "point_count": 363,
+          "seed": 16138888406703190593,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-8dbb02064cc40df2",
+          "mesh_id": "mesh-5da35341043e7328",
+          "parameters": {
+            "L_total": 64.35531809865518,
+            "R_fillet": 12.685332808871964,
+            "W_gauge": 7.055007247619416,
+            "W_grip": 18.9258687058253
+          },
+          "point_count": 363,
+          "seed": 15815898411042178139,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-277f2dd879939d7d",
+          "mesh_id": "mesh-141f107a991cad1e",
+          "parameters": {
+            "L_total": 41.175028512907254,
+            "R_fillet": 15.902313781180194,
+            "W_gauge": 7.757883934499704,
+            "W_grip": 23.366483573990806
+          },
+          "point_count": 363,
+          "seed": 5730313803472444266,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-be5f5227b79eb5a2",
+          "mesh_id": "mesh-a2b36b504d5ea368",
+          "parameters": {
+            "L_total": 50.54385598751501,
+            "R_fillet": 17.426143048562412,
+            "W_gauge": 12.913189336570126,
+            "W_grip": 19.380600637432746
+          },
+          "point_count": 363,
+          "seed": 6414239867841849796,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-2339a27be0b9ba6f",
+          "mesh_id": "mesh-808846ce0b7f983d",
+          "parameters": {
+            "L_total": 61.80071692131217,
+            "R_fillet": 19.051196524991532,
+            "W_gauge": 7.5887468987982984,
+            "W_grip": 16.717181794253026
+          },
+          "point_count": 363,
+          "seed": 10761376003391441423,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-9da130af5089bd0c",
+          "mesh_id": "mesh-023e5a08b6c33ab5",
+          "parameters": {
+            "L_total": 52.16932312422458,
+            "R_fillet": 17.791106262410263,
+            "W_gauge": 7.690122803411994,
+            "W_grip": 23.977714962230905
+          },
+          "point_count": 363,
+          "seed": 5667459018716570548,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-3e350cb00da06c00",
+          "mesh_id": "mesh-d42f4787adca5e20",
+          "parameters": {
+            "L_total": 57.06940433002891,
+            "R_fillet": 18.090738767439504,
+            "W_gauge": 10.199236332045588,
+            "W_grip": 19.258076004045055
+          },
+          "point_count": 363,
+          "seed": 2807603445108952517,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-7c66e2fa505393cb",
+          "mesh_id": "mesh-755caa2b5b56a7b9",
+          "parameters": {
+            "L_total": 43.33913133822351,
+            "R_fillet": 15.883524388394235,
+            "W_gauge": 11.586345923555413,
+            "W_grip": 18.600123017271265
+          },
+          "point_count": 363,
+          "seed": 15380079711675901938,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-3397de988ab5d0e5",
+          "mesh_id": "mesh-c5eeb21f9de08139",
+          "parameters": {
+            "L_total": 61.563885656186514,
+            "R_fillet": 10.171038361775977,
+            "W_gauge": 8.035205074372872,
+            "W_grip": 17.742816700354478
+          },
+          "point_count": 363,
+          "seed": 13890862975773652253,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-fb22327759fad808",
+          "mesh_id": "mesh-843ff822e2bbcf4d",
+          "parameters": {
+            "notch_depth": 2.574776158014625,
+            "notch_radius": 4.67405373034559,
+            "width": 20.597341275877305
+          },
+          "point_count": 363,
+          "seed": 3443754479414843535,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-677739b8ad19d0d6",
+          "mesh_id": "mesh-79e5a5b21caf1761",
+          "parameters": {
+            "notch_depth": 4.0216319557979805,
+            "notch_radius": 7.9080396742384185,
+            "width": 29.51015728526845
+          },
+          "point_count": 363,
+          "seed": 11974166012735086923,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-f82bd86da9b26841",
+          "mesh_id": "mesh-29f8c4afd64e1ba5",
+          "parameters": {
+            "notch_depth": 3.263254386476607,
+            "notch_radius": 6.2917030870113875,
+            "width": 20.115181985745693
+          },
+          "point_count": 363,
+          "seed": 3429807538646548174,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-df025c19161ef560",
+          "mesh_id": "mesh-567ea1f83ba07dcc",
+          "parameters": {
+            "notch_depth": 2.259714650049035,
+            "notch_radius": 4.7367683687583,
+            "width": 16.68050914301164
+          },
+          "point_count": 363,
+          "seed": 4163189698324461146,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-5fc356e19c23d895",
+          "mesh_id": "mesh-2211503342f1b4cb",
+          "parameters": {
+            "notch_depth": 2.9104785130753217,
+            "notch_radius": 3.664723752633816,
+            "width": 27.001246351227202
+          },
+          "point_count": 363,
+          "seed": 13624029284912888029,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-76ed7308feacfd2c",
+          "mesh_id": "mesh-2aff73a61a7fd544",
+          "parameters": {
+            "notch_depth": 3.2550062287430968,
+            "notch_radius": 5.4630298972975915,
+            "width": 22.469052122161415
+          },
+          "point_count": 363,
+          "seed": 7277499117284704974,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-97d3d168777d377a",
+          "mesh_id": "mesh-a58456151cf819bb",
+          "parameters": {
+            "notch_depth": 4.833440161054584,
+            "notch_radius": 5.1207839838072,
+            "width": 24.220980861259054
+          },
+          "point_count": 363,
+          "seed": 9681683184421959039,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-5850a4e527bda4ee",
+          "mesh_id": "mesh-a58b60c5db5099ab",
+          "parameters": {
+            "notch_depth": 3.1488611853178035,
+            "notch_radius": 3.6119699370691083,
+            "width": 20.83032805334629
+          },
+          "point_count": 363,
+          "seed": 12911839235604519754,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-cb7a87e58a419860",
+          "mesh_id": "mesh-507a4bdfca7c4754",
+          "parameters": {
+            "notch_depth": 4.703713705296502,
+            "notch_radius": 6.244267962517645,
+            "width": 19.17844332634062
+          },
+          "point_count": 363,
+          "seed": 1462109824407651598,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-6175827239b29a20",
+          "mesh_id": "mesh-cea36a2e8896bc55",
+          "parameters": {
+            "notch_depth": 1.321523584757271,
+            "notch_radius": 5.477466977102555,
+            "width": 20.34106505133463
+          },
+          "point_count": 363,
+          "seed": 17095429806994667664,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-1e6316d5cbbdde9c",
+          "mesh_id": "mesh-fd0ad20bc172b3d9",
+          "parameters": {
+            "notch_depth": 3.110135862033597,
+            "notch_radius": 7.462230594153525,
+            "width": 22.05795792509339
+          },
+          "point_count": 363,
+          "seed": 17253700427349094614,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-84fd43c7ab4b7713",
+          "mesh_id": "mesh-51af87316c4a7192",
+          "parameters": {
+            "notch_depth": 3.7619592946522733,
+            "notch_radius": 6.419438070140832,
+            "width": 27.826024796681267
+          },
+          "point_count": 363,
+          "seed": 5292977873090954903,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-b9c497bf3fc6d473",
+          "mesh_id": "mesh-adc11e51d9bb0689",
+          "parameters": {
+            "notch_depth": 4.4672110058071715,
+            "notch_radius": 6.370778736879631,
+            "width": 27.057201219239836
+          },
+          "point_count": 363,
+          "seed": 9956709623169961506,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-b86273129ec61a70",
+          "mesh_id": "mesh-28be9f99b4210e68",
+          "parameters": {
+            "notch_depth": 2.7700432887360766,
+            "notch_radius": 7.038127496351795,
+            "width": 23.239677444109063
+          },
+          "point_count": 363,
+          "seed": 12755794253950815090,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-97c212a2b29cbdd6",
+          "mesh_id": "mesh-049f395dba48a46d",
+          "parameters": {
+            "notch_depth": 1.5190701154728825,
+            "notch_radius": 2.296133810417544,
+            "width": 29.155745994954582
+          },
+          "point_count": 363,
+          "seed": 5296861298822487810,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-794750d3c6119506",
+          "mesh_id": "mesh-e7bc1265cfe803ba",
+          "parameters": {
+            "notch_depth": 2.8708724945522124,
+            "notch_radius": 7.117992752744678,
+            "width": 20.329467093140202
+          },
+          "point_count": 363,
+          "seed": 7417179040983987442,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-9e5d04f44d4bef78",
+          "mesh_id": "mesh-9903e943742bd44c",
+          "parameters": {
+            "notch_depth": 1.5842761501103273,
+            "notch_radius": 6.840571704869253,
+            "width": 24.993537487233663
+          },
+          "point_count": 363,
+          "seed": 7091352273034537302,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-fab0534fc9598c88",
+          "mesh_id": "mesh-4a3af172d8ed2a98",
+          "parameters": {
+            "notch_depth": 2.7335180463697744,
+            "notch_radius": 6.1742840448484095,
+            "width": 22.68515720536825
+          },
+          "point_count": 363,
+          "seed": 7621668627217119265,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-af5e7d895a2da0d3",
+          "mesh_id": "mesh-7226c670bd3c1da1",
+          "parameters": {
+            "notch_depth": 2.776923826189263,
+            "notch_radius": 2.473306693879518,
+            "width": 27.285909032404934
+          },
+          "point_count": 363,
+          "seed": 16308465051742662783,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-54b36f565917a000",
+          "mesh_id": "mesh-d7b7922ca58ccf0f",
+          "parameters": {
+            "notch_depth": 4.9127800366178445,
+            "notch_radius": 5.187103004769309,
+            "width": 27.78237520133483
+          },
+          "point_count": 363,
+          "seed": 16891435596815706711,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-a12bdec3ad94b311",
+          "mesh_id": "mesh-0eb7eb751c674279",
+          "parameters": {
+            "notch_depth": 4.314391766552383,
+            "notch_radius": 6.633758605772252,
+            "width": 16.572066391840547
+          },
+          "point_count": 363,
+          "seed": 15901906994565243724,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-8eff0e0860ba9755",
+          "mesh_id": "mesh-c38901c1b801df1d",
+          "parameters": {
+            "notch_depth": 4.045727616108113,
+            "notch_radius": 2.733554265788838,
+            "width": 20.60828898948251
+          },
+          "point_count": 363,
+          "seed": 18072330633027545509,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-07c291cfaa2c0178",
+          "mesh_id": "mesh-998fc10ca12b9720",
+          "parameters": {
+            "notch_depth": 4.737906485952886,
+            "notch_radius": 4.131802545456966,
+            "width": 23.95529908485397
+          },
+          "point_count": 363,
+          "seed": 3590142929410535460,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-ef67129a465437f5",
+          "mesh_id": "mesh-2e2e21af3afc3109",
+          "parameters": {
+            "notch_depth": 1.3814072234692851,
+            "notch_radius": 5.364491377792736,
+            "width": 23.749014948542417
+          },
+          "point_count": 363,
+          "seed": 3770359882175712825,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-e94f38dd4d86a5ad",
+          "mesh_id": "mesh-a3a46f2fa4c43115",
+          "parameters": {
+            "notch_depth": 1.479797193706733,
+            "notch_radius": 5.549990781595881,
+            "width": 23.712128713395206
+          },
+          "point_count": 363,
+          "seed": 5342057451728919329,
+          "topology_signature": "quarter-single-component-no-holes"
+        }
+      ],
+      "family_counts": {
+        "centre_notched": 25,
+        "dogbone": 25
+      },
+      "master_seed": 2026081301,
+      "no_release_evidence": true,
+      "role": "LEGACY",
+      "schema_version": "confirm-v1"
+    },
+    "manifest_sha256": "c4165c2057a69bcb3d5480d364d70fcaccfd6fc6c1a2f22176c13ab0d851a9c3"
+  },
+  "checkpoint": {
+    "provenance": {
+      "architecture": "conditioned_mlp",
+      "batch_size": 4,
+      "checkpoint_recovery": {
+        "confirm_py_sha256": "59c4d3a879cec92751e4cc901fc68df8543d1a2b347938ee7b795528d543eb12",
+        "invalid_checkpoint_quarantine_path": "C:\\Users\\betim\\AppData\\Local\\Temp\\pi-ginot-iteration8-invalid-torchversion-3b221fa06451.pt",
+        "invalid_checkpoint_sha256": "3b221fa06451dce4fadb5de770c99f3d6d8411525d58acc72147d5db3cec8bde",
+        "metadata_resaved_as_primitives": true,
+        "reason": "TorchVersion string subclass rejected by weights_only loader",
+        "recovered_utc": "2026-08-13T21:21:17.975148Z",
+        "source_loaded_with_weights_only": true,
+        "temporary_safe_global": "torch.torch_version.TorchVersion",
+        "tensor_state_unchanged": true
+      },
+      "configuration_alias": "iteration3_joint_adam",
+      "created_utc": "2026-08-13T21:17:32.772563Z",
+      "environment": {
+        "device": "cpu",
+        "dtype": "float32",
+        "numpy": "2.5.2",
+        "platform": "Windows-11-10.0.26200-SP0",
+        "python": "3.12.13",
+        "scikit_fem": "12.0.2",
+        "scipy": "1.18.0",
+        "torch": "2.13.0+cpu",
+        "torch_threads": 8
+      },
+      "epochs": 1500,
+      "fem_content_sha256": "a21d4b6ab942e313774eab998e110061bbe3ccc5a9afec1ec15e5d4722eff211",
+      "final_hybrid_loss": 0.0018756746663711964,
+      "gradient_clip_norm": 1.0,
+      "historical_checkpoint_missing": true,
+      "learning_rate": 0.001,
+      "loss_weights": {
+        "constitutive_in_plane": 1.0,
+        "equilibrium_on_P_served": 1.0,
+        "partial_traction_on_P_served": 0.0,
+        "peak_supervised_P": 0.0,
+        "section_resultant_on_P_served": 0.0,
+        "supervised_P": 1.0,
+        "supervised_u": 1.0,
+        "traction_free_on_P_served": 0.0
+      },
+      "model_parameter_count": 614939,
+      "model_seed": 314159,
+      "no_release_evidence": true,
+      "objective": "joint_u_P_equilibrium_constitutive",
+      "optimizer": "Adam",
+      "physics_query_count": 24,
+      "probe_geometry_id": "centre_notched-1e8a92943fd2eb99",
+      "probe_output_sha256": "f5d1f2b54877c08ecefa7144081f309442faa71e36d9c96de055704dd8ec7026",
+      "reproduction_kind": "semantic_protocol_reproduction",
+      "role": "LEGACY",
+      "sampler_seed": 314179,
+      "schema_version": "iteration3-protocol-reproduction-v1",
+      "sealed_iteration3_screen_sha256": "c4b58d0956b0d006459ba05ebfe8bbf1097aafe606e62e8505c49e0666d8a7f6",
+      "served_stress": "P_served = P_predicted",
+      "source_sha256": {
+        "experiments/spike/confirm.py": "944b739cc870754cb96abcfdaa993b83ce52e0ee1a30f8f1dcc73eebb1b4c83e",
+        "experiments/spike/iteration8.py": "47d2c6ea725ed42fa3003b8a88b6fb7ddeedadc879370e4e81112afbd9779dfb",
+        "experiments/spike/iteration8_reproduction.py": "1ac3ea5a79c3621854312dd6ed082197250d72260b679a1a26c2e5338415812f",
+        "experiments/spike/model.py": "02dd9bf3a38602d7b898e540ce3672c96763a2498d69027c7dbff1cd47f414fb",
+        "experiments/spike/run.py": "54e0c4541e83ca196b2fcfa7fa7fdd7acd28ff11fe97b7009412121b6ec51c53"
+      },
+      "stress_head_conditioning": [
+        "y_max/x_max"
+      ],
+      "stress_head_output_scale": "E*u_delta/x_max",
+      "stress_head_parameter_count": 4484,
+      "supervised_query_count": 96,
+      "training_data_sha256": "e4cbce48775cb05b3570f6057d17c460d67a1e3657472a0955b1b5200f8e6c12",
+      "training_geometry_digest": "e2fcc8e72677bbba218eae3a215067320f7ff9ea38aaf91ff21d585a4ebb9869",
+      "training_geometry_ids": [
+        "dogbone-99e333830501e217",
+        "dogbone-64ce4fda58ef1957",
+        "dogbone-a1840ab250176836",
+        "dogbone-a375954ba7e60fa9",
+        "dogbone-7697771e7849af06",
+        "dogbone-0fbc0d1312c7687d",
+        "dogbone-b7a98ea5853c7b4f",
+        "dogbone-07495eb74b8f06d9",
+        "dogbone-e6836a6d47fef622",
+        "dogbone-442423f5ef96184f",
+        "dogbone-12e79dc66ed3e6fd",
+        "dogbone-81d08cc637f24e4f",
+        "dogbone-43db12df86020f13",
+        "dogbone-e225c45f5a607623",
+        "dogbone-e88118beb918f108",
+        "dogbone-a01db5bc9d001299",
+        "dogbone-18db6301df6903c8",
+        "dogbone-e0af91b7a9e08e3d",
+        "dogbone-c53cac07c1a1dbaa",
+        "dogbone-698bb0c57b8560b1",
+        "centre_notched-d66a0fd3bc042733",
+        "centre_notched-5cca28515007c18b",
+        "centre_notched-a41e780eea638dea",
+        "centre_notched-a98b736cb24257ac",
+        "centre_notched-9c5b78550c97d20b",
+        "centre_notched-7b041d2ff5f7fbf8",
+        "centre_notched-50d9c2afeed60864",
+        "centre_notched-1e8a92943fd2eb99",
+        "centre_notched-9fc5124e6496d801",
+        "centre_notched-9e5c3dddc4257cda",
+        "centre_notched-3e9ed4485ed587e8",
+        "centre_notched-f5f32165abf4e50d",
+        "centre_notched-f7cbe654abd10d25",
+        "centre_notched-b2e260e6a0a74b69",
+        "centre_notched-4c01cde220ca32c0",
+        "centre_notched-3adc77fbc1bf007b",
+        "centre_notched-429b86644ed120bd",
+        "centre_notched-6b8ce2fc8e450129",
+        "centre_notched-c9200fa83be7164f",
+        "centre_notched-b727dfb28c2647d1"
+      ],
+      "training_mesh_digest": "7e761906e4cbc73bd124b090787207fef7ef414f0bffcc450031add324ac0d9b",
+      "training_seconds": 3737.9049545000307,
+      "upstream_checkpoint_epoch": 1424,
+      "upstream_checkpoint_sha256": "6f8dbdfffbb2170dce9aa6fcd156a151736ae49846c2af525c429edca6dd7c85",
+      "upstream_commit": "9f6794141beca9d3e66433465c3b07039a7e41d2",
+      "upstream_repository": "BBahtiri/PI-GINOT-DogBone"
+    },
+    "sha256": "eae8e1fb8c7ef9bacfc4d2f7c6edbfd3f58cfdff0e524e9407847c58198c4147"
+  },
+  "decision": {
+    "rule": "CONFIRMED only when every preregistered family gate passes; INCONCLUSIVE only when non-bootstrap gates pass and a stress bootstrap upper bound exceeds 0.15; otherwise NOT_CONFIRMED",
+    "status": "NOT_CONFIRMED"
+  },
+  "execution_mode": "evaluation_only",
+  "gates": {
+    "all_bootstrap_upper_bounds_pass": false,
+    "all_metrics_finite": true,
+    "all_other_gates_pass": false,
+    "all_point_estimates_pass": true,
+    "families": {
+      "centre_notched": {
+        "P_within_15_fraction": 0.8,
+        "P_within_15_wilson_lower": 0.6086904963045967,
+        "all_metrics_finite": true,
+        "all_non_bootstrap_gates_pass": false,
+        "bootstrap_95_ci_upper": 0.17311741766379712,
+        "bootstrap_upper_pass": false,
+        "displacement_gate": true,
+        "inference_time_gate": true,
+        "mean_inference_seconds": 0.018139626402407887,
+        "pass_fraction_gate": true,
+        "peak_stress_gate": true,
+        "point_estimate_pass": true,
+        "relative_l2_P": 0.13341291173135364,
+        "relative_l2_P_p90": 0.26549215749136884,
+        "relative_l2_u": 0.04722707722110341,
+        "stress_p90_gate": false,
+        "wilson_lower_gate": true,
+        "worst_relative_peak_stress_error": 0.5588745762268789
+      },
+      "dogbone": {
+        "P_within_15_fraction": 0.88,
+        "P_within_15_wilson_lower": 0.7004420607907267,
+        "all_metrics_finite": true,
+        "all_non_bootstrap_gates_pass": true,
+        "bootstrap_95_ci_upper": 0.12243678624751339,
+        "bootstrap_upper_pass": true,
+        "displacement_gate": true,
+        "inference_time_gate": true,
+        "mean_inference_seconds": 0.01119383839983493,
+        "pass_fraction_gate": true,
+        "peak_stress_gate": true,
+        "point_estimate_pass": true,
+        "relative_l2_P": 0.098038349553929,
+        "relative_l2_P_p90": 0.15729553017102116,
+        "relative_l2_u": 0.024662328536277697,
+        "stress_p90_gate": true,
+        "wilson_lower_gate": true,
+        "worst_relative_peak_stress_error": 0.31481704837028757
+      }
+    },
+    "family_fraction_P_within_15_percent_min": 0.8,
+    "family_mean_inference_seconds_max": 0.05,
+    "family_per_case_P_90th_percentile_max": 0.2,
+    "family_relative_l2_P_bootstrap_upper_max": 0.15,
+    "family_relative_l2_P_max": 0.15,
+    "family_relative_l2_u_max": 0.075,
+    "family_wilson_lower_fraction_min": 0.6,
+    "family_worst_peak_error_max": 0.6
+  },
+  "no_release_evidence": true,
+  "no_tuning": true,
+  "per_case_metrics": [
+    {
+      "P_squared_error": 17962.808131213857,
+      "P_squared_reference": 220437.2391040008,
+      "family": "centre_notched",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 74.24001113847773,
+      "fem_solve_seconds": 0.27858759998343885,
+      "geometry_id": "centre_notched-07c291cfaa2c0178",
+      "inference_seconds": 0.01780606001848355,
+      "mesh_id": "mesh-998fc10ca12b9720",
+      "parameters": {
+        "notch_depth": 4.737906485952886,
+        "notch_radius": 4.131802545456966,
+        "width": 23.95529908485397
+      },
+      "predicted_peak_stress_MPa": 32.74915637438222,
+      "relative_l2_P": 0.2854595875818645,
+      "relative_l2_u": 0.0864275845263936,
+      "relative_peak_stress_error": 0.5588745762268789,
+      "rng_seed": 3590142929410535460,
+      "u_squared_error": 0.859361476379815,
+      "u_squared_reference": 115.04589580720601
+    },
+    {
+      "P_squared_error": 292.46406844479714,
+      "P_squared_reference": 217828.84894690177,
+      "family": "centre_notched",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 56.82474111928861,
+      "fem_solve_seconds": 0.2781940000131726,
+      "geometry_id": "centre_notched-1e6316d5cbbdde9c",
+      "inference_seconds": 0.019383919995743782,
+      "mesh_id": "mesh-fd0ad20bc172b3d9",
+      "parameters": {
+        "notch_depth": 3.110135862033597,
+        "notch_radius": 7.462230594153525,
+        "width": 22.05795792509339
+      },
+      "predicted_peak_stress_MPa": 60.86887967223679,
+      "relative_l2_P": 0.03664194852500341,
+      "relative_l2_u": 0.010046742549383158,
+      "relative_peak_stress_error": 0.0711686225628124,
+      "rng_seed": 17253700427349094614,
+      "u_squared_error": 0.010122866643526584,
+      "u_squared_reference": 100.28892326707796
+    },
+    {
+      "P_squared_error": 4019.031817043859,
+      "P_squared_reference": 257708.08807640983,
+      "family": "centre_notched",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 69.33585197163744,
+      "fem_solve_seconds": 0.2802106000017375,
+      "geometry_id": "centre_notched-54b36f565917a000",
+      "inference_seconds": 0.015370720019564032,
+      "mesh_id": "mesh-d7b7922ca58ccf0f",
+      "parameters": {
+        "notch_depth": 4.9127800366178445,
+        "notch_radius": 5.187103004769309,
+        "width": 27.78237520133483
+      },
+      "predicted_peak_stress_MPa": 48.73000713777282,
+      "relative_l2_P": 0.124881094880734,
+      "relative_l2_u": 0.062310069133644265,
+      "relative_peak_stress_error": 0.2971888892674695,
+      "rng_seed": 16891435596815706711,
+      "u_squared_error": 0.5129932865928483,
+      "u_squared_reference": 132.12810777242376
+    },
+    {
+      "P_squared_error": 779.2580555393404,
+      "P_squared_reference": 207453.81211724342,
+      "family": "centre_notched",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 70.84515727089484,
+      "fem_solve_seconds": 0.2841859000036493,
+      "geometry_id": "centre_notched-5850a4e527bda4ee",
+      "inference_seconds": 0.01664875999558717,
+      "mesh_id": "mesh-a58b60c5db5099ab",
+      "parameters": {
+        "notch_depth": 3.1488611853178035,
+        "notch_radius": 3.6119699370691083,
+        "width": 20.83032805334629
+      },
+      "predicted_peak_stress_MPa": 53.70751036782524,
+      "relative_l2_P": 0.06128863378292109,
+      "relative_l2_u": 0.029795177634754012,
+      "relative_peak_stress_error": 0.24190287047482104,
+      "rng_seed": 12911839235604519754,
+      "u_squared_error": 0.0841237528395243,
+      "u_squared_reference": 94.76035537915357
+    },
+    {
+      "P_squared_error": 551.5803733810687,
+      "P_squared_reference": 277264.69291853375,
+      "family": "centre_notched",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 68.58983710590829,
+      "fem_solve_seconds": 0.3146211000275798,
+      "geometry_id": "centre_notched-5fc356e19c23d895",
+      "inference_seconds": 0.01557013998972252,
+      "mesh_id": "mesh-2211503342f1b4cb",
+      "parameters": {
+        "notch_depth": 2.9104785130753217,
+        "notch_radius": 3.664723752633816,
+        "width": 27.001246351227202
+      },
+      "predicted_peak_stress_MPa": 54.610697515895154,
+      "relative_l2_P": 0.04460228591873535,
+      "relative_l2_u": 0.025731437598171328,
+      "relative_peak_stress_error": 0.20380773857835827,
+      "rng_seed": 13624029284912888029,
+      "u_squared_error": 0.07962310600027515,
+      "u_squared_reference": 120.25717946900292
+    },
+    {
+      "P_squared_error": 753.3837558356522,
+      "P_squared_reference": 217253.98194664624,
+      "family": "centre_notched",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 51.34981836919133,
+      "fem_solve_seconds": 0.2743280000286177,
+      "geometry_id": "centre_notched-6175827239b29a20",
+      "inference_seconds": 0.0170570999966003,
+      "mesh_id": "mesh-cea36a2e8896bc55",
+      "parameters": {
+        "notch_depth": 1.321523584757271,
+        "notch_radius": 5.477466977102555,
+        "width": 20.34106505133463
+      },
+      "predicted_peak_stress_MPa": 68.81178456612032,
+      "relative_l2_P": 0.05888765404894438,
+      "relative_l2_u": 0.02130033197200925,
+      "relative_peak_stress_error": 0.3400589671297797,
+      "rng_seed": 17095429806994667664,
+      "u_squared_error": 0.03961997244104721,
+      "u_squared_reference": 87.32556916079533
+    },
+    {
+      "P_squared_error": 1457.8407724094845,
+      "P_squared_reference": 286263.94287724106,
+      "family": "centre_notched",
+      "fem_newton_iterations": 26,
+      "fem_peak_stress_MPa": 58.80627839906907,
+      "fem_solve_seconds": 0.29133069998351857,
+      "geometry_id": "centre_notched-677739b8ad19d0d6",
+      "inference_seconds": 0.01499590000603348,
+      "mesh_id": "mesh-79e5a5b21caf1761",
+      "parameters": {
+        "notch_depth": 4.0216319557979805,
+        "notch_radius": 7.9080396742384185,
+        "width": 29.51015728526845
+      },
+      "predicted_peak_stress_MPa": 68.09626936643318,
+      "relative_l2_P": 0.07136277371092349,
+      "relative_l2_u": 0.03162898619873626,
+      "relative_peak_stress_error": 0.15797617567839778,
+      "rng_seed": 11974166012735086923,
+      "u_squared_error": 0.13569524281194845,
+      "u_squared_reference": 135.64196699330262
+    },
+    {
+      "P_squared_error": 949.6737013013534,
+      "P_squared_reference": 222262.5878386965,
+      "family": "centre_notched",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 62.82757064394407,
+      "fem_solve_seconds": 0.29509229998802766,
+      "geometry_id": "centre_notched-76ed7308feacfd2c",
+      "inference_seconds": 0.01583864000858739,
+      "mesh_id": "mesh-2aff73a61a7fd544",
+      "parameters": {
+        "notch_depth": 3.2550062287430968,
+        "notch_radius": 5.4630298972975915,
+        "width": 22.469052122161415
+      },
+      "predicted_peak_stress_MPa": 49.8546484115104,
+      "relative_l2_P": 0.06536631800863908,
+      "relative_l2_u": 0.022506334326125924,
+      "relative_peak_stress_error": 0.20648454332181201,
+      "rng_seed": 7277499117284704974,
+      "u_squared_error": 0.05187553002340084,
+      "u_squared_reference": 102.41251115695074
+    },
+    {
+      "P_squared_error": 464.6975557633102,
+      "P_squared_reference": 202077.2375770384,
+      "family": "centre_notched",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 56.70104128639638,
+      "fem_solve_seconds": 0.27511190000222996,
+      "geometry_id": "centre_notched-794750d3c6119506",
+      "inference_seconds": 0.04222058000741526,
+      "mesh_id": "mesh-e7bc1265cfe803ba",
+      "parameters": {
+        "notch_depth": 2.8708724945522124,
+        "notch_radius": 7.117992752744678,
+        "width": 20.329467093140202
+      },
+      "predicted_peak_stress_MPa": 62.99821851263167,
+      "relative_l2_P": 0.047954182957381464,
+      "relative_l2_u": 0.025519976145617275,
+      "relative_peak_stress_error": 0.11105928715538585,
+      "rng_seed": 7417179040983987442,
+      "u_squared_error": 0.05997257972948407,
+      "u_squared_reference": 92.08570180116254
+    },
+    {
+      "P_squared_error": 809.9343716378619,
+      "P_squared_reference": 273164.22310344345,
+      "family": "centre_notched",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 61.76718310376381,
+      "fem_solve_seconds": 0.2794492000248283,
+      "geometry_id": "centre_notched-84fd43c7ab4b7713",
+      "inference_seconds": 0.01638194000115618,
+      "mesh_id": "mesh-51af87316c4a7192",
+      "parameters": {
+        "notch_depth": 3.7619592946522733,
+        "notch_radius": 6.419438070140832,
+        "width": 27.826024796681267
+      },
+      "predicted_peak_stress_MPa": 61.97602172045135,
+      "relative_l2_P": 0.05445189592164924,
+      "relative_l2_u": 0.030647019100155198,
+      "relative_peak_stress_error": 0.0033810610455831357,
+      "rng_seed": 5292977873090954903,
+      "u_squared_error": 0.11965643979597823,
+      "u_squared_reference": 127.39711666703158
+    },
+    {
+      "P_squared_error": 3564.344925920859,
+      "P_squared_reference": 195599.89057298747,
+      "family": "centre_notched",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 82.71671946729057,
+      "fem_solve_seconds": 0.2801892000134103,
+      "geometry_id": "centre_notched-8eff0e0860ba9755",
+      "inference_seconds": 0.019028800004161895,
+      "mesh_id": "mesh-c38901c1b801df1d",
+      "parameters": {
+        "notch_depth": 4.045727616108113,
+        "notch_radius": 2.733554265788838,
+        "width": 20.60828898948251
+      },
+      "predicted_peak_stress_MPa": 43.603916461347374,
+      "relative_l2_P": 0.13499123125292037,
+      "relative_l2_u": 0.0419911613086071,
+      "relative_peak_stress_error": 0.4728524445582,
+      "rng_seed": 18072330633027545509,
+      "u_squared_error": 0.17185582822017142,
+      "u_squared_reference": 97.4649566159373
+    },
+    {
+      "P_squared_error": 998.7303088924602,
+      "P_squared_reference": 313723.6331274841,
+      "family": "centre_notched",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 61.59154673540003,
+      "fem_solve_seconds": 0.2913830999750644,
+      "geometry_id": "centre_notched-97c212a2b29cbdd6",
+      "inference_seconds": 0.0171751799993217,
+      "mesh_id": "mesh-049f395dba48a46d",
+      "parameters": {
+        "notch_depth": 1.5190701154728825,
+        "notch_radius": 2.296133810417544,
+        "width": 29.155745994954582
+      },
+      "predicted_peak_stress_MPa": 64.99976991311082,
+      "relative_l2_P": 0.056422262484383603,
+      "relative_l2_u": 0.027696944974167824,
+      "relative_peak_stress_error": 0.055335891991033614,
+      "rng_seed": 5296861298822487810,
+      "u_squared_error": 0.09616881215035998,
+      "u_squared_reference": 125.36332876361239
+    },
+    {
+      "P_squared_error": 5531.597318810274,
+      "P_squared_reference": 220357.47446157632,
+      "family": "centre_notched",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 69.27240025433872,
+      "fem_solve_seconds": 0.27575959998648614,
+      "geometry_id": "centre_notched-97d3d168777d377a",
+      "inference_seconds": 0.0169747999869287,
+      "mesh_id": "mesh-a58456151cf819bb",
+      "parameters": {
+        "notch_depth": 4.833440161054584,
+        "notch_radius": 5.1207839838072,
+        "width": 24.220980861259054
+      },
+      "predicted_peak_stress_MPa": 42.966091384345766,
+      "relative_l2_P": 0.15843874205380787,
+      "relative_l2_u": 0.06158182927019544,
+      "relative_peak_stress_error": 0.3797516582853691,
+      "rng_seed": 9681683184421959039,
+      "u_squared_error": 0.4420251783025879,
+      "u_squared_reference": 116.5579330303404
+    },
+    {
+      "P_squared_error": 2761.8522865495333,
+      "P_squared_reference": 265777.1761020994,
+      "family": "centre_notched",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 50.65576422542956,
+      "fem_solve_seconds": 0.2802703999914229,
+      "geometry_id": "centre_notched-9e5d04f44d4bef78",
+      "inference_seconds": 0.01749438000842929,
+      "mesh_id": "mesh-9903e943742bd44c",
+      "parameters": {
+        "notch_depth": 1.5842761501103273,
+        "notch_radius": 6.840571704869253,
+        "width": 24.993537487233663
+      },
+      "predicted_peak_stress_MPa": 74.87581406363533,
+      "relative_l2_P": 0.10193923785779474,
+      "relative_l2_u": 0.03541040520077975,
+      "relative_peak_stress_error": 0.47813018337698154,
+      "rng_seed": 7091352273034537302,
+      "u_squared_error": 0.13540525369793932,
+      "u_squared_reference": 107.98755852769327
+    },
+    {
+      "P_squared_error": 18870.297352345016,
+      "P_squared_reference": 141509.91937278764,
+      "family": "centre_notched",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 64.21961078729794,
+      "fem_solve_seconds": 0.2792851999984123,
+      "geometry_id": "centre_notched-a12bdec3ad94b311",
+      "inference_seconds": 0.017807880020700394,
+      "mesh_id": "mesh-0eb7eb751c674279",
+      "parameters": {
+        "notch_depth": 4.314391766552383,
+        "notch_radius": 6.633758605772252,
+        "width": 16.572066391840547
+      },
+      "predicted_peak_stress_MPa": 31.83555109831589,
+      "relative_l2_P": 0.3651707051084105,
+      "relative_l2_u": 0.10168734832612775,
+      "relative_peak_stress_error": 0.5042705692540156,
+      "rng_seed": 15901906994565243724,
+      "u_squared_error": 0.8542899882020479,
+      "u_squared_reference": 82.61739015665208
+    },
+    {
+      "P_squared_error": 487.3460270139786,
+      "P_squared_reference": 283003.3661761257,
+      "family": "centre_notched",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 75.35696680739532,
+      "fem_solve_seconds": 0.29957570001715794,
+      "geometry_id": "centre_notched-af5e7d895a2da0d3",
+      "inference_seconds": 0.01899197999155149,
+      "mesh_id": "mesh-7226c670bd3c1da1",
+      "parameters": {
+        "notch_depth": 2.776923826189263,
+        "notch_radius": 2.473306693879518,
+        "width": 27.285909032404934
+      },
+      "predicted_peak_stress_MPa": 58.27503556605294,
+      "relative_l2_P": 0.04149759370985527,
+      "relative_l2_u": 0.02732215106652263,
+      "relative_peak_stress_error": 0.22668018585464095,
+      "rng_seed": 16308465051742662783,
+      "u_squared_error": 0.09010597834972257,
+      "u_squared_reference": 120.70460244413451
+    },
+    {
+      "P_squared_error": 432.06374939646383,
+      "P_squared_reference": 235041.74296171204,
+      "family": "centre_notched",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 56.56778658029965,
+      "fem_solve_seconds": 0.2815777999931015,
+      "geometry_id": "centre_notched-b86273129ec61a70",
+      "inference_seconds": 0.020068539993371815,
+      "mesh_id": "mesh-28be9f99b4210e68",
+      "parameters": {
+        "notch_depth": 2.7700432887360766,
+        "notch_radius": 7.038127496351795,
+        "width": 23.239677444109063
+      },
+      "predicted_peak_stress_MPa": 67.52347798478432,
+      "relative_l2_P": 0.04287473171953327,
+      "relative_l2_u": 0.020590901062814457,
+      "relative_peak_stress_error": 0.1936736801418374,
+      "rng_seed": 12755794253950815090,
+      "u_squared_error": 0.04412575965253326,
+      "u_squared_reference": 104.07381901036125
+    },
+    {
+      "P_squared_error": 14140.524981400838,
+      "P_squared_reference": 254878.0634625027,
+      "family": "centre_notched",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 63.752475086323,
+      "fem_solve_seconds": 0.2764108999981545,
+      "geometry_id": "centre_notched-b9c497bf3fc6d473",
+      "inference_seconds": 0.01934122001985088,
+      "mesh_id": "mesh-adc11e51d9bb0689",
+      "parameters": {
+        "notch_depth": 4.4672110058071715,
+        "notch_radius": 6.370778736879631,
+        "width": 27.057201219239836
+      },
+      "predicted_peak_stress_MPa": 32.57300236999749,
+      "relative_l2_P": 0.2355410123556252,
+      "relative_l2_u": 0.07449349922149331,
+      "relative_peak_stress_error": 0.48907077998316856,
+      "rng_seed": 9956709623169961506,
+      "u_squared_error": 0.7043342866455816,
+      "u_squared_reference": 126.92351181041872
+    },
+    {
+      "P_squared_error": 19688.672472898917,
+      "P_squared_reference": 165225.16841758174,
+      "family": "centre_notched",
+      "fem_newton_iterations": 26,
+      "fem_peak_stress_MPa": 65.25401759821607,
+      "fem_solve_seconds": 0.2900690999813378,
+      "geometry_id": "centre_notched-cb7a87e58a419860",
+      "inference_seconds": 0.018493840016890317,
+      "mesh_id": "mesh-507a4bdfca7c4754",
+      "parameters": {
+        "notch_depth": 4.703713705296502,
+        "notch_radius": 6.244267962517645,
+        "width": 19.17844332634062
+      },
+      "predicted_peak_stress_MPa": 31.15543398609142,
+      "relative_l2_P": 0.34519946629681814,
+      "relative_l2_u": 0.1014833423164368,
+      "relative_peak_stress_error": 0.5225514821489986,
+      "rng_seed": 1462109824407651598,
+      "u_squared_error": 0.9777769235774736,
+      "u_squared_reference": 94.94022553647933
+    },
+    {
+      "P_squared_error": 836.2894985028839,
+      "P_squared_reference": 170172.31119809928,
+      "family": "centre_notched",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 60.50202668589076,
+      "fem_solve_seconds": 0.2870091999648139,
+      "geometry_id": "centre_notched-df025c19161ef560",
+      "inference_seconds": 0.01535206000553444,
+      "mesh_id": "mesh-567ea1f83ba07dcc",
+      "parameters": {
+        "notch_depth": 2.259714650049035,
+        "notch_radius": 4.7367683687583,
+        "width": 16.68050914301164
+      },
+      "predicted_peak_stress_MPa": 43.3672617009589,
+      "relative_l2_P": 0.07010255922681322,
+      "relative_l2_u": 0.02751192111142611,
+      "relative_peak_stress_error": 0.28320976872214,
+      "rng_seed": 4163189698324461146,
+      "u_squared_error": 0.05624169695542641,
+      "u_squared_reference": 74.30475062363101
+    },
+    {
+      "P_squared_error": 399.07522508818624,
+      "P_squared_reference": 252997.6152059613,
+      "family": "centre_notched",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 52.22555188705949,
+      "fem_solve_seconds": 0.2755285000312142,
+      "geometry_id": "centre_notched-e94f38dd4d86a5ad",
+      "inference_seconds": 0.015745179983787237,
+      "mesh_id": "mesh-a3a46f2fa4c43115",
+      "parameters": {
+        "notch_depth": 1.479797193706733,
+        "notch_radius": 5.549990781595881,
+        "width": 23.712128713395206
+      },
+      "predicted_peak_stress_MPa": 62.87129957762363,
+      "relative_l2_P": 0.03971633542676471,
+      "relative_l2_u": 0.014980289208847758,
+      "relative_peak_stress_error": 0.20384174615494985,
+      "rng_seed": 5342057451728919329,
+      "u_squared_error": 0.022914690413852065,
+      "u_squared_reference": 102.11125132687025
+    },
+    {
+      "P_squared_error": 4496.8255979901105,
+      "P_squared_reference": 254148.27473095554,
+      "family": "centre_notched",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 51.72992346505339,
+      "fem_solve_seconds": 0.2765205999603495,
+      "geometry_id": "centre_notched-ef67129a465437f5",
+      "inference_seconds": 0.016789699997752906,
+      "mesh_id": "mesh-2e2e21af3afc3109",
+      "parameters": {
+        "notch_depth": 1.3814072234692851,
+        "notch_radius": 5.364491377792736,
+        "width": 23.749014948542417
+      },
+      "predicted_peak_stress_MPa": 72.40722953399381,
+      "relative_l2_P": 0.1330177015639879,
+      "relative_l2_u": 0.042777072299206145,
+      "relative_peak_stress_error": 0.39971654090903813,
+      "rng_seed": 3770359882175712825,
+      "u_squared_error": 0.18669912520776558,
+      "u_squared_reference": 102.02818654142068
+    },
+    {
+      "P_squared_error": 873.8083692951584,
+      "P_squared_reference": 195717.71082291586,
+      "family": "centre_notched",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 60.22503638326101,
+      "fem_solve_seconds": 0.2792205000296235,
+      "geometry_id": "centre_notched-f82bd86da9b26841",
+      "inference_seconds": 0.016490700002759696,
+      "mesh_id": "mesh-29f8c4afd64e1ba5",
+      "parameters": {
+        "notch_depth": 3.263254386476607,
+        "notch_radius": 6.2917030870113875,
+        "width": 20.115181985745693
+      },
+      "predicted_peak_stress_MPa": 49.39588128769679,
+      "relative_l2_P": 0.06681793293763123,
+      "relative_l2_u": 0.024786063614843215,
+      "relative_peak_stress_error": 0.1798115160387697,
+      "rng_seed": 3429807538646548174,
+      "u_squared_error": 0.05687602237301871,
+      "u_squared_reference": 92.57934341312753
+    },
+    {
+      "P_squared_error": 662.1954017812155,
+      "P_squared_reference": 230006.8444483024,
+      "family": "centre_notched",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 58.485571101564716,
+      "fem_solve_seconds": 0.2866304999915883,
+      "geometry_id": "centre_notched-fab0534fc9598c88",
+      "inference_seconds": 0.016417879995424302,
+      "mesh_id": "mesh-4a3af172d8ed2a98",
+      "parameters": {
+        "notch_depth": 2.7335180463697744,
+        "notch_radius": 6.1742840448484095,
+        "width": 22.68515720536825
+      },
+      "predicted_peak_stress_MPa": 52.04722261655027,
+      "relative_l2_P": 0.053656544495078395,
+      "relative_l2_u": 0.01925794873143066,
+      "relative_peak_stress_error": 0.11008439113698239,
+      "rng_seed": 7621668627217119265,
+      "u_squared_error": 0.037642909791027204,
+      "u_squared_reference": 101.49932044062281
+    },
+    {
+      "P_squared_error": 913.421335264371,
+      "P_squared_reference": 209983.36598599577,
+      "family": "centre_notched",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 62.46285163527462,
+      "fem_solve_seconds": 0.29086210002424195,
+      "geometry_id": "centre_notched-fb22327759fad808",
+      "inference_seconds": 0.016044759994838387,
+      "mesh_id": "mesh-843ff822e2bbcf4d",
+      "parameters": {
+        "notch_depth": 2.574776158014625,
+        "notch_radius": 4.67405373034559,
+        "width": 20.597341275877305
+      },
+      "predicted_peak_stress_MPa": 76.76121386196482,
+      "relative_l2_P": 0.06595430209895668,
+      "relative_l2_u": 0.029029129228617816,
+      "relative_peak_stress_error": 0.22890985365476804,
+      "rng_seed": 3443754479414843535,
+      "u_squared_error": 0.07742387496027509,
+      "u_squared_reference": 91.87701690485022
+    },
+    {
+      "P_squared_error": 489.1144962184579,
+      "P_squared_reference": 147078.96577753528,
+      "family": "dogbone",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 37.679461127176154,
+      "fem_solve_seconds": 0.2840790000045672,
+      "geometry_id": "dogbone-04b0f7750707ff83",
+      "inference_seconds": 0.009932939987629652,
+      "mesh_id": "mesh-459f9cd5968f6e93",
+      "parameters": {
+        "L_total": 48.62344423232988,
+        "R_fillet": 15.077883749443973,
+        "W_gauge": 12.290390719491256,
+        "W_grip": 23.447381019813037
+      },
+      "predicted_peak_stress_MPa": 35.023969128221786,
+      "relative_l2_P": 0.05766734852938632,
+      "relative_l2_u": 0.017925088323840488,
+      "relative_peak_stress_error": 0.07047584863253538,
+      "rng_seed": 16133095644800674133,
+      "u_squared_error": 0.023002326754903733,
+      "u_squared_reference": 71.58947208828897
+    },
+    {
+      "P_squared_error": 797.3842121874897,
+      "P_squared_reference": 73315.4315242413,
+      "family": "dogbone",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 28.12184670231948,
+      "fem_solve_seconds": 0.27909020002698526,
+      "geometry_id": "dogbone-2339a27be0b9ba6f",
+      "inference_seconds": 0.013980719994287938,
+      "mesh_id": "mesh-808846ce0b7f983d",
+      "parameters": {
+        "L_total": 61.80071692131217,
+        "R_fillet": 19.051196524991532,
+        "W_gauge": 7.5887468987982984,
+        "W_grip": 16.717181794253026
+      },
+      "predicted_peak_stress_MPa": 26.962248716406503,
+      "relative_l2_P": 0.10428842742553925,
+      "relative_l2_u": 0.019159009997494977,
+      "relative_peak_stress_error": 0.04123477373971086,
+      "rng_seed": 10761376003391441423,
+      "u_squared_error": 0.021844494271326318,
+      "u_squared_reference": 59.510810699797084
+    },
+    {
+      "P_squared_error": 216.12361956136752,
+      "P_squared_reference": 93231.65313307339,
+      "family": "dogbone",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 36.76478101032205,
+      "fem_solve_seconds": 0.2817759999888949,
+      "geometry_id": "dogbone-25bcc462dc2a27ee",
+      "inference_seconds": 0.009830840001814067,
+      "mesh_id": "mesh-477f3e44741a9ead",
+      "parameters": {
+        "L_total": 49.24877729618159,
+        "R_fillet": 15.300554149547036,
+        "W_gauge": 7.554852489155824,
+        "W_grip": 19.58512891177146
+      },
+      "predicted_peak_stress_MPa": 34.66466594409577,
+      "relative_l2_P": 0.04814702127627421,
+      "relative_l2_u": 0.007739554499057501,
+      "relative_peak_stress_error": 0.05712301307157648,
+      "rng_seed": 8370868678368811469,
+      "u_squared_error": 0.003292801289022311,
+      "u_squared_reference": 54.9709949586622
+    },
+    {
+      "P_squared_error": 2650.0966156669474,
+      "P_squared_reference": 120090.4062127918,
+      "family": "dogbone",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 46.22485895854019,
+      "fem_solve_seconds": 0.289965600008145,
+      "geometry_id": "dogbone-277f2dd879939d7d",
+      "inference_seconds": 0.012375179992523045,
+      "mesh_id": "mesh-141f107a991cad1e",
+      "parameters": {
+        "L_total": 41.175028512907254,
+        "R_fillet": 15.902313781180194,
+        "W_gauge": 7.757883934499704,
+        "W_grip": 23.366483573990806
+      },
+      "predicted_peak_stress_MPa": 41.45059888758335,
+      "relative_l2_P": 0.14855138211460978,
+      "relative_l2_u": 0.036818450467090535,
+      "relative_peak_stress_error": 0.10328338860349909,
+      "rng_seed": 5730313803472444266,
+      "u_squared_error": 0.07873141975642366,
+      "u_squared_reference": 58.078724396875145
+    },
+    {
+      "P_squared_error": 231.83608530086812,
+      "P_squared_reference": 75285.76140857796,
+      "family": "dogbone",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 29.35604361804439,
+      "fem_solve_seconds": 0.2783717999700457,
+      "geometry_id": "dogbone-3397de988ab5d0e5",
+      "inference_seconds": 0.01393354000756517,
+      "mesh_id": "mesh-c5eeb21f9de08139",
+      "parameters": {
+        "L_total": 61.563885656186514,
+        "R_fillet": 10.171038361775977,
+        "W_gauge": 8.035205074372872,
+        "W_grip": 17.742816700354478
+      },
+      "predicted_peak_stress_MPa": 26.614783021308778,
+      "relative_l2_P": 0.0554924748531944,
+      "relative_l2_u": 0.011546100381406662,
+      "relative_peak_stress_error": 0.09337976984918464,
+      "rng_seed": 13890862975773652253,
+      "u_squared_error": 0.007436210775941995,
+      "u_squared_reference": 55.780324099136735
+    },
+    {
+      "P_squared_error": 615.4517759891697,
+      "P_squared_reference": 100956.0299108435,
+      "family": "dogbone",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 28.800446671578378,
+      "fem_solve_seconds": 0.28483300004154444,
+      "geometry_id": "dogbone-37b840e5f3d0acdc",
+      "inference_seconds": 0.011558360001072288,
+      "mesh_id": "mesh-6e31fcad13b691af",
+      "parameters": {
+        "L_total": 62.71047247674794,
+        "R_fillet": 18.247955308410102,
+        "W_gauge": 10.594251010781973,
+        "W_grip": 23.439202059786318
+      },
+      "predicted_peak_stress_MPa": 26.211838888158447,
+      "relative_l2_P": 0.07807839599435215,
+      "relative_l2_u": 0.01385127741089998,
+      "relative_peak_stress_error": 0.08988082070180148,
+      "rng_seed": 16138888406703190593,
+      "u_squared_error": 0.016443068025076786,
+      "u_squared_reference": 85.70441578029474
+    },
+    {
+      "P_squared_error": 164.94663445479713,
+      "P_squared_reference": 104629.09882235354,
+      "family": "dogbone",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 31.003573558777376,
+      "fem_solve_seconds": 0.2855705000110902,
+      "geometry_id": "dogbone-3e350cb00da06c00",
+      "inference_seconds": 0.013972520001698286,
+      "mesh_id": "mesh-d42f4787adca5e20",
+      "parameters": {
+        "L_total": 57.06940433002891,
+        "R_fillet": 18.090738767439504,
+        "W_gauge": 10.199236332045588,
+        "W_grip": 19.258076004045055
+      },
+      "predicted_peak_stress_MPa": 29.30264389614567,
+      "relative_l2_P": 0.03970502620464671,
+      "relative_l2_u": 0.011406159536742164,
+      "relative_peak_stress_error": 0.05486237447457591,
+      "rng_seed": 2807603445108952517,
+      "u_squared_error": 0.008837703786655304,
+      "u_squared_reference": 67.92983469894351
+    },
+    {
+      "P_squared_error": 235.2681507201665,
+      "P_squared_reference": 161738.31602773155,
+      "family": "dogbone",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 41.25385603315618,
+      "fem_solve_seconds": 0.2774060000083409,
+      "geometry_id": "dogbone-519116b933cf4d0d",
+      "inference_seconds": 0.008914679987356067,
+      "mesh_id": "mesh-7e1e16fd63733aa9",
+      "parameters": {
+        "L_total": 44.38250900271456,
+        "R_fillet": 12.239402806047137,
+        "W_gauge": 12.614070594926915,
+        "W_grip": 22.052477096297565
+      },
+      "predicted_peak_stress_MPa": 38.84213668293575,
+      "relative_l2_P": 0.03813951015474655,
+      "relative_l2_u": 0.018888979462851785,
+      "relative_peak_stress_error": 0.05846045878189192,
+      "rng_seed": 10690281074362187903,
+      "u_squared_error": 0.022175257019596738,
+      "u_squared_reference": 62.15150840353922
+    },
+    {
+      "P_squared_error": 295.7293060824968,
+      "P_squared_reference": 105078.83708421873,
+      "family": "dogbone",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 28.45255159939829,
+      "fem_solve_seconds": 0.2840493000112474,
+      "geometry_id": "dogbone-522a7e204654dd58",
+      "inference_seconds": 0.009888379997573794,
+      "mesh_id": "mesh-8c3ca0110b4b9f0f",
+      "parameters": {
+        "L_total": 61.856210508797815,
+        "R_fillet": 15.412288359049988,
+        "W_gauge": 11.421212563139752,
+        "W_grip": 17.741016697246888
+      },
+      "predicted_peak_stress_MPa": 25.680741012114535,
+      "relative_l2_P": 0.053050508764998464,
+      "relative_l2_u": 0.016398890353537733,
+      "relative_peak_stress_error": 0.09741869995738357,
+      "rng_seed": 6792752199865919940,
+      "u_squared_error": 0.01891232489667523,
+      "u_squared_reference": 70.32601287944512
+    },
+    {
+      "P_squared_error": 5709.529965785285,
+      "P_squared_reference": 157284.7317742714,
+      "family": "dogbone",
+      "fem_newton_iterations": 26,
+      "fem_peak_stress_MPa": 40.41696552520546,
+      "fem_solve_seconds": 0.29480520001379773,
+      "geometry_id": "dogbone-5d72ef5d30a477f9",
+      "inference_seconds": 0.009873500000685454,
+      "mesh_id": "mesh-b144ab71ec91247f",
+      "parameters": {
+        "L_total": 44.30169229382993,
+        "R_fillet": 10.130198821419453,
+        "W_gauge": 12.518426380682142,
+        "W_grip": 18.543098500853404
+      },
+      "predicted_peak_stress_MPa": 28.775012256475275,
+      "relative_l2_P": 0.1905271606069588,
+      "relative_l2_u": 0.047135523659917446,
+      "relative_peak_stress_error": 0.2880461983587029,
+      "rng_seed": 5151608841238580864,
+      "u_squared_error": 0.12071365278741197,
+      "u_squared_reference": 54.33250382174708
+    },
+    {
+      "P_squared_error": 560.2229093222589,
+      "P_squared_reference": 95454.55128373984,
+      "family": "dogbone",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 37.30013072018757,
+      "fem_solve_seconds": 0.3179752000141889,
+      "geometry_id": "dogbone-674005280f22dcbe",
+      "inference_seconds": 0.011649959988426417,
+      "mesh_id": "mesh-c0118a147aba08ff",
+      "parameters": {
+        "L_total": 49.31739715781899,
+        "R_fillet": 15.455262910280503,
+        "W_gauge": 7.6147264391824905,
+        "W_grip": 21.825495907102457
+      },
+      "predicted_peak_stress_MPa": 34.06431235030925,
+      "relative_l2_P": 0.07660940900946075,
+      "relative_l2_u": 0.017316918672857902,
+      "relative_peak_stress_error": 0.0867508587075012,
+      "rng_seed": 681860139900529739,
+      "u_squared_error": 0.018110600304662817,
+      "u_squared_reference": 60.393696375588
+    },
+    {
+      "P_squared_error": 279.1903724054483,
+      "P_squared_reference": 152227.38408695447,
+      "family": "dogbone",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 40.90074362456011,
+      "fem_solve_seconds": 0.2799991999636404,
+      "geometry_id": "dogbone-7c66e2fa505393cb",
+      "inference_seconds": 0.016571559989824892,
+      "mesh_id": "mesh-755caa2b5b56a7b9",
+      "parameters": {
+        "L_total": 43.33913133822351,
+        "R_fillet": 15.883524388394235,
+        "W_gauge": 11.586345923555413,
+        "W_grip": 18.600123017271265
+      },
+      "predicted_peak_stress_MPa": 38.46584155548859,
+      "relative_l2_P": 0.042825636536165765,
+      "relative_l2_u": 0.011723294498696859,
+      "relative_peak_stress_error": 0.05953197554113436,
+      "rng_seed": 15380079711675901938,
+      "u_squared_error": 0.00747101301037967,
+      "u_squared_reference": 54.36008696000216
+    },
+    {
+      "P_squared_error": 2806.6115125705937,
+      "P_squared_reference": 105473.03770148834,
+      "family": "dogbone",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 27.69597688083003,
+      "fem_solve_seconds": 0.32771610002964735,
+      "geometry_id": "dogbone-7dc20e0a04ca4c28",
+      "inference_seconds": 0.008775279996916652,
+      "mesh_id": "mesh-a81591d729bf47ee",
+      "parameters": {
+        "L_total": 64.47694544390026,
+        "R_fillet": 14.072396137312552,
+        "W_gauge": 11.919206291774113,
+        "W_grip": 19.42141458996985
+      },
+      "predicted_peak_stress_MPa": 20.257269835594087,
+      "relative_l2_P": 0.1631249622086287,
+      "relative_l2_u": 0.0468926862160887,
+      "relative_peak_stress_error": 0.2685843896116442,
+      "rng_seed": 7305908704451617071,
+      "u_squared_error": 0.17063426646284338,
+      "u_squared_reference": 77.59898244203312
+    },
+    {
+      "P_squared_error": 282.3624376141678,
+      "P_squared_reference": 107056.84386206412,
+      "family": "dogbone",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 28.20781010148173,
+      "fem_solve_seconds": 0.3360683000064455,
+      "geometry_id": "dogbone-8d021760a5c938a9",
+      "inference_seconds": 0.010943399998359382,
+      "mesh_id": "mesh-a198ee011945b671",
+      "parameters": {
+        "L_total": 66.08118671473703,
+        "R_fillet": 8.990826773720709,
+        "W_gauge": 12.470506072092526,
+        "W_grip": 22.63566191316349
+      },
+      "predicted_peak_stress_MPa": 24.531210034875812,
+      "relative_l2_P": 0.05135659754517621,
+      "relative_l2_u": 0.016312296648143935,
+      "relative_peak_stress_error": 0.13033979076641578,
+      "rng_seed": 13796473564480256557,
+      "u_squared_error": 0.021996553097942705,
+      "u_squared_reference": 82.66552151145738
+    },
+    {
+      "P_squared_error": 1093.7247928720944,
+      "P_squared_reference": 65044.39279943606,
+      "family": "dogbone",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 27.678393202735894,
+      "fem_solve_seconds": 0.27690210001310334,
+      "geometry_id": "dogbone-8dbb02064cc40df2",
+      "inference_seconds": 0.014329120027832687,
+      "mesh_id": "mesh-5da35341043e7328",
+      "parameters": {
+        "L_total": 64.35531809865518,
+        "R_fillet": 12.685332808871964,
+        "W_gauge": 7.055007247619416,
+        "W_grip": 18.9258687058253
+      },
+      "predicted_peak_stress_MPa": 22.632404882451485,
+      "relative_l2_P": 0.129672862096434,
+      "relative_l2_u": 0.034630984997944876,
+      "relative_peak_stress_error": 0.18230784870075598,
+      "rng_seed": 15815898411042178139,
+      "u_squared_error": 0.07126047476016331,
+      "u_squared_reference": 59.418135933257844
+    },
+    {
+      "P_squared_error": 489.1145071764755,
+      "P_squared_reference": 88574.87261809707,
+      "family": "dogbone",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 38.73776604673825,
+      "fem_solve_seconds": 0.34254990000044927,
+      "geometry_id": "dogbone-90588924c7bfb303",
+      "inference_seconds": 0.008031840005423873,
+      "mesh_id": "mesh-cb8cbe54792d75d1",
+      "parameters": {
+        "L_total": 46.29923205062352,
+        "R_fillet": 10.605897791204004,
+        "W_gauge": 7.055878739765737,
+        "W_grip": 16.251447676201604
+      },
+      "predicted_peak_stress_MPa": 37.278277317038864,
+      "relative_l2_P": 0.07431046927229068,
+      "relative_l2_u": 0.019868718451728513,
+      "relative_peak_stress_error": 0.037676120195947065,
+      "rng_seed": 17716948236814777306,
+      "u_squared_error": 0.016125421293213663,
+      "u_squared_reference": 40.8480527695437
+    },
+    {
+      "P_squared_error": 455.84103002738595,
+      "P_squared_reference": 93830.17575538765,
+      "family": "dogbone",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 35.73865709084464,
+      "fem_solve_seconds": 0.2819875000277534,
+      "geometry_id": "dogbone-9da130af5089bd0c",
+      "inference_seconds": 0.012906060006935149,
+      "mesh_id": "mesh-023e5a08b6c33ab5",
+      "parameters": {
+        "L_total": 52.16932312422458,
+        "R_fillet": 17.791106262410263,
+        "W_gauge": 7.690122803411994,
+        "W_grip": 23.977714962230905
+      },
+      "predicted_peak_stress_MPa": 32.659363770932785,
+      "relative_l2_P": 0.06970042748518103,
+      "relative_l2_u": 0.017160411577971484,
+      "relative_peak_stress_error": 0.08616141653237144,
+      "rng_seed": 5667459018716570548,
+      "u_squared_error": 0.02092911056442072,
+      "u_squared_reference": 71.07148217786927
+    },
+    {
+      "P_squared_error": 119.14141903500213,
+      "P_squared_reference": 143009.4687411458,
+      "family": "dogbone",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 37.94296479074648,
+      "fem_solve_seconds": 0.3102227000053972,
+      "geometry_id": "dogbone-bbd828de6209f8e0",
+      "inference_seconds": 0.010889540007337929,
+      "mesh_id": "mesh-196532cc828d5cc0",
+      "parameters": {
+        "L_total": 48.3393814669694,
+        "R_fillet": 11.97012364489315,
+        "W_gauge": 12.106911597684446,
+        "W_grip": 21.916497735199517
+      },
+      "predicted_peak_stress_MPa": 34.75236341109793,
+      "relative_l2_P": 0.028863499660777756,
+      "relative_l2_u": 0.011023100318902728,
+      "relative_peak_stress_error": 0.08408940622443588,
+      "rng_seed": 2032658976170292926,
+      "u_squared_error": 0.00788996328916479,
+      "u_squared_reference": 64.93329819376733
+    },
+    {
+      "P_squared_error": 901.1786401985968,
+      "P_squared_reference": 156129.91407754197,
+      "family": "dogbone",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 46.132114812365685,
+      "fem_solve_seconds": 0.2898470999789424,
+      "geometry_id": "dogbone-bdfeae7a76ab4179",
+      "inference_seconds": 0.00944937999593094,
+      "mesh_id": "mesh-342ab0fa6674746c",
+      "parameters": {
+        "L_total": 40.96002538463468,
+        "R_fillet": 8.169478415935505,
+        "W_gauge": 11.303414649545543,
+        "W_grip": 25.91485536683436
+      },
+      "predicted_peak_stress_MPa": 42.45156912617609,
+      "relative_l2_P": 0.07597354375995576,
+      "relative_l2_u": 0.03796910565682804,
+      "relative_peak_stress_error": 0.07978272188820244,
+      "rng_seed": 10756062285186043883,
+      "u_squared_error": 0.07864920525243423,
+      "u_squared_reference": 54.55487978356494
+    },
+    {
+      "P_squared_error": 112.37590565577388,
+      "P_squared_reference": 145020.66065792425,
+      "family": "dogbone",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 34.791568614887936,
+      "fem_solve_seconds": 0.2861427000025287,
+      "geometry_id": "dogbone-be5f5227b79eb5a2",
+      "inference_seconds": 0.012606239994056523,
+      "mesh_id": "mesh-a2b36b504d5ea368",
+      "parameters": {
+        "L_total": 50.54385598751501,
+        "R_fillet": 17.426143048562412,
+        "W_gauge": 12.913189336570126,
+        "W_grip": 19.380600637432746
+      },
+      "predicted_peak_stress_MPa": 31.20316765311759,
+      "relative_l2_P": 0.027836950858345234,
+      "relative_l2_u": 0.013693488770066773,
+      "relative_peak_stress_error": 0.10313995903693764,
+      "rng_seed": 6414239867841849796,
+      "u_squared_error": 0.012496865219755548,
+      "u_squared_reference": 66.64581235196181
+    },
+    {
+      "P_squared_error": 277.25631722505364,
+      "P_squared_reference": 99697.99084448922,
+      "family": "dogbone",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 31.5635327050554,
+      "fem_solve_seconds": 0.28386440000031143,
+      "geometry_id": "dogbone-c18bc7426e847c02",
+      "inference_seconds": 0.00973973999498412,
+      "mesh_id": "mesh-f0a2e00f62baf5b2",
+      "parameters": {
+        "L_total": 57.78830202242548,
+        "R_fillet": 18.637008543306997,
+        "W_gauge": 9.406128992161566,
+        "W_grip": 23.679169583058055
+      },
+      "predicted_peak_stress_MPa": 28.727290486131963,
+      "relative_l2_P": 0.05273482655604484,
+      "relative_l2_u": 0.013108258802547118,
+      "relative_peak_stress_error": 0.08985819950594975,
+      "rng_seed": 1105280864400728267,
+      "u_squared_error": 0.013658529851293675,
+      "u_squared_reference": 79.49026441467706
+    },
+    {
+      "P_squared_error": 1826.9956823955886,
+      "P_squared_reference": 117880.33555163647,
+      "family": "dogbone",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 37.98999850528962,
+      "fem_solve_seconds": 0.2838476999895647,
+      "geometry_id": "dogbone-ca1a22f8639594f8",
+      "inference_seconds": 0.00971241999650374,
+      "mesh_id": "mesh-4d89e39d039509c9",
+      "parameters": {
+        "L_total": 49.08967517817897,
+        "R_fillet": 19.01564011590309,
+        "W_gauge": 9.232414772628367,
+        "W_grip": 24.26926515317925
+      },
+      "predicted_peak_stress_MPa": 33.935891303800375,
+      "relative_l2_P": 0.1244939018846758,
+      "relative_l2_u": 0.029987332102399223,
+      "relative_peak_stress_error": 0.10671511874170678,
+      "rng_seed": 4778177316160295388,
+      "u_squared_error": 0.06577413848801057,
+      "u_squared_reference": 73.14413521673423
+    },
+    {
+      "P_squared_error": 365.10286088642164,
+      "P_squared_reference": 67054.64061143053,
+      "family": "dogbone",
+      "fem_newton_iterations": 25,
+      "fem_peak_stress_MPa": 27.735320232325137,
+      "fem_solve_seconds": 0.37968790001468733,
+      "geometry_id": "dogbone-ccc6669e83db6594",
+      "inference_seconds": 0.010943199996836484,
+      "mesh_id": "mesh-2672c62c11c14049",
+      "parameters": {
+        "L_total": 64.67630246154236,
+        "R_fillet": 12.7824115013906,
+        "W_gauge": 7.274021777672117,
+        "W_grip": 20.5070636943301
+      },
+      "predicted_peak_stress_MPa": 25.37479868026257,
+      "relative_l2_P": 0.07378926737338401,
+      "relative_l2_u": 0.014949366955304333,
+      "relative_peak_stress_error": 0.0851088623563615,
+      "rng_seed": 15284097874117972527,
+      "u_squared_error": 0.014220556852822568,
+      "u_squared_reference": 63.63132959785877
+    },
+    {
+      "P_squared_error": 6070.833810251273,
+      "P_squared_reference": 164272.60688197165,
+      "family": "dogbone",
+      "fem_newton_iterations": 26,
+      "fem_peak_stress_MPa": 42.0381811765821,
+      "fem_solve_seconds": 0.35279620002256706,
+      "geometry_id": "dogbone-d115f240f61b0a80",
+      "inference_seconds": 0.00848672001156956,
+      "mesh_id": "mesh-86d9d7ea19aaa1bd",
+      "parameters": {
+        "L_total": 43.63014349586074,
+        "R_fillet": 8.669124135382836,
+        "W_gauge": 12.851612574737949,
+        "W_grip": 20.867359686209404
+      },
+      "predicted_peak_stress_MPa": 28.80384505971514,
+      "relative_l2_P": 0.19223904376193857,
+      "relative_l2_u": 0.04415073605333544,
+      "relative_peak_stress_error": 0.31481704837028757,
+      "rng_seed": 13815420070346126870,
+      "u_squared_error": 0.11090251696938049,
+      "u_squared_reference": 56.89387394513401
+    },
+    {
+      "P_squared_error": 542.0779750106482,
+      "P_squared_reference": 130839.25549684845,
+      "family": "dogbone",
+      "fem_newton_iterations": 30,
+      "fem_peak_stress_MPa": 35.35670447848777,
+      "fem_solve_seconds": 0.3491382999927737,
+      "geometry_id": "dogbone-f525e0e2bc3b64b7",
+      "inference_seconds": 0.010550840012729167,
+      "mesh_id": "mesh-e8ea1de474bf35dd",
+      "parameters": {
+        "L_total": 50.734538560077695,
+        "R_fillet": 8.139293521634833,
+        "W_gauge": 11.943071183290755,
+        "W_grip": 17.1260221992811
+      },
+      "predicted_peak_stress_MPa": 30.92094958471498,
+      "relative_l2_P": 0.06436678965219825,
+      "relative_l2_u": 0.020258955744720177,
+      "relative_peak_stress_error": 0.1254572494580669,
+      "rng_seed": 4475717467237790913,
+      "u_squared_error": 0.023175580108573485,
+      "u_squared_reference": 56.46723238971116
+    }
+  ],
+  "protocol": {
+    "backward_calls": 0,
+    "bootstrap_resamples": 10000,
+    "geometry_seed": 2026081301,
+    "minimum_converged_per_family": 24,
+    "minimum_converged_total": 48,
+    "model_state_unchanged": true,
+    "optimizer_steps": 0,
+    "statistics_seed": 2026081302,
+    "training_performed": false
+  },
+  "role": "LEGACY",
+  "schema_version": "iteration8-confirmation-v1",
+  "statistics": {
+    "centre_notched": {
+      "P_within_15_percent": {
+        "count": 25,
+        "fraction": 0.8,
+        "passed": 20,
+        "threshold": 0.15,
+        "wilson_95_ci": [
+          0.6086904963045967,
+          0.9113941531319742
+        ]
+      },
+      "count": 25,
+      "inference_seconds": {
+        "mean": 0.018139626402407887,
+        "total": 0.45349066006019717
+      },
+      "relative_l2_P": {
+        "bootstrap_95_ci": [
+          0.09011190961160224,
+          0.17311741766379712
+        ],
+        "estimate": 0.13341291173135364,
+        "per_case_90th_percentile": 0.26549215749136884
+      },
+      "relative_l2_u": {
+        "bootstrap_95_ci": [
+          0.03532112268000499,
+          0.05808579766454592
+        ],
+        "estimate": 0.04722707722110341
+      },
+      "relative_peak_stress_error": {
+        "median": 0.22890985365476804,
+        "median_bootstrap_95_ci": [
+          0.1936736801418374,
+          0.3797516582853691
+        ],
+        "worst": 0.5588745762268789
+      }
+    },
+    "dogbone": {
+      "P_within_15_percent": {
+        "count": 25,
+        "fraction": 0.88,
+        "passed": 22,
+        "threshold": 0.15,
+        "wilson_95_ci": [
+          0.7004420607907267,
+          0.9583318284955964
+        ]
+      },
+      "count": 25,
+      "inference_seconds": {
+        "mean": 0.01119383839983493,
+        "total": 0.27984595999587325
+      },
+      "relative_l2_P": {
+        "bootstrap_95_ci": [
+          0.07092556881508386,
+          0.12243678624751339
+        ],
+        "estimate": 0.098038349553929,
+        "per_case_90th_percentile": 0.15729553017102116
+      },
+      "relative_l2_u": {
+        "bootstrap_95_ci": [
+          0.019261025285707018,
+          0.02974053363131005
+        ],
+        "estimate": 0.024662328536277697
+      },
+      "relative_peak_stress_error": {
+        "median": 0.08985819950594975,
+        "median_bootstrap_95_ci": [
+          0.07978272188820244,
+          0.10328338860349909
+        ],
+        "worst": 0.31481704837028757
+      }
+    }
+  },
+  "status": "NOT_CONFIRMED"
+}

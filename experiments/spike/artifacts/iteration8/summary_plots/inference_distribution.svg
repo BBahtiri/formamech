@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="590" viewBox="0 0 960 590" role="img" aria-label="Inference-time distribution">
+<title>Inference-time distribution</title>
+<style>text{font-family:Arial,sans-serif;fill:#202124}.title{font-size:20px;font-weight:700;text-anchor:middle}.label{font-size:13px;text-anchor:middle}.vertical{transform:rotate(-90deg);transform-origin:22px 286px}.tick{font-size:11px;text-anchor:middle}.ytick{font-size:11px;text-anchor:end}.grid{stroke:#e2e6ea;stroke-width:1}.axis{stroke:#5f6368;stroke-width:1.5}.legend{font-size:11px}.series{fill:none;stroke-width:2}.point{stroke:#fff;stroke-width:1;opacity:.88}</style>
+<text class="title" x="480" y="31">Inference-time distribution</text>
+<line class="grid" x1="92.00" y1="62.0" x2="92.00" y2="510.0"/>
+<line class="grid" x1="92.0" y1="510.00" x2="920.0" y2="510.00"/>
+<text class="tick" x="92.00" y="532">-3.38</text>
+<text class="ytick" x="84" y="514.00">-0.5</text>
+<line class="grid" x1="257.60" y1="62.0" x2="257.60" y2="510.0"/>
+<line class="grid" x1="92.0" y1="420.40" x2="920.0" y2="420.40"/>
+<text class="tick" x="257.60" y="532">6.42</text>
+<text class="ytick" x="84" y="424.40">-0.1</text>
+<line class="grid" x1="423.20" y1="62.0" x2="423.20" y2="510.0"/>
+<line class="grid" x1="92.0" y1="330.80" x2="920.0" y2="330.80"/>
+<text class="tick" x="423.20" y="532">16.2</text>
+<text class="ytick" x="84" y="334.80">0.3</text>
+<line class="grid" x1="588.80" y1="62.0" x2="588.80" y2="510.0"/>
+<line class="grid" x1="92.0" y1="241.20" x2="920.0" y2="241.20"/>
+<text class="tick" x="588.80" y="532">26</text>
+<text class="ytick" x="84" y="245.20">0.7</text>
+<line class="grid" x1="754.40" y1="62.0" x2="754.40" y2="510.0"/>
+<line class="grid" x1="92.0" y1="151.60" x2="920.0" y2="151.60"/>
+<text class="tick" x="754.40" y="532">35.8</text>
+<text class="ytick" x="84" y="155.60">1.1</text>
+<line class="grid" x1="920.00" y1="62.0" x2="920.00" y2="510.0"/>
+<line class="grid" x1="92.0" y1="62.00" x2="920.0" y2="62.00"/>
+<text class="tick" x="920.00" y="532">45.6</text>
+<text class="ytick" x="84" y="66.00">1.5</text>
+<line class="axis" x1="92.0" y1="510.0" x2="920.0" y2="510.0"/>
+<line class="axis" x1="92.0" y1="62.0" x2="92.0" y2="510.0"/>
+<text class="label" x="506" y="570">inference time (ms)</text>
+<text class="label vertical" x="22" y="286">family</text>
+<circle class="point" cx="450.14" cy="407.96" r="4.2" fill="#1565c0" data-case="centre_notched-07c291cfaa2c0178" data-family="centre_notched" data-metric="inference"><title>centre_notched-07c291cfaa2c0178 | 17.81 ms</title></circle>
+<circle class="point" cx="476.81" cy="412.93" r="4.2" fill="#1565c0" data-case="centre_notched-1e6316d5cbbdde9c" data-family="centre_notched" data-metric="inference"><title>centre_notched-1e6316d5cbbdde9c | 19.38 ms</title></circle>
+<circle class="point" cx="408.97" cy="383.07" r="4.2" fill="#1565c0" data-case="centre_notched-54b36f565917a000" data-family="centre_notched" data-metric="inference"><title>centre_notched-54b36f565917a000 | 15.37 ms</title></circle>
+<circle class="point" cx="430.57" cy="398.00" r="4.2" fill="#1565c0" data-case="centre_notched-5850a4e527bda4ee" data-family="centre_notched" data-metric="inference"><title>centre_notched-5850a4e527bda4ee | 16.65 ms</title></circle>
+<circle class="point" cx="412.34" cy="422.89" r="4.2" fill="#1565c0" data-case="centre_notched-5fc356e19c23d895" data-family="centre_notched" data-metric="inference"><title>centre_notched-5fc356e19c23d895 | 15.57 ms</title></circle>
+<circle class="point" cx="437.48" cy="373.11" r="4.2" fill="#1565c0" data-case="centre_notched-6175827239b29a20" data-family="centre_notched" data-metric="inference"><title>centre_notched-6175827239b29a20 | 17.06 ms</title></circle>
+<circle class="point" cx="402.63" cy="417.91" r="4.2" fill="#1565c0" data-case="centre_notched-677739b8ad19d0d6" data-family="centre_notched" data-metric="inference"><title>centre_notched-677739b8ad19d0d6 | 15 ms</title></circle>
+<circle class="point" cx="416.88" cy="378.09" r="4.2" fill="#1565c0" data-case="centre_notched-76ed7308feacfd2c" data-family="centre_notched" data-metric="inference"><title>centre_notched-76ed7308feacfd2c | 15.84 ms</title></circle>
+<circle class="point" cx="862.90" cy="407.96" r="4.2" fill="#1565c0" data-case="centre_notched-794750d3c6119506" data-family="centre_notched" data-metric="inference"><title>centre_notched-794750d3c6119506 | 42.22 ms</title></circle>
+<circle class="point" cx="426.06" cy="402.98" r="4.2" fill="#1565c0" data-case="centre_notched-84fd43c7ab4b7713" data-family="centre_notched" data-metric="inference"><title>centre_notched-84fd43c7ab4b7713 | 16.38 ms</title></circle>
+<circle class="point" cx="470.81" cy="422.89" r="4.2" fill="#1565c0" data-case="centre_notched-8eff0e0860ba9755" data-family="centre_notched" data-metric="inference"><title>centre_notched-8eff0e0860ba9755 | 19.03 ms</title></circle>
+<circle class="point" cx="439.47" cy="417.91" r="4.2" fill="#1565c0" data-case="centre_notched-97c212a2b29cbdd6" data-family="centre_notched" data-metric="inference"><title>centre_notched-97c212a2b29cbdd6 | 17.18 ms</title></circle>
+<circle class="point" cx="436.08" cy="402.98" r="4.2" fill="#1565c0" data-case="centre_notched-97d3d168777d377a" data-family="centre_notched" data-metric="inference"><title>centre_notched-97d3d168777d377a | 16.97 ms</title></circle>
+<circle class="point" cx="444.87" cy="383.07" r="4.2" fill="#1565c0" data-case="centre_notched-9e5d04f44d4bef78" data-family="centre_notched" data-metric="inference"><title>centre_notched-9e5d04f44d4bef78 | 17.49 ms</title></circle>
+<circle class="point" cx="450.17" cy="407.96" r="4.2" fill="#1565c0" data-case="centre_notched-a12bdec3ad94b311" data-family="centre_notched" data-metric="inference"><title>centre_notched-a12bdec3ad94b311 | 17.81 ms</title></circle>
+<circle class="point" cx="470.19" cy="422.89" r="4.2" fill="#1565c0" data-case="centre_notched-af5e7d895a2da0d3" data-family="centre_notched" data-metric="inference"><title>centre_notched-af5e7d895a2da0d3 | 18.99 ms</title></circle>
+<circle class="point" cx="488.39" cy="402.98" r="4.2" fill="#1565c0" data-case="centre_notched-b86273129ec61a70" data-family="centre_notched" data-metric="inference"><title>centre_notched-b86273129ec61a70 | 20.07 ms</title></circle>
+<circle class="point" cx="476.09" cy="378.09" r="4.2" fill="#1565c0" data-case="centre_notched-b9c497bf3fc6d473" data-family="centre_notched" data-metric="inference"><title>centre_notched-b9c497bf3fc6d473 | 19.34 ms</title></circle>
+<circle class="point" cx="461.77" cy="378.09" r="4.2" fill="#1565c0" data-case="centre_notched-cb7a87e58a419860" data-family="centre_notched" data-metric="inference"><title>centre_notched-cb7a87e58a419860 | 18.49 ms</title></circle>
+<circle class="point" cx="408.65" cy="398.00" r="4.2" fill="#1565c0" data-case="centre_notched-df025c19161ef560" data-family="centre_notched" data-metric="inference"><title>centre_notched-df025c19161ef560 | 15.35 ms</title></circle>
+<circle class="point" cx="415.30" cy="422.89" r="4.2" fill="#1565c0" data-case="centre_notched-e94f38dd4d86a5ad" data-family="centre_notched" data-metric="inference"><title>centre_notched-e94f38dd4d86a5ad | 15.75 ms</title></circle>
+<circle class="point" cx="432.95" cy="388.04" r="4.2" fill="#1565c0" data-case="centre_notched-ef67129a465437f5" data-family="centre_notched" data-metric="inference"><title>centre_notched-ef67129a465437f5 | 16.79 ms</title></circle>
+<circle class="point" cx="427.90" cy="422.89" r="4.2" fill="#1565c0" data-case="centre_notched-f82bd86da9b26841" data-family="centre_notched" data-metric="inference"><title>centre_notched-f82bd86da9b26841 | 16.49 ms</title></circle>
+<circle class="point" cx="426.67" cy="388.04" r="4.2" fill="#1565c0" data-case="centre_notched-fab0534fc9598c88" data-family="centre_notched" data-metric="inference"><title>centre_notched-fab0534fc9598c88 | 16.42 ms</title></circle>
+<circle class="point" cx="420.36" cy="393.02" r="4.2" fill="#1565c0" data-case="centre_notched-fb22327759fad808" data-family="centre_notched" data-metric="inference"><title>centre_notched-fb22327759fad808 | 16.04 ms</title></circle>
+<circle class="point" cx="317.03" cy="183.96" r="4.2" fill="#d84315" data-case="dogbone-04b0f7750707ff83" data-family="dogbone" data-metric="inference"><title>dogbone-04b0f7750707ff83 | 9.933 ms</title></circle>
+<circle class="point" cx="385.47" cy="164.04" r="4.2" fill="#d84315" data-case="dogbone-2339a27be0b9ba6f" data-family="dogbone" data-metric="inference"><title>dogbone-2339a27be0b9ba6f | 13.98 ms</title></circle>
+<circle class="point" cx="315.31" cy="164.04" r="4.2" fill="#d84315" data-case="dogbone-25bcc462dc2a27ee" data-family="dogbone" data-metric="inference"><title>dogbone-25bcc462dc2a27ee | 9.831 ms</title></circle>
+<circle class="point" cx="358.32" cy="154.09" r="4.2" fill="#d84315" data-case="dogbone-277f2dd879939d7d" data-family="dogbone" data-metric="inference"><title>dogbone-277f2dd879939d7d | 12.38 ms</title></circle>
+<circle class="point" cx="384.67" cy="149.11" r="4.2" fill="#d84315" data-case="dogbone-3397de988ab5d0e5" data-family="dogbone" data-metric="inference"><title>dogbone-3397de988ab5d0e5 | 13.93 ms</title></circle>
+<circle class="point" cx="344.51" cy="154.09" r="4.2" fill="#d84315" data-case="dogbone-37b840e5f3d0acdc" data-family="dogbone" data-metric="inference"><title>dogbone-37b840e5f3d0acdc | 11.56 ms</title></circle>
+<circle class="point" cx="385.33" cy="198.89" r="4.2" fill="#d84315" data-case="dogbone-3e350cb00da06c00" data-family="dogbone" data-metric="inference"><title>dogbone-3e350cb00da06c00 | 13.97 ms</title></circle>
+<circle class="point" cx="299.82" cy="198.89" r="4.2" fill="#d84315" data-case="dogbone-519116b933cf4d0d" data-family="dogbone" data-metric="inference"><title>dogbone-519116b933cf4d0d | 8.915 ms</title></circle>
+<circle class="point" cx="316.28" cy="149.11" r="4.2" fill="#d84315" data-case="dogbone-522a7e204654dd58" data-family="dogbone" data-metric="inference"><title>dogbone-522a7e204654dd58 | 9.888 ms</title></circle>
+<circle class="point" cx="316.03" cy="164.04" r="4.2" fill="#d84315" data-case="dogbone-5d72ef5d30a477f9" data-family="dogbone" data-metric="inference"><title>dogbone-5d72ef5d30a477f9 | 9.874 ms</title></circle>
+<circle class="point" cx="346.06" cy="169.02" r="4.2" fill="#d84315" data-case="dogbone-674005280f22dcbe" data-family="dogbone" data-metric="inference"><title>dogbone-674005280f22dcbe | 11.65 ms</title></circle>
+<circle class="point" cx="429.27" cy="154.09" r="4.2" fill="#d84315" data-case="dogbone-7c66e2fa505393cb" data-family="dogbone" data-metric="inference"><title>dogbone-7c66e2fa505393cb | 16.57 ms</title></circle>
+<circle class="point" cx="297.46" cy="174.00" r="4.2" fill="#d84315" data-case="dogbone-7dc20e0a04ca4c28" data-family="dogbone" data-metric="inference"><title>dogbone-7dc20e0a04ca4c28 | 8.775 ms</title></circle>
+<circle class="point" cx="334.12" cy="188.93" r="4.2" fill="#d84315" data-case="dogbone-8d021760a5c938a9" data-family="dogbone" data-metric="inference"><title>dogbone-8d021760a5c938a9 | 10.94 ms</title></circle>
+<circle class="point" cx="391.36" cy="159.07" r="4.2" fill="#d84315" data-case="dogbone-8dbb02064cc40df2" data-family="dogbone" data-metric="inference"><title>dogbone-8dbb02064cc40df2 | 14.33 ms</title></circle>
+<circle class="point" cx="284.89" cy="169.02" r="4.2" fill="#d84315" data-case="dogbone-90588924c7bfb303" data-family="dogbone" data-metric="inference"><title>dogbone-90588924c7bfb303 | 8.032 ms</title></circle>
+<circle class="point" cx="367.30" cy="183.96" r="4.2" fill="#d84315" data-case="dogbone-9da130af5089bd0c" data-family="dogbone" data-metric="inference"><title>dogbone-9da130af5089bd0c | 12.91 ms</title></circle>
+<circle class="point" cx="333.21" cy="164.04" r="4.2" fill="#d84315" data-case="dogbone-bbd828de6209f8e0" data-family="dogbone" data-metric="inference"><title>dogbone-bbd828de6209f8e0 | 10.89 ms</title></circle>
+<circle class="point" cx="308.86" cy="193.91" r="4.2" fill="#d84315" data-case="dogbone-bdfeae7a76ab4179" data-family="dogbone" data-metric="inference"><title>dogbone-bdfeae7a76ab4179 | 9.449 ms</title></circle>
+<circle class="point" cx="362.23" cy="183.96" r="4.2" fill="#d84315" data-case="dogbone-be5f5227b79eb5a2" data-family="dogbone" data-metric="inference"><title>dogbone-be5f5227b79eb5a2 | 12.61 ms</title></circle>
+<circle class="point" cx="313.77" cy="178.98" r="4.2" fill="#d84315" data-case="dogbone-c18bc7426e847c02" data-family="dogbone" data-metric="inference"><title>dogbone-c18bc7426e847c02 | 9.74 ms</title></circle>
+<circle class="point" cx="313.30" cy="188.93" r="4.2" fill="#d84315" data-case="dogbone-ca1a22f8639594f8" data-family="dogbone" data-metric="inference"><title>dogbone-ca1a22f8639594f8 | 9.712 ms</title></circle>
+<circle class="point" cx="334.11" cy="183.96" r="4.2" fill="#d84315" data-case="dogbone-ccc6669e83db6594" data-family="dogbone" data-metric="inference"><title>dogbone-ccc6669e83db6594 | 10.94 ms</title></circle>
+<circle class="point" cx="292.58" cy="159.07" r="4.2" fill="#d84315" data-case="dogbone-d115f240f61b0a80" data-family="dogbone" data-metric="inference"><title>dogbone-d115f240f61b0a80 | 8.487 ms</title></circle>
+<circle class="point" cx="327.48" cy="169.02" r="4.2" fill="#d84315" data-case="dogbone-f525e0e2bc3b64b7" data-family="dogbone" data-metric="inference"><title>dogbone-f525e0e2bc3b64b7 | 10.55 ms</title></circle>
+</svg>

@@ -1,0 +1,136 @@
+{
+  "checks": [
+    {
+      "comparison": "gte",
+      "id": "G1.solves",
+      "measured": {
+        "attempted": 60,
+        "converged": 60
+      },
+      "status": "PASS",
+      "threshold": ">=50 of exactly 60 FEM cases converged"
+    },
+    {
+      "comparison": "lte",
+      "id": "G1.sanity",
+      "measured": {
+        "max_error": 4.1197582034444335e-16
+      },
+      "status": "PASS",
+      "threshold": 1e-06
+    },
+    {
+      "comparison": "all_true",
+      "id": "G1.split",
+      "measured": {
+        "geometry_ids_disjoint": true,
+        "mesh_ids_disjoint": true,
+        "mesh_qualified_node_ids_disjoint": true,
+        "node_identity_definition": "mesh_id plus local node index",
+        "outcome_independent_preassignment": true,
+        "rng_seeds_disjoint": true
+      },
+      "status": "PASS",
+      "threshold": "no shared geometry, mesh, RNG seed, or mesh-qualified node identity"
+    },
+    {
+      "comparison": "eq",
+      "id": "G1.report",
+      "measured": {
+        "complete": true,
+        "reason": "results.json contains every required finite family metric"
+      },
+      "status": "PASS",
+      "threshold": "complete finite held-out metrics for both families"
+    },
+    {
+      "comparison": "eq",
+      "id": "G1.isolation",
+      "measured": {
+        "tests/test_spike_isolation.py": true
+      },
+      "status": "PASS",
+      "threshold": "standalone isolation guard passes"
+    }
+  ],
+  "commit": "6f5f0cb781e71a991cef17c9b2321d7959675ea2",
+  "commit_scope": "base commit plus uncommitted local S1 worktree; S1 commit prohibited",
+  "execution_profile": {
+    "applied_displacement_mm": 1.0,
+    "device": "cpu",
+    "logical_cpu_count": 8,
+    "material": {
+      "E_MPa": 760.0,
+      "nu": 0.23
+    },
+    "mesh": {
+      "fixed": true,
+      "nx": 32,
+      "ny": 10
+    },
+    "numpy": "2.5.2",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "Intel64 Family 6 Model 189 Stepping 1, GenuineIntel",
+    "python": "3.12.13",
+    "scikit_fem": "12.0.2",
+    "scipy": "1.18.0",
+    "torch": "2.13.0+cpu",
+    "torch_threads": 8
+  },
+  "execution_profile_hash": "ac322c10dd559a0d1d150164753564adcc0d22625a4f0e0826d6a25925fd8a53",
+  "gate_id": "G1",
+  "no_release_evidence": true,
+  "role": "LEGACY",
+  "step": "S1",
+  "timestamp_utc": "2026-08-10T10:58:57.927767Z",
+  "verdict": "PASS",
+  "verdict_reason": "Every required G1 check passed; interpretation remains human-owned.",
+  "verification": {
+    "architecture_screen": {
+      "command": "training-only 2-fold x 3-variant screen, 300 epochs/fold at LR=1e-3",
+      "measured": "40 training geometries only; heldout_accessed=false; conditioned_mlp selected; 56.49% worst-family P-score improvement vs linear; all guardrails passed",
+      "status": "PASS"
+    },
+    "dependency_audit": {
+      "command": "python -m pip_audit",
+      "measured": "no known vulnerabilities; local piginot package not on PyPI",
+      "status": "PASS"
+    },
+    "full_s1_campaign": {
+      "command": "python -m experiments.spike.run",
+      "measured": "60/60 fixed-1-mm FEM solves; pinned upstream checkpoint epoch 1424; 3x150 LR sweep; selected LR=1e-3; 1500 final epochs; 4627.8596588 training seconds",
+      "status": "PASS"
+    },
+    "mypy": {
+      "command": "mypy --strict src",
+      "measured": "success; 2 source files checked",
+      "status": "PASS"
+    },
+    "root_tests": {
+      "command": "pytest --cov=src/piginot --cov-branch --cov-fail-under=80",
+      "measured": "9 passed; 92.86% branch coverage",
+      "status": "PASS"
+    },
+    "ruff": {
+      "command": "ruff check . && ruff format --check .",
+      "measured": "all checks passed; 21 files already formatted",
+      "status": "PASS"
+    },
+    "spike_isolation": {
+      "command": "pytest tests/test_spike_isolation.py -q",
+      "measured": "4 passed",
+      "status": "PASS"
+    },
+    "spike_tests": {
+      "command": "pytest experiments/spike/tests --cov=<non-vendored spike modules> --cov-branch --cov-fail-under=80",
+      "measured": "41 passed; 80.70% branch coverage",
+      "status": "PASS"
+    },
+    "wheel_isolation": {
+      "command": "pip wheel . --no-deps plus archive inspection",
+      "measured": "7 wheel entries; no experiments/ or tests/ entries",
+      "status": "PASS"
+    }
+  },
+  "worktree_content_sha256": "db8b75c0b60b57c5ab51417d381d449ca24c231ebced661581263a4775e57701"
+}

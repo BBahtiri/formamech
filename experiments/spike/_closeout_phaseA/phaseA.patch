@@ -1,0 +1,283 @@
+--- /mnt/user-data/uploads/pi_ginot_large/experiments/spike/fem.py	2026-08-17 08:17:43.658513248 +0000
++++ /tmp/work/experiments/spike/fem.py	2026-08-19 08:37:34.100314449 +0000
+@@ -13,6 +13,7 @@
+     Basis,
+     BilinearForm,
+     ElementTriP1,
++    ElementTriP2,
+     ElementVector,
+     LinearForm,
+     MeshTri,
+@@ -28,8 +29,15 @@
+ DEFAULT_AXIAL_STRAIN: Final = 0.10
+ DEFAULT_APPLIED_DISPLACEMENT: Final = 1.0
+ MINIMUM_JACOBIAN: Final = 0.05
++# Phase A of the S1 closeout: P1 gives element-wise constant stress, which
++# under-resolves a notch-root concentration. P2 is the default; P1 stays
++# selectable so the refinement study can report the discretization cross-check.
++DEFAULT_ELEMENT_ORDER: Final = 2
++_ELEMENTS: Final = {1: ElementTriP1, 2: ElementTriP2}
++_INTEGRATION_ORDER: Final = {1: 3, 2: 4}
+ 
+ FloatArray = NDArray[np.float64]
++IntArray = NDArray[np.int64]
+ 
+ 
+ @dataclass(frozen=True)
+@@ -42,6 +50,7 @@
+     first_piola: FloatArray | None
+     solve_seconds: float
+     newton_iterations: int
++    element_order: int = DEFAULT_ELEMENT_ORDER
+ 
+ 
+ @dataclass(frozen=True)
+@@ -255,8 +264,15 @@
+     load_steps: int,
+     tolerance: float,
+     max_newton_iterations: int,
++    element_order: int = DEFAULT_ELEMENT_ORDER,
+ ) -> tuple[bool, str | None, FloatArray, Basis, int]:
+-    basis = Basis(mesh, ElementVector(ElementTriP1()), intorder=3)
++    if element_order not in _ELEMENTS:
++        raise ValueError(f"element_order must be one of {sorted(_ELEMENTS)}")
++    basis = Basis(
++        mesh,
++        ElementVector(_ELEMENTS[element_order]()),
++        intorder=_INTEGRATION_ORDER[element_order],
++    )
+     scale = max(float(np.ptp(mesh.p[0])), float(np.ptp(mesh.p[1])), 1.0)
+     coordinate_tolerance = 1e-10 * scale
+     x_max = float(np.max(mesh.p[0]))
+@@ -352,21 +368,100 @@
+     return True, None, displacement, basis, total_iterations
+ 
+ 
++def _triangle_areas(points: FloatArray, cells: IntArray) -> FloatArray:
++    """Return reference-configuration areas for every triangle."""
++    triangles = points[cells]
++    edge_a = triangles[:, 1] - triangles[:, 0]
++    edge_b = triangles[:, 2] - triangles[:, 0]
++    return 0.5 * np.abs(edge_a[:, 0] * edge_b[:, 1] - edge_a[:, 1] * edge_b[:, 0])
++
++
++def area_weighted_nodal_average(
++    element_values: FloatArray,
++    points: FloatArray,
++    cells: IntArray,
++) -> FloatArray:
++    """Recover a nodal field from element values by area-weighted patch average.
++
++    The superseded recovery used an unweighted count average, which biases the
++    notch-root peak low because the elements meeting there are the smallest in the
++    mesh. Weighting by reference area removes that bias and reproduces a constant
++    field exactly.
++    """
++    values = np.asarray(element_values, dtype=np.float64)
++    if len(values) != len(cells):
++        raise ValueError("element_values must supply one entry per cell")
++    areas = _triangle_areas(np.asarray(points, dtype=np.float64), cells)
++    if np.any(areas <= 0.0):
++        raise ValueError("every triangle must have positive reference area")
++    trailing = values.shape[1:]
++    weighted = np.zeros((len(points), *trailing), dtype=np.float64)
++    weights = np.zeros(len(points), dtype=np.float64)
++    broadcast = areas.reshape((-1, *(1,) * len(trailing)))
++    for local_vertex in range(3):
++        vertices = cells[:, local_vertex]
++        np.add.at(weighted, vertices, values * broadcast)
++        np.add.at(weights, vertices, areas)
++    if np.any(weights <= 0.0):
++        raise ValueError("every node must belong to at least one triangle")
++    return weighted / weights.reshape((-1, *(1,) * len(trailing)))
++
++
++# Stress is evaluated at element vertices rather than averaged over quadrature
++# points. Collapsing an element to a single mean value discards the intra-element
++# variation that higher-order elements exist to represent, and biases a notch-root
++# peak low for any element order.
++_REFERENCE_VERTICES: Final = np.array([[0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
++_REFERENCE_VERTEX_WEIGHTS: Final = np.full(3, 1.0 / 6.0)
++
++
++def area_weighted_vertex_average(
++    vertex_values: FloatArray,
++    points: FloatArray,
++    cells: IntArray,
++) -> FloatArray:
++    """Average per-element vertex values onto nodes, weighted by element area."""
++    values = np.asarray(vertex_values, dtype=np.float64)
++    if values.shape[:2] != (len(cells), 3):
++        raise ValueError("vertex_values must have shape (cells, 3, ...)")
++    areas = _triangle_areas(np.asarray(points, dtype=np.float64), cells)
++    if np.any(areas <= 0.0):
++        raise ValueError("every triangle must have positive reference area")
++    trailing = values.shape[2:]
++    weighted = np.zeros((len(points), *trailing), dtype=np.float64)
++    weights = np.zeros(len(points), dtype=np.float64)
++    broadcast = areas.reshape((-1, *(1,) * len(trailing)))
++    for local_vertex in range(3):
++        vertices = cells[:, local_vertex]
++        np.add.at(weighted, vertices, values[:, local_vertex] * broadcast)
++        np.add.at(weights, vertices, areas)
++    if np.any(weights <= 0.0):
++        raise ValueError("every node must belong to at least one triangle")
++    return weighted / weights.reshape((-1, *(1,) * len(trailing)))
++
++
+ def _nodal_fields(
+     basis: Basis, displacement_vector: FloatArray
+ ) -> tuple[FloatArray, FloatArray]:
+     displacement = displacement_vector[basis.nodal_dofs].T.copy()
+     gradient = basis.interpolate(displacement_vector).grad
+     deformation = _matrix_field_to_last(np.eye(2)[:, :, None, None] + gradient)
+-    element_stress = first_piola_plane_stress(deformation).mean(axis=1)
+-
+-    nodal_stress = np.zeros((basis.mesh.nvertices, 2, 2))
+-    counts = np.zeros(basis.mesh.nvertices)
+-    for local_vertex in range(3):
+-        vertices = basis.mesh.t[local_vertex]
+-        np.add.at(nodal_stress, vertices, element_stress)
+-        np.add.at(counts, vertices, 1.0)
+-    nodal_stress = nodal_stress / counts[:, None, None]
++    del deformation
++    vertex_basis = Basis(
++        basis.mesh,
++        basis.elem,
++        quadrature=(_REFERENCE_VERTICES, _REFERENCE_VERTEX_WEIGHTS),
++    )
++    vertex_gradient = vertex_basis.interpolate(displacement_vector).grad
++    vertex_deformation = _matrix_field_to_last(
++        np.eye(2)[:, :, None, None] + vertex_gradient
++    )
++    vertex_stress = first_piola_plane_stress(vertex_deformation)
++    nodal_stress = area_weighted_vertex_average(
++        vertex_stress,
++        basis.mesh.p.T,
++        basis.mesh.t.T,
++    )
+     return displacement, nodal_stress
+ 
+ 
+@@ -378,6 +473,7 @@
+     load_steps: int = 5,
+     tolerance: float = 1e-10,
+     max_newton_iterations: int = 30,
++    element_order: int = DEFAULT_ELEMENT_ORDER,
+ ) -> FEMResult:
+     """Solve with upstream's 1 mm loading, or an explicit strain override."""
+     started = perf_counter()
+@@ -396,12 +492,15 @@
+         load_steps=load_steps,
+         tolerance=tolerance,
+         max_newton_iterations=max_newton_iterations,
++        element_order=element_order,
+     )
+     elapsed = perf_counter() - started
+     if not converged:
+-        return FEMResult(False, reason, None, None, elapsed, iterations)
++        return FEMResult(False, reason, None, None, elapsed, iterations, element_order)
+     displacement, stress = _nodal_fields(basis, vector)
+-    return FEMResult(True, None, displacement, stress, elapsed, iterations)
++    return FEMResult(
++        True, None, displacement, stress, elapsed, iterations, element_order
++    )
+ 
+ 
+ def _uniaxial_lateral_stretch(axial_stretch: float) -> float:
+@@ -424,6 +523,7 @@
+     axial_stretch: float = 1.10,
+     nx: int = 6,
+     ny: int = 6,
++    element_order: int = DEFAULT_ELEMENT_ORDER,
+ ) -> SanityResult:
+     """Run the actual FEM solver and compare it with the affine closed form."""
+     if axial_stretch <= 0.0:
+@@ -437,6 +537,7 @@
+         load_steps=5,
+         tolerance=1e-12,
+         max_newton_iterations=40,
++        element_order=element_order,
+     )
+     if not converged:
+         return SanityResult(False, reason, math.nan, math.inf, math.inf, math.inf)
+--- /mnt/user-data/uploads/pi_ginot_large/experiments/spike/geometry.py	2026-08-17 08:17:43.662513248 +0000
++++ /tmp/work/experiments/spike/geometry.py	2026-08-19 08:38:13.876190732 +0000
+@@ -11,7 +11,7 @@
+ import hashlib
+ import json
+ import math
+-from collections.abc import Mapping
++from collections.abc import Mapping, Sequence
+ from dataclasses import dataclass
+ from typing import Final
+ 
+@@ -303,3 +303,68 @@
+                 cases.append(case)
+                 break
+     return tuple(cases)
++
++
++def derived_ratios(family: str, parameters: Mapping[str, float]) -> dict[str, float]:
++    """Return the dimensionless ratios that govern the stress concentration.
++
++    The S1 confirmation campaign sampled the raw parameter box uniformly, but the
++    physics is governed by these ratios. Training covered the centre-notched
++    net-section factor only to 1.56 while the evaluation draw reached 2.09, and
++    that gap carried the reported failure. Design and envelope declarations belong
++    in this space, not in the box.
++    """
++    values = _validate_parameters(family, parameters)
++    if family == "dogbone":
++        return {
++            "width_ratio": values["W_grip"] / values["W_gauge"],
++            "fillet_ratio": values["R_fillet"] / values["W_gauge"],
++            "gauge_slenderness": values["L_total"] / values["W_gauge"],
++        }
++    ligament = values["width"] - 2.0 * values["notch_depth"]
++    return {
++        "net_section_factor": values["width"] / ligament,
++        "notch_sharpness": values["notch_depth"] / values["notch_radius"],
++        "relative_depth": 2.0 * values["notch_depth"] / values["width"],
++    }
++
++
++# Extremal criteria per family: the cases hardest to resolve and most likely to
++# drive a verdict. Iteration 8 sampled a fixed stride (family_index 0, 12, 24),
++# which checked convergence on geometries that were never at risk.
++_EXTREMAL_CRITERIA: Final[dict[str, tuple[tuple[str, str], ...]]] = {
++    "dogbone": (
++        ("fillet_ratio", "min"),
++        ("width_ratio", "max"),
++        ("gauge_slenderness", "min"),
++    ),
++    "centre_notched": (
++        ("net_section_factor", "max"),
++        ("notch_sharpness", "max"),
++        ("relative_depth", "max"),
++    ),
++}
++
++
++def select_refinement_geometries(
++    cases: Sequence[SpikeMesh],
++) -> tuple[SpikeMesh, ...]:
++    """Select the extremal geometry per criterion per family, deduplicated."""
++    selected: dict[str, SpikeMesh] = {}
++    for family, criteria in _EXTREMAL_CRITERIA.items():
++        family_cases = sorted(
++            (case for case in cases if case.family == family),
++            key=lambda case: case.geometry_id,
++        )
++        if not family_cases:
++            raise ValueError(f"no cases supplied for {family}")
++        for ratio_name, direction in criteria:
++            chooser = max if direction == "max" else min
++            winner = chooser(
++                family_cases,
++                key=lambda case: derived_ratios(case.family, case.parameters)[
++                    ratio_name
++                ],
++            )
++            selected[winner.geometry_id] = winner
++    return tuple(selected[key] for key in sorted(selected))

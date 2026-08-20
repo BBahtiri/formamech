@@ -1,0 +1,653 @@
+{
+  "created_utc": "2026-08-13T07:39:41.991717Z",
+  "fem_content_sha256": "a21d4b6ab942e313774eab998e110061bbe3ccc5a9afec1ec15e5d4722eff211",
+  "no_release_evidence": true,
+  "role": "LEGACY",
+  "schema_version": "1.0",
+  "step": "S1",
+  "training_code_sha256": {
+    "model.py": "02dd9bf3a38602d7b898e540ce3672c96763a2498d69027c7dbff1cd47f414fb",
+    "run.py": "4071057fd520f7e62e6ca049daeb8c9c93151ebf00095c10cb215f51cd0e369d"
+  },
+  "training_protocol_iteration": {
+    "decision": "candidate rejected by training-only guardrails; retain joint_adam",
+    "held_out_evaluation_status": "not_accessed_for_iteration4_selection",
+    "hypothesis": "joint high-learning-rate fine-tuning damages useful pretrained PI-GINOT representations before the new direct-P head adapts",
+    "iteration": 4,
+    "selected_protocol": "joint_adam",
+    "selection": {
+      "architecture": "conditioned_mlp",
+      "baseline_epochs": 300,
+      "common_random_seed_and_sampling_stream": true,
+      "data_policy": "existing 40 training geometries only",
+      "development_geometries_per_family_per_fold": 4,
+      "fem_labels_changed": false,
+      "fold_count": 2,
+      "guardrails": ">=10% primary-score improvement; P improves in every family/fold; family P/u, worst u, peak, parameter, and inference guardrails",
+      "held_out_geometry_accessed": false,
+      "loss_weights_changed": false,
+      "protocols": {
+        "joint_adam": {
+          "folds": [
+            {
+              "development_geometry_ids": [
+                "dogbone-18db6301df6903c8",
+                "dogbone-e0af91b7a9e08e3d",
+                "dogbone-c53cac07c1a1dbaa",
+                "dogbone-698bb0c57b8560b1",
+                "centre_notched-429b86644ed120bd",
+                "centre_notched-6b8ce2fc8e450129",
+                "centre_notched-c9200fa83be7164f",
+                "centre_notched-b727dfb28c2647d1"
+              ],
+              "family_metrics": {
+                "centre_notched": {
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "mean_inference_seconds": 0.029373295000550567,
+                  "relative_l2_P": 0.07237493935275628,
+                  "relative_l2_u": 0.026846047268056762,
+                  "worst_relative_peak_stress_error": 0.3436541495814298
+                },
+                "dogbone": {
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "mean_inference_seconds": 0.027182885001093383,
+                  "relative_l2_P": 0.08657252024970394,
+                  "relative_l2_u": 0.019123479195397,
+                  "worst_relative_peak_stress_error": 0.14087189727474328
+                }
+              },
+              "final_hybrid_loss": 0.008315255166962743,
+              "fit_geometry_ids": [
+                "dogbone-99e333830501e217",
+                "dogbone-64ce4fda58ef1957",
+                "dogbone-a1840ab250176836",
+                "dogbone-a375954ba7e60fa9",
+                "dogbone-7697771e7849af06",
+                "dogbone-0fbc0d1312c7687d",
+                "dogbone-b7a98ea5853c7b4f",
+                "dogbone-07495eb74b8f06d9",
+                "dogbone-e6836a6d47fef622",
+                "dogbone-442423f5ef96184f",
+                "dogbone-12e79dc66ed3e6fd",
+                "dogbone-81d08cc637f24e4f",
+                "dogbone-43db12df86020f13",
+                "dogbone-e225c45f5a607623",
+                "dogbone-e88118beb918f108",
+                "dogbone-a01db5bc9d001299",
+                "centre_notched-d66a0fd3bc042733",
+                "centre_notched-5cca28515007c18b",
+                "centre_notched-a41e780eea638dea",
+                "centre_notched-a98b736cb24257ac",
+                "centre_notched-9c5b78550c97d20b",
+                "centre_notched-7b041d2ff5f7fbf8",
+                "centre_notched-50d9c2afeed60864",
+                "centre_notched-1e8a92943fd2eb99",
+                "centre_notched-9fc5124e6496d801",
+                "centre_notched-9e5c3dddc4257cda",
+                "centre_notched-3e9ed4485ed587e8",
+                "centre_notched-f5f32165abf4e50d",
+                "centre_notched-f7cbe654abd10d25",
+                "centre_notched-b2e260e6a0a74b69",
+                "centre_notched-4c01cde220ca32c0",
+                "centre_notched-3adc77fbc1bf007b"
+              ],
+              "fold": "tail",
+              "per_case_metrics": {
+                "centre_notched-429b86644ed120bd": {
+                  "inference_seconds": 0.036422140001377556,
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "relative_l2_P": 0.07600338389004675,
+                  "relative_l2_u": 0.024676210080128786,
+                  "relative_peak_stress_error": 0.2869067080512137
+                },
+                "centre_notched-6b8ce2fc8e450129": {
+                  "inference_seconds": 0.02738715999876149,
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "relative_l2_P": 0.07458535188019737,
+                  "relative_l2_u": 0.025025469940804748,
+                  "relative_peak_stress_error": 0.2896702643389753
+                },
+                "centre_notched-b727dfb28c2647d1": {
+                  "inference_seconds": 0.027000960001896602,
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "relative_l2_P": 0.08273914381109254,
+                  "relative_l2_u": 0.036200908980727545,
+                  "relative_peak_stress_error": 0.3436541495814298
+                },
+                "centre_notched-c9200fa83be7164f": {
+                  "inference_seconds": 0.026682920000166633,
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "relative_l2_P": 0.04991735426150924,
+                  "relative_l2_u": 0.011265027760748952,
+                  "relative_peak_stress_error": 0.29066294016247707
+                },
+                "dogbone-18db6301df6903c8": {
+                  "inference_seconds": 0.027086799999233337,
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "relative_l2_P": 0.07997700864007447,
+                  "relative_l2_u": 0.015876270336314845,
+                  "relative_peak_stress_error": 0.09679994925720715
+                },
+                "dogbone-698bb0c57b8560b1": {
+                  "inference_seconds": 0.026132880001387093,
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "relative_l2_P": 0.09447906107369415,
+                  "relative_l2_u": 0.02472863664536342,
+                  "relative_peak_stress_error": 0.14087189727474328
+                },
+                "dogbone-c53cac07c1a1dbaa": {
+                  "inference_seconds": 0.027905680002004375,
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "relative_l2_P": 0.09211431712867381,
+                  "relative_l2_u": 0.018309642988814226,
+                  "relative_peak_stress_error": 0.11064097327163454
+                },
+                "dogbone-e0af91b7a9e08e3d": {
+                  "inference_seconds": 0.027606180001748727,
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "relative_l2_P": 0.08294214649889435,
+                  "relative_l2_u": 0.015920631618915913,
+                  "relative_peak_stress_error": 0.12965936743701353
+                }
+              },
+              "training_seconds": 860.7077552000046
+            },
+            {
+              "development_geometry_ids": [
+                "dogbone-99e333830501e217",
+                "dogbone-64ce4fda58ef1957",
+                "dogbone-a1840ab250176836",
+                "dogbone-a375954ba7e60fa9",
+                "centre_notched-d66a0fd3bc042733",
+                "centre_notched-5cca28515007c18b",
+                "centre_notched-a41e780eea638dea",
+                "centre_notched-a98b736cb24257ac"
+              ],
+              "family_metrics": {
+                "centre_notched": {
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "mean_inference_seconds": 0.02704000000048836,
+                  "relative_l2_P": 0.15947140606930169,
+                  "relative_l2_u": 0.06409976831004084,
+                  "worst_relative_peak_stress_error": 0.5419400590785503
+                },
+                "dogbone": {
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "mean_inference_seconds": 0.0280774000006204,
+                  "relative_l2_P": 0.14094428285844987,
+                  "relative_l2_u": 0.04085592366721112,
+                  "worst_relative_peak_stress_error": 0.30675441337008136
+                }
+              },
+              "final_hybrid_loss": 0.00882639002520591,
+              "fit_geometry_ids": [
+                "dogbone-7697771e7849af06",
+                "dogbone-0fbc0d1312c7687d",
+                "dogbone-b7a98ea5853c7b4f",
+                "dogbone-07495eb74b8f06d9",
+                "dogbone-e6836a6d47fef622",
+                "dogbone-442423f5ef96184f",
+                "dogbone-12e79dc66ed3e6fd",
+                "dogbone-81d08cc637f24e4f",
+                "dogbone-43db12df86020f13",
+                "dogbone-e225c45f5a607623",
+                "dogbone-e88118beb918f108",
+                "dogbone-a01db5bc9d001299",
+                "dogbone-18db6301df6903c8",
+                "dogbone-e0af91b7a9e08e3d",
+                "dogbone-c53cac07c1a1dbaa",
+                "dogbone-698bb0c57b8560b1",
+                "centre_notched-9c5b78550c97d20b",
+                "centre_notched-7b041d2ff5f7fbf8",
+                "centre_notched-50d9c2afeed60864",
+                "centre_notched-1e8a92943fd2eb99",
+                "centre_notched-9fc5124e6496d801",
+                "centre_notched-9e5c3dddc4257cda",
+                "centre_notched-3e9ed4485ed587e8",
+                "centre_notched-f5f32165abf4e50d",
+                "centre_notched-f7cbe654abd10d25",
+                "centre_notched-b2e260e6a0a74b69",
+                "centre_notched-4c01cde220ca32c0",
+                "centre_notched-3adc77fbc1bf007b",
+                "centre_notched-429b86644ed120bd",
+                "centre_notched-6b8ce2fc8e450129",
+                "centre_notched-c9200fa83be7164f",
+                "centre_notched-b727dfb28c2647d1"
+              ],
+              "fold": "head",
+              "per_case_metrics": {
+                "centre_notched-5cca28515007c18b": {
+                  "inference_seconds": 0.027051440000650472,
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "relative_l2_P": 0.18406079462937092,
+                  "relative_l2_u": 0.07154702386865927,
+                  "relative_peak_stress_error": 0.5419400590785503
+                },
+                "centre_notched-a41e780eea638dea": {
+                  "inference_seconds": 0.02688081999949645,
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "relative_l2_P": 0.11471253852691156,
+                  "relative_l2_u": 0.04594760423778873,
+                  "relative_peak_stress_error": 0.5202506774440324
+                },
+                "centre_notched-a98b736cb24257ac": {
+                  "inference_seconds": 0.026580440002726392,
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "relative_l2_P": 0.2003639283424427,
+                  "relative_l2_u": 0.08387908584975516,
+                  "relative_peak_stress_error": 0.48714513555952127
+                },
+                "centre_notched-d66a0fd3bc042733": {
+                  "inference_seconds": 0.02764729999908013,
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "relative_l2_P": 0.11395558075646733,
+                  "relative_l2_u": 0.037669924906474445,
+                  "relative_peak_stress_error": 0.4164562520940353
+                },
+                "dogbone-64ce4fda58ef1957": {
+                  "inference_seconds": 0.028047159999550784,
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "relative_l2_P": 0.23251319127032813,
+                  "relative_l2_u": 0.06459840425469308,
+                  "relative_peak_stress_error": 0.18490874696170498
+                },
+                "dogbone-99e333830501e217": {
+                  "inference_seconds": 0.030233360001875553,
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "relative_l2_P": 0.1022048551941823,
+                  "relative_l2_u": 0.035316465693937586,
+                  "relative_peak_stress_error": 0.30675441337008136
+                },
+                "dogbone-a1840ab250176836": {
+                  "inference_seconds": 0.027479020001192112,
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "relative_l2_P": 0.09642473040333921,
+                  "relative_l2_u": 0.026411149222348856,
+                  "relative_peak_stress_error": 0.26343279142198955
+                },
+                "dogbone-a375954ba7e60fa9": {
+                  "inference_seconds": 0.02655005999986315,
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "relative_l2_P": 0.07619137950115719,
+                  "relative_l2_u": 0.01726630172318896,
+                  "relative_peak_stress_error": 0.21269030714706727
+                }
+              },
+              "training_seconds": 950.2866587000026
+            }
+          ],
+          "guardrails_passed": null,
+          "mean_inference_seconds": 0.027918395000688177,
+          "mean_relative_l2_P": {
+            "centre_notched": 0.11592317271102898,
+            "dogbone": 0.1137584015540769
+          },
+          "mean_relative_l2_u": {
+            "centre_notched": 0.045472907789048805,
+            "dogbone": 0.029989701431304062
+          },
+          "median_peak_stress_error": 0.2882884861950945,
+          "overall_worst_peak_stress_error": 0.5419400590785503,
+          "peak_supervised_P_weight": 0.0,
+          "pooled_worst_family_relative_l2_P": 0.11592317271102898,
+          "stress_head_parameter_count": 4484,
+          "total_parameter_count": 614939,
+          "worst_single_case_relative_l2_u": 0.08387908584975516
+        },
+        "staged_adam": {
+          "folds": [
+            {
+              "development_geometry_ids": [
+                "dogbone-18db6301df6903c8",
+                "dogbone-e0af91b7a9e08e3d",
+                "dogbone-c53cac07c1a1dbaa",
+                "dogbone-698bb0c57b8560b1",
+                "centre_notched-429b86644ed120bd",
+                "centre_notched-6b8ce2fc8e450129",
+                "centre_notched-c9200fa83be7164f",
+                "centre_notched-b727dfb28c2647d1"
+              ],
+              "family_metrics": {
+                "centre_notched": {
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "mean_inference_seconds": 0.015330069995252417,
+                  "relative_l2_P": 0.14664912521561912,
+                  "relative_l2_u": 0.05122342640372751,
+                  "worst_relative_peak_stress_error": 0.5497214280965145
+                },
+                "dogbone": {
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "mean_inference_seconds": 0.01597754499525763,
+                  "relative_l2_P": 0.15663323220739878,
+                  "relative_l2_u": 0.02729279190671398,
+                  "worst_relative_peak_stress_error": 0.3676421374594817
+                }
+              },
+              "fit_geometry_ids": [
+                "dogbone-99e333830501e217",
+                "dogbone-64ce4fda58ef1957",
+                "dogbone-a1840ab250176836",
+                "dogbone-a375954ba7e60fa9",
+                "dogbone-7697771e7849af06",
+                "dogbone-0fbc0d1312c7687d",
+                "dogbone-b7a98ea5853c7b4f",
+                "dogbone-07495eb74b8f06d9",
+                "dogbone-e6836a6d47fef622",
+                "dogbone-442423f5ef96184f",
+                "dogbone-12e79dc66ed3e6fd",
+                "dogbone-81d08cc637f24e4f",
+                "dogbone-43db12df86020f13",
+                "dogbone-e225c45f5a607623",
+                "dogbone-e88118beb918f108",
+                "dogbone-a01db5bc9d001299",
+                "centre_notched-d66a0fd3bc042733",
+                "centre_notched-5cca28515007c18b",
+                "centre_notched-a41e780eea638dea",
+                "centre_notched-a98b736cb24257ac",
+                "centre_notched-9c5b78550c97d20b",
+                "centre_notched-7b041d2ff5f7fbf8",
+                "centre_notched-50d9c2afeed60864",
+                "centre_notched-1e8a92943fd2eb99",
+                "centre_notched-9fc5124e6496d801",
+                "centre_notched-9e5c3dddc4257cda",
+                "centre_notched-3e9ed4485ed587e8",
+                "centre_notched-f5f32165abf4e50d",
+                "centre_notched-f7cbe654abd10d25",
+                "centre_notched-b2e260e6a0a74b69",
+                "centre_notched-4c01cde220ca32c0",
+                "centre_notched-3adc77fbc1bf007b"
+              ],
+              "fold": "tail",
+              "per_case_metrics": {
+                "centre_notched-429b86644ed120bd": {
+                  "inference_seconds": 0.014321419992484152,
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "relative_l2_P": 0.16525983949984466,
+                  "relative_l2_u": 0.0541244300732807,
+                  "relative_peak_stress_error": 0.5036584147468889
+                },
+                "centre_notched-6b8ce2fc8e450129": {
+                  "inference_seconds": 0.015799279988277702,
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "relative_l2_P": 0.12529868566149635,
+                  "relative_l2_u": 0.04197543967802325,
+                  "relative_peak_stress_error": 0.5039173720701826
+                },
+                "centre_notched-b727dfb28c2647d1": {
+                  "inference_seconds": 0.016156359994783997,
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "relative_l2_P": 0.18013957193763216,
+                  "relative_l2_u": 0.0662889534941326,
+                  "relative_peak_stress_error": 0.5497214280965145
+                },
+                "centre_notched-c9200fa83be7164f": {
+                  "inference_seconds": 0.01504322000546381,
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "relative_l2_P": 0.09881908917340054,
+                  "relative_l2_u": 0.029556986603715404,
+                  "relative_peak_stress_error": 0.4575429697335157
+                },
+                "dogbone-18db6301df6903c8": {
+                  "inference_seconds": 0.017637019988615065,
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "relative_l2_P": 0.1469343554497151,
+                  "relative_l2_u": 0.020030327827817676,
+                  "relative_peak_stress_error": 0.1911568903935906
+                },
+                "dogbone-698bb0c57b8560b1": {
+                  "inference_seconds": 0.015174920007120818,
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "relative_l2_P": 0.10376075531892684,
+                  "relative_l2_u": 0.019598937871887965,
+                  "relative_peak_stress_error": 0.21159565264719526
+                },
+                "dogbone-c53cac07c1a1dbaa": {
+                  "inference_seconds": 0.014475699991453438,
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "relative_l2_P": 0.2681510491567581,
+                  "relative_l2_u": 0.043590312017330005,
+                  "relative_peak_stress_error": 0.3676421374594817
+                },
+                "dogbone-e0af91b7a9e08e3d": {
+                  "inference_seconds": 0.016622539993841202,
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "relative_l2_P": 0.0989372575314149,
+                  "relative_l2_u": 0.014855930956455345,
+                  "relative_peak_stress_error": 0.24375458448950238
+                }
+              },
+              "training": {
+                "final_hybrid_loss": 0.021051467512734234,
+                "optimizer_state_preserved_across_phases": true,
+                "phases": [
+                  {
+                    "decoder_lr": null,
+                    "encoder_lr": null,
+                    "epochs": 60,
+                    "final_hybrid_loss": 0.15957149304449558,
+                    "name": "head_only",
+                    "stress_head_lr": 0.001
+                  },
+                  {
+                    "decoder_lr": 0.0001,
+                    "encoder_lr": null,
+                    "epochs": 120,
+                    "final_hybrid_loss": 0.030723614618182182,
+                    "name": "decoder_and_head",
+                    "stress_head_lr": 0.001
+                  },
+                  {
+                    "decoder_lr": 0.0001,
+                    "encoder_lr": 3e-05,
+                    "epochs": 120,
+                    "final_hybrid_loss": 0.021051467512734234,
+                    "name": "full_low_lr",
+                    "stress_head_lr": 0.0003
+                  }
+                ],
+                "total_epochs": 300
+              },
+              "training_seconds": 625.0998579000006
+            },
+            {
+              "development_geometry_ids": [
+                "dogbone-99e333830501e217",
+                "dogbone-64ce4fda58ef1957",
+                "dogbone-a1840ab250176836",
+                "dogbone-a375954ba7e60fa9",
+                "centre_notched-d66a0fd3bc042733",
+                "centre_notched-5cca28515007c18b",
+                "centre_notched-a41e780eea638dea",
+                "centre_notched-a98b736cb24257ac"
+              ],
+              "family_metrics": {
+                "centre_notched": {
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "mean_inference_seconds": 0.015579335001530126,
+                  "relative_l2_P": 0.2041958327074059,
+                  "relative_l2_u": 0.07399006225630841,
+                  "worst_relative_peak_stress_error": 0.6216150326185804
+                },
+                "dogbone": {
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "mean_inference_seconds": 0.015552509998087771,
+                  "relative_l2_P": 0.13939950042392749,
+                  "relative_l2_u": 0.040600798364187084,
+                  "worst_relative_peak_stress_error": 0.4116312971037901
+                }
+              },
+              "fit_geometry_ids": [
+                "dogbone-7697771e7849af06",
+                "dogbone-0fbc0d1312c7687d",
+                "dogbone-b7a98ea5853c7b4f",
+                "dogbone-07495eb74b8f06d9",
+                "dogbone-e6836a6d47fef622",
+                "dogbone-442423f5ef96184f",
+                "dogbone-12e79dc66ed3e6fd",
+                "dogbone-81d08cc637f24e4f",
+                "dogbone-43db12df86020f13",
+                "dogbone-e225c45f5a607623",
+                "dogbone-e88118beb918f108",
+                "dogbone-a01db5bc9d001299",
+                "dogbone-18db6301df6903c8",
+                "dogbone-e0af91b7a9e08e3d",
+                "dogbone-c53cac07c1a1dbaa",
+                "dogbone-698bb0c57b8560b1",
+                "centre_notched-9c5b78550c97d20b",
+                "centre_notched-7b041d2ff5f7fbf8",
+                "centre_notched-50d9c2afeed60864",
+                "centre_notched-1e8a92943fd2eb99",
+                "centre_notched-9fc5124e6496d801",
+                "centre_notched-9e5c3dddc4257cda",
+                "centre_notched-3e9ed4485ed587e8",
+                "centre_notched-f5f32165abf4e50d",
+                "centre_notched-f7cbe654abd10d25",
+                "centre_notched-b2e260e6a0a74b69",
+                "centre_notched-4c01cde220ca32c0",
+                "centre_notched-3adc77fbc1bf007b",
+                "centre_notched-429b86644ed120bd",
+                "centre_notched-6b8ce2fc8e450129",
+                "centre_notched-c9200fa83be7164f",
+                "centre_notched-b727dfb28c2647d1"
+              ],
+              "fold": "head",
+              "per_case_metrics": {
+                "centre_notched-5cca28515007c18b": {
+                  "inference_seconds": 0.016523380007129163,
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "relative_l2_P": 0.23252317767008537,
+                  "relative_l2_u": 0.08658057514677833,
+                  "relative_peak_stress_error": 0.6077575714724884
+                },
+                "centre_notched-a41e780eea638dea": {
+                  "inference_seconds": 0.014526080002542584,
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "relative_l2_P": 0.18183014009701742,
+                  "relative_l2_u": 0.06759620431856339,
+                  "relative_peak_stress_error": 0.6216150326185804
+                },
+                "centre_notched-a98b736cb24257ac": {
+                  "inference_seconds": 0.01699213999090716,
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "relative_l2_P": 0.2082705761740483,
+                  "relative_l2_u": 0.07614008223409745,
+                  "relative_peak_stress_error": 0.5462511063328981
+                },
+                "centre_notched-d66a0fd3bc042733": {
+                  "inference_seconds": 0.014275740005541594,
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "relative_l2_P": 0.19045645416905874,
+                  "relative_l2_u": 0.05983510030871301,
+                  "relative_peak_stress_error": 0.5390288840276466
+                },
+                "dogbone-64ce4fda58ef1957": {
+                  "inference_seconds": 0.016298400005325675,
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "relative_l2_P": 0.1708299965689764,
+                  "relative_l2_u": 0.04330318960697349,
+                  "relative_peak_stress_error": 0.14812548738927575
+                },
+                "dogbone-99e333830501e217": {
+                  "inference_seconds": 0.016276839992497117,
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "relative_l2_P": 0.08942941799479635,
+                  "relative_l2_u": 0.033855768922083564,
+                  "relative_peak_stress_error": 0.21769055813633717
+                },
+                "dogbone-a1840ab250176836": {
+                  "inference_seconds": 0.01542141999816522,
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "relative_l2_P": 0.13507962252745245,
+                  "relative_l2_u": 0.04196325204238722,
+                  "relative_peak_stress_error": 0.3868160814411202
+                },
+                "dogbone-a375954ba7e60fa9": {
+                  "inference_seconds": 0.014213379996363074,
+                  "l2_quadrature": "P1 lumped reference-area weights",
+                  "relative_l2_P": 0.14490777525314252,
+                  "relative_l2_u": 0.04287250546302923,
+                  "relative_peak_stress_error": 0.4116312971037901
+                }
+              },
+              "training": {
+                "final_hybrid_loss": 0.01912030193489045,
+                "optimizer_state_preserved_across_phases": true,
+                "phases": [
+                  {
+                    "decoder_lr": null,
+                    "encoder_lr": null,
+                    "epochs": 60,
+                    "final_hybrid_loss": 0.20419121626764536,
+                    "name": "head_only",
+                    "stress_head_lr": 0.001
+                  },
+                  {
+                    "decoder_lr": 0.0001,
+                    "encoder_lr": null,
+                    "epochs": 120,
+                    "final_hybrid_loss": 0.026587658328935504,
+                    "name": "decoder_and_head",
+                    "stress_head_lr": 0.001
+                  },
+                  {
+                    "decoder_lr": 0.0001,
+                    "encoder_lr": 3e-05,
+                    "epochs": 120,
+                    "final_hybrid_loss": 0.01912030193489045,
+                    "name": "full_low_lr",
+                    "stress_head_lr": 0.0003
+                  }
+                ],
+                "total_epochs": 300
+              },
+              "training_seconds": 485.2151441000169
+            }
+          ],
+          "guardrail_checks": {
+            "P_improves_in_every_family_fold": false,
+            "all_passed": false,
+            "family_P_within_absolute_0_005": false,
+            "family_u_within_absolute_0_005": false,
+            "mean_inference_within_1_25x": true,
+            "median_peak_within_absolute_0_02": false,
+            "primary_score_improved_by_at_least_10_percent": false,
+            "stress_head_parameters_at_most_10000": true,
+            "total_model_growth_below_1_percent": true,
+            "worst_case_u_within_absolute_0_01": true,
+            "worst_peak_within_absolute_0_05": false
+          },
+          "guardrails_passed": false,
+          "mean_inference_seconds": 0.015609864997531985,
+          "mean_relative_l2_P": {
+            "centre_notched": 0.17542247896151253,
+            "dogbone": 0.14801636631566312
+          },
+          "mean_relative_l2_u": {
+            "centre_notched": 0.06260674433001796,
+            "dogbone": 0.03394679513545053
+          },
+          "median_peak_stress_error": 0.4345871334186529,
+          "overall_worst_peak_stress_error": 0.6216150326185804,
+          "peak_supervised_P_weight": 0.0,
+          "pooled_worst_family_relative_l2_P": 0.17542247896151253,
+          "stress_head_parameter_count": 4484,
+          "total_parameter_count": 614939,
+          "worst_single_case_relative_l2_u": 0.08658057514677833
+        }
+      },
+      "same_epoch_budget": true,
+      "staged_epochs": 300,
+      "training_geometry_count": 40
+    },
+    "upstream_implementation_audit": {
+      "checkpoint_runtime_loaded": true,
+      "displacement_uses_upstream_forward": true,
+      "public_head_matches_pinned_commit": true,
+      "s1_only_extension": "direct first-Piola stress head",
+      "vendored_source_semantically_identical": true
+    }
+  },
+  "upstream_checkpoint_sha256": "6f8dbdfffbb2170dce9aa6fcd156a151736ae49846c2af525c429edca6dd7c85",
+  "upstream_commit": "9f6794141beca9d3e66433465c3b07039a7e41d2",
+  "upstream_repository": "BBahtiri/PI-GINOT-DogBone"
+}

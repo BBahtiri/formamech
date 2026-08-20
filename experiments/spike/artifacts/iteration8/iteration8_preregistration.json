@@ -1,0 +1,903 @@
+{
+  "created_before_fem_solves": true,
+  "created_utc": "2026-08-13T21:22:31.283092Z",
+  "fem": {
+    "applied_displacement_mm": 1.0,
+    "cache_namespace": "confirm-v1",
+    "content_sha256": "a21d4b6ab942e313774eab998e110061bbe3ccc5a9afec1ec15e5d4722eff211"
+  },
+  "fresh_campaign": {
+    "manifest": {
+      "case_count": 50,
+      "cases": [
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-5d72ef5d30a477f9",
+          "mesh_id": "mesh-b144ab71ec91247f",
+          "parameters": {
+            "L_total": 44.30169229382993,
+            "R_fillet": 10.130198821419453,
+            "W_gauge": 12.518426380682142,
+            "W_grip": 18.543098500853404
+          },
+          "point_count": 363,
+          "seed": 5151608841238580864,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-522a7e204654dd58",
+          "mesh_id": "mesh-8c3ca0110b4b9f0f",
+          "parameters": {
+            "L_total": 61.856210508797815,
+            "R_fillet": 15.412288359049988,
+            "W_gauge": 11.421212563139752,
+            "W_grip": 17.741016697246888
+          },
+          "point_count": 363,
+          "seed": 6792752199865919940,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-c18bc7426e847c02",
+          "mesh_id": "mesh-f0a2e00f62baf5b2",
+          "parameters": {
+            "L_total": 57.78830202242548,
+            "R_fillet": 18.637008543306997,
+            "W_gauge": 9.406128992161566,
+            "W_grip": 23.679169583058055
+          },
+          "point_count": 363,
+          "seed": 1105280864400728267,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-8d021760a5c938a9",
+          "mesh_id": "mesh-a198ee011945b671",
+          "parameters": {
+            "L_total": 66.08118671473703,
+            "R_fillet": 8.990826773720709,
+            "W_gauge": 12.470506072092526,
+            "W_grip": 22.63566191316349
+          },
+          "point_count": 363,
+          "seed": 13796473564480256557,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-ccc6669e83db6594",
+          "mesh_id": "mesh-2672c62c11c14049",
+          "parameters": {
+            "L_total": 64.67630246154236,
+            "R_fillet": 12.7824115013906,
+            "W_gauge": 7.274021777672117,
+            "W_grip": 20.5070636943301
+          },
+          "point_count": 363,
+          "seed": 15284097874117972527,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-674005280f22dcbe",
+          "mesh_id": "mesh-c0118a147aba08ff",
+          "parameters": {
+            "L_total": 49.31739715781899,
+            "R_fillet": 15.455262910280503,
+            "W_gauge": 7.6147264391824905,
+            "W_grip": 21.825495907102457
+          },
+          "point_count": 363,
+          "seed": 681860139900529739,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-bbd828de6209f8e0",
+          "mesh_id": "mesh-196532cc828d5cc0",
+          "parameters": {
+            "L_total": 48.3393814669694,
+            "R_fillet": 11.97012364489315,
+            "W_gauge": 12.106911597684446,
+            "W_grip": 21.916497735199517
+          },
+          "point_count": 363,
+          "seed": 2032658976170292926,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-90588924c7bfb303",
+          "mesh_id": "mesh-cb8cbe54792d75d1",
+          "parameters": {
+            "L_total": 46.29923205062352,
+            "R_fillet": 10.605897791204004,
+            "W_gauge": 7.055878739765737,
+            "W_grip": 16.251447676201604
+          },
+          "point_count": 363,
+          "seed": 17716948236814777306,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-d115f240f61b0a80",
+          "mesh_id": "mesh-86d9d7ea19aaa1bd",
+          "parameters": {
+            "L_total": 43.63014349586074,
+            "R_fillet": 8.669124135382836,
+            "W_gauge": 12.851612574737949,
+            "W_grip": 20.867359686209404
+          },
+          "point_count": 363,
+          "seed": 13815420070346126870,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-7dc20e0a04ca4c28",
+          "mesh_id": "mesh-a81591d729bf47ee",
+          "parameters": {
+            "L_total": 64.47694544390026,
+            "R_fillet": 14.072396137312552,
+            "W_gauge": 11.919206291774113,
+            "W_grip": 19.42141458996985
+          },
+          "point_count": 363,
+          "seed": 7305908704451617071,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-519116b933cf4d0d",
+          "mesh_id": "mesh-7e1e16fd63733aa9",
+          "parameters": {
+            "L_total": 44.38250900271456,
+            "R_fillet": 12.239402806047137,
+            "W_gauge": 12.614070594926915,
+            "W_grip": 22.052477096297565
+          },
+          "point_count": 363,
+          "seed": 10690281074362187903,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-04b0f7750707ff83",
+          "mesh_id": "mesh-459f9cd5968f6e93",
+          "parameters": {
+            "L_total": 48.62344423232988,
+            "R_fillet": 15.077883749443973,
+            "W_gauge": 12.290390719491256,
+            "W_grip": 23.447381019813037
+          },
+          "point_count": 363,
+          "seed": 16133095644800674133,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-bdfeae7a76ab4179",
+          "mesh_id": "mesh-342ab0fa6674746c",
+          "parameters": {
+            "L_total": 40.96002538463468,
+            "R_fillet": 8.169478415935505,
+            "W_gauge": 11.303414649545543,
+            "W_grip": 25.91485536683436
+          },
+          "point_count": 363,
+          "seed": 10756062285186043883,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-25bcc462dc2a27ee",
+          "mesh_id": "mesh-477f3e44741a9ead",
+          "parameters": {
+            "L_total": 49.24877729618159,
+            "R_fillet": 15.300554149547036,
+            "W_gauge": 7.554852489155824,
+            "W_grip": 19.58512891177146
+          },
+          "point_count": 363,
+          "seed": 8370868678368811469,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-ca1a22f8639594f8",
+          "mesh_id": "mesh-4d89e39d039509c9",
+          "parameters": {
+            "L_total": 49.08967517817897,
+            "R_fillet": 19.01564011590309,
+            "W_gauge": 9.232414772628367,
+            "W_grip": 24.26926515317925
+          },
+          "point_count": 363,
+          "seed": 4778177316160295388,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-f525e0e2bc3b64b7",
+          "mesh_id": "mesh-e8ea1de474bf35dd",
+          "parameters": {
+            "L_total": 50.734538560077695,
+            "R_fillet": 8.139293521634833,
+            "W_gauge": 11.943071183290755,
+            "W_grip": 17.1260221992811
+          },
+          "point_count": 363,
+          "seed": 4475717467237790913,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-37b840e5f3d0acdc",
+          "mesh_id": "mesh-6e31fcad13b691af",
+          "parameters": {
+            "L_total": 62.71047247674794,
+            "R_fillet": 18.247955308410102,
+            "W_gauge": 10.594251010781973,
+            "W_grip": 23.439202059786318
+          },
+          "point_count": 363,
+          "seed": 16138888406703190593,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-8dbb02064cc40df2",
+          "mesh_id": "mesh-5da35341043e7328",
+          "parameters": {
+            "L_total": 64.35531809865518,
+            "R_fillet": 12.685332808871964,
+            "W_gauge": 7.055007247619416,
+            "W_grip": 18.9258687058253
+          },
+          "point_count": 363,
+          "seed": 15815898411042178139,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-277f2dd879939d7d",
+          "mesh_id": "mesh-141f107a991cad1e",
+          "parameters": {
+            "L_total": 41.175028512907254,
+            "R_fillet": 15.902313781180194,
+            "W_gauge": 7.757883934499704,
+            "W_grip": 23.366483573990806
+          },
+          "point_count": 363,
+          "seed": 5730313803472444266,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-be5f5227b79eb5a2",
+          "mesh_id": "mesh-a2b36b504d5ea368",
+          "parameters": {
+            "L_total": 50.54385598751501,
+            "R_fillet": 17.426143048562412,
+            "W_gauge": 12.913189336570126,
+            "W_grip": 19.380600637432746
+          },
+          "point_count": 363,
+          "seed": 6414239867841849796,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-2339a27be0b9ba6f",
+          "mesh_id": "mesh-808846ce0b7f983d",
+          "parameters": {
+            "L_total": 61.80071692131217,
+            "R_fillet": 19.051196524991532,
+            "W_gauge": 7.5887468987982984,
+            "W_grip": 16.717181794253026
+          },
+          "point_count": 363,
+          "seed": 10761376003391441423,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-9da130af5089bd0c",
+          "mesh_id": "mesh-023e5a08b6c33ab5",
+          "parameters": {
+            "L_total": 52.16932312422458,
+            "R_fillet": 17.791106262410263,
+            "W_gauge": 7.690122803411994,
+            "W_grip": 23.977714962230905
+          },
+          "point_count": 363,
+          "seed": 5667459018716570548,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-3e350cb00da06c00",
+          "mesh_id": "mesh-d42f4787adca5e20",
+          "parameters": {
+            "L_total": 57.06940433002891,
+            "R_fillet": 18.090738767439504,
+            "W_gauge": 10.199236332045588,
+            "W_grip": 19.258076004045055
+          },
+          "point_count": 363,
+          "seed": 2807603445108952517,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-7c66e2fa505393cb",
+          "mesh_id": "mesh-755caa2b5b56a7b9",
+          "parameters": {
+            "L_total": 43.33913133822351,
+            "R_fillet": 15.883524388394235,
+            "W_gauge": 11.586345923555413,
+            "W_grip": 18.600123017271265
+          },
+          "point_count": 363,
+          "seed": 15380079711675901938,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "dogbone",
+          "geometry_id": "dogbone-3397de988ab5d0e5",
+          "mesh_id": "mesh-c5eeb21f9de08139",
+          "parameters": {
+            "L_total": 61.563885656186514,
+            "R_fillet": 10.171038361775977,
+            "W_gauge": 8.035205074372872,
+            "W_grip": 17.742816700354478
+          },
+          "point_count": 363,
+          "seed": 13890862975773652253,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-fb22327759fad808",
+          "mesh_id": "mesh-843ff822e2bbcf4d",
+          "parameters": {
+            "notch_depth": 2.574776158014625,
+            "notch_radius": 4.67405373034559,
+            "width": 20.597341275877305
+          },
+          "point_count": 363,
+          "seed": 3443754479414843535,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-677739b8ad19d0d6",
+          "mesh_id": "mesh-79e5a5b21caf1761",
+          "parameters": {
+            "notch_depth": 4.0216319557979805,
+            "notch_radius": 7.9080396742384185,
+            "width": 29.51015728526845
+          },
+          "point_count": 363,
+          "seed": 11974166012735086923,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-f82bd86da9b26841",
+          "mesh_id": "mesh-29f8c4afd64e1ba5",
+          "parameters": {
+            "notch_depth": 3.263254386476607,
+            "notch_radius": 6.2917030870113875,
+            "width": 20.115181985745693
+          },
+          "point_count": 363,
+          "seed": 3429807538646548174,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-df025c19161ef560",
+          "mesh_id": "mesh-567ea1f83ba07dcc",
+          "parameters": {
+            "notch_depth": 2.259714650049035,
+            "notch_radius": 4.7367683687583,
+            "width": 16.68050914301164
+          },
+          "point_count": 363,
+          "seed": 4163189698324461146,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-5fc356e19c23d895",
+          "mesh_id": "mesh-2211503342f1b4cb",
+          "parameters": {
+            "notch_depth": 2.9104785130753217,
+            "notch_radius": 3.664723752633816,
+            "width": 27.001246351227202
+          },
+          "point_count": 363,
+          "seed": 13624029284912888029,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-76ed7308feacfd2c",
+          "mesh_id": "mesh-2aff73a61a7fd544",
+          "parameters": {
+            "notch_depth": 3.2550062287430968,
+            "notch_radius": 5.4630298972975915,
+            "width": 22.469052122161415
+          },
+          "point_count": 363,
+          "seed": 7277499117284704974,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-97d3d168777d377a",
+          "mesh_id": "mesh-a58456151cf819bb",
+          "parameters": {
+            "notch_depth": 4.833440161054584,
+            "notch_radius": 5.1207839838072,
+            "width": 24.220980861259054
+          },
+          "point_count": 363,
+          "seed": 9681683184421959039,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-5850a4e527bda4ee",
+          "mesh_id": "mesh-a58b60c5db5099ab",
+          "parameters": {
+            "notch_depth": 3.1488611853178035,
+            "notch_radius": 3.6119699370691083,
+            "width": 20.83032805334629
+          },
+          "point_count": 363,
+          "seed": 12911839235604519754,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-cb7a87e58a419860",
+          "mesh_id": "mesh-507a4bdfca7c4754",
+          "parameters": {
+            "notch_depth": 4.703713705296502,
+            "notch_radius": 6.244267962517645,
+            "width": 19.17844332634062
+          },
+          "point_count": 363,
+          "seed": 1462109824407651598,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-6175827239b29a20",
+          "mesh_id": "mesh-cea36a2e8896bc55",
+          "parameters": {
+            "notch_depth": 1.321523584757271,
+            "notch_radius": 5.477466977102555,
+            "width": 20.34106505133463
+          },
+          "point_count": 363,
+          "seed": 17095429806994667664,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-1e6316d5cbbdde9c",
+          "mesh_id": "mesh-fd0ad20bc172b3d9",
+          "parameters": {
+            "notch_depth": 3.110135862033597,
+            "notch_radius": 7.462230594153525,
+            "width": 22.05795792509339
+          },
+          "point_count": 363,
+          "seed": 17253700427349094614,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-84fd43c7ab4b7713",
+          "mesh_id": "mesh-51af87316c4a7192",
+          "parameters": {
+            "notch_depth": 3.7619592946522733,
+            "notch_radius": 6.419438070140832,
+            "width": 27.826024796681267
+          },
+          "point_count": 363,
+          "seed": 5292977873090954903,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-b9c497bf3fc6d473",
+          "mesh_id": "mesh-adc11e51d9bb0689",
+          "parameters": {
+            "notch_depth": 4.4672110058071715,
+            "notch_radius": 6.370778736879631,
+            "width": 27.057201219239836
+          },
+          "point_count": 363,
+          "seed": 9956709623169961506,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-b86273129ec61a70",
+          "mesh_id": "mesh-28be9f99b4210e68",
+          "parameters": {
+            "notch_depth": 2.7700432887360766,
+            "notch_radius": 7.038127496351795,
+            "width": 23.239677444109063
+          },
+          "point_count": 363,
+          "seed": 12755794253950815090,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-97c212a2b29cbdd6",
+          "mesh_id": "mesh-049f395dba48a46d",
+          "parameters": {
+            "notch_depth": 1.5190701154728825,
+            "notch_radius": 2.296133810417544,
+            "width": 29.155745994954582
+          },
+          "point_count": 363,
+          "seed": 5296861298822487810,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-794750d3c6119506",
+          "mesh_id": "mesh-e7bc1265cfe803ba",
+          "parameters": {
+            "notch_depth": 2.8708724945522124,
+            "notch_radius": 7.117992752744678,
+            "width": 20.329467093140202
+          },
+          "point_count": 363,
+          "seed": 7417179040983987442,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-9e5d04f44d4bef78",
+          "mesh_id": "mesh-9903e943742bd44c",
+          "parameters": {
+            "notch_depth": 1.5842761501103273,
+            "notch_radius": 6.840571704869253,
+            "width": 24.993537487233663
+          },
+          "point_count": 363,
+          "seed": 7091352273034537302,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-fab0534fc9598c88",
+          "mesh_id": "mesh-4a3af172d8ed2a98",
+          "parameters": {
+            "notch_depth": 2.7335180463697744,
+            "notch_radius": 6.1742840448484095,
+            "width": 22.68515720536825
+          },
+          "point_count": 363,
+          "seed": 7621668627217119265,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-af5e7d895a2da0d3",
+          "mesh_id": "mesh-7226c670bd3c1da1",
+          "parameters": {
+            "notch_depth": 2.776923826189263,
+            "notch_radius": 2.473306693879518,
+            "width": 27.285909032404934
+          },
+          "point_count": 363,
+          "seed": 16308465051742662783,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-54b36f565917a000",
+          "mesh_id": "mesh-d7b7922ca58ccf0f",
+          "parameters": {
+            "notch_depth": 4.9127800366178445,
+            "notch_radius": 5.187103004769309,
+            "width": 27.78237520133483
+          },
+          "point_count": 363,
+          "seed": 16891435596815706711,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-a12bdec3ad94b311",
+          "mesh_id": "mesh-0eb7eb751c674279",
+          "parameters": {
+            "notch_depth": 4.314391766552383,
+            "notch_radius": 6.633758605772252,
+            "width": 16.572066391840547
+          },
+          "point_count": 363,
+          "seed": 15901906994565243724,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-8eff0e0860ba9755",
+          "mesh_id": "mesh-c38901c1b801df1d",
+          "parameters": {
+            "notch_depth": 4.045727616108113,
+            "notch_radius": 2.733554265788838,
+            "width": 20.60828898948251
+          },
+          "point_count": 363,
+          "seed": 18072330633027545509,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-07c291cfaa2c0178",
+          "mesh_id": "mesh-998fc10ca12b9720",
+          "parameters": {
+            "notch_depth": 4.737906485952886,
+            "notch_radius": 4.131802545456966,
+            "width": 23.95529908485397
+          },
+          "point_count": 363,
+          "seed": 3590142929410535460,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-ef67129a465437f5",
+          "mesh_id": "mesh-2e2e21af3afc3109",
+          "parameters": {
+            "notch_depth": 1.3814072234692851,
+            "notch_radius": 5.364491377792736,
+            "width": 23.749014948542417
+          },
+          "point_count": 363,
+          "seed": 3770359882175712825,
+          "topology_signature": "quarter-single-component-no-holes"
+        },
+        {
+          "cell_count": 640,
+          "family": "centre_notched",
+          "geometry_id": "centre_notched-e94f38dd4d86a5ad",
+          "mesh_id": "mesh-a3a46f2fa4c43115",
+          "parameters": {
+            "notch_depth": 1.479797193706733,
+            "notch_radius": 5.549990781595881,
+            "width": 23.712128713395206
+          },
+          "point_count": 363,
+          "seed": 5342057451728919329,
+          "topology_signature": "quarter-single-component-no-holes"
+        }
+      ],
+      "family_counts": {
+        "centre_notched": 25,
+        "dogbone": 25
+      },
+      "master_seed": 2026081301,
+      "no_release_evidence": true,
+      "role": "LEGACY",
+      "schema_version": "confirm-v1"
+    },
+    "manifest_sha256": "c4165c2057a69bcb3d5480d364d70fcaccfd6fc6c1a2f22176c13ab0d851a9c3"
+  },
+  "frozen_model": {
+    "provenance": {
+      "architecture": "conditioned_mlp",
+      "batch_size": 4,
+      "checkpoint_recovery": {
+        "confirm_py_sha256": "59c4d3a879cec92751e4cc901fc68df8543d1a2b347938ee7b795528d543eb12",
+        "invalid_checkpoint_quarantine_path": "C:\\Users\\betim\\AppData\\Local\\Temp\\pi-ginot-iteration8-invalid-torchversion-3b221fa06451.pt",
+        "invalid_checkpoint_sha256": "3b221fa06451dce4fadb5de770c99f3d6d8411525d58acc72147d5db3cec8bde",
+        "metadata_resaved_as_primitives": true,
+        "reason": "TorchVersion string subclass rejected by weights_only loader",
+        "recovered_utc": "2026-08-13T21:21:17.975148Z",
+        "source_loaded_with_weights_only": true,
+        "temporary_safe_global": "torch.torch_version.TorchVersion",
+        "tensor_state_unchanged": true
+      },
+      "configuration_alias": "iteration3_joint_adam",
+      "created_utc": "2026-08-13T21:17:32.772563Z",
+      "environment": {
+        "device": "cpu",
+        "dtype": "float32",
+        "numpy": "2.5.2",
+        "platform": "Windows-11-10.0.26200-SP0",
+        "python": "3.12.13",
+        "scikit_fem": "12.0.2",
+        "scipy": "1.18.0",
+        "torch": "2.13.0+cpu",
+        "torch_threads": 8
+      },
+      "epochs": 1500,
+      "fem_content_sha256": "a21d4b6ab942e313774eab998e110061bbe3ccc5a9afec1ec15e5d4722eff211",
+      "final_hybrid_loss": 0.0018756746663711964,
+      "gradient_clip_norm": 1.0,
+      "historical_checkpoint_missing": true,
+      "learning_rate": 0.001,
+      "loss_weights": {
+        "constitutive_in_plane": 1.0,
+        "equilibrium_on_P_served": 1.0,
+        "partial_traction_on_P_served": 0.0,
+        "peak_supervised_P": 0.0,
+        "section_resultant_on_P_served": 0.0,
+        "supervised_P": 1.0,
+        "supervised_u": 1.0,
+        "traction_free_on_P_served": 0.0
+      },
+      "model_parameter_count": 614939,
+      "model_seed": 314159,
+      "no_release_evidence": true,
+      "objective": "joint_u_P_equilibrium_constitutive",
+      "optimizer": "Adam",
+      "physics_query_count": 24,
+      "probe_geometry_id": "centre_notched-1e8a92943fd2eb99",
+      "probe_output_sha256": "f5d1f2b54877c08ecefa7144081f309442faa71e36d9c96de055704dd8ec7026",
+      "reproduction_kind": "semantic_protocol_reproduction",
+      "role": "LEGACY",
+      "sampler_seed": 314179,
+      "schema_version": "iteration3-protocol-reproduction-v1",
+      "sealed_iteration3_screen_sha256": "c4b58d0956b0d006459ba05ebfe8bbf1097aafe606e62e8505c49e0666d8a7f6",
+      "served_stress": "P_served = P_predicted",
+      "source_sha256": {
+        "experiments/spike/confirm.py": "944b739cc870754cb96abcfdaa993b83ce52e0ee1a30f8f1dcc73eebb1b4c83e",
+        "experiments/spike/iteration8.py": "47d2c6ea725ed42fa3003b8a88b6fb7ddeedadc879370e4e81112afbd9779dfb",
+        "experiments/spike/iteration8_reproduction.py": "1ac3ea5a79c3621854312dd6ed082197250d72260b679a1a26c2e5338415812f",
+        "experiments/spike/model.py": "02dd9bf3a38602d7b898e540ce3672c96763a2498d69027c7dbff1cd47f414fb",
+        "experiments/spike/run.py": "54e0c4541e83ca196b2fcfa7fa7fdd7acd28ff11fe97b7009412121b6ec51c53"
+      },
+      "stress_head_conditioning": [
+        "y_max/x_max"
+      ],
+      "stress_head_output_scale": "E*u_delta/x_max",
+      "stress_head_parameter_count": 4484,
+      "supervised_query_count": 96,
+      "training_data_sha256": "e4cbce48775cb05b3570f6057d17c460d67a1e3657472a0955b1b5200f8e6c12",
+      "training_geometry_digest": "e2fcc8e72677bbba218eae3a215067320f7ff9ea38aaf91ff21d585a4ebb9869",
+      "training_geometry_ids": [
+        "dogbone-99e333830501e217",
+        "dogbone-64ce4fda58ef1957",
+        "dogbone-a1840ab250176836",
+        "dogbone-a375954ba7e60fa9",
+        "dogbone-7697771e7849af06",
+        "dogbone-0fbc0d1312c7687d",
+        "dogbone-b7a98ea5853c7b4f",
+        "dogbone-07495eb74b8f06d9",
+        "dogbone-e6836a6d47fef622",
+        "dogbone-442423f5ef96184f",
+        "dogbone-12e79dc66ed3e6fd",
+        "dogbone-81d08cc637f24e4f",
+        "dogbone-43db12df86020f13",
+        "dogbone-e225c45f5a607623",
+        "dogbone-e88118beb918f108",
+        "dogbone-a01db5bc9d001299",
+        "dogbone-18db6301df6903c8",
+        "dogbone-e0af91b7a9e08e3d",
+        "dogbone-c53cac07c1a1dbaa",
+        "dogbone-698bb0c57b8560b1",
+        "centre_notched-d66a0fd3bc042733",
+        "centre_notched-5cca28515007c18b",
+        "centre_notched-a41e780eea638dea",
+        "centre_notched-a98b736cb24257ac",
+        "centre_notched-9c5b78550c97d20b",
+        "centre_notched-7b041d2ff5f7fbf8",
+        "centre_notched-50d9c2afeed60864",
+        "centre_notched-1e8a92943fd2eb99",
+        "centre_notched-9fc5124e6496d801",
+        "centre_notched-9e5c3dddc4257cda",
+        "centre_notched-3e9ed4485ed587e8",
+        "centre_notched-f5f32165abf4e50d",
+        "centre_notched-f7cbe654abd10d25",
+        "centre_notched-b2e260e6a0a74b69",
+        "centre_notched-4c01cde220ca32c0",
+        "centre_notched-3adc77fbc1bf007b",
+        "centre_notched-429b86644ed120bd",
+        "centre_notched-6b8ce2fc8e450129",
+        "centre_notched-c9200fa83be7164f",
+        "centre_notched-b727dfb28c2647d1"
+      ],
+      "training_mesh_digest": "7e761906e4cbc73bd124b090787207fef7ef414f0bffcc450031add324ac0d9b",
+      "training_seconds": 3737.9049545000307,
+      "upstream_checkpoint_epoch": 1424,
+      "upstream_checkpoint_sha256": "6f8dbdfffbb2170dce9aa6fcd156a151736ae49846c2af525c429edca6dd7c85",
+      "upstream_commit": "9f6794141beca9d3e66433465c3b07039a7e41d2",
+      "upstream_repository": "BBahtiri/PI-GINOT-DogBone"
+    },
+    "sha256": "eae8e1fb8c7ef9bacfc4d2f7c6edbfd3f58cfdff0e524e9407847c58198c4147"
+  },
+  "gates": {
+    "family_fraction_P_within_15_percent_min": 0.8,
+    "family_mean_inference_seconds_max": 0.05,
+    "family_per_case_P_90th_percentile_max": 0.2,
+    "family_relative_l2_P_bootstrap_upper_max": 0.15,
+    "family_relative_l2_P_max": 0.15,
+    "family_relative_l2_u_max": 0.075,
+    "family_wilson_lower_fraction_min": 0.6,
+    "family_worst_peak_error_max": 0.6,
+    "minimum_converged_per_family": 24,
+    "minimum_converged_total": 48
+  },
+  "no_release_evidence": true,
+  "no_tuning": true,
+  "regularity_geometry_ids": [
+    "dogbone-5d72ef5d30a477f9",
+    "dogbone-bdfeae7a76ab4179",
+    "dogbone-3397de988ab5d0e5",
+    "centre_notched-fb22327759fad808",
+    "centre_notched-b9c497bf3fc6d473",
+    "centre_notched-e94f38dd4d86a5ad"
+  ],
+  "role": "LEGACY",
+  "schema_version": "iteration8-preregistration-v1",
+  "statistics": {
+    "bootstrap_seed": 2026081302,
+    "whole_geometry_resamples": 10000
+  },
+  "step": "S1"
+}

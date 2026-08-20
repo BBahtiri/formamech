@@ -1,0 +1,292 @@
+{
+  "changes": {
+    "convergence_check": "all_last_changes_within_limit -> Richardson order/limit/remaining-error",
+    "element_order": "ElementTriP1 -> ElementTriP2 (P1 retained for the cross-check)",
+    "refinement_selection": "fixed stride (family_index 0,12,24) -> extremal per derived ratio",
+    "stress_recovery": "element-mean + unweighted count average -> vertex-evaluated + area-weighted patch average"
+  },
+  "created_utc": "2026-08-19T08:39:35.386069Z",
+  "execution_profile": {
+    "note": "differs from the iteration-8 Windows profile; byte-identical reproduction is NOT_RUN",
+    "numpy": "2.4.4",
+    "platform": "Linux-6.18.5-fc-v20-x86_64-with-glibc2.39",
+    "python": "3.11.15"
+  },
+  "gate_A": {
+    "A.order": {
+      "note": "observed order recorded for every refinement geometry",
+      "status": "PASS"
+    },
+    "A.remaining": {
+      "reasons": [
+        "centre_notched-5cca28515007c18b: refinement sequence is diverging; order is undetermined",
+        "dogbone-e88118beb918f108: remaining error 0.0246 exceeds 0.0200"
+      ],
+      "status": "FAIL",
+      "threshold": 0.02,
+      "verdict": "FAIL"
+    },
+    "A.sanity": {
+      "does_not_validate": [
+        "mesh resolution at a stress concentration"
+      ],
+      "measured": {
+        "P1": 3.950988591647254e-14,
+        "P2": 4.5570489676436654e-14
+      },
+      "status": "PASS",
+      "threshold": 1e-06,
+      "validates": [
+        "constitutive law",
+        "plane-stress closure",
+        "boundary-condition plumbing"
+      ]
+    },
+    "A.worst-case": {
+      "selected": [
+        "centre_notched-5cca28515007c18b",
+        "centre_notched-640d49e3463cf016",
+        "dogbone-3778c574631c19f0",
+        "dogbone-e88118beb918f108"
+      ],
+      "status": "PASS"
+    }
+  },
+  "geometries": {
+    "centre_notched-5cca28515007c18b": {
+      "cross_check_p1_vs_p2": {
+        "bounds_discretization_error_only": true,
+        "linear_value": 79.68484548280145,
+        "quadratic_value": 79.57438904807456,
+        "reason": null,
+        "relative_disagreement": 0.0013861661405960167,
+        "status": "OK"
+      },
+      "derived_ratios": {
+        "net_section_factor": 1.5604797056424073,
+        "notch_sharpness": 1.3357490583922846,
+        "relative_depth": 0.3591714160817445
+      },
+      "family": "centre_notched",
+      "linear_peaks_MPa": [
+        71.7139489794102,
+        77.91414595275239,
+        79.68484548280145
+      ],
+      "linear_richardson": {
+        "extrapolated_limit": 80.39268578880802,
+        "observed_order": 1.8079946270602483,
+        "reason": null,
+        "relative_remaining_error": [
+          0.10795430858221235,
+          0.030830414629594134,
+          0.008804784901279127
+        ],
+        "status": "OK"
+      },
+      "parameters": {
+        "notch_depth": 4.876036986381234,
+        "notch_radius": 3.6504139424586683,
+        "width": 27.15158705876242
+      },
+      "quadratic_peaks_MPa": [
+        80.0366985910083,
+        79.887678830688,
+        79.57438904807456
+      ]
+    },
+    "centre_notched-640d49e3463cf016": {
+      "cross_check_p1_vs_p2": {
+        "bounds_discretization_error_only": true,
+        "linear_value": 74.1771201367288,
+        "quadratic_value": 74.12089372671417,
+        "reason": null,
+        "relative_disagreement": 0.0007580020619699186,
+        "status": "OK"
+      },
+      "derived_ratios": {
+        "net_section_factor": 1.8717945530048508,
+        "notch_sharpness": 1.0934788478339459,
+        "relative_depth": 0.4657533336686612
+      },
+      "family": "centre_notched",
+      "linear_peaks_MPa": [
+        69.78135227131588,
+        73.51614797562748,
+        74.1771201367288
+      ],
+      "linear_richardson": {
+        "extrapolated_limit": 74.31925067597722,
+        "observed_order": 2.4983679143054403,
+        "reason": null,
+        "relative_remaining_error": [
+          0.061059528498827474,
+          0.01080611945148867,
+          0.0019124323503756054
+        ],
+        "status": "OK"
+      },
+      "parameters": {
+        "notch_depth": 4.675063658140992,
+        "notch_radius": 4.2754038337383005,
+        "width": 20.07527727742192
+      },
+      "quadratic_peaks_MPa": [
+        75.17048727847956,
+        74.411834663129,
+        74.12089372671417
+      ]
+    },
+    "dogbone-3778c574631c19f0": {
+      "cross_check_p1_vs_p2": {
+        "bounds_discretization_error_only": true,
+        "linear_value": 36.38484930305045,
+        "quadratic_value": 36.848166130677946,
+        "reason": null,
+        "relative_disagreement": 0.012573673978357363,
+        "status": "OK"
+      },
+      "derived_ratios": {
+        "fillet_ratio": 2.9826508446861717,
+        "gauge_slenderness": 8.72792862207571,
+        "width_ratio": 4.224417737304712
+      },
+      "family": "dogbone",
+      "linear_peaks_MPa": [
+        35.98897528808702,
+        36.16160391289034,
+        36.38484930305045
+      ],
+      "linear_richardson": {
+        "extrapolated_limit": null,
+        "observed_order": null,
+        "reason": "refinement sequence is diverging; order is undetermined",
+        "relative_remaining_error": [],
+        "status": "NOT_RUN"
+      },
+      "parameters": {
+        "L_total": 53.577437241437806,
+        "R_fillet": 18.30936014303585,
+        "W_gauge": 6.138620004971559,
+        "W_grip": 25.932095231575392
+      },
+      "quadratic_peaks_MPa": [
+        36.16302105654077,
+        36.67396422048521,
+        36.848166130677946
+      ]
+    },
+    "dogbone-e88118beb918f108": {
+      "cross_check_p1_vs_p2": {
+        "bounds_discretization_error_only": true,
+        "linear_value": 38.74252412450539,
+        "quadratic_value": 39.896275728786705,
+        "reason": null,
+        "relative_disagreement": 0.02891877959046793,
+        "status": "OK"
+      },
+      "derived_ratios": {
+        "fillet_ratio": 0.6289325687684958,
+        "gauge_slenderness": 3.5019797521344365,
+        "width_ratio": 1.3423675327848787
+      },
+      "family": "dogbone",
+      "linear_peaks_MPa": [
+        34.89181763572996,
+        37.41484444531672,
+        38.74252412450539
+      ],
+      "linear_richardson": {
+        "extrapolated_limit": 40.21718640937947,
+        "observed_order": 0.9262484175861707,
+        "reason": null,
+        "relative_remaining_error": [
+          0.13241524952644448,
+          0.06968020924032596,
+          0.03666746524391781
+        ],
+        "status": "OK"
+      },
+      "parameters": {
+        "L_total": 47.29141020662104,
+        "R_fillet": 8.493226748043467,
+        "W_gauge": 13.504192929098803,
+        "W_grip": 18.127590144485364
+      },
+      "quadratic_peaks_MPa": [
+        38.65174746876853,
+        39.4526396574383,
+        39.896275728786705
+      ]
+    }
+  },
+  "no_release_evidence": true,
+  "phase": "A",
+  "richardson_study_p2": {
+    "geometries": {
+      "centre_notched-5cca28515007c18b": {
+        "extrapolated_limit": null,
+        "observed_order": null,
+        "passes": false,
+        "production_level_index": 1,
+        "production_remaining_error": null,
+        "reason": "refinement sequence is diverging; order is undetermined",
+        "relative_remaining_error": [],
+        "status": "NOT_RUN"
+      },
+      "centre_notched-640d49e3463cf016": {
+        "extrapolated_limit": 73.93991336574788,
+        "observed_order": 1.3827131283161107,
+        "passes": true,
+        "production_level_index": 1,
+        "production_remaining_error": 0.006382497299486009,
+        "reason": null,
+        "relative_remaining_error": [
+          0.016642890919341076,
+          0.006382497299486009,
+          0.0024476680148522558
+        ],
+        "status": "OK"
+      },
+      "dogbone-3778c574631c19f0": {
+        "extrapolated_limit": 36.9382837066408,
+        "observed_order": 1.5524023745107125,
+        "passes": true,
+        "production_level_index": 1,
+        "production_remaining_error": 0.007155705669889395,
+        "reason": null,
+        "relative_remaining_error": [
+          0.02098805283583478,
+          0.007155705669889395,
+          0.002439679566017729
+        ],
+        "status": "OK"
+      },
+      "dogbone-e88118beb918f108": {
+        "extrapolated_limit": 40.44717732083533,
+        "observed_order": 0.8522313751772321,
+        "passes": false,
+        "production_level_index": 1,
+        "production_remaining_error": 0.02458855547590269,
+        "reason": null,
+        "relative_remaining_error": [
+          0.044389496894309446,
+          0.02458855547590269,
+          0.013620272872906807
+        ],
+        "status": "OK"
+      }
+    },
+    "production_level_index": 1,
+    "refinement_ratio": 2.0,
+    "remaining_error_limit": 0.02,
+    "verdict": "FAIL",
+    "verdict_reasons": [
+      "centre_notched-5cca28515007c18b: refinement sequence is diverging; order is undetermined",
+      "dogbone-e88118beb918f108: remaining error 0.0246 exceeds 0.0200"
+    ]
+  },
+  "role": "LEGACY",
+  "schema_version": "s1-closeout-gateA-v1",
+  "step": "S1"
+}

@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="590" viewBox="0 0 960 590" role="img" aria-label="Bootstrap confidence intervals">
+<title>Bootstrap confidence intervals</title>
+<style>text{font-family:Arial,sans-serif;fill:#202124}.title{font-size:20px;font-weight:700;text-anchor:middle}.label{font-size:13px;text-anchor:middle}.vertical{transform:rotate(-90deg);transform-origin:22px 286px}.tick{font-size:11px;text-anchor:middle}.ytick{font-size:11px;text-anchor:end}.grid{stroke:#e2e6ea;stroke-width:1}.axis{stroke:#5f6368;stroke-width:1.5}.legend{font-size:11px}.series{fill:none;stroke-width:2}.point{stroke:#fff;stroke-width:1;opacity:.88}</style>
+<text class="title" x="480" y="31">Bootstrap confidence intervals</text>
+<line class="grid" x1="92.00" y1="62.0" x2="92.00" y2="510.0"/>
+<line class="grid" x1="92.0" y1="510.00" x2="920.0" y2="510.00"/>
+<text class="tick" x="92.00" y="532">0</text>
+<text class="ytick" x="84" y="514.00">-0.75</text>
+<line class="grid" x1="257.60" y1="62.0" x2="257.60" y2="510.0"/>
+<line class="grid" x1="92.0" y1="420.40" x2="920.0" y2="420.40"/>
+<text class="tick" x="257.60" y="532">0.0381</text>
+<text class="ytick" x="84" y="424.40">0.15</text>
+<line class="grid" x1="423.20" y1="62.0" x2="423.20" y2="510.0"/>
+<line class="grid" x1="92.0" y1="330.80" x2="920.0" y2="330.80"/>
+<text class="tick" x="423.20" y="532">0.0762</text>
+<text class="ytick" x="84" y="334.80">1.05</text>
+<line class="grid" x1="588.80" y1="62.0" x2="588.80" y2="510.0"/>
+<line class="grid" x1="92.0" y1="241.20" x2="920.0" y2="241.20"/>
+<text class="tick" x="588.80" y="532">0.114</text>
+<text class="ytick" x="84" y="245.20">1.95</text>
+<line class="grid" x1="754.40" y1="62.0" x2="754.40" y2="510.0"/>
+<line class="grid" x1="92.0" y1="151.60" x2="920.0" y2="151.60"/>
+<text class="tick" x="754.40" y="532">0.152</text>
+<text class="ytick" x="84" y="155.60">2.85</text>
+<line class="grid" x1="920.00" y1="62.0" x2="920.00" y2="510.0"/>
+<line class="grid" x1="92.0" y1="62.00" x2="920.0" y2="62.00"/>
+<text class="tick" x="920.00" y="532">0.19</text>
+<text class="ytick" x="84" y="66.00">3.75</text>
+<line class="axis" x1="92.0" y1="510.0" x2="920.0" y2="510.0"/>
+<line class="axis" x1="92.0" y1="62.0" x2="92.0" y2="510.0"/>
+<text class="label" x="506" y="570">relative L2 error</text>
+<text class="label vertical" x="22" y="286">family / metric</text>
+<line x1="483.81" y1="136.67" x2="844.73" y2="136.67" stroke="#1565c0" stroke-width="5"><title>centre_notched P 95% CI [0.0901, 0.1731]</title></line>
+<circle cx="672.09" cy="136.67" r="6" fill="#1565c0"/>
+<text class="legend" x="97.0" y="127.67">centre_notched P</text>
+<line x1="245.58" y1="236.22" x2="344.56" y2="236.22" stroke="#d84315" stroke-width="5"><title>centre_notched u 95% CI [0.0353, 0.0581]</title></line>
+<circle cx="297.35" cy="236.22" r="6" fill="#d84315"/>
+<text class="legend" x="97.0" y="227.22">centre_notched u</text>
+<line x1="400.39" y1="335.78" x2="624.36" y2="335.78" stroke="#2e7d32" stroke-width="5"><title>dogbone P 95% CI [0.0709, 0.1224]</title></line>
+<circle cx="518.28" cy="335.78" r="6" fill="#2e7d32"/>
+<text class="legend" x="97.0" y="326.78">dogbone P</text>
+<line x1="175.75" y1="435.33" x2="221.31" y2="435.33" stroke="#6a1b9a" stroke-width="5"><title>dogbone u 95% CI [0.0193, 0.0297]</title></line>
+<circle cx="199.23" cy="435.33" r="6" fill="#6a1b9a"/>
+<text class="legend" x="97.0" y="426.33">dogbone u</text>
+</svg>

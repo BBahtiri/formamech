@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="590" viewBox="0 0 960 590" role="img" aria-label="Peak-stress identity">
+<title>Peak-stress identity</title>
+<style>text{font-family:Arial,sans-serif;fill:#202124}.title{font-size:20px;font-weight:700;text-anchor:middle}.label{font-size:13px;text-anchor:middle}.vertical{transform:rotate(-90deg);transform-origin:22px 286px}.tick{font-size:11px;text-anchor:middle}.ytick{font-size:11px;text-anchor:end}.grid{stroke:#e2e6ea;stroke-width:1}.axis{stroke:#5f6368;stroke-width:1.5}.legend{font-size:11px}.series{fill:none;stroke-width:2}.point{stroke:#fff;stroke-width:1;opacity:.88}</style>
+<text class="title" x="480" y="31">Peak-stress identity</text>
+<line class="grid" x1="92.00" y1="62.0" x2="92.00" y2="510.0"/>
+<line class="grid" x1="92.0" y1="510.00" x2="920.0" y2="510.00"/>
+<text class="tick" x="92.00" y="532">-6.62</text>
+<text class="ytick" x="84" y="514.00">-6.62</text>
+<line class="grid" x1="257.60" y1="62.0" x2="257.60" y2="510.0"/>
+<line class="grid" x1="92.0" y1="420.40" x2="920.0" y2="420.40"/>
+<text class="tick" x="257.60" y="532">12.6</text>
+<text class="ytick" x="84" y="424.40">12.6</text>
+<line class="grid" x1="423.20" y1="62.0" x2="423.20" y2="510.0"/>
+<line class="grid" x1="92.0" y1="330.80" x2="920.0" y2="330.80"/>
+<text class="tick" x="423.20" y="532">31.8</text>
+<text class="ytick" x="84" y="334.80">31.8</text>
+<line class="grid" x1="588.80" y1="62.0" x2="588.80" y2="510.0"/>
+<line class="grid" x1="92.0" y1="241.20" x2="920.0" y2="241.20"/>
+<text class="tick" x="588.80" y="532">51</text>
+<text class="ytick" x="84" y="245.20">51</text>
+<line class="grid" x1="754.40" y1="62.0" x2="754.40" y2="510.0"/>
+<line class="grid" x1="92.0" y1="151.60" x2="920.0" y2="151.60"/>
+<text class="tick" x="754.40" y="532">70.1</text>
+<text class="ytick" x="84" y="155.60">70.1</text>
+<line class="grid" x1="920.00" y1="62.0" x2="920.00" y2="510.0"/>
+<line class="grid" x1="92.0" y1="62.00" x2="920.0" y2="62.00"/>
+<text class="tick" x="920.00" y="532">89.3</text>
+<text class="ytick" x="84" y="66.00">89.3</text>
+<line class="axis" x1="92.0" y1="510.0" x2="920.0" y2="510.0"/>
+<line class="axis" x1="92.0" y1="62.0" x2="92.0" y2="510.0"/>
+<text class="label" x="506" y="570">FEM peak stress (MPa)</text>
+<text class="label vertical" x="22" y="286">predicted peak stress (MPa)</text>
+<line x1="92.00" y1="510.00" x2="920.00" y2="62.00" stroke="#424242" stroke-dasharray="6 4"/><text class="legend" x="820" y="84">y = x</text>
+<circle class="point" cx="789.75" cy="326.20" r="4.2" fill="#1565c0" data-case="centre_notched-07c291cfaa2c0178" data-family="centre_notched" data-metric="peak"><title>centre_notched-07c291cfaa2c0178 | FEM=74.24 MPa; predicted=32.75 MPa</title></circle>
+<circle class="point" cx="639.47" cy="194.90" r="4.2" fill="#1565c0" data-case="centre_notched-1e6316d5cbbdde9c" data-family="centre_notched" data-metric="peak"><title>centre_notched-1e6316d5cbbdde9c | FEM=56.82 MPa; predicted=60.87 MPa</title></circle>
+<circle class="point" cx="747.43" cy="251.58" r="4.2" fill="#1565c0" data-case="centre_notched-54b36f565917a000" data-family="centre_notched" data-metric="peak"><title>centre_notched-54b36f565917a000 | FEM=69.34 MPa; predicted=48.73 MPa</title></circle>
+<circle class="point" cx="760.45" cy="228.34" r="4.2" fill="#1565c0" data-case="centre_notched-5850a4e527bda4ee" data-family="centre_notched" data-metric="peak"><title>centre_notched-5850a4e527bda4ee | FEM=70.85 MPa; predicted=53.71 MPa</title></circle>
+<circle class="point" cx="740.99" cy="224.12" r="4.2" fill="#1565c0" data-case="centre_notched-5fc356e19c23d895" data-family="centre_notched" data-metric="peak"><title>centre_notched-5fc356e19c23d895 | FEM=68.59 MPa; predicted=54.61 MPa</title></circle>
+<circle class="point" cx="592.22" cy="157.82" r="4.2" fill="#1565c0" data-case="centre_notched-6175827239b29a20" data-family="centre_notched" data-metric="peak"><title>centre_notched-6175827239b29a20 | FEM=51.35 MPa; predicted=68.81 MPa</title></circle>
+<circle class="point" cx="656.56" cy="161.16" r="4.2" fill="#1565c0" data-case="centre_notched-677739b8ad19d0d6" data-family="centre_notched" data-metric="peak"><title>centre_notched-677739b8ad19d0d6 | FEM=58.81 MPa; predicted=68.1 MPa</title></circle>
+<circle class="point" cx="691.27" cy="246.33" r="4.2" fill="#1565c0" data-case="centre_notched-76ed7308feacfd2c" data-family="centre_notched" data-metric="peak"><title>centre_notched-76ed7308feacfd2c | FEM=62.83 MPa; predicted=49.85 MPa</title></circle>
+<circle class="point" cx="638.40" cy="184.96" r="4.2" fill="#1565c0" data-case="centre_notched-794750d3c6119506" data-family="centre_notched" data-metric="peak"><title>centre_notched-794750d3c6119506 | FEM=56.7 MPa; predicted=63 MPa</title></circle>
+<circle class="point" cx="682.12" cy="189.74" r="4.2" fill="#1565c0" data-case="centre_notched-84fd43c7ab4b7713" data-family="centre_notched" data-metric="peak"><title>centre_notched-84fd43c7ab4b7713 | FEM=61.77 MPa; predicted=61.98 MPa</title></circle>
+<circle class="point" cx="862.90" cy="275.52" r="4.2" fill="#1565c0" data-case="centre_notched-8eff0e0860ba9755" data-family="centre_notched" data-metric="peak"><title>centre_notched-8eff0e0860ba9755 | FEM=82.72 MPa; predicted=43.6 MPa</title></circle>
+<circle class="point" cx="680.60" cy="175.62" r="4.2" fill="#1565c0" data-case="centre_notched-97c212a2b29cbdd6" data-family="centre_notched" data-metric="peak"><title>centre_notched-97c212a2b29cbdd6 | FEM=61.59 MPa; predicted=65 MPa</title></circle>
+<circle class="point" cx="746.88" cy="278.49" r="4.2" fill="#1565c0" data-case="centre_notched-97d3d168777d377a" data-family="centre_notched" data-metric="peak"><title>centre_notched-97d3d168777d377a | FEM=69.27 MPa; predicted=42.97 MPa</title></circle>
+<circle class="point" cx="586.23" cy="129.51" r="4.2" fill="#1565c0" data-case="centre_notched-9e5d04f44d4bef78" data-family="centre_notched" data-metric="peak"><title>centre_notched-9e5d04f44d4bef78 | FEM=50.66 MPa; predicted=74.88 MPa</title></circle>
+<circle class="point" cx="703.28" cy="330.46" r="4.2" fill="#1565c0" data-case="centre_notched-a12bdec3ad94b311" data-family="centre_notched" data-metric="peak"><title>centre_notched-a12bdec3ad94b311 | FEM=64.22 MPa; predicted=31.84 MPa</title></circle>
+<circle class="point" cx="799.39" cy="207.02" r="4.2" fill="#1565c0" data-case="centre_notched-af5e7d895a2da0d3" data-family="centre_notched" data-metric="peak"><title>centre_notched-af5e7d895a2da0d3 | FEM=75.36 MPa; predicted=58.28 MPa</title></circle>
+<circle class="point" cx="637.25" cy="163.83" r="4.2" fill="#1565c0" data-case="centre_notched-b86273129ec61a70" data-family="centre_notched" data-metric="peak"><title>centre_notched-b86273129ec61a70 | FEM=56.57 MPa; predicted=67.52 MPa</title></circle>
+<circle class="point" cx="699.25" cy="327.02" r="4.2" fill="#1565c0" data-case="centre_notched-b9c497bf3fc6d473" data-family="centre_notched" data-metric="peak"><title>centre_notched-b9c497bf3fc6d473 | FEM=63.75 MPa; predicted=32.57 MPa</title></circle>
+<circle class="point" cx="712.20" cy="333.64" r="4.2" fill="#1565c0" data-case="centre_notched-cb7a87e58a419860" data-family="centre_notched" data-metric="peak"><title>centre_notched-cb7a87e58a419860 | FEM=65.25 MPa; predicted=31.16 MPa</title></circle>
+<circle class="point" cx="671.20" cy="276.62" r="4.2" fill="#1565c0" data-case="centre_notched-df025c19161ef560" data-family="centre_notched" data-metric="peak"><title>centre_notched-df025c19161ef560 | FEM=60.5 MPa; predicted=43.37 MPa</title></circle>
+<circle class="point" cx="599.78" cy="185.56" r="4.2" fill="#1565c0" data-case="centre_notched-e94f38dd4d86a5ad" data-family="centre_notched" data-metric="peak"><title>centre_notched-e94f38dd4d86a5ad | FEM=52.23 MPa; predicted=62.87 MPa</title></circle>
+<circle class="point" cx="595.50" cy="141.03" r="4.2" fill="#1565c0" data-case="centre_notched-ef67129a465437f5" data-family="centre_notched" data-metric="peak"><title>centre_notched-ef67129a465437f5 | FEM=51.73 MPa; predicted=72.41 MPa</title></circle>
+<circle class="point" cx="668.81" cy="248.47" r="4.2" fill="#1565c0" data-case="centre_notched-f82bd86da9b26841" data-family="centre_notched" data-metric="peak"><title>centre_notched-f82bd86da9b26841 | FEM=60.23 MPa; predicted=49.4 MPa</title></circle>
+<circle class="point" cx="653.80" cy="236.09" r="4.2" fill="#1565c0" data-case="centre_notched-fab0534fc9598c88" data-family="centre_notched" data-metric="peak"><title>centre_notched-fab0534fc9598c88 | FEM=58.49 MPa; predicted=52.05 MPa</title></circle>
+<circle class="point" cx="688.12" cy="120.70" r="4.2" fill="#1565c0" data-case="centre_notched-fb22327759fad808" data-family="centre_notched" data-metric="peak"><title>centre_notched-fb22327759fad808 | FEM=62.46 MPa; predicted=76.76 MPa</title></circle>
+<circle class="point" cx="474.25" cy="315.58" r="4.2" fill="#d84315" data-case="dogbone-04b0f7750707ff83" data-family="dogbone" data-metric="peak"><title>dogbone-04b0f7750707ff83 | FEM=37.68 MPa; predicted=35.02 MPa</title></circle>
+<circle class="point" cx="391.78" cy="353.22" r="4.2" fill="#d84315" data-case="dogbone-2339a27be0b9ba6f" data-family="dogbone" data-metric="peak"><title>dogbone-2339a27be0b9ba6f | FEM=28.12 MPa; predicted=26.96 MPa</title></circle>
+<circle class="point" cx="466.36" cy="317.25" r="4.2" fill="#d84315" data-case="dogbone-25bcc462dc2a27ee" data-family="dogbone" data-metric="peak"><title>dogbone-25bcc462dc2a27ee | FEM=36.76 MPa; predicted=34.66 MPa</title></circle>
+<circle class="point" cx="547.99" cy="285.57" r="4.2" fill="#d84315" data-case="dogbone-277f2dd879939d7d" data-family="dogbone" data-metric="peak"><title>dogbone-277f2dd879939d7d | FEM=46.22 MPa; predicted=41.45 MPa</title></circle>
+<circle class="point" cx="402.43" cy="354.84" r="4.2" fill="#d84315" data-case="dogbone-3397de988ab5d0e5" data-family="dogbone" data-metric="peak"><title>dogbone-3397de988ab5d0e5 | FEM=29.36 MPa; predicted=26.61 MPa</title></circle>
+<circle class="point" cx="397.63" cy="356.72" r="4.2" fill="#d84315" data-case="dogbone-37b840e5f3d0acdc" data-family="dogbone" data-metric="peak"><title>dogbone-37b840e5f3d0acdc | FEM=28.8 MPa; predicted=26.21 MPa</title></circle>
+<circle class="point" cx="416.64" cy="342.29" r="4.2" fill="#d84315" data-case="dogbone-3e350cb00da06c00" data-family="dogbone" data-metric="peak"><title>dogbone-3e350cb00da06c00 | FEM=31 MPa; predicted=29.3 MPa</title></circle>
+<circle class="point" cx="505.10" cy="297.75" r="4.2" fill="#d84315" data-case="dogbone-519116b933cf4d0d" data-family="dogbone" data-metric="peak"><title>dogbone-519116b933cf4d0d | FEM=41.25 MPa; predicted=38.84 MPa</title></circle>
+<circle class="point" cx="394.63" cy="359.20" r="4.2" fill="#d84315" data-case="dogbone-522a7e204654dd58" data-family="dogbone" data-metric="peak"><title>dogbone-522a7e204654dd58 | FEM=28.45 MPa; predicted=25.68 MPa</title></circle>
+<circle class="point" cx="497.88" cy="344.75" r="4.2" fill="#d84315" data-case="dogbone-5d72ef5d30a477f9" data-family="dogbone" data-metric="peak"><title>dogbone-5d72ef5d30a477f9 | FEM=40.42 MPa; predicted=28.78 MPa</title></circle>
+<circle class="point" cx="470.98" cy="320.06" r="4.2" fill="#d84315" data-case="dogbone-674005280f22dcbe" data-family="dogbone" data-metric="peak"><title>dogbone-674005280f22dcbe | FEM=37.3 MPa; predicted=34.06 MPa</title></circle>
+<circle class="point" cx="502.05" cy="299.51" r="4.2" fill="#d84315" data-case="dogbone-7c66e2fa505393cb" data-family="dogbone" data-metric="peak"><title>dogbone-7c66e2fa505393cb | FEM=40.9 MPa; predicted=38.47 MPa</title></circle>
+<circle class="point" cx="388.10" cy="384.52" r="4.2" fill="#d84315" data-case="dogbone-7dc20e0a04ca4c28" data-family="dogbone" data-metric="peak"><title>dogbone-7dc20e0a04ca4c28 | FEM=27.7 MPa; predicted=20.26 MPa</title></circle>
+<circle class="point" cx="392.52" cy="364.57" r="4.2" fill="#d84315" data-case="dogbone-8d021760a5c938a9" data-family="dogbone" data-metric="peak"><title>dogbone-8d021760a5c938a9 | FEM=28.21 MPa; predicted=24.53 MPa</title></circle>
+<circle class="point" cx="387.95" cy="373.43" r="4.2" fill="#d84315" data-case="dogbone-8dbb02064cc40df2" data-family="dogbone" data-metric="peak"><title>dogbone-8dbb02064cc40df2 | FEM=27.68 MPa; predicted=22.63 MPa</title></circle>
+<circle class="point" cx="483.39" cy="305.05" r="4.2" fill="#d84315" data-case="dogbone-90588924c7bfb303" data-family="dogbone" data-metric="peak"><title>dogbone-90588924c7bfb303 | FEM=38.74 MPa; predicted=37.28 MPa</title></circle>
+<circle class="point" cx="457.51" cy="326.62" r="4.2" fill="#d84315" data-case="dogbone-9da130af5089bd0c" data-family="dogbone" data-metric="peak"><title>dogbone-9da130af5089bd0c | FEM=35.74 MPa; predicted=32.66 MPa</title></circle>
+<circle class="point" cx="476.53" cy="316.84" r="4.2" fill="#d84315" data-case="dogbone-bbd828de6209f8e0" data-family="dogbone" data-metric="peak"><title>dogbone-bbd828de6209f8e0 | FEM=37.94 MPa; predicted=34.75 MPa</title></circle>
+<circle class="point" cx="547.19" cy="280.90" r="4.2" fill="#d84315" data-case="dogbone-bdfeae7a76ab4179" data-family="dogbone" data-metric="peak"><title>dogbone-bdfeae7a76ab4179 | FEM=46.13 MPa; predicted=42.45 MPa</title></circle>
+<circle class="point" cx="449.33" cy="333.41" r="4.2" fill="#d84315" data-case="dogbone-be5f5227b79eb5a2" data-family="dogbone" data-metric="peak"><title>dogbone-be5f5227b79eb5a2 | FEM=34.79 MPa; predicted=31.2 MPa</title></circle>
+<circle class="point" cx="421.48" cy="344.97" r="4.2" fill="#d84315" data-case="dogbone-c18bc7426e847c02" data-family="dogbone" data-metric="peak"><title>dogbone-c18bc7426e847c02 | FEM=31.56 MPa; predicted=28.73 MPa</title></circle>
+<circle class="point" cx="476.93" cy="320.66" r="4.2" fill="#d84315" data-case="dogbone-ca1a22f8639594f8" data-family="dogbone" data-metric="peak"><title>dogbone-ca1a22f8639594f8 | FEM=37.99 MPa; predicted=33.94 MPa</title></circle>
+<circle class="point" cx="388.44" cy="360.63" r="4.2" fill="#d84315" data-case="dogbone-ccc6669e83db6594" data-family="dogbone" data-metric="peak"><title>dogbone-ccc6669e83db6594 | FEM=27.74 MPa; predicted=25.37 MPa</title></circle>
+<circle class="point" cx="511.87" cy="344.62" r="4.2" fill="#d84315" data-case="dogbone-d115f240f61b0a80" data-family="dogbone" data-metric="peak"><title>dogbone-d115f240f61b0a80 | FEM=42.04 MPa; predicted=28.8 MPa</title></circle>
+<circle class="point" cx="454.21" cy="334.73" r="4.2" fill="#d84315" data-case="dogbone-f525e0e2bc3b64b7" data-family="dogbone" data-metric="peak"><title>dogbone-f525e0e2bc3b64b7 | FEM=35.36 MPa; predicted=30.92 MPa</title></circle>
+</svg>

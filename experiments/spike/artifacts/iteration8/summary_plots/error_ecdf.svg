@@ -1,0 +1,139 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="590" viewBox="0 0 960 590" role="img" aria-label="Per-case error ECDF">
+<title>Per-case error ECDF</title>
+<style>text{font-family:Arial,sans-serif;fill:#202124}.title{font-size:20px;font-weight:700;text-anchor:middle}.label{font-size:13px;text-anchor:middle}.vertical{transform:rotate(-90deg);transform-origin:22px 286px}.tick{font-size:11px;text-anchor:middle}.ytick{font-size:11px;text-anchor:end}.grid{stroke:#e2e6ea;stroke-width:1}.axis{stroke:#5f6368;stroke-width:1.5}.legend{font-size:11px}.series{fill:none;stroke-width:2}.point{stroke:#fff;stroke-width:1;opacity:.88}</style>
+<text class="title" x="480" y="31">Per-case error ECDF</text>
+<line class="grid" x1="92.00" y1="62.0" x2="92.00" y2="510.0"/>
+<line class="grid" x1="92.0" y1="510.00" x2="920.0" y2="510.00"/>
+<text class="tick" x="92.00" y="532">0</text>
+<text class="ytick" x="84" y="514.00">0</text>
+<line class="grid" x1="257.60" y1="62.0" x2="257.60" y2="510.0"/>
+<line class="grid" x1="92.0" y1="420.40" x2="920.0" y2="420.40"/>
+<text class="tick" x="257.60" y="532">0.0789</text>
+<text class="ytick" x="84" y="424.40">0.208</text>
+<line class="grid" x1="423.20" y1="62.0" x2="423.20" y2="510.0"/>
+<line class="grid" x1="92.0" y1="330.80" x2="920.0" y2="330.80"/>
+<text class="tick" x="423.20" y="532">0.158</text>
+<text class="ytick" x="84" y="334.80">0.416</text>
+<line class="grid" x1="588.80" y1="62.0" x2="588.80" y2="510.0"/>
+<line class="grid" x1="92.0" y1="241.20" x2="920.0" y2="241.20"/>
+<text class="tick" x="588.80" y="532">0.237</text>
+<text class="ytick" x="84" y="245.20">0.624</text>
+<line class="grid" x1="754.40" y1="62.0" x2="754.40" y2="510.0"/>
+<line class="grid" x1="92.0" y1="151.60" x2="920.0" y2="151.60"/>
+<text class="tick" x="754.40" y="532">0.316</text>
+<text class="ytick" x="84" y="155.60">0.832</text>
+<line class="grid" x1="920.00" y1="62.0" x2="920.00" y2="510.0"/>
+<line class="grid" x1="92.0" y1="62.00" x2="920.0" y2="62.00"/>
+<text class="tick" x="920.00" y="532">0.394</text>
+<text class="ytick" x="84" y="66.00">1.04</text>
+<line class="axis" x1="92.0" y1="510.0" x2="920.0" y2="510.0"/>
+<line class="axis" x1="92.0" y1="62.0" x2="92.0" y2="510.0"/>
+<text class="label" x="506" y="570">relative L2 error</text>
+<text class="label vertical" x="22" y="286">ECDF</text>
+<line x1="196.97" y1="62.0" x2="196.97" y2="510.0" stroke="#616161" stroke-dasharray="5 4"/>
+<text class="legend" x="200.97" y="76">5% target</text>
+<line x1="406.92" y1="62.0" x2="406.92" y2="510.0" stroke="#616161" stroke-dasharray="5 4"/>
+<text class="legend" x="410.92" y="76">15% S1 gate</text>
+<circle class="point" cx="150.44" cy="501.38" r="4.2" fill="#1565c0" data-case="dogbone-be5f5227b79eb5a2" data-family="dogbone" data-metric="P"><title>dogbone-be5f5227b79eb5a2 | P=0.0278</title></circle>
+<circle class="point" cx="152.60" cy="492.77" r="4.2" fill="#1565c0" data-case="dogbone-bbd828de6209f8e0" data-family="dogbone" data-metric="P"><title>dogbone-bbd828de6209f8e0 | P=0.0289</title></circle>
+<circle class="point" cx="168.93" cy="484.15" r="4.2" fill="#1565c0" data-case="centre_notched-1e6316d5cbbdde9c" data-family="centre_notched" data-metric="P"><title>centre_notched-1e6316d5cbbdde9c | P=0.0366</title></circle>
+<circle class="point" cx="172.07" cy="475.54" r="4.2" fill="#1565c0" data-case="dogbone-519116b933cf4d0d" data-family="dogbone" data-metric="P"><title>dogbone-519116b933cf4d0d | P=0.0381</title></circle>
+<circle class="point" cx="175.36" cy="466.92" r="4.2" fill="#1565c0" data-case="dogbone-3e350cb00da06c00" data-family="dogbone" data-metric="P"><title>dogbone-3e350cb00da06c00 | P=0.0397</title></circle>
+<circle class="point" cx="175.38" cy="458.31" r="4.2" fill="#1565c0" data-case="centre_notched-e94f38dd4d86a5ad" data-family="centre_notched" data-metric="P"><title>centre_notched-e94f38dd4d86a5ad | P=0.0397</title></circle>
+<circle class="point" cx="179.12" cy="449.69" r="4.2" fill="#1565c0" data-case="centre_notched-af5e7d895a2da0d3" data-family="centre_notched" data-metric="P"><title>centre_notched-af5e7d895a2da0d3 | P=0.0415</title></circle>
+<circle class="point" cx="181.91" cy="441.08" r="4.2" fill="#1565c0" data-case="dogbone-7c66e2fa505393cb" data-family="dogbone" data-metric="P"><title>dogbone-7c66e2fa505393cb | P=0.0428</title></circle>
+<circle class="point" cx="182.01" cy="432.46" r="4.2" fill="#1565c0" data-case="centre_notched-b86273129ec61a70" data-family="centre_notched" data-metric="P"><title>centre_notched-b86273129ec61a70 | P=0.0429</title></circle>
+<circle class="point" cx="185.64" cy="423.85" r="4.2" fill="#1565c0" data-case="centre_notched-5fc356e19c23d895" data-family="centre_notched" data-metric="P"><title>centre_notched-5fc356e19c23d895 | P=0.0446</title></circle>
+<circle class="point" cx="192.68" cy="415.23" r="4.2" fill="#1565c0" data-case="centre_notched-794750d3c6119506" data-family="centre_notched" data-metric="P"><title>centre_notched-794750d3c6119506 | P=0.0480</title></circle>
+<circle class="point" cx="193.08" cy="406.62" r="4.2" fill="#1565c0" data-case="dogbone-25bcc462dc2a27ee" data-family="dogbone" data-metric="P"><title>dogbone-25bcc462dc2a27ee | P=0.0481</title></circle>
+<circle class="point" cx="199.82" cy="398.00" r="4.2" fill="#1565c0" data-case="dogbone-8d021760a5c938a9" data-family="dogbone" data-metric="P"><title>dogbone-8d021760a5c938a9 | P=0.0514</title></circle>
+<circle class="point" cx="202.72" cy="389.38" r="4.2" fill="#1565c0" data-case="dogbone-c18bc7426e847c02" data-family="dogbone" data-metric="P"><title>dogbone-c18bc7426e847c02 | P=0.0527</title></circle>
+<circle class="point" cx="203.38" cy="380.77" r="4.2" fill="#1565c0" data-case="dogbone-522a7e204654dd58" data-family="dogbone" data-metric="P"><title>dogbone-522a7e204654dd58 | P=0.0531</title></circle>
+<circle class="point" cx="204.65" cy="372.15" r="4.2" fill="#1565c0" data-case="centre_notched-fab0534fc9598c88" data-family="centre_notched" data-metric="P"><title>centre_notched-fab0534fc9598c88 | P=0.0537</title></circle>
+<circle class="point" cx="206.32" cy="363.54" r="4.2" fill="#1565c0" data-case="centre_notched-84fd43c7ab4b7713" data-family="centre_notched" data-metric="P"><title>centre_notched-84fd43c7ab4b7713 | P=0.0545</title></circle>
+<circle class="point" cx="208.51" cy="354.92" r="4.2" fill="#1565c0" data-case="dogbone-3397de988ab5d0e5" data-family="dogbone" data-metric="P"><title>dogbone-3397de988ab5d0e5 | P=0.0555</title></circle>
+<circle class="point" cx="210.46" cy="346.31" r="4.2" fill="#1565c0" data-case="centre_notched-97c212a2b29cbdd6" data-family="centre_notched" data-metric="P"><title>centre_notched-97c212a2b29cbdd6 | P=0.0564</title></circle>
+<circle class="point" cx="213.07" cy="337.69" r="4.2" fill="#1565c0" data-case="dogbone-04b0f7750707ff83" data-family="dogbone" data-metric="P"><title>dogbone-04b0f7750707ff83 | P=0.0577</title></circle>
+<circle class="point" cx="215.63" cy="329.08" r="4.2" fill="#1565c0" data-case="centre_notched-6175827239b29a20" data-family="centre_notched" data-metric="P"><title>centre_notched-6175827239b29a20 | P=0.0589</title></circle>
+<circle class="point" cx="220.67" cy="320.46" r="4.2" fill="#1565c0" data-case="centre_notched-5850a4e527bda4ee" data-family="centre_notched" data-metric="P"><title>centre_notched-5850a4e527bda4ee | P=0.0613</title></circle>
+<circle class="point" cx="227.14" cy="311.85" r="4.2" fill="#1565c0" data-case="dogbone-f525e0e2bc3b64b7" data-family="dogbone" data-metric="P"><title>dogbone-f525e0e2bc3b64b7 | P=0.0644</title></circle>
+<circle class="point" cx="229.23" cy="303.23" r="4.2" fill="#1565c0" data-case="centre_notched-76ed7308feacfd2c" data-family="centre_notched" data-metric="P"><title>centre_notched-76ed7308feacfd2c | P=0.0654</title></circle>
+<circle class="point" cx="230.47" cy="294.62" r="4.2" fill="#1565c0" data-case="centre_notched-fb22327759fad808" data-family="centre_notched" data-metric="P"><title>centre_notched-fb22327759fad808 | P=0.0660</title></circle>
+<circle class="point" cx="232.28" cy="286.00" r="4.2" fill="#1565c0" data-case="centre_notched-f82bd86da9b26841" data-family="centre_notched" data-metric="P"><title>centre_notched-f82bd86da9b26841 | P=0.0668</title></circle>
+<circle class="point" cx="238.33" cy="277.38" r="4.2" fill="#1565c0" data-case="dogbone-9da130af5089bd0c" data-family="dogbone" data-metric="P"><title>dogbone-9da130af5089bd0c | P=0.0697</title></circle>
+<circle class="point" cx="239.18" cy="268.77" r="4.2" fill="#1565c0" data-case="centre_notched-df025c19161ef560" data-family="centre_notched" data-metric="P"><title>centre_notched-df025c19161ef560 | P=0.0701</title></circle>
+<circle class="point" cx="241.82" cy="260.15" r="4.2" fill="#1565c0" data-case="centre_notched-677739b8ad19d0d6" data-family="centre_notched" data-metric="P"><title>centre_notched-677739b8ad19d0d6 | P=0.0714</title></circle>
+<circle class="point" cx="246.92" cy="251.54" r="4.2" fill="#1565c0" data-case="dogbone-ccc6669e83db6594" data-family="dogbone" data-metric="P"><title>dogbone-ccc6669e83db6594 | P=0.0738</title></circle>
+<circle class="point" cx="248.01" cy="242.92" r="4.2" fill="#1565c0" data-case="dogbone-90588924c7bfb303" data-family="dogbone" data-metric="P"><title>dogbone-90588924c7bfb303 | P=0.0743</title></circle>
+<circle class="point" cx="251.50" cy="234.31" r="4.2" fill="#1565c0" data-case="dogbone-bdfeae7a76ab4179" data-family="dogbone" data-metric="P"><title>dogbone-bdfeae7a76ab4179 | P=0.0760</title></circle>
+<circle class="point" cx="252.84" cy="225.69" r="4.2" fill="#1565c0" data-case="dogbone-674005280f22dcbe" data-family="dogbone" data-metric="P"><title>dogbone-674005280f22dcbe | P=0.0766</title></circle>
+<circle class="point" cx="255.92" cy="217.08" r="4.2" fill="#1565c0" data-case="dogbone-37b840e5f3d0acdc" data-family="dogbone" data-metric="P"><title>dogbone-37b840e5f3d0acdc | P=0.0781</title></circle>
+<circle class="point" cx="306.02" cy="208.46" r="4.2" fill="#1565c0" data-case="centre_notched-9e5d04f44d4bef78" data-family="centre_notched" data-metric="P"><title>centre_notched-9e5d04f44d4bef78 | P=0.1019</title></circle>
+<circle class="point" cx="310.95" cy="199.85" r="4.2" fill="#1565c0" data-case="dogbone-2339a27be0b9ba6f" data-family="dogbone" data-metric="P"><title>dogbone-2339a27be0b9ba6f | P=0.1043</title></circle>
+<circle class="point" cx="353.37" cy="191.23" r="4.2" fill="#1565c0" data-case="dogbone-ca1a22f8639594f8" data-family="dogbone" data-metric="P"><title>dogbone-ca1a22f8639594f8 | P=0.1245</title></circle>
+<circle class="point" cx="354.18" cy="182.62" r="4.2" fill="#1565c0" data-case="centre_notched-54b36f565917a000" data-family="centre_notched" data-metric="P"><title>centre_notched-54b36f565917a000 | P=0.1249</title></circle>
+<circle class="point" cx="364.24" cy="174.00" r="4.2" fill="#1565c0" data-case="dogbone-8dbb02064cc40df2" data-family="dogbone" data-metric="P"><title>dogbone-8dbb02064cc40df2 | P=0.1297</title></circle>
+<circle class="point" cx="371.27" cy="165.38" r="4.2" fill="#1565c0" data-case="centre_notched-ef67129a465437f5" data-family="centre_notched" data-metric="P"><title>centre_notched-ef67129a465437f5 | P=0.1330</title></circle>
+<circle class="point" cx="375.41" cy="156.77" r="4.2" fill="#1565c0" data-case="centre_notched-8eff0e0860ba9755" data-family="centre_notched" data-metric="P"><title>centre_notched-8eff0e0860ba9755 | P=0.1350</title></circle>
+<circle class="point" cx="403.88" cy="148.15" r="4.2" fill="#1565c0" data-case="dogbone-277f2dd879939d7d" data-family="dogbone" data-metric="P"><title>dogbone-277f2dd879939d7d | P=0.1486</title></circle>
+<circle class="point" cx="424.64" cy="139.54" r="4.2" fill="#1565c0" data-case="centre_notched-97d3d168777d377a" data-family="centre_notched" data-metric="P"><title>centre_notched-97d3d168777d377a | P=0.1584</title></circle>
+<circle class="point" cx="434.48" cy="130.92" r="4.2" fill="#1565c0" data-case="dogbone-7dc20e0a04ca4c28" data-family="dogbone" data-metric="P"><title>dogbone-7dc20e0a04ca4c28 | P=0.1631</title></circle>
+<circle class="point" cx="492.01" cy="122.31" r="4.2" fill="#1565c0" data-case="dogbone-5d72ef5d30a477f9" data-family="dogbone" data-metric="P"><title>dogbone-5d72ef5d30a477f9 | P=0.1905</title></circle>
+<circle class="point" cx="495.60" cy="113.69" r="4.2" fill="#1565c0" data-case="dogbone-d115f240f61b0a80" data-family="dogbone" data-metric="P"><title>dogbone-d115f240f61b0a80 | P=0.1922</title></circle>
+<circle class="point" cx="586.51" cy="105.08" r="4.2" fill="#1565c0" data-case="centre_notched-b9c497bf3fc6d473" data-family="centre_notched" data-metric="P"><title>centre_notched-b9c497bf3fc6d473 | P=0.2355</title></circle>
+<circle class="point" cx="691.32" cy="96.46" r="4.2" fill="#1565c0" data-case="centre_notched-07c291cfaa2c0178" data-family="centre_notched" data-metric="P"><title>centre_notched-07c291cfaa2c0178 | P=0.2855</title></circle>
+<circle class="point" cx="816.74" cy="87.85" r="4.2" fill="#1565c0" data-case="centre_notched-cb7a87e58a419860" data-family="centre_notched" data-metric="P"><title>centre_notched-cb7a87e58a419860 | P=0.3452</title></circle>
+<circle class="point" cx="858.67" cy="79.23" r="4.2" fill="#1565c0" data-case="centre_notched-a12bdec3ad94b311" data-family="centre_notched" data-metric="P"><title>centre_notched-a12bdec3ad94b311 | P=0.3652</title></circle>
+<polyline class="series" stroke="#1565c0" points="150.44,501.38 152.60,492.77 168.93,484.15 172.07,475.54 175.36,466.92 175.38,458.31 179.12,449.69 181.91,441.08 182.01,432.46 185.64,423.85 192.68,415.23 193.08,406.62 199.82,398.00 202.72,389.38 203.38,380.77 204.65,372.15 206.32,363.54 208.51,354.92 210.46,346.31 213.07,337.69 215.63,329.08 220.67,320.46 227.14,311.85 229.23,303.23 230.47,294.62 232.28,286.00 238.33,277.38 239.18,268.77 241.82,260.15 246.92,251.54 248.01,242.92 251.50,234.31 252.84,225.69 255.92,217.08 306.02,208.46 310.95,199.85 353.37,191.23 354.18,182.62 364.24,174.00 371.27,165.38 375.41,156.77 403.88,148.15 424.64,139.54 434.48,130.92 492.01,122.31 495.60,113.69 586.51,105.08 691.32,96.46 816.74,87.85 858.67,79.23"/>
+<circle class="point" cx="108.25" cy="501.38" r="4.2" fill="#d84315" data-case="dogbone-25bcc462dc2a27ee" data-family="dogbone" data-metric="u"><title>dogbone-25bcc462dc2a27ee | u=0.0077</title></circle>
+<circle class="point" cx="113.09" cy="492.77" r="4.2" fill="#d84315" data-case="centre_notched-1e6316d5cbbdde9c" data-family="centre_notched" data-metric="u"><title>centre_notched-1e6316d5cbbdde9c | u=0.0100</title></circle>
+<circle class="point" cx="115.14" cy="484.15" r="4.2" fill="#d84315" data-case="dogbone-bbd828de6209f8e0" data-family="dogbone" data-metric="u"><title>dogbone-bbd828de6209f8e0 | u=0.0110</title></circle>
+<circle class="point" cx="115.95" cy="475.54" r="4.2" fill="#d84315" data-case="dogbone-3e350cb00da06c00" data-family="dogbone" data-metric="u"><title>dogbone-3e350cb00da06c00 | u=0.0114</title></circle>
+<circle class="point" cx="116.24" cy="466.92" r="4.2" fill="#d84315" data-case="dogbone-3397de988ab5d0e5" data-family="dogbone" data-metric="u"><title>dogbone-3397de988ab5d0e5 | u=0.0115</title></circle>
+<circle class="point" cx="116.61" cy="458.31" r="4.2" fill="#d84315" data-case="dogbone-7c66e2fa505393cb" data-family="dogbone" data-metric="u"><title>dogbone-7c66e2fa505393cb | u=0.0117</title></circle>
+<circle class="point" cx="119.52" cy="449.69" r="4.2" fill="#d84315" data-case="dogbone-c18bc7426e847c02" data-family="dogbone" data-metric="u"><title>dogbone-c18bc7426e847c02 | u=0.0131</title></circle>
+<circle class="point" cx="120.75" cy="441.08" r="4.2" fill="#d84315" data-case="dogbone-be5f5227b79eb5a2" data-family="dogbone" data-metric="u"><title>dogbone-be5f5227b79eb5a2 | u=0.0137</title></circle>
+<circle class="point" cx="121.08" cy="432.46" r="4.2" fill="#d84315" data-case="dogbone-37b840e5f3d0acdc" data-family="dogbone" data-metric="u"><title>dogbone-37b840e5f3d0acdc | u=0.0139</title></circle>
+<circle class="point" cx="123.39" cy="423.85" r="4.2" fill="#d84315" data-case="dogbone-ccc6669e83db6594" data-family="dogbone" data-metric="u"><title>dogbone-ccc6669e83db6594 | u=0.0149</title></circle>
+<circle class="point" cx="123.45" cy="415.23" r="4.2" fill="#d84315" data-case="centre_notched-e94f38dd4d86a5ad" data-family="centre_notched" data-metric="u"><title>centre_notched-e94f38dd4d86a5ad | u=0.0150</title></circle>
+<circle class="point" cx="126.25" cy="406.62" r="4.2" fill="#d84315" data-case="dogbone-8d021760a5c938a9" data-family="dogbone" data-metric="u"><title>dogbone-8d021760a5c938a9 | u=0.0163</title></circle>
+<circle class="point" cx="126.43" cy="398.00" r="4.2" fill="#d84315" data-case="dogbone-522a7e204654dd58" data-family="dogbone" data-metric="u"><title>dogbone-522a7e204654dd58 | u=0.0164</title></circle>
+<circle class="point" cx="128.03" cy="389.38" r="4.2" fill="#d84315" data-case="dogbone-9da130af5089bd0c" data-family="dogbone" data-metric="u"><title>dogbone-9da130af5089bd0c | u=0.0172</title></circle>
+<circle class="point" cx="128.36" cy="380.77" r="4.2" fill="#d84315" data-case="dogbone-674005280f22dcbe" data-family="dogbone" data-metric="u"><title>dogbone-674005280f22dcbe | u=0.0173</title></circle>
+<circle class="point" cx="129.63" cy="372.15" r="4.2" fill="#d84315" data-case="dogbone-04b0f7750707ff83" data-family="dogbone" data-metric="u"><title>dogbone-04b0f7750707ff83 | u=0.0179</title></circle>
+<circle class="point" cx="131.66" cy="363.54" r="4.2" fill="#d84315" data-case="dogbone-519116b933cf4d0d" data-family="dogbone" data-metric="u"><title>dogbone-519116b933cf4d0d | u=0.0189</title></circle>
+<circle class="point" cx="132.22" cy="354.92" r="4.2" fill="#d84315" data-case="dogbone-2339a27be0b9ba6f" data-family="dogbone" data-metric="u"><title>dogbone-2339a27be0b9ba6f | u=0.0192</title></circle>
+<circle class="point" cx="132.43" cy="346.31" r="4.2" fill="#d84315" data-case="centre_notched-fab0534fc9598c88" data-family="centre_notched" data-metric="u"><title>centre_notched-fab0534fc9598c88 | u=0.0193</title></circle>
+<circle class="point" cx="133.71" cy="337.69" r="4.2" fill="#d84315" data-case="dogbone-90588924c7bfb303" data-family="dogbone" data-metric="u"><title>dogbone-90588924c7bfb303 | u=0.0199</title></circle>
+<circle class="point" cx="134.53" cy="329.08" r="4.2" fill="#d84315" data-case="dogbone-f525e0e2bc3b64b7" data-family="dogbone" data-metric="u"><title>dogbone-f525e0e2bc3b64b7 | u=0.0203</title></circle>
+<circle class="point" cx="135.23" cy="320.46" r="4.2" fill="#d84315" data-case="centre_notched-b86273129ec61a70" data-family="centre_notched" data-metric="u"><title>centre_notched-b86273129ec61a70 | u=0.0206</title></circle>
+<circle class="point" cx="136.72" cy="311.85" r="4.2" fill="#d84315" data-case="centre_notched-6175827239b29a20" data-family="centre_notched" data-metric="u"><title>centre_notched-6175827239b29a20 | u=0.0213</title></circle>
+<circle class="point" cx="139.25" cy="303.23" r="4.2" fill="#d84315" data-case="centre_notched-76ed7308feacfd2c" data-family="centre_notched" data-metric="u"><title>centre_notched-76ed7308feacfd2c | u=0.0225</title></circle>
+<circle class="point" cx="144.04" cy="294.62" r="4.2" fill="#d84315" data-case="centre_notched-f82bd86da9b26841" data-family="centre_notched" data-metric="u"><title>centre_notched-f82bd86da9b26841 | u=0.0248</title></circle>
+<circle class="point" cx="145.58" cy="286.00" r="4.2" fill="#d84315" data-case="centre_notched-794750d3c6119506" data-family="centre_notched" data-metric="u"><title>centre_notched-794750d3c6119506 | u=0.0255</title></circle>
+<circle class="point" cx="146.02" cy="277.38" r="4.2" fill="#d84315" data-case="centre_notched-5fc356e19c23d895" data-family="centre_notched" data-metric="u"><title>centre_notched-5fc356e19c23d895 | u=0.0257</title></circle>
+<circle class="point" cx="149.36" cy="268.77" r="4.2" fill="#d84315" data-case="centre_notched-af5e7d895a2da0d3" data-family="centre_notched" data-metric="u"><title>centre_notched-af5e7d895a2da0d3 | u=0.0273</title></circle>
+<circle class="point" cx="149.76" cy="260.15" r="4.2" fill="#d84315" data-case="centre_notched-df025c19161ef560" data-family="centre_notched" data-metric="u"><title>centre_notched-df025c19161ef560 | u=0.0275</title></circle>
+<circle class="point" cx="150.15" cy="251.54" r="4.2" fill="#d84315" data-case="centre_notched-97c212a2b29cbdd6" data-family="centre_notched" data-metric="u"><title>centre_notched-97c212a2b29cbdd6 | u=0.0277</title></circle>
+<circle class="point" cx="152.95" cy="242.92" r="4.2" fill="#d84315" data-case="centre_notched-fb22327759fad808" data-family="centre_notched" data-metric="u"><title>centre_notched-fb22327759fad808 | u=0.0290</title></circle>
+<circle class="point" cx="154.55" cy="234.31" r="4.2" fill="#d84315" data-case="centre_notched-5850a4e527bda4ee" data-family="centre_notched" data-metric="u"><title>centre_notched-5850a4e527bda4ee | u=0.0298</title></circle>
+<circle class="point" cx="154.96" cy="225.69" r="4.2" fill="#d84315" data-case="dogbone-ca1a22f8639594f8" data-family="dogbone" data-metric="u"><title>dogbone-ca1a22f8639594f8 | u=0.0300</title></circle>
+<circle class="point" cx="156.34" cy="217.08" r="4.2" fill="#d84315" data-case="centre_notched-84fd43c7ab4b7713" data-family="centre_notched" data-metric="u"><title>centre_notched-84fd43c7ab4b7713 | u=0.0306</title></circle>
+<circle class="point" cx="158.40" cy="208.46" r="4.2" fill="#d84315" data-case="centre_notched-677739b8ad19d0d6" data-family="centre_notched" data-metric="u"><title>centre_notched-677739b8ad19d0d6 | u=0.0316</title></circle>
+<circle class="point" cx="164.71" cy="199.85" r="4.2" fill="#d84315" data-case="dogbone-8dbb02064cc40df2" data-family="dogbone" data-metric="u"><title>dogbone-8dbb02064cc40df2 | u=0.0346</title></circle>
+<circle class="point" cx="166.34" cy="191.23" r="4.2" fill="#d84315" data-case="centre_notched-9e5d04f44d4bef78" data-family="centre_notched" data-metric="u"><title>centre_notched-9e5d04f44d4bef78 | u=0.0354</title></circle>
+<circle class="point" cx="169.30" cy="182.62" r="4.2" fill="#d84315" data-case="dogbone-277f2dd879939d7d" data-family="dogbone" data-metric="u"><title>dogbone-277f2dd879939d7d | u=0.0368</title></circle>
+<circle class="point" cx="171.72" cy="174.00" r="4.2" fill="#d84315" data-case="dogbone-bdfeae7a76ab4179" data-family="dogbone" data-metric="u"><title>dogbone-bdfeae7a76ab4179 | u=0.0380</title></circle>
+<circle class="point" cx="180.16" cy="165.38" r="4.2" fill="#d84315" data-case="centre_notched-8eff0e0860ba9755" data-family="centre_notched" data-metric="u"><title>centre_notched-8eff0e0860ba9755 | u=0.0420</title></circle>
+<circle class="point" cx="181.81" cy="156.77" r="4.2" fill="#d84315" data-case="centre_notched-ef67129a465437f5" data-family="centre_notched" data-metric="u"><title>centre_notched-ef67129a465437f5 | u=0.0428</title></circle>
+<circle class="point" cx="184.69" cy="148.15" r="4.2" fill="#d84315" data-case="dogbone-d115f240f61b0a80" data-family="dogbone" data-metric="u"><title>dogbone-d115f240f61b0a80 | u=0.0442</title></circle>
+<circle class="point" cx="190.45" cy="139.54" r="4.2" fill="#d84315" data-case="dogbone-7dc20e0a04ca4c28" data-family="dogbone" data-metric="u"><title>dogbone-7dc20e0a04ca4c28 | u=0.0469</title></circle>
+<circle class="point" cx="190.96" cy="130.92" r="4.2" fill="#d84315" data-case="dogbone-5d72ef5d30a477f9" data-family="dogbone" data-metric="u"><title>dogbone-5d72ef5d30a477f9 | u=0.0471</title></circle>
+<circle class="point" cx="221.29" cy="122.31" r="4.2" fill="#d84315" data-case="centre_notched-97d3d168777d377a" data-family="centre_notched" data-metric="u"><title>centre_notched-97d3d168777d377a | u=0.0616</title></circle>
+<circle class="point" cx="222.82" cy="113.69" r="4.2" fill="#d84315" data-case="centre_notched-54b36f565917a000" data-family="centre_notched" data-metric="u"><title>centre_notched-54b36f565917a000 | u=0.0623</title></circle>
+<circle class="point" cx="248.40" cy="105.08" r="4.2" fill="#d84315" data-case="centre_notched-b9c497bf3fc6d473" data-family="centre_notched" data-metric="u"><title>centre_notched-b9c497bf3fc6d473 | u=0.0745</title></circle>
+<circle class="point" cx="273.45" cy="96.46" r="4.2" fill="#d84315" data-case="centre_notched-07c291cfaa2c0178" data-family="centre_notched" data-metric="u"><title>centre_notched-07c291cfaa2c0178 | u=0.0864</title></circle>
+<circle class="point" cx="305.06" cy="87.85" r="4.2" fill="#d84315" data-case="centre_notched-cb7a87e58a419860" data-family="centre_notched" data-metric="u"><title>centre_notched-cb7a87e58a419860 | u=0.1015</title></circle>
+<circle class="point" cx="305.49" cy="79.23" r="4.2" fill="#d84315" data-case="centre_notched-a12bdec3ad94b311" data-family="centre_notched" data-metric="u"><title>centre_notched-a12bdec3ad94b311 | u=0.1017</title></circle>
+<polyline class="series" stroke="#d84315" points="108.25,501.38 113.09,492.77 115.14,484.15 115.95,475.54 116.24,466.92 116.61,458.31 119.52,449.69 120.75,441.08 121.08,432.46 123.39,423.85 123.45,415.23 126.25,406.62 126.43,398.00 128.03,389.38 128.36,380.77 129.63,372.15 131.66,363.54 132.22,354.92 132.43,346.31 133.71,337.69 134.53,329.08 135.23,320.46 136.72,311.85 139.25,303.23 144.04,294.62 145.58,286.00 146.02,277.38 149.36,268.77 149.76,260.15 150.15,251.54 152.95,242.92 154.55,234.31 154.96,225.69 156.34,217.08 158.40,208.46 164.71,199.85 166.34,191.23 169.30,182.62 171.72,174.00 180.16,165.38 181.81,156.77 184.69,148.15 190.45,139.54 190.96,130.92 221.29,122.31 222.82,113.69 248.40,105.08 273.45,96.46 305.06,87.85 305.49,79.23"/>
+</svg>
