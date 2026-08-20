@@ -55,6 +55,35 @@
   ],
   "commit": "6f5f0cb781e71a991cef17c9b2321d7959675ea2",
   "commit_scope": "base commit plus uncommitted local S1 worktree; S1 commit prohibited",
+  "decision": {
+    "adr": "docs/adr/0001-s1-go-with-contingency.md",
+    "authority": "STEPS-v1.0.md S1 decision table; the call is reserved to a human and is not automatable",
+    "carried_risks": [
+      "peak stress systematically under-predicted (median signed error -27% after the coverage fix); non-conservative and unresolved",
+      "speedup measured at ~15x on spike meshes against a G14 target of >=100x on the primary solver",
+      "family generality untested: both spike families share one mesh generator and topology signature"
+    ],
+    "contingency": "3-week architecture iteration between S11 and S12 is budgeted and not reclaimable for schedule",
+    "decided_by": "Betim Bahtiri",
+    "decided_utc": "2026-08-20T08:24:42.682223Z",
+    "evidence": {
+      "covering_doe_retrain_relative_l2_P": {
+        "centre_notched_whole_campaign": 0.1062
+      },
+      "in_envelope_relative_l2_P": {
+        "centre_notched": 0.0853,
+        "dogbone": 0.0888
+      },
+      "iteration8_as_reported": {
+        "caveat": "centre-notched figure mixes in- and out-of-envelope cases; the NOT_CONFIRMED verdict was rendered against gates the implementing agent authored, not against the STEPS decision table",
+        "centre_notched": 0.1334,
+        "dogbone": 0.098
+      },
+      "note": "fresh stratified 50-case campaign, disjoint from training; frozen incumbent unchanged; P1 ground truth matching its own training targets"
+    },
+    "rule_applied": "measured stress error in the 5-15% band -> proceed, with a 3-week architecture iteration budgeted between S11 and S12",
+    "verdict": "GO_WITH_CONTINGENCY"
+  },
   "execution_profile": {
     "applied_displacement_mm": 1.0,
     "device": "cpu",
@@ -84,7 +113,7 @@
   "step": "S1",
   "timestamp_utc": "2026-08-10T10:58:57.927767Z",
   "verdict": "PASS",
-  "verdict_reason": "Every required G1 check passed; interpretation remains human-owned.",
+  "verdict_reason": "Every required G1 check passed; the human GO/NO-GO decision is recorded under 'decision' and in ADR 0001.",
   "verification": {
     "architecture_screen": {
       "command": "training-only 2-fold x 3-variant screen, 300 epochs/fold at LR=1e-3",
