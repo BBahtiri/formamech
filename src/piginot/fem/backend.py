@@ -4,18 +4,9 @@ from __future__ import annotations
 
 import math
 from dataclasses import replace
-from importlib import metadata
 from typing import Any
 
-import numpy as np
 import torch
-from skfem import (  # type: ignore[import-untyped]
-    Basis,
-    ElementTriP1,
-    ElementTriP2,
-    ElementVector,
-    MeshTri,
-)
 
 from piginot.contracts import (
     BoundaryConditionSpec,
@@ -146,7 +137,9 @@ class ScikitFemBackend:
         )
 
     def _check_resource_limit(self, request: FemRequest) -> None:
-        dof_count = _scikit_fem_dof_count(request.mesh, request.config.element_order)
+        dof_count = _triangle_vector_dof_count(
+            request.mesh, request.config.element_order
+        )
         if dof_count > request.config.max_dofs:
             raise FemSolveFailure(
                 FemFailureCode.RESOURCE_EXHAUSTION,
@@ -169,19 +162,17 @@ class ScikitFemBackend:
                 )
 
 
-def _version(package: str) -> str:
-    try:
-        return metadata.version(package)
-    except metadata.PackageNotFoundError:
-        return "not-installed"
-
-
-def _scikit_fem_dof_count(mesh: CanonicalMesh, element_order: int) -> int:
-    points = np.array(mesh.nodes, dtype=np.float64).T
-    cells = np.array(mesh.cells, dtype=np.int32).T
-    element = ElementTriP1() if element_order == 1 else ElementTriP2()
-    basis = Basis(MeshTri(points, cells), ElementVector(element))
-    return int(basis.N)
+def _triangle_vector_dof_count(mesh: CanonicalMesh, element_order: int) -> int:
+    if element_order == 1:
+        scalar_dofs = len(mesh.nodes)
+    else:
+        edges = {
+            tuple(sorted((cell[index], cell[(index + 1) % 3])))
+            for cell in mesh.cells
+            for index in range(3)
+        }
+        scalar_dofs = len(mesh.nodes) + len(edges)
+    return 2 * scalar_dofs
 
 
 def _kernel_material(material: MaterialSpec) -> MaterialSpec:
