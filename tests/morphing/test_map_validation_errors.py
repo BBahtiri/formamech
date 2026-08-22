@@ -314,9 +314,7 @@ def test_records_and_ledgers_enforce_status_and_unique_identity() -> None:
     with pytest.raises(ValueError, match="rejected records"):
         MorphRecord("bad-rejected", MorphStatus.REJECTED, (), None, report)
 
-    accepted = MorphRecord(
-        "accepted", MorphStatus.ACCEPTED, (), reference, report
-    )
+    accepted = MorphRecord("accepted", MorphStatus.ACCEPTED, (), reference, report)
     assert accepted.mesh_id == reference.mesh_id
     with pytest.raises(ValueError, match="unique"):
         MorphLedger((accepted, accepted))
@@ -326,9 +324,7 @@ def test_apply_morph_rejects_a_reference_from_another_validation_context() -> No
     _, predicate, morph = _setup()
     other_reference = canonicalize_mesh(rectangle_payload(width=5.0))
 
-    result = apply_morph(
-        other_reference, morph, predicate, {"stretch": length(0.0)}
-    )
+    result = apply_morph(other_reference, morph, predicate, {"stretch": length(0.0)})
 
     assert result.reason_codes == (MorphReasonCode.VALIDATION_CONTEXT_MISMATCH,)
     assert result.report.quadrature_points_checked == 0
@@ -337,9 +333,7 @@ def test_apply_morph_rejects_a_reference_from_another_validation_context() -> No
 def test_apply_morph_rejects_map_and_predicate_parameter_mismatch() -> None:
     reference, predicate, _ = _setup()
 
-    result = apply_morph(
-        reference, _ffd("offset"), predicate, {"stretch": length(0.0)}
-    )
+    result = apply_morph(reference, _ffd("offset"), predicate, {"stretch": length(0.0)})
 
     assert result.reason_codes == (MorphReasonCode.INVALID_MAP_CONFIGURATION,)
     assert result.report.quadrature_points_checked == 0
