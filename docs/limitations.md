@@ -6,15 +6,31 @@ agree with measurements from physical specimens.
 
 Verification for a bundle establishes nothing about geometries outside that bundle's
 declared input envelope. Inputs outside the envelope must not be treated as covered by
-the bundle's results.
+the bundle's results. Finite verification sampling is evidence about the evaluated
+cases, not a mathematical proof of a uniform error bound over every admissible input.
 
-Finite verification sampling is evidence about the cases evaluated. It is not a
-mathematical proof of a uniform error bound over every admissible input.
+The verified S4 material envelope is `1 <= E <= 10000 MPa` and
+`0 <= nu <= 0.49`; values outside it are unsupported. The S7 primary solver currently
+supports only that compressible Neo-Hookean law in 2D finite-strain plane stress on
+linear triangular reference meshes. It offers P1 and P2 displacement, sparse Newton
+solves with load continuation, component-wise essential conditions, axis-aligned
+implicit symmetry, dead nominal traction, and registered reference-volume body
+forces. The plane-stress model uses a fixed reference thickness of 1 mm. It does not
+yet support dynamics, contact, follower loads, mixed or nearly-incompressible
+formulations, multiple materials, remeshing, or alternative constitutive laws.
 
-At the current S6 stage, PI-GINOT contains contract and local content-storage
-infrastructure, a constitutive physics kernel, and strict tagged 2D triangle geometry
-ingestion. The verified S4 material envelope is `1 <= E <= 10000 MPa` and
-`0 <= nu <= 0.49`; values outside it are unsupported.
+S7 returns full 3D deformation-gradient and first-Piola tensors at quadrature points
+and an L2-recovered first-Piola field. Boundary maximum and pointwise peak-stress QoIs
+are refused at re-entrant or mixed-BC junctions and require P2 or a declared graded
+mesh. A recovered peak remains mesh- and recovery-dependent; it is not a certified
+physical maximum.
+Reported external work covers assembled dead loads at the final state and excludes
+work reconstructed along prescribed-displacement paths.
+
+The primary FEM implementation is not yet independently verified. Until S8 completes
+manufactured-solution, patch, convergence, error-estimation, and balance checks, G7
+only establishes the solver contract and its narrow closed-form unit-square case. No
+general FEM accuracy claim follows from S7 alone.
 
 S5 accepts explicitly unitized, planar, linear triangle meshes with named line
 boundary groups and positive named region groups. It rejects healing, defeaturing,
@@ -34,5 +50,5 @@ remesh failed instances.
 Family membership enforces exact named canonical quantities, inclusive primitive and
 derived bounds, the reference mesh identity, and a hashed validity policy. The
 invalid-instance ledger records every supplied attempt but does not construct or
-sample a DOE. The project does not yet implement geometry construction, FEM,
-neural-operator training, verification, or inference.
+sample a DOE. The project does not yet implement verified datasets, neural-operator
+training, certification, or inference.

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from enum import StrEnum
 
 from piginot.contracts import (
@@ -27,6 +27,7 @@ class FemFailureCode(StrEnum):
     NEWTON_NON_CONVERGENCE = "NEWTON_NON_CONVERGENCE"
     RESOURCE_EXHAUSTION = "RESOURCE_EXHAUSTION"
     QOI_REGULARITY_REJECTED = "QOI_REGULARITY_REJECTED"
+    QOI_RESOLUTION_REJECTED = "QOI_RESOLUTION_REJECTED"
     UNSUPPORTED_REQUEST = "UNSUPPORTED_REQUEST"
 
 
@@ -37,6 +38,7 @@ class FemSolverConfig(SpecContract):
     element_order: int = 1
     solver_tolerance: float = 1e-10
     max_newton_iterations: int = 16
+    plane_stress_max_iterations: int = 32
     load_steps: int = 1
     max_dofs: int = 100_000
 
@@ -47,6 +49,8 @@ class FemSolverConfig(SpecContract):
             raise ValueError("solver_tolerance must be positive")
         if self.max_newton_iterations < 0:
             raise ValueError("max_newton_iterations must be non-negative")
+        if self.plane_stress_max_iterations < 0:
+            raise ValueError("plane_stress_max_iterations must be non-negative")
         if self.load_steps <= 0:
             raise ValueError("load_steps must be positive")
         if self.max_dofs <= 0:
@@ -68,6 +72,13 @@ class FemRequest(SpecContract):
     qois: tuple[QoISpec, ...]
     config: FemSolverConfig
     execution_profile: ExecutionProfile
+    body_force_provider_ids: Mapping[str, str] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        providers: FrozenMap[str] = FrozenMap.copy_of(self.body_force_provider_ids)
+        if any(not isinstance(value, str) or not value for value in providers.values()):
+            raise ValueError("body-force provider IDs must be non-empty strings")
+        object.__setattr__(self, "body_force_provider_ids", providers)
 
     @property
     def recipe_hash(self) -> str:
@@ -98,13 +109,38 @@ class FemResult(SpecContract):
     request_id: str
     mesh_id: str
     element_order: int
+    displacement_dof_coordinates: tuple[tuple[float, float], ...]
     displacement: tuple[tuple[float, float], ...]
+    quadrature_points: tuple[tuple[tuple[float, float], ...], ...]
+    quadrature_weights: tuple[tuple[float, ...], ...]
     first_piola_stress: tuple[
-        tuple[tuple[tuple[float, float], tuple[float, float]], ...],
+        tuple[
+            tuple[
+                tuple[float, float, float],
+                tuple[float, float, float],
+                tuple[float, float, float],
+            ],
+            ...,
+        ],
         ...,
     ]
     deformation_gradient: tuple[
-        tuple[tuple[tuple[float, float], tuple[float, float]], ...],
+        tuple[
+            tuple[
+                tuple[float, float, float],
+                tuple[float, float, float],
+                tuple[float, float, float],
+            ],
+            ...,
+        ],
+        ...,
+    ]
+    recovered_first_piola_stress: tuple[
+        tuple[
+            tuple[float, float, float],
+            tuple[float, float, float],
+            tuple[float, float, float],
+        ],
         ...,
     ]
     reactions: Mapping[str, tuple[float, float]]
@@ -128,6 +164,7 @@ class FemAttempt(SpecContract):
     success: bool
     result: FemResult | None
     result_hash: str | None
+    store_content_hash: str | None
     failure_code: FemFailureCode | None
     message: str
 
