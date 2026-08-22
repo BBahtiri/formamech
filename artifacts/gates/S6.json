@@ -1,0 +1,204 @@
+{
+  "gate_id": "G6",
+  "step": "S6",
+  "commit": "31642157757e5fd9e466f5cd16b519a375f540f9",
+  "implementation_commit": "31642157757e5fd9e466f5cd16b519a375f540f9",
+  "execution_profile_hash": "741902ac27e486f306eb6a4c22644de3b94b663271941d6835ab1642761c49cf",
+  "execution_profile_hash_domain": "content",
+  "timestamp_utc": "2026-08-22T09:59:43Z",
+  "execution_profile": {
+    "python_version": "3.13.11",
+    "library_versions": {
+      "meshio": "5.3.5",
+      "numpy": "2.2.6",
+      "piginot": "0.1.0",
+      "pytest": "9.1.1",
+      "rfc8785": "0.1.4"
+    },
+    "blas_threads": null,
+    "device": "cpu",
+    "dtype": "float64",
+    "rng_algorithm": "none",
+    "seed": 0,
+    "container_digest": null
+  },
+  "morphing_contract": {
+    "maps": [
+      "gaussian-rbf-with-affine-tail-v1",
+      "tensor-bernstein-ffd-v1"
+    ],
+    "parameter_unit": "mm",
+    "quadrature_rule": "triangle-degree-2-v1",
+    "membership_schema": "1.0",
+    "fixed_connectivity": true,
+    "silent_healing": false,
+    "remeshing": false,
+    "global_injectivity_proof": false
+  },
+  "ci_evidence": {
+    "workflow": "CI",
+    "run_id": 32566173757,
+    "run_url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/32566173757",
+    "event": "push",
+    "head_branch": "codex/s6-morphing-membership",
+    "head_sha": "31642157757e5fd9e466f5cd16b519a375f540f9",
+    "status": "completed",
+    "conclusion": "success",
+    "started_at_utc": "2026-08-22T09:53:56Z",
+    "completed_at_utc": "2026-08-22T09:57:27Z",
+    "jobs": [
+      {
+        "id": 97015006885,
+        "name": "windows-latest / Python 3.11",
+        "url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/32566173757/job/97015006885",
+        "conclusion": "success"
+      },
+      {
+        "id": 97015006974,
+        "name": "windows-latest / Python 3.12",
+        "url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/32566173757/job/97015006974",
+        "conclusion": "success"
+      },
+      {
+        "id": 97015006986,
+        "name": "ubuntu-latest / Python 3.11",
+        "url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/32566173757/job/97015006986",
+        "conclusion": "success"
+      },
+      {
+        "id": 97015006996,
+        "name": "ubuntu-latest / Python 3.12",
+        "url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/32566173757/job/97015006996",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "checks": [
+    {
+      "id": "G6.stress",
+      "status": "PASS",
+      "measured": "500 of 500 supplied FFD instances were accepted and every report independently satisfied the configured Jacobian, topology, tag, feature-size, angle and aspect-ratio criteria; mixed-sweep rejections carried stable reasons",
+      "threshold": "500-sample morph sweep: every accepted instance satisfies all validity criteria; every rejected instance has a recorded reason",
+      "command": "python -m pytest tests/morphing/test_gate.py tests/morphing/test_validation_and_ledger.py -q"
+    },
+    {
+      "id": "G6.ledger",
+      "status": "PASS",
+      "measured": {
+        "stress_attempted": 500,
+        "stress_accepted": 500,
+        "stress_rejected": 0,
+        "mixed_attempted": 3,
+        "mixed_accepted": 1,
+        "mixed_rejected": 2,
+        "silent_drops": 0
+      },
+      "threshold": "accepted + rejected = attempted, asserted exactly; no silent drops",
+      "command": "python -m pytest tests/morphing/test_gate.py::test_g6_500_sample_stress_tags_ledger_and_determinism tests/morphing/test_validation_and_ledger.py::test_ledger_accounts_for_every_attempt_and_every_rejection_has_a_reason -q"
+    },
+    {
+      "id": "G6.tags",
+      "status": "PASS",
+      "measured": "semantic tag names, facet counts and transported geometric incidence matched the S5 reference on all 500 accepted instances",
+      "threshold": "tag identity preserved across all 500 accepted instances",
+      "command": "python -m pytest tests/morphing/test_gate.py::test_g6_500_sample_stress_tags_ledger_and_determinism -q"
+    },
+    {
+      "id": "G6.determinism",
+      "status": "PASS",
+      "measured": "repeating sample 173 with the identical canonical theta produced a byte-identical canonical mesh; repeated standalone FFD and RBF paths were deterministic",
+      "threshold": "identical theta produces a byte-identical mesh",
+      "command": "python -m pytest tests/morphing/test_gate.py::test_g6_500_sample_stress_tags_ledger_and_determinism tests/morphing/test_validation_and_ledger.py::test_valid_morph_transports_tags_topology_and_is_byte_deterministic -q"
+    },
+    {
+      "id": "G6.membership",
+      "status": "PASS",
+      "measured": {
+        "labelled_instances": 204,
+        "correct": 204,
+        "accuracy_percent": 100.0,
+        "inclusive_boundary_cases": true,
+        "boundary_adjacent_cases": true
+      },
+      "threshold": "100% correct on a labelled in/out fixture set of at least 200 instances, including boundary-adjacent cases",
+      "command": "python -m pytest tests/morphing/test_membership.py::test_membership_fixture_has_100_percent_accuracy_on_204_labelled_cases -q"
+    },
+    {
+      "id": "G6.injectivity",
+      "status": "PASS",
+      "measured": {
+        "reason_code": "NONINJECTIVE_MORPH",
+        "minimum_jacobian_determinant": -0.25,
+        "quadrature_points_checked": 48
+      },
+      "threshold": "a deliberately non-injective map is rejected and the NONINJECTIVE_MORPH mutant fires",
+      "command": "python -m pytest tests/morphing/test_validation_and_ledger.py::test_deliberately_noninjective_map_fires_the_required_mutant -q"
+    },
+    {
+      "id": "G6.coverage",
+      "status": "PASS",
+      "measured": {
+        "tests": "135 passed",
+        "coverage_percent": 94.9
+      },
+      "threshold": 85.0,
+      "comparison": "gte",
+      "command": "python -m pytest tests/morphing --cov=src/piginot/morphing --cov-report=term-missing --cov-branch --cov-fail-under=85 -q"
+    },
+    {
+      "id": "G-CODE.ruff-check",
+      "status": "PASS",
+      "measured": "All checks passed",
+      "threshold": "ruff check . clean",
+      "command": "python -m ruff check ."
+    },
+    {
+      "id": "G-CODE.ruff-format",
+      "status": "PASS",
+      "measured": "all repository files formatted",
+      "threshold": "ruff format --check . clean",
+      "command": "python -m ruff format --check ."
+    },
+    {
+      "id": "G-CODE.mypy",
+      "status": "PASS",
+      "measured": "Success: no issues found in 34 source files; an external structural-typing probe also accepted the public FFDMap and FamilyMembershipPredicate orchestration API",
+      "threshold": "mypy --strict src clean and concrete public types satisfy orchestration protocols",
+      "command": "python -m mypy --strict src/"
+    },
+    {
+      "id": "G-CODE.pytest-cov",
+      "status": "PASS",
+      "measured": {
+        "tests": "595 passed, 2 skipped",
+        "coverage_percent": 93.88
+      },
+      "threshold": "pytest green and package coverage at least 90%",
+      "comparison": "gte",
+      "command": "python -m pytest --cov=src/piginot --cov-report=term-missing --cov-branch --cov-fail-under=90"
+    },
+    {
+      "id": "G-CODE.pip-audit",
+      "status": "PASS",
+      "measured": "No known vulnerabilities found in a fresh locked environment containing the development, geometry and physics dependency groups; all four fresh CI audits passed",
+      "threshold": "no known vulnerabilities in the resolved project dependency boundary",
+      "command": "uv run --isolated --locked --extra dev --extra geometry --extra physics python -m pip_audit"
+    },
+    {
+      "id": "G-CODE.documentation",
+      "status": "PASS",
+      "measured": "strict MkDocs build completed",
+      "threshold": "documentation builds without errors",
+      "command": "python -m mkdocs build --strict -f docs/mkdocs.yml"
+    },
+    {
+      "id": "G-CODE.s6-anti-scope",
+      "status": "PASS",
+      "measured": "25 isolation, guard and anti-scope tests passed",
+      "threshold": "no experiments import, FEM, physics, ML, DOE construction, healing, remeshing or training surface in piginot.morphing",
+      "command": "python -m pytest tests/test_no_fixture_names.py tests/test_spike_isolation.py tests/test_s5_anti_scope.py tests/test_s6_anti_scope.py -q"
+    }
+  ],
+  "verdict": "PASS",
+  "verdict_reason": "all required G6 checks passed locally and in Linux/Windows CI on Python 3.11 and 3.12"
+}
