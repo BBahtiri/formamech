@@ -3,10 +3,11 @@
 PI-GINOT is an early-stage open-source project for verified, problem-specific
 physics-informed neural operators in 2D finite-strain elasticity. The repository
 currently implements the S2 contract layer, S3 local content store, S4
-constitutive physics kernel, and S5 tagged 2D triangle geometry ingestion; it does
-not yet generate FEM datasets, train, verify, or serve neural operators. Read the
-[project limitations](docs/limitations.md) before using or evaluating future
-results.
+constitutive physics kernel, S5 tagged 2D triangle geometry ingestion, and S6
+reference-mesh morphing with executable family-membership checks and rejection
+ledgers. It does not yet generate FEM datasets, train, verify, or serve neural
+operators. Read the [project limitations](docs/limitations.md) before using or
+evaluating future results.
 
 ## Requirements
 
@@ -32,6 +33,7 @@ mypy --strict src/
 pytest
 pytest tests/physics --cov=src/piginot/physics --cov-fail-under=95
 pytest tests/geometry --cov=src/piginot/geometry --cov-fail-under=85
+pytest tests/morphing --cov=src/piginot/morphing --cov-fail-under=85
 pip-audit
 ```
 

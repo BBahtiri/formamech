@@ -44,5 +44,7 @@ jobs:
         run: python -m pytest tests/physics --cov=src/piginot/physics --cov-fail-under=95
       - name: Check S5 geometry coverage
         run: python -m pytest tests/geometry --cov=src/piginot/geometry --cov-fail-under=85
+      - name: Check S6 morphing coverage
+        run: python -m pytest tests/morphing --cov=src/piginot/morphing --cov-fail-under=85
       - name: Audit dependencies
         run: python -m pip_audit
