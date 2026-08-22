@@ -24,16 +24,19 @@ A morph retains the reference connectivity. It transports boundary facets throug
 same point map and then passes the result through the S5 canonical mesh boundary. The
 validity policy requires all of the following:
 
-- `det(grad(Phi))` is strictly greater than the configured margin at all three points
-  of the fixed degree-2 triangle quadrature rule;
+- `det(grad(Phi))` is strictly greater than the configured margin at all seven points
+  of the fixed degree-5 symmetric triangle rule tabulated by
+  [Dunavant](https://doi.org/10.1002/nme.1620210612);
 - the versioned topology signature, including hole count, is unchanged;
 - semantic tag names, counts, and transported facet incidence are unchanged;
 - the physical boundary feature-size floor is met; and
 - triangle minimum-angle and aspect-ratio bounds are met.
 
 The quadrature rule and validity-policy content hash are recorded in every report.
-Quadrature positivity is the executable S6 gate predicate, not a claim of global
-bijectivity or a sign guarantee between the sampled points.
+The degree-5 rule includes the triangle centroid and catches an interior-fold fixture
+whose vertices and former degree-2 sample points remain valid. Quadrature positivity
+is still the executable S6 gate predicate, not a claim of global bijectivity or a sign
+guarantee between the sampled points.
 
 The family-membership predicate compiles an S2 `GeometryFamilySpec` against one S5
 reference mesh and one validity policy. It requires the exact primitive parameter
@@ -54,5 +57,8 @@ reason codes and no mesh. Duplicate attempt identifiers fail before execution.
   feature size, and unacceptable mesh quality fail closed with stable reason codes.
 - The family predicate is tied to one reference mesh identity and one policy hash;
   changing either requires recompilation.
+- A later stage must add a stronger map-level certificate before describing an inverse
+  map or cross-mesh pullback as verified. S10 cannot inherit that claim from S6's
+  sampled determinant predicate alone.
 - S6 does not create a DOE, heal geometry, remesh, run FEM, evaluate constitutive
   physics, or train a neural operator.

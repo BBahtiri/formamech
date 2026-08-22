@@ -297,8 +297,8 @@ def test_validity_report_records_quadrature_and_policy_identity() -> None:
     result = apply_morph(reference, morph, predicate, {"shift": _length(0.1)})
 
     assert result.accepted
-    assert result.report.quadrature_rule == "triangle-degree-2-v1"
-    assert result.report.quadrature_points_checked == 3 * len(reference.cells)
+    assert result.report.quadrature_rule == "triangle-degree-5-dunavant-v1"
+    assert result.report.quadrature_points_checked == 7 * len(reference.cells)
     assert result.report.reference_mesh_id == reference.mesh_id
     assert result.report.validity_policy_hash == predicate.validity_policy_hash
     assert result.report.tags_preserved

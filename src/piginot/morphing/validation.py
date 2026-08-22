@@ -19,11 +19,17 @@ from piginot.morphing.models import (
     Point,
 )
 
-_QUADRATURE_RULE = "triangle-degree-2-v1"
-_TRIANGLE_DEGREE_2 = (
-    (2.0 / 3.0, 1.0 / 6.0, 1.0 / 6.0),
-    (1.0 / 6.0, 2.0 / 3.0, 1.0 / 6.0),
-    (1.0 / 6.0, 1.0 / 6.0, 2.0 / 3.0),
+QUADRATURE_RULE = "triangle-degree-5-dunavant-v1"
+_DUNAVANT_INNER = 0.470142064105115
+_DUNAVANT_OUTER = 0.101286507323456
+_TRIANGLE_DEGREE_5_DUNAVANT = (
+    (1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0),
+    (1.0 - 2.0 * _DUNAVANT_INNER, _DUNAVANT_INNER, _DUNAVANT_INNER),
+    (_DUNAVANT_INNER, 1.0 - 2.0 * _DUNAVANT_INNER, _DUNAVANT_INNER),
+    (_DUNAVANT_INNER, _DUNAVANT_INNER, 1.0 - 2.0 * _DUNAVANT_INNER),
+    (1.0 - 2.0 * _DUNAVANT_OUTER, _DUNAVANT_OUTER, _DUNAVANT_OUTER),
+    (_DUNAVANT_OUTER, 1.0 - 2.0 * _DUNAVANT_OUTER, _DUNAVANT_OUTER),
+    (_DUNAVANT_OUTER, _DUNAVANT_OUTER, 1.0 - 2.0 * _DUNAVANT_OUTER),
 )
 
 
@@ -132,7 +138,7 @@ def _jacobian_determinants(
     try:
         for cell in reference.cells:
             vertices = tuple(reference.nodes[node_id] for node_id in cell)
-            for barycentric in _TRIANGLE_DEGREE_2:
+            for barycentric in _TRIANGLE_DEGREE_5_DUNAVANT:
                 point = (
                     math.fsum(
                         weight * vertex[0]
@@ -373,7 +379,7 @@ def _report(
     return MorphValidityReport(
         reference_mesh_id=reference.mesh_id,
         validity_policy_hash=policy_hash,
-        quadrature_rule=_QUADRATURE_RULE,
+        quadrature_rule=QUADRATURE_RULE,
         quadrature_points_checked=quadrature_count,
         minimum_jacobian_determinant=minimum_determinant,
         topology_signature=None if morphed is None else morphed.topology_signature,

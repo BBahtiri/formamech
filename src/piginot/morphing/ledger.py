@@ -147,10 +147,12 @@ def _empty_report(
     predicate: _Predicate,
     reasons: tuple[MorphReasonCode, ...],
 ) -> MorphValidityReport:
+    from piginot.morphing.validation import QUADRATURE_RULE
+
     return MorphValidityReport(
         reference_mesh_id=reference.mesh_id,
         validity_policy_hash=predicate.validity_policy_hash,
-        quadrature_rule="triangle-degree-2-v1",
+        quadrature_rule=QUADRATURE_RULE,
         quadrature_points_checked=0,
         minimum_jacobian_determinant=None,
         topology_signature=None,

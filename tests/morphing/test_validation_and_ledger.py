@@ -4,8 +4,8 @@ from dataclasses import replace
 
 import pytest
 
-from piginot.contracts import CanonicalQuantity, canonical_json_bytes
-from piginot.geometry import canonicalize_mesh
+from piginot.contracts import CanonicalQuantity, Unit, canonical_json_bytes
+from piginot.geometry import CellType, MeshPayload, canonicalize_mesh
 from piginot.morphing import (
     FamilyMembershipPredicate,
     FFDControlPoint,
@@ -13,6 +13,7 @@ from piginot.morphing import (
     MorphAttempt,
     MorphReasonCode,
     MorphValidityCriteria,
+    Point,
     RBFControlPoint,
     RBFMap,
     apply_morph,
@@ -58,6 +59,33 @@ class _InvalidIdentityDeformation:
 
     def jacobian(self, point):
         return ((1.0, 0.0), (0.0, 1.0))
+
+
+class _InteriorFoldDeformation:
+    """Identity at triangle vertices with a negative Jacobian at its centroid."""
+
+    kind = "interior-fold"
+    parameter_hash = "interior-fold-v1"
+
+    @staticmethod
+    def map_point(point: Point) -> Point:
+        x_value, y_value = point
+        displacement = (
+            72.0
+            * x_value
+            * (1.0 - x_value)
+            * (y_value - 1.0 / 6.0)
+            * (y_value - 2.0 / 3.0)
+        )
+        return x_value + displacement, y_value
+
+    @staticmethod
+    def jacobian(point: Point):
+        x_value, y_value = point
+        y_polynomial = (y_value - 1.0 / 6.0) * (y_value - 2.0 / 3.0)
+        displacement_dx = 72.0 * (1.0 - 2.0 * x_value) * y_polynomial
+        displacement_dy = 72.0 * x_value * (1.0 - x_value) * (2.0 * y_value - 5.0 / 6.0)
+        return ((1.0 + displacement_dx, displacement_dy), (0.0, 1.0))
 
 
 class _RejectingMap:
@@ -140,6 +168,45 @@ def test_deliberately_noninjective_map_fires_the_required_mutant() -> None:
     assert MorphReasonCode.NONINJECTIVE_MORPH in result.reason_codes
     assert result.report.minimum_jacobian_determinant is not None
     assert result.report.minimum_jacobian_determinant <= 0.0
+
+
+def test_higher_order_rule_detects_an_interior_fold_with_valid_mesh_vertices() -> None:
+    reference = canonicalize_mesh(
+        MeshPayload(
+            nodes=((0.0, 0.0), (1.0, 0.0), (0.0, 1.0)),
+            cells=((0, 1, 2),),
+            cell_type=CellType.TRIANGLE,
+            boundary_facets=((0, 1), (1, 2), (2, 0)),
+            boundary_tags={"base": (0,), "diagonal": (1,), "left": (2,)},
+            region_ids=(1,),
+            unit=Unit.MM,
+            source_provenance={"fixture": "interior-fold"},
+        )
+    )
+    deformation = _InteriorFoldDeformation()
+    old_degree_2_points = (
+        (1.0 / 6.0, 1.0 / 6.0),
+        (2.0 / 3.0, 1.0 / 6.0),
+        (1.0 / 6.0, 2.0 / 3.0),
+    )
+
+    assert all(deformation.map_point(node) == node for node in reference.nodes)
+    assert all(deformation.jacobian(point)[0][0] > 0.0 for point in old_degree_2_points)
+
+    from piginot.morphing.validation import validate_deformation
+
+    mesh, report = validate_deformation(
+        reference,
+        deformation,
+        MorphValidityCriteria(),
+    )
+
+    assert mesh is None
+    assert report.reason_codes == (MorphReasonCode.NONINJECTIVE_MORPH,)
+    assert report.quadrature_rule == "triangle-degree-5-dunavant-v1"
+    assert report.quadrature_points_checked == 7
+    assert report.minimum_jacobian_determinant is not None
+    assert report.minimum_jacobian_determinant < 0.0
 
 
 def test_feature_size_and_mesh_quality_are_independent_validity_reasons() -> None:

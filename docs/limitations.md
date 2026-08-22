@@ -25,9 +25,11 @@ S6 deforms an existing S5 reference mesh with interpolatory Gaussian RBF maps or
 tensor-product Bernstein FFD maps. It preserves connectivity and accepts a morph only
 when the declared topology and tags remain unchanged, feature-size and mesh-quality
 bounds pass, and `det(grad(Phi))` is strictly above the configured margin at every
-point of a fixed degree-2 triangle quadrature rule. This finite check is an executable
-acceptance predicate; it is not a mathematical proof of global injectivity or of the
-Jacobian sign between quadrature points. S6 does not heal or remesh failed instances.
+point of a fixed seven-point, degree-5 triangle rule. This finite check is an
+executable acceptance predicate; it is not a mathematical proof of global injectivity
+or of the Jacobian sign between quadrature points. A later cross-mesh comparison must
+not call its pullback verified solely because an S6 report passed. S6 does not heal or
+remesh failed instances.
 
 Family membership enforces exact named canonical quantities, inclusive primitive and
 derived bounds, the reference mesh identity, and a hashed validity policy. The

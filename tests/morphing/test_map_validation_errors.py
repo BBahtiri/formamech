@@ -67,7 +67,7 @@ def _report(reference: object) -> MorphValidityReport:
     return MorphValidityReport(
         reference_mesh_id=reference.mesh_id,
         validity_policy_hash="policy-hash",
-        quadrature_rule="triangle-degree-2-v1",
+        quadrature_rule="triangle-degree-5-dunavant-v1",
         quadrature_points_checked=0,
         minimum_jacobian_determinant=None,
         topology_signature=None,
@@ -376,7 +376,7 @@ def test_validation_propagates_an_ffd_outside_box_reason() -> None:
 
     assert mesh is None
     assert report.reason_codes == (MorphReasonCode.POINT_OUTSIDE_FFD_BOX,)
-    assert 0 < report.quadrature_points_checked < 3 * len(reference.cells)
+    assert 0 < report.quadrature_points_checked < 7 * len(reference.cells)
 
 
 def test_validation_fails_closed_on_nonfinite_jacobians() -> None:
