@@ -499,3 +499,30 @@ def test_unsupported_qoi_is_a_visible_failed_attempt(
 
     assert not attempt.success
     assert attempt.failure_code is FemFailureCode.UNSUPPORTED_REQUEST
+
+
+def test_empty_qoi_region_is_visible_failure_without_dropping_batch() -> None:
+    valid = _traction_request(element_order=2)
+    empty_region = replace(
+        valid,
+        mesh=replace(
+            valid.mesh,
+            semantic_tags={**dict(valid.mesh.semantic_tags), "empty_region": ()},
+        ),
+        qois=(
+            QoISpec(
+                "empty_peak",
+                "first_piola_stress",
+                "pointwise_peak",
+                "empty_region",
+                Unit.MPA,
+            ),
+        ),
+    )
+
+    attempts = ScikitFemBackend().solve_many((empty_region, valid))
+
+    assert len(attempts) == 2
+    assert not attempts[0].success
+    assert attempts[0].failure_code is FemFailureCode.UNSUPPORTED_REQUEST
+    assert attempts[1].success

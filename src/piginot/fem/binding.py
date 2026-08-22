@@ -64,10 +64,16 @@ def facets_for_tag(
             FemFailureCode.UNSUPPORTED_REQUEST,
             f"unknown boundary tag {tag!r}",
         )
+    tagged_facets = mesh.semantic_tags[tag]
+    if not tagged_facets:
+        raise FemSolveFailure(
+            FemFailureCode.UNSUPPORTED_REQUEST,
+            f"boundary tag {tag!r} has no facets",
+        )
     return np.asarray(
         [
             facet_map[_facet_key(*mesh.boundary_facets[index])]
-            for index in mesh.semantic_tags[tag]
+            for index in tagged_facets
         ],
         dtype=np.int64,
     )
