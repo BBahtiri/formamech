@@ -19,17 +19,19 @@ BC/load/QoI specs, solver configuration, and `ExecutionProfile`. Each successful
 result hashes under the S2 `content` domain. Failed attempts record the same recipe
 hash and one stable `FemFailureCode`.
 
-The first backend is `ScikitFemBackend`. It uses scikit-fem's triangular vector basis
-construction for P1/P2 DOF accounting and uses PI-GINOT's S4 compressible
-Neo-Hookean plane-stress closure for constitutive evaluation. The S7 gate exercises
-affine finite-strain states, where the constant-strain triangle field is exact. The
-backend therefore implements the exact affine path now and keeps broader nonlinear
-assembly and non-affine load continuation as S8/S9 hardening work.
+The first backend is `ScikitFemBackend`. It uses scikit-fem's triangular vector
+basis construction for P1/P2 DOF locations and element connectivity, assembles a
+Total-Lagrangian residual over triangle quadrature, obtains the consistent element
+tangent by deterministic finite differences of the element residual, and solves by
+Newton iterations over load-continuation steps. PI-GINOT's S4 compressible
+Neo-Hookean plane-stress closure supplies the constitutive response at quadrature
+points.
 
 The backend binds component-wise Dirichlet and symmetry conditions from semantic
-boundary tags, accepts dead nominal traction and body-force load specs, returns
-displacement, quadrature-indexed first-Piola stress and deformation gradients,
-reactions, energies, convergence history, QoIs, and all attempts.
+boundary tags, assembles dead nominal traction and body-force load specs on the
+reference configuration, returns displacement, quadrature-indexed first-Piola stress
+and deformation gradients, constrained-DOF reactions, energies, convergence history,
+QoIs, and all attempts.
 
 The QoI regularity screen rejects pointwise peak-stress requests whose target region
 touches a re-entrant boundary vertex. Such QoIs must later be replaced by approved
@@ -48,3 +50,6 @@ averaged or masked quantities before they can enter training or certification.
 - S7 is a primary solver boundary and gate harness, not yet the independent
   verification proof. S8 must still add MMS, patch tests, convergence studies, error
   estimators, and stronger evidence for non-affine load cases.
+- The S7 backend intentionally caps the dense local gate implementation at 2,000
+  DOFs and records larger requests as resource exhaustion unless a future sparse
+  production path replaces the dense tangent solve.

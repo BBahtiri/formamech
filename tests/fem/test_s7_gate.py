@@ -159,6 +159,55 @@ def _extension_request(
     )
 
 
+def _traction_request(
+    *,
+    element_order: int = 1,
+    solver_tolerance: float = 1e-10,
+    max_iterations: int = 12,
+    traction: float = 1.0,
+) -> FemRequest:
+    bcs = (
+        BoundaryConditionSpec(
+            "left_x",
+            "left",
+            "dirichlet",
+            ("x",),
+            (_quantity(0.0, Unit.MM),),
+        ),
+        BoundaryConditionSpec(
+            "bottom_y",
+            "bottom",
+            "dirichlet",
+            ("y",),
+            (_quantity(0.0, Unit.MM),),
+        ),
+    )
+    loads = (
+        LoadSpec(
+            "right_pull",
+            "traction",
+            "right",
+            ("x",),
+            (_quantity(traction, Unit.MPA),),
+        ),
+    )
+    return FemRequest(
+        request_id="traction-square",
+        mesh=_unit_square_mesh(),
+        material=_material(),
+        boundary_conditions=bcs,
+        loads=loads,
+        qois=(),
+        config=FemSolverConfig(
+            element_order=element_order,
+            solver_tolerance=solver_tolerance,
+            max_newton_iterations=max_iterations,
+            load_steps=3,
+        ),
+        execution_profile=_profile(),
+    )
+
+
 def test_g7_analytic_unit_square_matches_closed_form_to_1e_minus_8() -> None:
     result = ScikitFemBackend().solve_many((_extension_request(),))
 
@@ -184,6 +233,38 @@ def test_g7_analytic_unit_square_matches_closed_form_to_1e_minus_8() -> None:
     assert attempt.result_hash == hash_spec(attempt.result, "content")
 
 
+def test_g7_p2_unit_square_matches_closed_form_to_1e_minus_8() -> None:
+    result = ScikitFemBackend().solve_many((_extension_request(element_order=2),))
+
+    attempt = result[0]
+    assert attempt.success
+    assert attempt.result is not None
+    computed = torch.tensor(attempt.result.first_piola_stress, dtype=torch.float64)
+    deformation = torch.tensor([[1.2, 0.0], [0.0, 1.0]], dtype=torch.float64)
+    f33 = plane_stress_closure(deformation, _material())
+    full_deformation = torch.eye(3, dtype=torch.float64)
+    full_deformation[:2, :2] = deformation
+    full_deformation[2, 2] = f33
+    expected = first_piola(full_deformation, _material())[:2, :2]
+
+    assert torch.max(torch.abs(computed - expected)).item() < 1e-8
+
+
+def test_nonzero_dead_traction_enters_equilibrium_and_reactions() -> None:
+    attempt = ScikitFemBackend().solve_many((_traction_request(traction=1.0),))[0]
+
+    assert attempt.success
+    assert attempt.result is not None
+    right_node_displacements = [
+        attempt.result.displacement[index][0]
+        for index, point in enumerate(attempt.request.mesh.nodes)
+        if math.isclose(point[0], 1.0)
+    ]
+    assert min(right_node_displacements) > 0.0
+    assert attempt.result.external_work > 0.0
+    assert attempt.result.reactions["left"][0] < 0.0
+
+
 def test_g7_outcomes_records_five_distinct_failure_codes() -> None:
     valid = _extension_request()
     attempts = (
@@ -199,7 +280,7 @@ def test_g7_outcomes_records_five_distinct_failure_codes() -> None:
             config=valid.config,
             execution_profile=valid.execution_profile,
         ),
-        _extension_request(max_iterations=1, solver_tolerance=1e-20),
+        _traction_request(max_iterations=1, solver_tolerance=1e-20),
         _extension_request(mesh=_unit_square_mesh("too-large")).with_config(
             valid.config.with_resource_limit(max_dofs=2)
         ),

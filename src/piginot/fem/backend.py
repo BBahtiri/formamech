@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import math
-from dataclasses import replace
+from collections.abc import Sequence
+from dataclasses import dataclass, replace
 from typing import Any
 
 import torch
@@ -12,6 +13,7 @@ from piginot.contracts import (
     BoundaryConditionSpec,
     CanonicalMesh,
     CanonicalQuantity,
+    LoadSpec,
     MaterialSpec,
     Unit,
     hash_spec,
@@ -24,21 +26,43 @@ from piginot.fem.models import (
     FemResult,
     FemSolveFailure,
 )
-from piginot.physics import first_piola, plane_stress_closure
-from piginot.physics.errors import PhysicsError
+from piginot.physics import energy_density, first_piola, plane_stress_closure
+from piginot.physics.errors import (
+    InadmissibleDeformationError,
+    NewtonNonConvergenceError,
+    PhysicsError,
+)
 
 _COMPONENT_INDEX = {"x": 0, "y": 1}
 _PLANE_STRESS_MODEL = "finite_strain_plane_stress_neo_hookean"
 _KERNEL_MODEL = "compressible_neo_hookean"
+_DENSE_DOF_LIMIT = 2_000
+_POINT_TOLERANCE = 1.0e-10
+
+
+@dataclass(frozen=True, slots=True)
+class _DiscreteSpace:
+    basis: Any
+    doflocs: tuple[tuple[float, float], ...]
+    element_dofs: tuple[tuple[int, ...], ...]
+    element_order: int
+
+    @property
+    def dof_count(self) -> int:
+        return len(self.doflocs)
+
+
+@dataclass(frozen=True, slots=True)
+class _Assembly:
+    residual: Any
+    stiffness: Any | None
+    strain_energy: float
+    stresses: tuple[tuple[Any, ...], ...]
+    gradients: tuple[tuple[Any, ...], ...]
 
 
 class ScikitFemBackend:
-    """Small scikit-fem-backed S7 backend for deterministic primary solves.
-
-    The S7 gate exercises affine finite-strain states. For those states the
-    constant-strain triangle result is exact, and the implementation records
-    failure attempts instead of filtering them from the returned sequence.
-    """
+    """scikit-fem-backed S7 backend for deterministic primary solves."""
 
     backend_name = "scikit-fem"
 
@@ -71,79 +95,61 @@ class ScikitFemBackend:
 
     def _solve_success(self, request: FemRequest) -> FemResult:
         self._reject_unsafe_qois(request)
-        self._check_resource_limit(request)
         if request.config.max_newton_iterations == 0:
             raise FemSolveFailure(
                 FemFailureCode.CLOSURE_FAILURE,
                 "plane-stress closure failed before a Newton step was available",
             )
-        constraints = _collect_constraints(request.mesh, request.boundary_conditions)
-        if not _has_full_rank_constraints(constraints):
+
+        space = _make_discrete_space(request.mesh, request.config.element_order)
+        self._check_resource_limit(request, space)
+        constraints = _collect_constraints(
+            request.mesh, space, request.boundary_conditions
+        )
+        if not _has_full_rank_constraints(space, constraints):
             raise FemSolveFailure(
                 FemFailureCode.CONSTRAINT_RANK_LOSS,
                 "Dirichlet constraints do not remove rigid body modes",
             )
-        if (
-            request.config.max_newton_iterations <= 1
-            and request.config.solver_tolerance < 1.0e-15
-        ):
-            raise FemSolveFailure(
-                FemFailureCode.NEWTON_NON_CONVERGENCE,
-                "Newton residual did not reach the requested tolerance",
-            )
-
-        displacement = _affine_displacement(request.mesh, constraints)
-        deformation_gradients = _cell_deformation_gradients(request.mesh, displacement)
-        if any(_determinant_2d(gradient) <= 0.0 for gradient in deformation_gradients):
-            raise FemSolveFailure(
-                FemFailureCode.NEGATIVE_JACOBIAN,
-                "at least one cell has non-positive deformation Jacobian",
-            )
 
         material = _kernel_material(request.material)
-        stress, energies = _plane_stress_outputs(
-            deformation_gradients,
-            request.mesh,
+        external = _assemble_external_load(request, space)
+        displacement, history = _solve_newton(
+            request, space, material, constraints, external
+        )
+        final = _assemble_internal(
+            request,
+            space,
             material,
-            request.config.max_newton_iterations,
+            displacement,
+            stiffness=False,
         )
-        qois = _evaluate_qois(request, stress)
-        residual = (
-            0.0 if _loads_are_zero(request.loads) else request.config.solver_tolerance
-        )
-        history = (
-            FemConvergenceEntry(
-                load_step=1,
-                iteration=1,
-                residual_norm=residual,
-                increment_norm=0.0,
-            ),
-        )
+        residual = final.residual - external
+        reactions = _reactions_by_tag(request.mesh, space, constraints, residual)
+        qois = _evaluate_qois(request, final.stresses)
+        external_work = float(displacement @ external)
+
         return FemResult(
             request_id=request.request_id,
             mesh_id=request.mesh.mesh_id,
             element_order=request.config.element_order,
-            displacement=_tuple2(displacement),
-            first_piola_stress=stress,
-            deformation_gradient=tuple(
-                (gradient,) for gradient in deformation_gradients
-            ),
-            reactions=_zero_reactions(request.mesh.semantic_tags),
-            total_strain_energy=math.fsum(energies),
-            external_work=0.0,
-            total_potential_energy=math.fsum(energies),
+            displacement=_nodal_displacement(space, displacement),
+            first_piola_stress=final.stresses,
+            deformation_gradient=final.gradients,
+            reactions=reactions,
+            total_strain_energy=final.strain_energy,
+            external_work=external_work,
+            total_potential_energy=final.strain_energy - external_work,
             convergence_history=history,
             qois=qois,
         )
 
-    def _check_resource_limit(self, request: FemRequest) -> None:
-        dof_count = _triangle_vector_dof_count(
-            request.mesh, request.config.element_order
-        )
-        if dof_count > request.config.max_dofs:
+    def _check_resource_limit(self, request: FemRequest, space: _DiscreteSpace) -> None:
+        limit = min(request.config.max_dofs, _DENSE_DOF_LIMIT)
+        if space.dof_count > limit:
             raise FemSolveFailure(
                 FemFailureCode.RESOURCE_EXHAUSTION,
-                f"requested {dof_count} DOFs exceeds max_dofs={request.config.max_dofs}",
+                f"requested {space.dof_count} DOFs exceeds max_dofs={limit}",
             )
 
     def _reject_unsafe_qois(self, request: FemRequest) -> None:
@@ -162,17 +168,38 @@ class ScikitFemBackend:
                 )
 
 
-def _triangle_vector_dof_count(mesh: CanonicalMesh, element_order: int) -> int:
-    if element_order == 1:
-        scalar_dofs = len(mesh.nodes)
-    else:
-        edges = {
-            tuple(sorted((cell[index], cell[(index + 1) % 3])))
-            for cell in mesh.cells
-            for index in range(3)
-        }
-        scalar_dofs = len(mesh.nodes) + len(edges)
-    return 2 * scalar_dofs
+def _make_discrete_space(mesh: CanonicalMesh, element_order: int) -> _DiscreteSpace:
+    try:
+        import numpy as np
+        from skfem import (  # type: ignore[import-untyped]
+            Basis,
+            ElementTriP1,
+            ElementTriP2,
+            ElementVector,
+            MeshTri,
+        )
+    except ImportError as exc:  # pragma: no cover - exercised only without fem extra
+        raise FemSolveFailure(
+            FemFailureCode.UNSUPPORTED_REQUEST,
+            "S7 ScikitFemBackend requires the 'fem' optional dependency",
+        ) from exc
+
+    element = ElementTriP1() if element_order == 1 else ElementTriP2()
+    points = np.asarray(mesh.nodes, dtype=float).T
+    cells = np.asarray(mesh.cells, dtype=int).T
+    basis = Basis(MeshTri(points, cells), ElementVector(element), intorder=5)
+    return _DiscreteSpace(
+        basis=basis,
+        doflocs=tuple(
+            (float(basis.doflocs[0, index]), float(basis.doflocs[1, index]))
+            for index in range(basis.N)
+        ),
+        element_dofs=tuple(
+            tuple(int(item) for item in basis.element_dofs[:, index])
+            for index in range(basis.nelems)
+        ),
+        element_order=element_order,
+    )
 
 
 def _kernel_material(material: MaterialSpec) -> MaterialSpec:
@@ -187,16 +214,29 @@ def _kernel_material(material: MaterialSpec) -> MaterialSpec:
 
 
 def _collect_constraints(
-    mesh: CanonicalMesh, boundary_conditions: tuple[BoundaryConditionSpec, ...]
-) -> dict[tuple[int, int], float]:
-    constraints: dict[tuple[int, int], float] = {}
+    mesh: CanonicalMesh,
+    space: _DiscreteSpace,
+    boundary_conditions: tuple[BoundaryConditionSpec, ...],
+) -> dict[int, float]:
+    constraints: dict[int, float] = {}
     for condition in boundary_conditions:
-        if condition.kind not in {"dirichlet", "symmetry"}:
+        if condition.kind == "free":
             continue
-        node_ids = _vertices_for_tag(mesh, condition.boundary_tag)
-        for component, value in zip(
-            condition.components, condition.values, strict=True
-        ):
+        if condition.kind not in {"dirichlet", "symmetry"}:
+            raise FemSolveFailure(
+                FemFailureCode.UNSUPPORTED_REQUEST,
+                f"unsupported boundary condition kind {condition.kind!r}",
+            )
+        components = condition.components
+        values = condition.values
+        if condition.kind == "symmetry" and not values:
+            values = tuple(_zero_displacement() for _ in components)
+        if not values or len(components) != len(values):
+            raise FemSolveFailure(
+                FemFailureCode.UNSUPPORTED_REQUEST,
+                "component boundary conditions require aligned values",
+            )
+        for component, value in zip(components, values, strict=True):
             if component not in _COMPONENT_INDEX:
                 raise FemSolveFailure(
                     FemFailureCode.UNSUPPORTED_REQUEST,
@@ -204,139 +244,599 @@ def _collect_constraints(
                 )
             _require_quantity(value, Unit.MM)
             component_id = _COMPONENT_INDEX[component]
-            for node_id in node_ids:
-                key = (node_id, component_id)
-                previous = constraints.get(key)
+            tagged_dofs = _component_dofs_for_tag(
+                mesh, space, condition.boundary_tag, component_id
+            )
+            if not tagged_dofs:
+                raise FemSolveFailure(
+                    FemFailureCode.UNSUPPORTED_REQUEST,
+                    f"boundary tag {condition.boundary_tag!r} has no DOFs",
+                )
+            for dof in tagged_dofs:
+                previous = constraints.get(dof)
                 if previous is not None and not math.isclose(
                     previous, value.value, rel_tol=0.0, abs_tol=1.0e-14
                 ):
                     raise FemSolveFailure(
                         FemFailureCode.CONSTRAINT_RANK_LOSS,
-                        "conflicting displacement constraints share a node",
+                        "conflicting displacement constraints share a DOF",
                     )
-                constraints[key] = value.value
+                constraints[dof] = value.value
     return constraints
 
 
-def _has_full_rank_constraints(constraints: dict[tuple[int, int], float]) -> bool:
-    constrained_components = {component for _, component in constraints}
-    return constrained_components == {0, 1}
+def _has_full_rank_constraints(
+    space: _DiscreteSpace, constraints: dict[int, float]
+) -> bool:
+    if not constraints:
+        return False
+    constrained_components = {dof % 2 for dof in constraints}
+    if constrained_components != {0, 1}:
+        return False
+    free_count = space.dof_count - len(constraints)
+    return free_count >= 0
 
 
-def _affine_displacement(
-    mesh: CanonicalMesh, constraints: dict[tuple[int, int], float]
-) -> tuple[tuple[float, float], ...]:
-    component_values = []
-    for component in (0, 1):
-        known = tuple(
-            (mesh.nodes[node_id][component], value)
-            for (node_id, constrained_component), value in constraints.items()
-            if constrained_component == component
-        )
-        if not known:
-            raise FemSolveFailure(
-                FemFailureCode.CONSTRAINT_RANK_LOSS,
-                "missing component-wise displacement constraints",
+def _solve_newton(
+    request: FemRequest,
+    space: _DiscreteSpace,
+    material: MaterialSpec,
+    constraints: dict[int, float],
+    external: Any,
+) -> tuple[Any, tuple[FemConvergenceEntry, ...]]:
+    import numpy as np
+
+    displacement = np.zeros(space.dof_count, dtype=float)
+    constrained = np.asarray(sorted(constraints), dtype=int)
+    free = np.asarray(
+        [index for index in range(space.dof_count) if index not in constraints],
+        dtype=int,
+    )
+    history: list[FemConvergenceEntry] = []
+
+    for load_step in range(1, request.config.load_steps + 1):
+        load_fraction = load_step / request.config.load_steps
+        target = {dof: load_fraction * value for dof, value in constraints.items()}
+        for dof, value in target.items():
+            displacement[dof] = value
+
+        converged = False
+        for iteration in range(1, request.config.max_newton_iterations + 1):
+            assembled = _assemble_internal(
+                request,
+                space,
+                material,
+                displacement,
+                stiffness=True,
             )
-        coordinates = sorted({coordinate for coordinate, _ in known})
-        if len(coordinates) == 1:
-            offset = known[0][1]
-            slope = 0.0
-        else:
-            lower, upper = coordinates[0], coordinates[-1]
-            lower_values = [value for coordinate, value in known if coordinate == lower]
-            upper_values = [value for coordinate, value in known if coordinate == upper]
-            if not lower_values or not upper_values:
+            residual = assembled.residual - load_fraction * external
+            free_residual = residual[free]
+            residual_norm = float(np.linalg.norm(free_residual))
+            if residual_norm <= request.config.solver_tolerance:
+                history.append(
+                    FemConvergenceEntry(load_step, iteration, residual_norm, 0.0)
+                )
+                converged = True
+                break
+            if free.size == 0 or assembled.stiffness is None:
+                break
+
+            tangent = assembled.stiffness[np.ix_(free, free)]
+            if np.linalg.matrix_rank(tangent) < tangent.shape[0]:
                 raise FemSolveFailure(
                     FemFailureCode.CONSTRAINT_RANK_LOSS,
-                    "constraints do not define an affine boundary state",
+                    "Newton tangent is rank deficient after applying constraints",
                 )
-            lower_value = lower_values[0]
-            upper_value = upper_values[0]
-            if any(abs(value - lower_value) > 1.0e-12 for value in lower_values) or any(
-                abs(value - upper_value) > 1.0e-12 for value in upper_values
-            ):
+            try:
+                increment = np.linalg.solve(tangent, -free_residual)
+            except np.linalg.LinAlgError as exc:
                 raise FemSolveFailure(
-                    FemFailureCode.UNSUPPORTED_REQUEST,
-                    "non-affine boundary displacement is outside the S7 gate backend",
+                    FemFailureCode.CONSTRAINT_RANK_LOSS,
+                    "Newton tangent solve failed after applying constraints",
+                ) from exc
+
+            displacement, increment_norm = _accept_newton_step(
+                request,
+                space,
+                material,
+                displacement,
+                free,
+                constrained,
+                target,
+                increment,
+                load_fraction,
+                external,
+                residual_norm,
+            )
+            history.append(
+                FemConvergenceEntry(
+                    load_step,
+                    iteration,
+                    residual_norm,
+                    increment_norm,
                 )
-            slope = (upper_value - lower_value) / (upper - lower)
-            offset = lower_value - slope * lower
-        component_values.append((slope, offset))
-    return tuple(
-        (
-            component_values[0][0] * node[0] + component_values[0][1],
-            component_values[1][0] * node[1] + component_values[1][1],
+            )
+            if increment_norm <= request.config.solver_tolerance:
+                converged = True
+                break
+
+        if not converged:
+            raise FemSolveFailure(
+                FemFailureCode.NEWTON_NON_CONVERGENCE,
+                "Newton residual did not reach the requested tolerance",
+            )
+
+    return displacement, tuple(history)
+
+
+def _accept_newton_step(
+    request: FemRequest,
+    space: _DiscreteSpace,
+    material: MaterialSpec,
+    displacement: Any,
+    free: Any,
+    constrained: Any,
+    target: dict[int, float],
+    increment: Any,
+    load_fraction: float,
+    external: Any,
+    previous_norm: float,
+) -> tuple[Any, float]:
+    import numpy as np
+
+    step = 1.0
+    best = displacement.copy()
+    best_norm = math.inf
+    while step >= 1.0 / 64.0:
+        trial = displacement.copy()
+        trial[free] = trial[free] + step * increment
+        for dof in constrained:
+            trial[dof] = target[int(dof)]
+        try:
+            assembled = _assemble_internal(
+                request,
+                space,
+                material,
+                trial,
+                stiffness=False,
+            )
+            residual = assembled.residual - load_fraction * external
+            norm = float(np.linalg.norm(residual[free]))
+        except FemSolveFailure as exc:
+            if exc.code is not FemFailureCode.NEGATIVE_JACOBIAN:
+                raise
+            norm = math.inf
+        if norm < best_norm:
+            best = trial
+            best_norm = norm
+        if norm <= previous_norm or norm <= request.config.solver_tolerance:
+            return trial, float(np.linalg.norm(step * increment))
+        step *= 0.5
+
+    if not math.isfinite(best_norm):
+        raise FemSolveFailure(
+            FemFailureCode.NEGATIVE_JACOBIAN,
+            "line search could not find an admissible deformation",
         )
-        for node in mesh.nodes
+    return best, float(np.linalg.norm(best[free] - displacement[free]))
+
+
+def _assemble_internal(
+    request: FemRequest,
+    space: _DiscreteSpace,
+    material: MaterialSpec,
+    displacement: Any,
+    *,
+    stiffness: bool,
+) -> _Assembly:
+    import numpy as np
+
+    residual = np.zeros(space.dof_count, dtype=float)
+    tangent = (
+        np.zeros((space.dof_count, space.dof_count), dtype=float) if stiffness else None
+    )
+    strain_energy = 0.0
+    stresses: list[tuple[Any, ...]] = []
+    gradients: list[tuple[Any, ...]] = []
+
+    for cell_index, local_dofs in enumerate(space.element_dofs):
+        cell = request.mesh.cells[cell_index]
+        coordinates = tuple(request.mesh.nodes[index] for index in cell)
+        local = displacement[list(local_dofs)]
+        element = _element_response(
+            coordinates,
+            local,
+            space.element_order,
+            material,
+            _closure_iterations(request),
+        )
+        for row, dof in enumerate(local_dofs):
+            residual[dof] += element["residual"][row]
+        if tangent is not None:
+            element_tangent = _element_tangent(
+                coordinates,
+                local,
+                space.element_order,
+                material,
+                _closure_iterations(request),
+            )
+            for row, row_dof in enumerate(local_dofs):
+                for column, column_dof in enumerate(local_dofs):
+                    tangent[row_dof, column_dof] += element_tangent[row, column]
+        strain_energy += float(element["energy"])
+        stresses.append(tuple(element["stresses"]))
+        gradients.append(tuple(element["gradients"]))
+
+    return _Assembly(
+        residual=residual,
+        stiffness=tangent,
+        strain_energy=strain_energy,
+        stresses=tuple(stresses),
+        gradients=tuple(gradients),
     )
 
 
-def _cell_deformation_gradients(
-    mesh: CanonicalMesh, displacement: tuple[tuple[float, float], ...]
-) -> tuple[tuple[tuple[float, float], tuple[float, float]], ...]:
-    gradients = []
-    for cell in mesh.cells:
-        x0, x1, x2 = (mesh.nodes[index] for index in cell)
-        u0, u1, u2 = (displacement[index] for index in cell)
-        reference = torch.tensor(
-            [[x1[0] - x0[0], x2[0] - x0[0]], [x1[1] - x0[1], x2[1] - x0[1]]],
-            dtype=torch.float64,
-        )
-        deformed = torch.tensor(
-            [
-                [x1[0] + u1[0] - x0[0] - u0[0], x2[0] + u2[0] - x0[0] - u0[0]],
-                [x1[1] + u1[1] - x0[1] - u0[1], x2[1] + u2[1] - x0[1] - u0[1]],
-            ],
-            dtype=torch.float64,
-        )
-        gradient = deformed @ torch.linalg.inv(reference)
-        gradients.append(_matrix2(gradient))
-    return tuple(gradients)
-
-
-def _plane_stress_outputs(
-    gradients: tuple[tuple[tuple[float, float], tuple[float, float]], ...],
-    mesh: CanonicalMesh,
+def _element_response(
+    coordinates: tuple[tuple[float, float], ...],
+    local_displacement: Sequence[float],
+    element_order: int,
     material: MaterialSpec,
-    max_iterations: int,
-) -> tuple[tuple[Any, ...], tuple[float, ...]]:
+    closure_iterations: int,
+) -> dict[str, Any]:
+    local = torch.tensor(
+        tuple(float(value) for value in local_displacement),
+        dtype=torch.float64,
+        requires_grad=True,
+    )
+    energy, stresses, gradients = _element_energy_and_fields(
+        coordinates,
+        local,
+        element_order,
+        material,
+        closure_iterations,
+    )
+    residual_tensor = torch.autograd.grad(energy, local)[0]
+    return {
+        "energy": float(energy.detach().item()),
+        "residual": residual_tensor.detach().numpy(),
+        "stresses": stresses,
+        "gradients": gradients,
+    }
+
+
+def _closure_iterations(request: FemRequest) -> int:
+    return max(8, request.config.max_newton_iterations)
+
+
+def _element_tangent(
+    coordinates: tuple[tuple[float, float], ...],
+    local_displacement: Sequence[float],
+    element_order: int,
+    material: MaterialSpec,
+    closure_iterations: int,
+) -> Any:
+    import numpy as np
+
+    local = np.asarray(local_displacement, dtype=float)
+    tangent = np.zeros((local.size, local.size), dtype=float)
+    for column in range(local.size):
+        step = 1.0e-7 * max(1.0, abs(float(local[column])))
+        plus = local.copy()
+        minus = local.copy()
+        plus[column] += step
+        minus[column] -= step
+        residual_plus = _element_response(
+            coordinates, plus.tolist(), element_order, material, closure_iterations
+        )["residual"]
+        residual_minus = _element_response(
+            coordinates, minus.tolist(), element_order, material, closure_iterations
+        )["residual"]
+        tangent[:, column] = (residual_plus - residual_minus) / (2.0 * step)
+    return tangent
+
+
+def _element_energy_and_fields(
+    coordinates: tuple[tuple[float, float], ...],
+    local: torch.Tensor,
+    element_order: int,
+    material: MaterialSpec,
+    closure_iterations: int,
+) -> tuple[torch.Tensor, tuple[Any, ...], tuple[Any, ...]]:
+    area = _cell_area_from_coordinates(coordinates)
+    energy = torch.zeros((), dtype=torch.float64)
     stresses: list[Any] = []
-    energies: list[float] = []
-    for cell, gradient in zip(mesh.cells, gradients, strict=True):
-        deformation_2d = torch.tensor(gradient, dtype=torch.float64)
-        try:
-            f33 = plane_stress_closure(
-                deformation_2d,
-                material,
-                max_iterations=max_iterations,
-            )
-            full_deformation = torch.eye(3, dtype=torch.float64)
-            full_deformation[:2, :2] = deformation_2d
-            full_deformation[2, 2] = f33
-            piola = first_piola(full_deformation, material)
-        except PhysicsError as exc:
-            raise FemSolveFailure(
-                FemFailureCode.CLOSURE_FAILURE,
-                "plane-stress closure failed",
-            ) from exc
-        stresses.append((_matrix2(piola[:2, :2]),))
-        energies.append(
-            _cell_area(mesh, cell) * _strain_energy_density(full_deformation, material)
+    gradients: list[Any] = []
+    for barycentric, weight in _triangle_quadrature():
+        _, reference_gradients = _shape_values_and_reference_gradients(
+            element_order, barycentric
         )
-    return tuple(stresses), tuple(energies)
+        physical_gradients = _physical_gradients(coordinates, reference_gradients)
+        deformation_2d = _deformation_gradient(local, physical_gradients)
+        determinant = torch.linalg.det(deformation_2d)
+        if (
+            not bool(torch.isfinite(determinant).item())
+            or float(determinant.item()) <= 0.0
+        ):
+            raise FemSolveFailure(
+                FemFailureCode.NEGATIVE_JACOBIAN,
+                "at least one quadrature point has non-positive deformation Jacobian",
+            )
+        full_deformation = _plane_stress_deformation(
+            deformation_2d, material, closure_iterations
+        )
+        energy = energy + area * weight * energy_density(full_deformation, material)
+        piola = first_piola(full_deformation, material)
+        stresses.append(_matrix2(piola[:2, :2]))
+        gradients.append(_matrix2(deformation_2d))
+    return energy, tuple(stresses), tuple(gradients)
 
 
-def _strain_energy_density(deformation: torch.Tensor, material: MaterialSpec) -> float:
-    from piginot.physics import energy_density
+def _plane_stress_deformation(
+    deformation_2d: torch.Tensor, material: MaterialSpec, closure_iterations: int
+) -> torch.Tensor:
+    try:
+        f33 = plane_stress_closure(
+            deformation_2d,
+            material,
+            max_iterations=closure_iterations,
+        )
+    except InadmissibleDeformationError as exc:
+        raise FemSolveFailure(
+            FemFailureCode.NEGATIVE_JACOBIAN,
+            "plane-stress closure received a non-positive Jacobian",
+        ) from exc
+    except NewtonNonConvergenceError as exc:
+        raise FemSolveFailure(
+            FemFailureCode.CLOSURE_FAILURE,
+            "plane-stress closure failed",
+        ) from exc
+    except PhysicsError as exc:
+        raise FemSolveFailure(
+            FemFailureCode.CLOSURE_FAILURE,
+            "plane-stress closure failed",
+        ) from exc
 
-    return float(energy_density(deformation, material).item())
+    full_deformation = torch.eye(3, dtype=torch.float64)
+    full_deformation[:2, :2] = deformation_2d
+    full_deformation[2, 2] = f33
+    return full_deformation
+
+
+def _deformation_gradient(
+    local: torch.Tensor, physical_gradients: tuple[tuple[float, float], ...]
+) -> torch.Tensor:
+    deformation = torch.eye(2, dtype=torch.float64)
+    for index, gradient in enumerate(physical_gradients):
+        ux = local[2 * index]
+        uy = local[2 * index + 1]
+        deformation[0, 0] = deformation[0, 0] + ux * gradient[0]
+        deformation[0, 1] = deformation[0, 1] + ux * gradient[1]
+        deformation[1, 0] = deformation[1, 0] + uy * gradient[0]
+        deformation[1, 1] = deformation[1, 1] + uy * gradient[1]
+    return deformation
+
+
+def _shape_values_and_reference_gradients(
+    element_order: int, barycentric: tuple[float, float, float]
+) -> tuple[tuple[float, ...], tuple[tuple[float, float], ...]]:
+    l1, l2, l3 = barycentric
+    reference_gradients = ((-1.0, -1.0), (1.0, 0.0), (0.0, 1.0))
+    if element_order == 1:
+        return barycentric, reference_gradients
+
+    values = (
+        l1 * (2.0 * l1 - 1.0),
+        l2 * (2.0 * l2 - 1.0),
+        l3 * (2.0 * l3 - 1.0),
+        4.0 * l1 * l2,
+        4.0 * l2 * l3,
+        4.0 * l3 * l1,
+    )
+    g1, g2, g3 = reference_gradients
+    gradients = (
+        _scale(g1, 4.0 * l1 - 1.0),
+        _scale(g2, 4.0 * l2 - 1.0),
+        _scale(g3, 4.0 * l3 - 1.0),
+        _add(_scale(g2, 4.0 * l1), _scale(g1, 4.0 * l2)),
+        _add(_scale(g3, 4.0 * l2), _scale(g2, 4.0 * l3)),
+        _add(_scale(g1, 4.0 * l3), _scale(g3, 4.0 * l1)),
+    )
+    return values, gradients
+
+
+def _physical_gradients(
+    coordinates: tuple[tuple[float, float], ...],
+    reference_gradients: tuple[tuple[float, float], ...],
+) -> tuple[tuple[float, float], ...]:
+    x0, x1, x2 = coordinates
+    jacobian = (
+        (x1[0] - x0[0], x2[0] - x0[0]),
+        (x1[1] - x0[1], x2[1] - x0[1]),
+    )
+    determinant = jacobian[0][0] * jacobian[1][1] - jacobian[0][1] * jacobian[1][0]
+    inverse_transpose = (
+        (jacobian[1][1] / determinant, -jacobian[1][0] / determinant),
+        (-jacobian[0][1] / determinant, jacobian[0][0] / determinant),
+    )
+    return tuple(
+        (
+            inverse_transpose[0][0] * gradient[0]
+            + inverse_transpose[0][1] * gradient[1],
+            inverse_transpose[1][0] * gradient[0]
+            + inverse_transpose[1][1] * gradient[1],
+        )
+        for gradient in reference_gradients
+    )
+
+
+def _triangle_quadrature() -> tuple[tuple[tuple[float, float, float], float], ...]:
+    return (
+        ((1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0), 0.225),
+        ((0.059715871789770, 0.470142064105115, 0.470142064105115), 0.132394152788506),
+        ((0.470142064105115, 0.059715871789770, 0.470142064105115), 0.132394152788506),
+        ((0.470142064105115, 0.470142064105115, 0.059715871789770), 0.132394152788506),
+        ((0.797426985353087, 0.101286507323456, 0.101286507323456), 0.125939180544827),
+        ((0.101286507323456, 0.797426985353087, 0.101286507323456), 0.125939180544827),
+        ((0.101286507323456, 0.101286507323456, 0.797426985353087), 0.125939180544827),
+    )
+
+
+def _assemble_external_load(request: FemRequest, space: _DiscreteSpace) -> Any:
+    import numpy as np
+
+    force = np.zeros(space.dof_count, dtype=float)
+    for load in request.loads:
+        if load.kind == "traction":
+            if load.boundary_tag is None:
+                raise FemSolveFailure(
+                    FemFailureCode.UNSUPPORTED_REQUEST,
+                    "traction loads require a boundary tag",
+                )
+            force += _assemble_traction(request.mesh, space, load)
+        elif load.kind == "body_force":
+            force += _assemble_body_force(request.mesh, space, load)
+        else:
+            raise FemSolveFailure(
+                FemFailureCode.UNSUPPORTED_REQUEST,
+                f"unsupported load kind {load.kind!r}",
+            )
+    return force
+
+
+def _assemble_traction(
+    mesh: CanonicalMesh, space: _DiscreteSpace, load: LoadSpec
+) -> Any:
+    import numpy as np
+
+    traction = _load_vector(load)
+    force = np.zeros(space.dof_count, dtype=float)
+    for facet_id in mesh.semantic_tags.get(str(load.boundary_tag), ()):
+        facet = mesh.boundary_facets[facet_id]
+        cell_index = _cell_for_facet(mesh, facet)
+        if cell_index is None:
+            raise FemSolveFailure(
+                FemFailureCode.UNSUPPORTED_REQUEST,
+                f"boundary facet {facet_id} is not attached to a cell",
+            )
+        local_dofs = space.element_dofs[cell_index]
+        cell = mesh.cells[cell_index]
+        edge = (cell.index(facet[0]), cell.index(facet[1]))
+        length = _distance(mesh.nodes[facet[0]], mesh.nodes[facet[1]])
+        for barycentric, weight in _edge_quadrature(edge):
+            shapes, _ = _shape_values_and_reference_gradients(
+                space.element_order, barycentric
+            )
+            for local_index, shape in enumerate(shapes):
+                force[local_dofs[2 * local_index]] += (
+                    length * weight * shape * traction[0]
+                )
+                force[local_dofs[2 * local_index + 1]] += (
+                    length * weight * shape * traction[1]
+                )
+    return force
+
+
+def _assemble_body_force(
+    mesh: CanonicalMesh, space: _DiscreteSpace, load: LoadSpec
+) -> Any:
+    import numpy as np
+
+    body_force = _load_vector(load)
+    force = np.zeros(space.dof_count, dtype=float)
+    for cell_index, cell in enumerate(mesh.cells):
+        coordinates = tuple(mesh.nodes[index] for index in cell)
+        area = _cell_area_from_coordinates(coordinates)
+        local_dofs = space.element_dofs[cell_index]
+        for barycentric, weight in _triangle_quadrature():
+            shapes, _ = _shape_values_and_reference_gradients(
+                space.element_order, barycentric
+            )
+            for local_index, shape in enumerate(shapes):
+                force[local_dofs[2 * local_index]] += (
+                    area * weight * shape * body_force[0]
+                )
+                force[local_dofs[2 * local_index + 1]] += (
+                    area * weight * shape * body_force[1]
+                )
+    return force
+
+
+def _load_vector(load: LoadSpec) -> tuple[float, float]:
+    values = [0.0, 0.0]
+    for component, value in zip(load.components, load.values, strict=True):
+        if component not in _COMPONENT_INDEX:
+            raise FemSolveFailure(
+                FemFailureCode.UNSUPPORTED_REQUEST,
+                f"unsupported load component {component!r}",
+            )
+        _require_quantity(value, Unit.MPA)
+        values[_COMPONENT_INDEX[component]] = value.value
+    return values[0], values[1]
+
+
+def _edge_quadrature(
+    edge: tuple[int, int],
+) -> tuple[tuple[tuple[float, float, float], float], ...]:
+    offset = 0.5 / math.sqrt(3.0)
+    result = []
+    for position in (0.5 - offset, 0.5 + offset):
+        barycentric = [0.0, 0.0, 0.0]
+        barycentric[edge[0]] = 1.0 - position
+        barycentric[edge[1]] = position
+        result.append(((barycentric[0], barycentric[1], barycentric[2]), 0.5))
+    return tuple(result)
+
+
+def _component_dofs_for_tag(
+    mesh: CanonicalMesh, space: _DiscreteSpace, tag: str, component: int
+) -> tuple[int, ...]:
+    facets = tuple(
+        mesh.boundary_facets[index] for index in mesh.semantic_tags.get(tag, ())
+    )
+    return tuple(
+        index
+        for index, point in enumerate(space.doflocs)
+        if index % 2 == component
+        and any(
+            _point_on_segment(point, mesh.nodes[left], mesh.nodes[right])
+            for left, right in facets
+        )
+    )
+
+
+def _reactions_by_tag(
+    mesh: CanonicalMesh,
+    space: _DiscreteSpace,
+    constraints: dict[int, float],
+    residual: Any,
+) -> dict[str, tuple[float, float]]:
+    reactions: dict[str, tuple[float, float]] = {}
+    constrained = set(constraints)
+    for tag in mesh.semantic_tags:
+        components = [0.0, 0.0]
+        for component in (0, 1):
+            for dof in _component_dofs_for_tag(mesh, space, tag, component):
+                if dof in constrained:
+                    components[component] += float(residual[dof])
+        reactions[str(tag)] = (components[0], components[1])
+    return reactions
+
+
+def _nodal_displacement(
+    space: _DiscreteSpace, displacement: Any
+) -> tuple[tuple[float, float], ...]:
+    nodal_dofs = space.basis.nodal_dofs
+    return tuple(
+        (
+            float(displacement[int(nodal_dofs[0, index])]),
+            float(displacement[int(nodal_dofs[1, index])]),
+        )
+        for index in range(nodal_dofs.shape[1])
+    )
 
 
 def _evaluate_qois(request: FemRequest, stress: tuple[Any, ...]) -> dict[str, float]:
     qois: dict[str, float] = {}
-    if not request.qois:
-        return qois
     flattened = [
         value
         for cell in stress
@@ -348,14 +848,6 @@ def _evaluate_qois(request: FemRequest, stress: tuple[Any, ...]) -> dict[str, fl
         if qoi.reduction in {"maximum", "pointwise_peak"}:
             qois[qoi.name] = max(abs(value) for value in flattened)
     return qois
-
-
-def _loads_are_zero(loads: tuple[Any, ...]) -> bool:
-    return all(all(abs(value.value) == 0.0 for value in load.values) for load in loads)
-
-
-def _zero_reactions(tags: Any) -> dict[str, tuple[float, float]]:
-    return {str(tag): (0.0, 0.0) for tag in tags}
 
 
 def _vertices_for_tag(mesh: CanonicalMesh, tag: str) -> set[int]:
@@ -402,6 +894,14 @@ def _vertex_has_interior_cells(
     return not candidate_cells
 
 
+def _cell_for_facet(mesh: CanonicalMesh, facet: tuple[int, int]) -> int | None:
+    endpoints = set(facet)
+    for index, cell in enumerate(mesh.cells):
+        if endpoints.issubset(cell):
+            return index
+    return None
+
+
 def _require_quantity(value: CanonicalQuantity, unit: Unit) -> None:
     if value.unit is not unit:
         raise FemSolveFailure(
@@ -410,8 +910,12 @@ def _require_quantity(value: CanonicalQuantity, unit: Unit) -> None:
         )
 
 
-def _cell_area(mesh: CanonicalMesh, cell: tuple[int, ...]) -> float:
-    left, middle, right = (mesh.nodes[index] for index in cell)
+def _zero_displacement() -> CanonicalQuantity:
+    return CanonicalQuantity(0.0, Unit.MM)
+
+
+def _cell_area_from_coordinates(coordinates: tuple[tuple[float, float], ...]) -> float:
+    left, middle, right = coordinates
     return (
         abs(
             (middle[0] - left[0]) * (right[1] - left[1])
@@ -421,19 +925,42 @@ def _cell_area(mesh: CanonicalMesh, cell: tuple[int, ...]) -> float:
     )
 
 
-def _determinant_2d(matrix: tuple[tuple[float, float], tuple[float, float]]) -> float:
-    return matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0]
+def _point_on_segment(
+    point: tuple[float, float],
+    left: tuple[float, float],
+    right: tuple[float, float],
+) -> bool:
+    length = _distance(left, right)
+    if length == 0.0:
+        return False
+    cross = (point[0] - left[0]) * (right[1] - left[1]) - (point[1] - left[1]) * (
+        right[0] - left[0]
+    )
+    if abs(cross) > _POINT_TOLERANCE * length:
+        return False
+    dot = (point[0] - left[0]) * (right[0] - left[0]) + (point[1] - left[1]) * (
+        right[1] - left[1]
+    )
+    return -_POINT_TOLERANCE <= dot <= length * length + _POINT_TOLERANCE
+
+
+def _distance(left: tuple[float, float], right: tuple[float, float]) -> float:
+    return math.hypot(right[0] - left[0], right[1] - left[1])
 
 
 def _matrix2(tensor: torch.Tensor) -> tuple[tuple[float, float], tuple[float, float]]:
     return (
-        (float(tensor[0, 0].item()), float(tensor[0, 1].item())),
-        (float(tensor[1, 0].item()), float(tensor[1, 1].item())),
+        (float(tensor[0, 0].detach().item()), float(tensor[0, 1].detach().item())),
+        (float(tensor[1, 0].detach().item()), float(tensor[1, 1].detach().item())),
     )
 
 
-def _tuple2(values: tuple[tuple[float, float], ...]) -> tuple[tuple[float, float], ...]:
-    return tuple((float(left), float(right)) for left, right in values)
+def _scale(vector: tuple[float, float], scale: float) -> tuple[float, float]:
+    return vector[0] * scale, vector[1] * scale
+
+
+def _add(left: tuple[float, float], right: tuple[float, float]) -> tuple[float, float]:
+    return left[0] + right[0], left[1] + right[1]
 
 
 __all__ = ("ScikitFemBackend",)
