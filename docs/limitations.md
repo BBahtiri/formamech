@@ -11,8 +11,15 @@ the bundle's results.
 Finite verification sampling is evidence about the cases evaluated. It is not a
 mathematical proof of a uniform error bound over every admissible input.
 
-At the current S4 stage, PI-GINOT contains contract and local content-storage
-infrastructure plus a constitutive physics kernel. The verified S4 material envelope
-is `1 <= E <= 10000 MPa` and `0 <= nu <= 0.49`; values outside it are unsupported.
+At the current S5 stage, PI-GINOT contains contract and local content-storage
+infrastructure, a constitutive physics kernel, and strict tagged 2D triangle geometry
+ingestion. The verified S4 material envelope is `1 <= E <= 10000 MPa` and
+`0 <= nu <= 0.49`; values outside it are unsupported.
+
+S5 accepts explicitly unitized, planar, linear triangle meshes with named line
+boundary groups and positive named region groups. It rejects healing, defeaturing,
+remeshing, inferred units, quads, high-order elements, mixed area elements, 3D
+meshes, unclassified facets, duplicate nodes or cells, inverted elements,
+non-manifold edges, and query points outside the mesh when containment is required.
 The project does not yet implement geometry construction, FEM, neural-operator
 training, verification, or inference.

@@ -1,20 +1,21 @@
 import ast
+import inspect
 from pathlib import Path
 
 import pytest
 
 from piginot import cli
 from piginot.contracts import CampaignPlan, CanonicalMesh
+from piginot.geometry import canonicalize_meshio, read_gmsh
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_PACKAGE = REPOSITORY_ROOT / "src" / "piginot"
 
-FORBIDDEN_S5_PLUS_MODULES = {
+FORBIDDEN_S6_PLUS_MODULES = {
     "bundle",
     "datasets",
     "doe",
     "fem",
-    "geometry",
     "objectives",
     "operator",
     "training",
@@ -51,14 +52,24 @@ FORBIDDEN_S3_NAME_FRAGMENTS = {
     "narrative_cache",
     "quarantine",
 }
+FORBIDDEN_GEOMETRY_IMPORTS = {"piginot.fem", "piginot.physics", "skfem", "torch"}
+FORBIDDEN_GEOMETRY_OPERATION_FRAGMENTS = {
+    "defeatur",
+    "generate_mesh",
+    "heal",
+    "infer_unit",
+    "morph",
+    "remesh",
+    "repair",
+}
 
 
-def test_no_s5_or_later_module_exists() -> None:
+def test_no_s6_or_later_module_exists() -> None:
     discovered = {
         path.stem for path in SOURCE_PACKAGE.rglob("*.py") if path.name != "__init__.py"
     }
 
-    assert discovered.isdisjoint(FORBIDDEN_S5_PLUS_MODULES)
+    assert discovered.isdisjoint(FORBIDDEN_S6_PLUS_MODULES)
 
 
 def test_physics_contains_no_fem_mesh_or_ml_surface() -> None:
@@ -82,6 +93,43 @@ def test_physics_contains_no_fem_mesh_or_ml_surface() -> None:
     assert not any(
         path.stem == "_closure_unrolled" for path in physics_root.rglob("*.py")
     )
+
+
+def test_geometry_contains_no_physics_fem_or_ml_surface() -> None:
+    geometry_root = SOURCE_PACKAGE / "geometry"
+    imports: set[str] = set()
+    definitions: set[str] = set()
+    for path in geometry_root.rglob("*.py"):
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                imports.update(alias.name for alias in node.names)
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                imports.add(node.module)
+            elif isinstance(
+                node, ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef
+            ):
+                definitions.add(node.name.lower())
+
+    assert all(
+        not any(
+            imported == forbidden or imported.startswith(f"{forbidden}.")
+            for forbidden in FORBIDDEN_GEOMETRY_IMPORTS
+        )
+        for imported in imports
+    )
+    assert all(
+        fragment not in definition
+        for definition in definitions
+        for fragment in FORBIDDEN_GEOMETRY_OPERATION_FRAGMENTS
+    )
+
+
+def test_geometry_adapters_require_an_explicit_coordinate_unit() -> None:
+    for adapter in (read_gmsh, canonicalize_meshio):
+        unit = inspect.signature(adapter).parameters["unit"]
+        assert unit.kind is inspect.Parameter.KEYWORD_ONLY
+        assert unit.default is inspect.Parameter.empty
 
 
 def test_contract_modules_define_no_evaluation_or_workflow_operation() -> None:
@@ -116,7 +164,7 @@ def test_canonical_mesh_exposes_no_geometry_algorithm(algorithm_name: str) -> No
     assert not hasattr(CanonicalMesh, algorithm_name)
 
 
-def test_cli_rejects_s4_plus_subcommands(
+def test_cli_rejects_s5_plus_subcommands(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     assert cli.main([]) == 0
