@@ -1,0 +1,198 @@
+{
+  "gate_id": "G5",
+  "step": "S5",
+  "commit": "0c4204178ca709455a104b636071d55bb83a1f06",
+  "implementation_commit": "0c4204178ca709455a104b636071d55bb83a1f06",
+  "execution_profile_hash": "81d380aafa86ddfacc7ca0bb3efda45dfa0a0e17a3510b44d753e5fdd4a2aef1",
+  "execution_profile_hash_domain": "content",
+  "timestamp_utc": "2026-08-22T07:24:19Z",
+  "execution_profile": {
+    "python_version": "3.13.11",
+    "library_versions": {
+      "meshio": "5.3.5",
+      "numpy": "2.2.6",
+      "piginot": "0.1.0",
+      "pytest": "9.1.1",
+      "rfc8785": "0.1.4"
+    },
+    "blas_threads": 1,
+    "device": "cpu",
+    "dtype": "float64",
+    "rng_algorithm": "none",
+    "seed": 0,
+    "container_digest": null
+  },
+  "geometry_contract": {
+    "canonical_schema": "canonical-triangle-mesh-v1",
+    "canonical_unit": "mm",
+    "cell_type": "triangle",
+    "boundary_cell_type": "line",
+    "coordinate_dimension": 2,
+    "gmsh_version": "4.1",
+    "topology_signature_version": "planar-cell-complex-v1",
+    "silent_healing": false,
+    "unit_inference": false
+  },
+  "ci_evidence": {
+    "workflow": "CI",
+    "run_id": 32559305230,
+    "run_url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/32559305230",
+    "event": "push",
+    "head_branch": "codex/s5-geometry-ingestion",
+    "head_sha": "0c4204178ca709455a104b636071d55bb83a1f06",
+    "status": "completed",
+    "conclusion": "success",
+    "started_at_utc": "2026-08-22T07:19:46Z",
+    "completed_at_utc": "2026-08-22T07:23:31Z",
+    "jobs": [
+      {
+        "id": 96998326258,
+        "name": "windows-latest / Python 3.11",
+        "url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/32559305230/job/96998326258",
+        "conclusion": "success"
+      },
+      {
+        "id": 96998326328,
+        "name": "ubuntu-latest / Python 3.11",
+        "url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/32559305230/job/96998326328",
+        "conclusion": "success"
+      },
+      {
+        "id": 96998326349,
+        "name": "ubuntu-latest / Python 3.12",
+        "url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/32559305230/job/96998326349",
+        "conclusion": "success"
+      },
+      {
+        "id": 96998326358,
+        "name": "windows-latest / Python 3.12",
+        "url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/32559305230/job/96998326358",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "checks": [
+    {
+      "id": "G5.roundtrip",
+      "status": "PASS",
+      "measured": "Gmsh 4.1 import, deterministic byte-identical export, independent meshio read, and canonical reimport preserved nodes, cells, directed boundary facets, semantic names and memberships, and region IDs exactly",
+      "threshold": "gmsh -> canonical -> gmsh preserves nodes, cells and tags exactly",
+      "command": "python -m pytest tests/geometry/test_gmsh_v41.py -q"
+    },
+    {
+      "id": "G5.topology",
+      "status": "PASS",
+      "measured": {
+        "zero_holes": {
+          "components": 1,
+          "holes": 0
+        },
+        "one_hole": {
+          "components": 1,
+          "holes": 1
+        },
+        "three_holes": {
+          "components": 1,
+          "holes": 3
+        },
+        "corner_touching_components": {
+          "components": 2,
+          "holes": 0
+        }
+      },
+      "threshold": "correct component and hole counts on fixtures with 0, 1 and 3 holes",
+      "command": "python -m pytest tests/geometry/test_topology.py -q"
+    },
+    {
+      "id": "G5.determinism",
+      "status": "PASS",
+      "measured": "canonical content and mesh identity matched exactly after node, cell and facet permutations, cyclic cell rotations, reversed source facets, and changed provenance",
+      "threshold": "equivalent meshes in different node orderings canonicalize identically",
+      "command": "python -m pytest tests/geometry/test_canonicalization.py tests/geometry/test_ingestion.py -q"
+    },
+    {
+      "id": "G5.tags",
+      "status": "PASS",
+      "measured": "missing and multiply-owned boundary facets failed with UNCLASSIFIED_BOUNDARY_FACET or AMBIGUOUS_BOUNDARY_TAG and stable canonical facet IDs",
+      "threshold": "missing or ambiguous tags fail with offending facet IDs and a reason code",
+      "command": "python -m pytest tests/geometry/test_validation.py tests/geometry/test_gmsh_v41.py -q"
+    },
+    {
+      "id": "G5.defects",
+      "status": "PASS",
+      "measured": "exact duplicate nodes, inverted elements and edges incident to more than two cells each failed with distinct typed reason codes",
+      "threshold": "inverted elements, non-manifold edges and duplicate nodes each detected",
+      "command": "python -m pytest tests/geometry/test_validation.py tests/geometry/test_ingestion.py -q"
+    },
+    {
+      "id": "G5.degenerate",
+      "status": "PASS",
+      "measured": "one repeated canonical mesh identity classified FIXED_DEGENERATE and require_variable_family raised DEGENERATE_VARIABLE_FAMILY",
+      "threshold": "a single fixed mesh is explicitly degenerate and cannot be used as variable",
+      "command": "python -m pytest tests/geometry/test_family.py -q"
+    },
+    {
+      "id": "G5.coverage",
+      "status": "PASS",
+      "measured": 89.15,
+      "threshold": 85.0,
+      "comparison": "gte",
+      "command": "python -m pytest tests/geometry --cov=src/piginot/geometry --cov-report=term-missing --cov-branch --cov-fail-under=85 -q"
+    },
+    {
+      "id": "G-CODE.ruff-check",
+      "status": "PASS",
+      "measured": "All checks passed",
+      "threshold": "ruff check . clean",
+      "command": "python -m ruff check ."
+    },
+    {
+      "id": "G-CODE.ruff-format",
+      "status": "PASS",
+      "measured": "94 files already formatted",
+      "threshold": "ruff format --check . clean",
+      "command": "python -m ruff format --check ."
+    },
+    {
+      "id": "G-CODE.mypy",
+      "status": "PASS",
+      "measured": "Success: no issues found in 28 source files",
+      "threshold": "mypy --strict src clean",
+      "command": "python -m mypy --strict src/"
+    },
+    {
+      "id": "G-CODE.pytest-cov",
+      "status": "PASS",
+      "measured": {
+        "tests": "458 passed, 2 skipped",
+        "coverage_percent": 93.24
+      },
+      "threshold": "pytest green and package coverage >=90%",
+      "comparison": "gte",
+      "command": "python -m pytest --cov=src/piginot --cov-report=term-missing --cov-branch --cov-fail-under=90"
+    },
+    {
+      "id": "G-CODE.pip-audit",
+      "status": "PASS",
+      "measured": "No known vulnerabilities found in the resolved project or isolated geometry dependencies locally; all four fresh CI audits passed",
+      "threshold": "no known dependency vulnerabilities",
+      "command": "python -m pip_audit"
+    },
+    {
+      "id": "G-CODE.documentation",
+      "status": "PASS",
+      "measured": "strict MkDocs build completed",
+      "threshold": "documentation builds without errors",
+      "command": "python -m mkdocs build --strict -f docs/mkdocs.yml"
+    },
+    {
+      "id": "G-CODE.s5-anti-scope",
+      "status": "PASS",
+      "measured": "23 guard and anti-scope tests passed",
+      "threshold": "no experiments import, S6+ module, healing, remeshing, morphing, inferred unit, FEM, physics, or ML geometry surface",
+      "command": "python -m pytest tests/test_no_fixture_names.py tests/test_spike_isolation.py tests/test_s5_anti_scope.py -q"
+    }
+  ],
+  "verdict": "PASS",
+  "verdict_reason": "all required G5 checks passed locally and in Linux/Windows CI on Python 3.11 and 3.12"
+}
