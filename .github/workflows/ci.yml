@@ -49,4 +49,4 @@ jobs:
       - name: Check S7 FEM coverage
         run: python -m pytest tests/fem --cov=src/piginot/fem --cov-fail-under=80
       - name: Audit dependencies
-        run: python -m pip_audit .
+        run: python -m pip_audit
