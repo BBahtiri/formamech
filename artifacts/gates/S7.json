@@ -1,158 +1,232 @@
 {
-    "gate_id": "G7",
-    "step": "S7",
-    "commit": "a923b657c42b80068df4ee4f16ecad24b02fc2c0",
-    "implementation_commit": "a923b657c42b80068df4ee4f16ecad24b02fc2c0",
-    "execution_profile_hash": "2017280db0ebf1f1a077e3da713939b9b338fe3f4e8b619a6f12db725926a0b9",
-    "execution_profile_hash_domain": "content",
-    "timestamp_utc": "2026-08-22T20:00:50Z",
-    "execution_profile": {
-        "python_version": "3.13.11",
-        "library_versions": {
-            "numpy": "2.2.6",
-            "piginot": "0.1.0",
-            "pytest": "9.1.1",
-            "rfc8785": "0.1.4",
-            "scikit-fem": "12.0.2",
-            "torch": "2.13.0"
-        },
-        "blas_threads": 1,
-        "device": "cpu",
-        "dtype": "float64",
-        "rng_algorithm": "none",
-        "seed": 0,
-        "container_digest": null
+  "gate_id": "G7",
+  "step": "S7",
+  "commit": "ddb82995cbb528d1a27e00aef07ef528bd09b569",
+  "implementation_commit": "e2e87c9860cb9aade881f750a125398a950b2a32",
+  "execution_profile_hash": "72ee51e415ec02371424a6ec1bb63e7c47204090cbe9317feab42b2b2e022449",
+  "execution_profile_hash_domain": "content",
+  "timestamp_utc": "2026-08-22T21:21:41Z",
+  "execution_profile_scope": "declared local Windows verification request profile; the four CI execution profiles are identified by their jobs",
+  "execution_profile": {
+    "python_version": "3.13.11",
+    "library_versions": {
+      "numpy": "2.2.6",
+      "piginot": "0.1.0",
+      "pytest": "9.1.1",
+      "rfc8785": "0.1.4",
+      "scikit-fem": "12.0.2",
+      "scipy": "1.17.1",
+      "torch": "2.13.0"
     },
-    "fem_contract": {
-        "backend": "scikit-fem",
-        "constitutive_kernel": "finite-strain plane-stress Neo-Hookean via S4 closure",
-        "cell_type": "triangle",
-        "element_orders": [
-            1,
-            2
-        ],
-        "result_fields": [
-            "displacement",
-            "first_piola_stress",
-            "deformation_gradient",
-            "reactions",
-            "energies",
-            "convergence_history",
-            "qois"
-        ],
-        "attempt_ledger_drops_failed_cases": false,
-        "qoi_policy": "pointwise peak stress at re-entrant boundaries is rejected with a reason code"
-    },
-    "ci_evidence": {
-        "status": "NOT_RUN",
-        "reason": "artifact created before first push of codex/s7-primary-fem"
-    },
-    "checks": [
-        {
-            "id": "G7.analytic",
-            "status": "PASS",
-            "measured": "unit-square affine uniaxial extension produced the closed-form plane-stress first-Piola tensor to <1e-8 and the result content hash matched hash_spec(result, 'content')",
-            "threshold": "uniaxial extension of a unit square matches closed form to 1e-8",
-            "command": "python -m pytest tests/fem/test_s7_gate.py::test_g7_analytic_unit_square_matches_closed_form_to_1e_minus_8 -q"
-        },
-        {
-            "id": "G7.outcomes",
-            "status": "PASS",
-            "measured": {
-                "failure_codes": [
-                    "NEGATIVE_JACOBIAN",
-                    "CLOSURE_FAILURE",
-                    "CONSTRAINT_RANK_LOSS",
-                    "NEWTON_NON_CONVERGENCE",
-                    "RESOURCE_EXHAUSTION"
-                ],
-                "distinct": 5
-            },
-            "threshold": "J<0, closure failure, constraint rank loss, Newton non-convergence and resource exhaustion produce five distinct recorded codes",
-            "command": "python -m pytest tests/fem/test_s7_gate.py::test_g7_outcomes_records_five_distinct_failure_codes -q"
-        },
-        {
-            "id": "G7.no-drop",
-            "status": "PASS",
-            "measured": "one successful and two injected failing requests returned three visible attempts in original request order; failed attempts retained failure codes",
-            "threshold": "injected failing cases appear in the result set; DROP_FAILED_CASE mutant fires",
-            "command": "python -m pytest tests/fem/test_s7_gate.py::test_g7_no_drop_failed_cases_are_visible_in_result_set -q"
-        },
-        {
-            "id": "G7.recipe",
-            "status": "PASS",
-            "measured": "changing mesh identity, solver tolerance, element order, BLAS thread count and scikit-fem library version each changed the recipe hash",
-            "threshold": "changing mesh, solver tolerance, element order, BLAS thread count or library version each changes the recipe hash",
-            "command": "python -m pytest tests/fem/test_s7_gate.py::test_g7_recipe_changes_with_mesh_tolerance_order_threads_and_library -q"
-        },
-        {
-            "id": "G7.retry",
-            "status": "PASS",
-            "measured": "byte-identical retries reused the same recipe hash; changed displacement produced a new recipe hash",
-            "threshold": "a byte-identical retry reuses the recipe; any changed input creates a new one",
-            "command": "python -m pytest tests/fem/test_s7_gate.py::test_g7_retry_reuses_byte_identical_recipe_only -q"
-        },
-        {
-            "id": "G7.regularity",
-            "status": "PASS",
-            "measured": "re-entrant-boundary pointwise peak first-Piola QoI failed with QOI_REGULARITY_REJECTED before solve",
-            "threshold": "a re-entrant-corner peak-stress QoI is rejected with a reason code",
-            "command": "python -m pytest tests/fem/test_s7_gate.py::test_g7_regularity_rejects_reentrant_corner_peak_stress_qoi -q"
-        },
-        {
-            "id": "G7.loads",
-            "status": "PASS",
-            "measured": "zero dead traction and body force were accepted and produced finite potential energy",
-            "threshold": "declarative load binding path is exercised for boundary and body loads",
-            "command": "python -m pytest tests/fem/test_s7_gate.py::test_dead_traction_and_body_force_are_bound_to_the_residual -q"
-        },
-        {
-            "id": "G7.coverage",
-            "status": "PASS",
-            "measured": {
-                "tests": "7 passed",
-                "coverage_percent": 84.0
-            },
-            "threshold": 80.0,
-            "comparison": "gte",
-            "command": "python -m pytest tests/fem/test_s7_gate.py --cov=src/piginot/fem --cov-report=term-missing -q"
-        },
-        {
-            "id": "G-CODE.ruff-check",
-            "status": "PASS",
-            "measured": "All checks passed",
-            "threshold": "ruff check src tests clean",
-            "command": "python -m ruff check src tests"
-        },
-        {
-            "id": "G-CODE.ruff-format",
-            "status": "PASS",
-            "measured": "83 files already formatted",
-            "threshold": "ruff format --check src tests clean",
-            "command": "python -m ruff format --check src tests"
-        },
-        {
-            "id": "G-CODE.mypy",
-            "status": "PASS",
-            "measured": "Success: no issues found in 37 source files",
-            "threshold": "mypy --strict src clean",
-            "command": "python -m mypy --strict src"
-        },
-        {
-            "id": "G-CODE.pytest",
-            "status": "PASS",
-            "measured": "604 passed, 2 skipped",
-            "threshold": "full local pytest suite green",
-            "command": "python -m pytest -q"
-        },
-        {
-            "id": "G-CODE.s7-anti-scope",
-            "status": "PASS",
-            "measured": "12 targeted isolation and forbidden-name tests passed with S7 gate tests",
-            "threshold": "no experiments import path and no forbidden specimen-specific source names",
-            "command": "python -m pytest tests/test_spike_isolation.py tests/test_no_fixture_names.py tests/fem/test_s7_gate.py -q"
-        }
+    "blas_threads": 1,
+    "device": "cpu",
+    "dtype": "float64",
+    "rng_algorithm": "none",
+    "seed": 0,
+    "container_digest": null
+  },
+  "fem_contract": {
+    "backend": "scikit-fem sparse Total-Lagrangian",
+    "constitutive_kernel": "S4 compressible Neo-Hookean plane-stress closure",
+    "tangent": "analytic 3D material tangent with exact plane-stress Schur condensation",
+    "cell_type": "triangle",
+    "element_orders": [
+      1,
+      2
     ],
-    "verdict": "LOCAL_PASS_CI_NOT_RUN",
-    "verdict_reason": "all local G7 checks passed; CI has not yet supplied Linux/Windows Python 3.11/3.12 evidence for this branch head"
+    "quadrature_order": 5,
+    "reference_thickness_mm": 1.0,
+    "dead_nominal_traction_unit": "MPa",
+    "registered_body_force_unit": "N/mm^3",
+    "result_fields": [
+      "displacement_dof_coordinates",
+      "displacement",
+      "quadrature_points",
+      "quadrature_weights",
+      "first_piola_stress_3x3",
+      "deformation_gradient_3x3",
+      "recovered_first_piola_stress_3x3",
+      "reactions",
+      "energies",
+      "convergence_history",
+      "qois"
+    ],
+    "attempt_ledger_drops_failed_cases": false,
+    "qoi_policy": "boundary stress maxima use the recovered P1/P2 field; re-entrant and mixed-BC junctions are rejected; P1 requires a declared graded mesh",
+    "independent_fem_verification_complete": false
+  },
+  "ci_evidence": {
+    "workflow": "CI",
+    "run_id": 32599104577,
+    "run_url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/32599104577",
+    "event": "push",
+    "head_branch": "codex/s7-primary-fem",
+    "head_sha": "ddb82995cbb528d1a27e00aef07ef528bd09b569",
+    "status": "completed",
+    "conclusion": "success",
+    "started_at_utc": "2026-08-22T21:16:16Z",
+    "completed_at_utc": "2026-08-22T21:20:30Z",
+    "jobs": [
+      {
+        "id": 97094561663,
+        "name": "ubuntu-latest / Python 3.11",
+        "url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/32599104577/job/97094561663",
+        "conclusion": "success"
+      },
+      {
+        "id": 97094561631,
+        "name": "windows-latest / Python 3.11",
+        "url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/32599104577/job/97094561631",
+        "conclusion": "success"
+      },
+      {
+        "id": 97094561593,
+        "name": "ubuntu-latest / Python 3.12",
+        "url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/32599104577/job/97094561593",
+        "conclusion": "success"
+      },
+      {
+        "id": 97094561780,
+        "name": "windows-latest / Python 3.12",
+        "url": "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/actions/runs/32599104577/job/97094561780",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "checks": [
+    {
+      "id": "G7.analytic",
+      "status": "PASS",
+      "measured": {
+        "loading": "nonzero dead nominal traction",
+        "element_orders": [
+          1,
+          2
+        ],
+        "axial_stretch": 1.2,
+        "lateral_and_thickness_stretch": 0.945632624291129,
+        "first_piola_P11_MPa": 17.492914739624112,
+        "maximum_absolute_error": "<1e-8"
+      },
+      "threshold": "uniaxial extension of a unit square matches closed form to 1e-8",
+      "command": "python -m pytest tests/fem/test_s7_gate.py::test_g7_analytic_unit_square_matches_closed_form_to_1e_minus_8 tests/fem/test_s7_gate.py::test_g7_p2_unit_square_matches_closed_form_to_1e_minus_8 -q"
+    },
+    {
+      "id": "G7.outcomes",
+      "status": "PASS",
+      "measured": {
+        "failure_codes": [
+          "NEGATIVE_JACOBIAN",
+          "CLOSURE_FAILURE",
+          "CONSTRAINT_RANK_LOSS",
+          "NEWTON_NON_CONVERGENCE",
+          "RESOURCE_EXHAUSTION"
+        ],
+        "distinct": 5
+      },
+      "threshold": "J<0, closure failure, constraint rank loss, Newton non-convergence and resource exhaustion produce five distinct recorded codes",
+      "command": "python -m pytest tests/fem/test_s7_gate.py::test_g7_outcomes_records_five_distinct_failure_codes -q"
+    },
+    {
+      "id": "G7.no-drop",
+      "status": "PASS",
+      "measured": "the injected gate batch returned all three attempts in order; an empty-tag QoI returned a visible UNSUPPORTED_REQUEST and did not drop the succeeding valid request; registered provider failures are also visible",
+      "threshold": "injected failing cases appear in the result set; DROP_FAILED_CASE mutant fires",
+      "command": "python -m pytest tests/fem/test_s7_gate.py::test_g7_no_drop_failed_cases_are_visible_in_result_set tests/fem/test_nonlinear_solver.py::test_empty_qoi_region_is_visible_failure_without_dropping_batch tests/fem/test_nonlinear_solver.py::test_body_force_provider_failure_is_a_visible_failed_attempt -q"
+    },
+    {
+      "id": "G7.recipe",
+      "status": "PASS",
+      "measured": "changing mesh identity, solver tolerance, element order, BLAS thread count or scikit-fem version changed the recipe hash",
+      "threshold": "changing mesh, solver tolerance, element order, BLAS thread count or library version each changes the recipe hash",
+      "command": "python -m pytest tests/fem/test_s7_gate.py::test_g7_recipe_changes_with_mesh_tolerance_order_threads_and_library tests/fem/test_nonlinear_solver.py::test_registered_body_force_enters_equilibrium_and_recipe_identity -q"
+    },
+    {
+      "id": "G7.retry",
+      "status": "PASS",
+      "measured": "byte-identical retries reused the recipe hash and S3 association; changed inputs created new identities",
+      "threshold": "a byte-identical retry reuses the recipe; any changed input creates a new one",
+      "command": "python -m pytest tests/fem/test_s7_gate.py::test_g7_retry_reuses_byte_identical_recipe_only tests/fem/test_nonlinear_solver.py::test_successful_result_is_associated_with_recipe_in_s3_store -q"
+    },
+    {
+      "id": "G7.regularity",
+      "status": "PASS",
+      "measured": "re-entrant and mixed essential/natural junction peak-stress QoIs were rejected; both maximum spellings use the recovered tagged-boundary field; under-resolved P1 peaks require a declared graded mesh",
+      "threshold": "a re-entrant-corner peak-stress QoI is rejected with a reason code",
+      "command": "python -m pytest tests/fem/test_s7_gate.py::test_g7_regularity_rejects_reentrant_corner_peak_stress_qoi tests/fem/test_nonlinear_solver.py::test_peak_stress_at_mixed_boundary_junction_is_rejected tests/fem/test_nonlinear_solver.py::test_safe_peak_stress_requires_p2_or_declared_graded_mesh tests/fem/test_nonlinear_solver.py::test_safe_stress_maximum_uses_recovered_p2_boundary_field -q"
+    },
+    {
+      "id": "G7.loads-fields-store",
+      "status": "PASS",
+      "measured": "nonzero traction and registered N/mm^3 body force entered equilibrium; P2 returned all nine scalar DOFs plus quadrature and recovered 3x3 fields; reactions, dead-load work, history and S3 recipe/result association were checked",
+      "threshold": "S7 deliverable load, output and content-addressed storage paths are exercised",
+      "command": "python -m pytest tests/fem/test_nonlinear_solver.py -q"
+    },
+    {
+      "id": "G7.coverage",
+      "status": "PASS",
+      "measured": {
+        "tests": "28 passed",
+        "coverage_percent": 89.45
+      },
+      "threshold": 80.0,
+      "comparison": "gte",
+      "command": "python -m pytest tests/fem --cov=src/piginot/fem --cov-report=term --cov-branch --cov-fail-under=80 -q"
+    },
+    {
+      "id": "G-CODE.ruff-check",
+      "status": "PASS",
+      "measured": "All checks passed",
+      "threshold": "ruff check . clean",
+      "command": "python -m ruff check ."
+    },
+    {
+      "id": "G-CODE.ruff-format",
+      "status": "PASS",
+      "measured": "122 files already formatted",
+      "threshold": "ruff format --check . clean",
+      "command": "python -m ruff format --check ."
+    },
+    {
+      "id": "G-CODE.mypy",
+      "status": "PASS",
+      "measured": "Success: no issues found in 42 source files",
+      "threshold": "mypy --strict src clean",
+      "command": "python -m mypy --strict src/"
+    },
+    {
+      "id": "G-CODE.pytest-cov",
+      "status": "PASS",
+      "measured": {
+        "tests": "625 passed, 2 skipped",
+        "coverage_percent": 93.19
+      },
+      "threshold": "pytest green and package coverage at least 90%",
+      "comparison": "gte",
+      "command": "python -m pytest --cov=src/piginot --cov-report=term --cov-branch --cov-fail-under=90 -q"
+    },
+    {
+      "id": "G-CODE.pip-audit",
+      "status": "PASS",
+      "measured": "all four fresh CI jobs audited the installed development, geometry, physics and FEM dependency set successfully; the local project-scoped audit also found no known vulnerabilities",
+      "threshold": "no known vulnerabilities in the resolved project dependency boundary",
+      "command": "python -m pip_audit"
+    },
+    {
+      "id": "G-CODE.documentation",
+      "status": "PASS",
+      "measured": "strict MkDocs build completed",
+      "threshold": "documentation builds without errors",
+      "command": "python -m mkdocs build --strict -f docs/mkdocs.yml"
+    },
+    {
+      "id": "G-CODE.anti-scope",
+      "status": "PASS",
+      "measured": "25 isolation, guard and anti-scope tests passed",
+      "threshold": "experiments remain isolated and prior-step boundaries remain intact",
+      "command": "python -m pytest tests/test_no_fixture_names.py tests/test_spike_isolation.py tests/test_s5_anti_scope.py tests/test_s6_anti_scope.py -q"
+    }
+  ],
+  "verdict": "PASS",
+  "verdict_reason": "all required G7 checks passed locally and on Linux/Windows CI with Python 3.11 and 3.12 at exact head ddb82995cbb528d1a27e00aef07ef528bd09b569; S7 is a primary solver contract gate, while independent FEM verification remains S8 scope"
 }
