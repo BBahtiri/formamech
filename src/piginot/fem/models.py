@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
 from enum import StrEnum
@@ -73,12 +74,31 @@ class FemRequest(SpecContract):
     config: FemSolverConfig
     execution_profile: ExecutionProfile
     body_force_provider_ids: Mapping[str, str] = field(default_factory=dict)
+    boundary_field_provider_ids: Mapping[str, str] = field(default_factory=dict)
+    traction_field_provider_ids: Mapping[str, str] = field(default_factory=dict)
+    rigid_mode_constraint: str | None = None
 
     def __post_init__(self) -> None:
-        providers: FrozenMap[str] = FrozenMap.copy_of(self.body_force_provider_ids)
-        if any(not isinstance(value, str) or not value for value in providers.values()):
-            raise ValueError("body-force provider IDs must be non-empty strings")
-        object.__setattr__(self, "body_force_provider_ids", providers)
+        provider_fields = (
+            ("body_force_provider_ids", "body-force"),
+            ("boundary_field_provider_ids", "boundary-field"),
+            ("traction_field_provider_ids", "traction-field"),
+        )
+        for attribute, label in provider_fields:
+            providers: FrozenMap[str] = FrozenMap.copy_of(getattr(self, attribute))
+            if any(
+                not isinstance(value, str) or not value.strip()
+                for value in providers.values()
+            ):
+                raise ValueError(f"{label} provider IDs must be non-empty strings")
+            object.__setattr__(self, attribute, providers)
+        if self.rigid_mode_constraint not in {
+            None,
+            "zero_mean_translation_rotation",
+        }:
+            raise ValueError(
+                "rigid_mode_constraint must be None or 'zero_mean_translation_rotation'"
+            )
 
     @property
     def recipe_hash(self) -> str:
@@ -144,6 +164,7 @@ class FemResult(SpecContract):
         ...,
     ]
     reactions: Mapping[str, tuple[float, float]]
+    rigid_mode_multipliers: tuple[float, ...]
     total_strain_energy: float
     external_work: float
     total_potential_energy: float
@@ -152,6 +173,10 @@ class FemResult(SpecContract):
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "reactions", FrozenMap.copy_of(self.reactions))
+        multipliers = tuple(self.rigid_mode_multipliers)
+        if any(not math.isfinite(value) for value in multipliers):
+            raise ValueError("rigid_mode_multipliers must contain only finite values")
+        object.__setattr__(self, "rigid_mode_multipliers", multipliers)
         object.__setattr__(self, "qois", FrozenMap.copy_of(self.qois))
 
 

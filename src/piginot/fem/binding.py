@@ -19,6 +19,10 @@ from piginot.contracts import (
     Unit,
 )
 from piginot.fem.body_forces import BodyForceProvider
+from piginot.fem.field_providers import (
+    DirichletFieldProvider,
+    TractionFieldProvider,
+)
 from piginot.fem.models import FemFailureCode, FemSolveFailure
 
 FloatArray = NDArray[np.float64]
@@ -35,6 +39,8 @@ class BoundConstraints:
     free: IntArray
     target_values: FloatArray
     by_name: dict[str, IntArray]
+    global_matrix: FloatArray
+    global_targets: FloatArray
 
 
 @LinearForm  # type: ignore[untyped-decorator]
@@ -45,6 +51,21 @@ def _dead_traction(test: Any, data: Any) -> Any:
 @LinearForm  # type: ignore[untyped-decorator]
 def _registered_body_force(test: Any, data: Any) -> Any:
     return dot(data.body_force, test)
+
+
+@LinearForm  # type: ignore[untyped-decorator]
+def _mean_x_constraint(test: Any, _data: Any) -> Any:
+    return test[0]
+
+
+@LinearForm  # type: ignore[untyped-decorator]
+def _mean_y_constraint(test: Any, _data: Any) -> Any:
+    return test[1]
+
+
+@LinearForm  # type: ignore[untyped-decorator]
+def _mean_rotation_constraint(test: Any, data: Any) -> Any:
+    return data.x[0] * test[1] - data.x[1] * test[0]
 
 
 def canonical_facet_map(skmesh: Any) -> dict[tuple[int, int], int]:
@@ -84,14 +105,44 @@ def bind_constraints(
     skmesh: Any,
     mesh: CanonicalMesh,
     conditions: tuple[BoundaryConditionSpec, ...],
+    *,
+    provider_ids: Mapping[str, str],
+    providers: Mapping[str, DirichletFieldProvider],
+    rigid_mode_constraint: str | None = None,
 ) -> BoundConstraints:
     facet_map = canonical_facet_map(skmesh)
     target_by_dof: dict[int, float] = {}
     owner_by_dof: dict[int, str] = {}
     by_name: dict[str, IntArray] = {}
 
+    condition_names = {condition.name for condition in conditions}
+    dangling = sorted(set(provider_ids) - condition_names)
+    if dangling:
+        raise FemSolveFailure(
+            FemFailureCode.UNSUPPORTED_REQUEST,
+            f"boundary-field provider references unknown condition {dangling[0]!r}",
+        )
+
     for condition in conditions:
         facets = facets_for_tag(mesh, facet_map, condition.boundary_tag)
+        provider_id = provider_ids.get(condition.name)
+        provider = providers.get(provider_id) if provider_id is not None else None
+        if provider_id is not None:
+            if condition.kind != "dirichlet":
+                raise FemSolveFailure(
+                    FemFailureCode.UNSUPPORTED_REQUEST,
+                    "boundary-field providers require a Dirichlet condition",
+                )
+            if condition.values:
+                raise FemSolveFailure(
+                    FemFailureCode.UNSUPPORTED_REQUEST,
+                    "boundary-field conditions cannot also carry constant values",
+                )
+            if provider is None or provider.provider_id != provider_id:
+                raise FemSolveFailure(
+                    FemFailureCode.UNSUPPORTED_REQUEST,
+                    f"boundary-field provider for {condition.name!r} is not registered",
+                )
         if condition.kind == "free":
             if condition.components or condition.values:
                 raise FemSolveFailure(
@@ -111,11 +162,19 @@ def bind_constraints(
                 basis.get_dofs(facets=facets).all([_component_name(component)]),
                 dtype=np.int64,
             )
-            for dof in dofs:
+            prescribed_values = (
+                np.full(dofs.shape, value, dtype=np.float64)
+                if provider is None
+                else _evaluate_dirichlet_field(provider, basis, dofs, component)
+            )
+            for dof, prescribed_value in zip(dofs, prescribed_values, strict=True):
                 index = int(dof)
                 previous = target_by_dof.get(index)
                 if previous is not None and not math.isclose(
-                    previous, value, rel_tol=0.0, abs_tol=1.0e-14
+                    previous,
+                    float(prescribed_value),
+                    rel_tol=0.0,
+                    abs_tol=1.0e-14,
                 ):
                     raise FemSolveFailure(
                         FemFailureCode.CONSTRAINT_RANK_LOSS,
@@ -126,7 +185,7 @@ def bind_constraints(
                         FemFailureCode.CONSTRAINT_RANK_LOSS,
                         "duplicate essential constraints share a DOF",
                     )
-                target_by_dof[index] = value
+                target_by_dof[index] = float(prescribed_value)
                 owner_by_dof[index] = condition.name
                 owned.append(index)
         owned_array = np.asarray(sorted(set(owned)), dtype=np.int64)
@@ -137,8 +196,54 @@ def bind_constraints(
     if constrained.size:
         target[constrained] = [target_by_dof[int(dof)] for dof in constrained]
     free = np.setdiff1d(np.arange(basis.N, dtype=np.int64), constrained)
-    _require_rigid_mode_rank(basis, constrained)
-    return BoundConstraints(constrained, free, target, by_name)
+    global_matrix = _global_rigid_mode_matrix(
+        basis,
+        rigid_mode_constraint,
+        constrained,
+    )
+    global_targets = np.zeros(global_matrix.shape[0], dtype=np.float64)
+    _require_rigid_mode_rank(basis, constrained, global_matrix)
+    return BoundConstraints(
+        constrained,
+        free,
+        target,
+        by_name,
+        global_matrix,
+        global_targets,
+    )
+
+
+def _global_rigid_mode_matrix(
+    basis: Any,
+    strategy: str | None,
+    constrained: IntArray,
+) -> FloatArray:
+    if strategy is None:
+        return np.empty((0, basis.N), dtype=np.float64)
+    if strategy != "zero_mean_translation_rotation":
+        raise FemSolveFailure(
+            FemFailureCode.UNSUPPORTED_REQUEST,
+            f"unsupported rigid-mode constraint {strategy!r}",
+        )
+    if constrained.size:
+        raise FemSolveFailure(
+            FemFailureCode.UNSUPPORTED_REQUEST,
+            "global rigid-mode constraints cannot be mixed with essential boundaries",
+        )
+    rows = np.vstack(
+        (
+            np.asarray(asm(_mean_x_constraint, basis), dtype=np.float64),
+            np.asarray(asm(_mean_y_constraint, basis), dtype=np.float64),
+            np.asarray(asm(_mean_rotation_constraint, basis), dtype=np.float64),
+        )
+    )
+    row_norms = np.linalg.norm(rows, axis=1)
+    if not bool(np.isfinite(rows).all()) or bool(np.any(row_norms <= 0.0)):
+        raise FemSolveFailure(
+            FemFailureCode.CONSTRAINT_RANK_LOSS,
+            "global rigid-mode constraints are rank deficient",
+        )
+    return np.asarray(rows / row_norms[:, None], dtype=np.float64)
 
 
 def assemble_dead_loads(
@@ -150,10 +255,27 @@ def assemble_dead_loads(
     thickness: float,
     provider_ids: Mapping[str, str],
     providers: Mapping[str, BodyForceProvider],
+    traction_provider_ids: Mapping[str, str],
+    traction_providers: Mapping[str, TractionFieldProvider],
 ) -> FloatArray:
     result = np.zeros(basis.N, dtype=np.float64)
     facet_map = canonical_facet_map(skmesh)
+    load_names = {load.name for load in loads}
+    dangling = sorted(set(traction_provider_ids) - load_names)
+    if dangling:
+        raise FemSolveFailure(
+            FemFailureCode.UNSUPPORTED_REQUEST,
+            f"traction-field provider references unknown load {dangling[0]!r}",
+        )
     for load in loads:
+        traction_provider_id = traction_provider_ids.get(load.name)
+        if traction_provider_id is not None and (
+            load.kind != "traction" or load.boundary_tag is None
+        ):
+            raise FemSolveFailure(
+                FemFailureCode.UNSUPPORTED_REQUEST,
+                "traction-field providers require a traction load with a boundary",
+            )
         if load.kind == "body_force":
             if load.boundary_tag is not None or load.components or load.values:
                 raise FemSolveFailure(
@@ -194,21 +316,6 @@ def assemble_dead_loads(
                 FemFailureCode.UNSUPPORTED_REQUEST,
                 f"unsupported load kind {load.kind!r}",
             )
-        traction = np.zeros(2, dtype=np.float64)
-        for component, value in zip(load.components, load.values, strict=True):
-            if value.unit is not Unit.MPA:
-                raise FemSolveFailure(
-                    FemFailureCode.UNSUPPORTED_REQUEST,
-                    "dead nominal traction must use canonical MPa",
-                )
-            try:
-                component_index = _COMPONENT_INDEX[component]
-            except KeyError as exc:
-                raise FemSolveFailure(
-                    FemFailureCode.UNSUPPORTED_REQUEST,
-                    f"unsupported traction component {component!r}",
-                ) from exc
-            traction[component_index] = value.value
         facets = facets_for_tag(mesh, facet_map, load.boundary_tag)
         facet_basis = FacetBasis(
             skmesh,
@@ -216,13 +323,102 @@ def assemble_dead_loads(
             facets=facets,
             dofs=basis.dofs,
         )
+        traction = _traction_field(
+            load,
+            facet_basis,
+            provider_id=traction_provider_id,
+            providers=traction_providers,
+        )
         assembled = asm(
             _dead_traction,
             facet_basis,
-            traction=traction[:, None, None],
+            traction=traction,
         )
         result = result + np.asarray(assembled, dtype=np.float64) * thickness
     return result
+
+
+def _evaluate_dirichlet_field(
+    provider: DirichletFieldProvider,
+    basis: Any,
+    dofs: IntArray,
+    component: str,
+) -> FloatArray:
+    points = np.asarray(basis.doflocs[:, dofs], dtype=np.float64)
+    try:
+        field = np.asarray(provider.evaluate(points), dtype=np.float64)
+    except Exception as exc:
+        raise FemSolveFailure(
+            FemFailureCode.UNSUPPORTED_REQUEST,
+            "boundary-field provider failed",
+        ) from exc
+    if field.shape != points.shape or not bool(np.isfinite(field).all()):
+        raise FemSolveFailure(
+            FemFailureCode.UNSUPPORTED_REQUEST,
+            "boundary-field provider returned an invalid canonical field",
+        )
+    return np.asarray(field[_COMPONENT_INDEX[component]], dtype=np.float64)
+
+
+def _traction_field(
+    load: LoadSpec,
+    facet_basis: Any,
+    *,
+    provider_id: str | None,
+    providers: Mapping[str, TractionFieldProvider],
+) -> FloatArray:
+    if provider_id is None:
+        constant_traction = np.zeros(2, dtype=np.float64)
+        for component, value in zip(load.components, load.values, strict=True):
+            if value.unit is not Unit.MPA:
+                raise FemSolveFailure(
+                    FemFailureCode.UNSUPPORTED_REQUEST,
+                    "dead nominal traction must use canonical MPa",
+                )
+            constant_traction[_traction_component_index(component)] = value.value
+        return constant_traction[:, None, None]
+
+    if load.values:
+        raise FemSolveFailure(
+            FemFailureCode.UNSUPPORTED_REQUEST,
+            "traction-field loads cannot also carry constant values",
+        )
+    provider = providers.get(provider_id)
+    if provider is None or provider.provider_id != provider_id:
+        raise FemSolveFailure(
+            FemFailureCode.UNSUPPORTED_REQUEST,
+            f"traction-field provider for {load.name!r} is not registered",
+        )
+    points = np.asarray(facet_basis.global_coordinates(), dtype=np.float64)
+    normals = np.asarray(facet_basis.normals, dtype=np.float64)
+    try:
+        evaluated = np.asarray(provider.evaluate(points, normals), dtype=np.float64)
+    except Exception as exc:
+        raise FemSolveFailure(
+            FemFailureCode.UNSUPPORTED_REQUEST,
+            f"traction-field provider for {load.name!r} failed",
+        ) from exc
+    if evaluated.shape != points.shape or not bool(np.isfinite(evaluated).all()):
+        raise FemSolveFailure(
+            FemFailureCode.UNSUPPORTED_REQUEST,
+            "traction-field provider returned an invalid canonical field",
+        )
+    components = load.components or tuple(_COMPONENT_INDEX)
+    spatial_traction = np.zeros_like(evaluated)
+    for component in components:
+        index = _traction_component_index(component)
+        spatial_traction[index] = evaluated[index]
+    return spatial_traction
+
+
+def _traction_component_index(component: str) -> int:
+    try:
+        return _COMPONENT_INDEX[component]
+    except KeyError as exc:
+        raise FemSolveFailure(
+            FemFailureCode.UNSUPPORTED_REQUEST,
+            f"unsupported traction component {component!r}",
+        ) from exc
 
 
 def _condition_components(
@@ -296,14 +492,26 @@ def _component_name(component: str) -> str:
         ) from exc
 
 
-def _require_rigid_mode_rank(basis: Any, constrained: IntArray) -> None:
+def _require_rigid_mode_rank(
+    basis: Any,
+    constrained: IntArray,
+    global_matrix: FloatArray,
+) -> None:
     rows: list[tuple[float, float, float]] = []
     x_dofs = set(int(value) for value in basis.split_indices()[0])
     for dof in constrained:
         x = float(basis.doflocs[0, dof])
         y = float(basis.doflocs[1, dof])
         rows.append((1.0, 0.0, -y) if int(dof) in x_dofs else (0.0, 1.0, x))
-    if len(rows) < 3 or int(np.linalg.matrix_rank(np.asarray(rows))) < 3:
+    if global_matrix.shape[0]:
+        rigid_modes = np.zeros((basis.N, 3), dtype=np.float64)
+        for dof in range(basis.N):
+            x = float(basis.doflocs[0, dof])
+            y = float(basis.doflocs[1, dof])
+            rigid_modes[dof] = (1.0, 0.0, -y) if dof in x_dofs else (0.0, 1.0, x)
+        rows.extend(tuple(row) for row in global_matrix @ rigid_modes)
+    rank = 0 if not rows else int(np.linalg.matrix_rank(np.asarray(rows)))
+    if rank < 3:
         raise FemSolveFailure(
             FemFailureCode.CONSTRAINT_RANK_LOSS,
             "essential constraints do not remove all rigid-body modes",

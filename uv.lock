@@ -968,7 +968,12 @@ dev = [
     { name = "setuptools" },
 ]
 fem = [
+    { name = "numpy" },
     { name = "scikit-fem" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "scipy", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "sympy" },
+    { name = "torch" },
 ]
 geometry = [
     { name = "meshio" },
@@ -986,6 +991,7 @@ requires-dist = [
     { name = "meshio", marker = "extra == 'geometry'", specifier = ">=5.3.5,<6" },
     { name = "mkdocs", marker = "extra == 'dev'", specifier = ">=1.6,<2" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.15,<3" },
+    { name = "numpy", marker = "extra == 'fem'", specifier = ">=1.26,<2.3" },
     { name = "numpy", marker = "extra == 'geometry'", specifier = ">=1.26,<2.3" },
     { name = "pip-audit", marker = "extra == 'dev'", specifier = ">=2.8,<3" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.1,<5" },
@@ -994,7 +1000,10 @@ requires-dist = [
     { name = "rfc8785", specifier = ">=0.1.4,<0.2" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.9,<1" },
     { name = "scikit-fem", marker = "extra == 'fem'", specifier = ">=11,<13" },
+    { name = "scipy", marker = "extra == 'fem'", specifier = ">=1.12,<2" },
     { name = "setuptools", marker = "extra == 'dev'", specifier = ">=83" },
+    { name = "sympy", marker = "extra == 'fem'", specifier = ">=1.13,<2" },
+    { name = "torch", marker = "extra == 'fem'", specifier = ">=2.6,<3" },
     { name = "torch", marker = "extra == 'ml'", specifier = ">=2.6,<3" },
     { name = "torch", marker = "extra == 'physics'", specifier = ">=2.6,<3" },
 ]

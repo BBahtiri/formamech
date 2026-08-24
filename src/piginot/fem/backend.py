@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import warnings
 from dataclasses import replace
-from types import MappingProxyType
 from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
+from scipy.sparse import bmat, csr_matrix  # type: ignore[import-untyped]
 from scipy.sparse.linalg import (  # type: ignore[import-untyped]
     MatrixRankWarning,
     spsolve,
@@ -31,6 +31,11 @@ from piginot.fem.binding import (
     facets_for_tag,
 )
 from piginot.fem.body_forces import BodyForceProvider
+from piginot.fem.field_providers import (
+    DirichletFieldProvider,
+    TractionFieldProvider,
+    immutable_provider_registry,
+)
 from piginot.fem.models import (
     FemAttempt,
     FemConvergenceEntry,
@@ -58,14 +63,22 @@ class ScikitFemBackend:
         self,
         *,
         body_force_providers: tuple[BodyForceProvider, ...] = (),
+        dirichlet_field_providers: tuple[DirichletFieldProvider, ...] = (),
+        traction_field_providers: tuple[TractionFieldProvider, ...] = (),
         store: ObjectStore | None = None,
     ) -> None:
-        providers = {
-            provider.provider_id: provider for provider in body_force_providers
-        }
-        if len(providers) != len(body_force_providers):
-            raise ValueError("body-force provider IDs must be unique")
-        self._body_force_providers = MappingProxyType(providers)
+        self._body_force_providers = immutable_provider_registry(
+            body_force_providers,
+            label="body-force",
+        )
+        self._dirichlet_field_providers = immutable_provider_registry(
+            dirichlet_field_providers,
+            label="Dirichlet-field",
+        )
+        self._traction_field_providers = immutable_provider_registry(
+            traction_field_providers,
+            label="traction-field",
+        )
         self._store = store
 
     def solve_many(self, requests: tuple[FemRequest, ...]) -> tuple[FemAttempt, ...]:
@@ -122,6 +135,9 @@ class ScikitFemBackend:
             skmesh,
             request.mesh,
             request.boundary_conditions,
+            provider_ids=request.boundary_field_provider_ids,
+            providers=self._dirichlet_field_providers,
+            rigid_mode_constraint=request.rigid_mode_constraint,
         )
         material = _kernel_material(request.material)
         external_force = assemble_dead_loads(
@@ -132,6 +148,8 @@ class ScikitFemBackend:
             thickness=1.0,
             provider_ids=request.body_force_provider_ids,
             providers=self._body_force_providers,
+            traction_provider_ids=request.traction_field_provider_ids,
+            traction_providers=self._traction_field_providers,
         )
         displacement, state, history, residual = _solve_newton(
             basis,
@@ -155,6 +173,7 @@ class ScikitFemBackend:
             deformation_gradient=_matrix3_field(state.deformation_gradient),
             recovered_first_piola_stress=_matrix3_dofs(recovered),
             reactions=_reaction_result(basis, constraints, residual),
+            rigid_mode_multipliers=_rigid_mode_multipliers(residual, constraints),
             total_strain_energy=state.strain_energy,
             external_work=external_work,
             total_potential_energy=state.strain_energy - external_work,
@@ -242,7 +261,12 @@ def _solve_newton(
                 thickness=1.0,
             )
             residual = state.internal_force - load_factor * external_force
-            residual_norm = float(np.linalg.norm(residual[constraints.free]))
+            residual_norm = _constrained_residual_norm(
+                residual,
+                displacement,
+                constraints,
+                load_factor,
+            )
             if residual_norm <= request.config.solver_tolerance:
                 history.append(
                     FemConvergenceEntry(
@@ -257,7 +281,13 @@ def _solve_newton(
                 converged = True
                 break
 
-            increment = _solve_increment(state, residual, constraints.free)
+            increment = _solve_increment(
+                state,
+                residual,
+                displacement,
+                constraints,
+                load_factor,
+            )
             displacement, increment_norm = _line_search(
                 basis,
                 displacement,
@@ -296,13 +326,42 @@ def _solve_newton(
 def _solve_increment(
     state: AssemblyState,
     residual: FloatArray,
-    free: NDArray[np.int64],
+    displacement: FloatArray,
+    constraints: BoundConstraints,
+    load_factor: float,
 ) -> FloatArray:
+    free = constraints.free
     tangent = state.tangent[free][:, free]
+    global_matrix = constraints.global_matrix[:, free]
     with warnings.catch_warnings():
         warnings.simplefilter("error", MatrixRankWarning)
         try:
-            increment = np.asarray(spsolve(tangent, -residual[free]), dtype=np.float64)
+            if global_matrix.shape[0]:
+                saddle_point = bmat(
+                    (
+                        (tangent, csr_matrix(global_matrix.T)),
+                        (
+                            csr_matrix(global_matrix),
+                            csr_matrix(
+                                (global_matrix.shape[0], global_matrix.shape[0])
+                            ),
+                        ),
+                    ),
+                    format="csr",
+                )
+                constraint_residual = (
+                    constraints.global_matrix @ displacement
+                    - load_factor * constraints.global_targets
+                )
+                right_hand_side = -np.concatenate((residual[free], constraint_residual))
+                solution = np.asarray(
+                    spsolve(saddle_point, right_hand_side), dtype=np.float64
+                )
+                increment = solution[: free.size]
+            else:
+                increment = np.asarray(
+                    spsolve(tangent, -residual[free]), dtype=np.float64
+                )
         except (MatrixRankWarning, ValueError) as exc:
             raise FemSolveFailure(
                 FemFailureCode.CONSTRAINT_RANK_LOSS,
@@ -348,7 +407,12 @@ def _line_search(
             step *= 0.5
             continue
         candidate_residual = state.internal_force - load_factor * external_force
-        candidate_norm = float(np.linalg.norm(candidate_residual[constraints.free]))
+        candidate_norm = _constrained_residual_norm(
+            candidate_residual,
+            candidate,
+            constraints,
+            load_factor,
+        )
         if candidate_norm < previous_norm:
             return candidate, float(step * np.linalg.norm(increment))
         step *= 0.5
@@ -356,6 +420,40 @@ def _line_search(
         FemFailureCode.NEWTON_NON_CONVERGENCE,
         "Newton line search did not reduce the free residual",
     )
+
+
+def _constrained_residual_norm(
+    residual: FloatArray,
+    displacement: FloatArray,
+    constraints: BoundConstraints,
+    load_factor: float,
+) -> float:
+    free_residual = residual[constraints.free]
+    global_matrix = constraints.global_matrix[:, constraints.free]
+    if not global_matrix.shape[0]:
+        return float(np.linalg.norm(free_residual))
+    gram = global_matrix @ global_matrix.T
+    coefficients = np.linalg.solve(gram, global_matrix @ free_residual)
+    projected = free_residual - global_matrix.T @ coefficients
+    constraint_residual = (
+        constraints.global_matrix @ displacement
+        - load_factor * constraints.global_targets
+    )
+    return float(
+        np.hypot(np.linalg.norm(projected), np.linalg.norm(constraint_residual))
+    )
+
+
+def _rigid_mode_multipliers(
+    residual: FloatArray,
+    constraints: BoundConstraints,
+) -> tuple[float, ...]:
+    global_matrix = constraints.global_matrix[:, constraints.free]
+    if not global_matrix.shape[0]:
+        return ()
+    gram = global_matrix @ global_matrix.T
+    values = -np.linalg.solve(gram, global_matrix @ residual[constraints.free])
+    return tuple(float(value) for value in values)
 
 
 def _displacement_values(

@@ -27,10 +27,13 @@ physical maximum.
 Reported external work covers assembled dead loads at the final state and excludes
 work reconstructed along prescribed-displacement paths.
 
-The primary FEM implementation is not yet independently verified. Until S8 completes
-manufactured-solution, patch, convergence, error-estimation, and balance checks, G7
-only establishes the solver contract and its narrow closed-form unit-square case. No
-general FEM accuracy claim follows from S7 alone.
+S8 adds manufactured-solution, patch, convergence, error-estimation, physical
+balance, and seeded-defect checks for the primary FEM implementation. Those checks
+verify the stated S8 population only. They are not experimental validation, not a
+certificate for arbitrary geometries or load histories, and not evidence for a second
+concrete FEM implementation. `G8` remains failed until the proposed thresholds in
+`docs/adr/0002-fem-thresholds.md` are explicitly accepted and exact branch-head CI
+passes on Linux and Windows with Python 3.11 and 3.12.
 
 S5 accepts explicitly unitized, planar, linear triangle meshes with named line
 boundary groups and positive named region groups. It rejects healing, defeaturing,
