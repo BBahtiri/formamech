@@ -2,12 +2,13 @@
 
 PI-GINOT is an early-stage open-source project for verified, problem-specific
 physics-informed neural operators in 2D finite-strain elasticity. The repository
-currently implements the S2 contract layer, S3 local content store, S4
-constitutive physics kernel, S5 tagged 2D triangle geometry ingestion, and S6
-reference-mesh morphing with executable family-membership checks and rejection
-ledgers. It does not yet generate FEM datasets, train, verify, or serve neural
-operators. Read the [project limitations](docs/limitations.md) before using or
-evaluating future results.
+currently implements the S2 contract layer, S3 local content store, S4 constitutive
+physics kernel, S5 tagged 2D triangle geometry ingestion, S6 reference-mesh morphing,
+S7 finite-element solves, S8 independent FEM verification, and S9 preregistered DOE,
+evidence-role, leakage, replacement, and holdout-commitment contracts. It does not
+yet generate verified training datasets, train, certify, or serve neural operators.
+Read the [project limitations](docs/limitations.md) before using or evaluating future
+results.
 
 ## Requirements
 
@@ -18,7 +19,7 @@ evaluating future results.
 
 ```text
 python -m venv .venv
-python -m pip install -e ".[dev,geometry,physics]"
+python -m pip install -e ".[dev,geometry,physics,fem]"
 ```
 
 Activate the virtual environment using the command appropriate for your shell before
@@ -34,6 +35,8 @@ pytest
 pytest tests/physics --cov=src/piginot/physics --cov-fail-under=95
 pytest tests/geometry --cov=src/piginot/geometry --cov-fail-under=85
 pytest tests/morphing --cov=src/piginot/morphing --cov-fail-under=85
+pytest tests/fem --cov=src/piginot/fem --cov-fail-under=85
+pytest tests/doe tests/test_s9_anti_scope.py --cov=src/piginot/doe --cov-fail-under=90
 pip-audit
 ```
 

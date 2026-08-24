@@ -48,5 +48,7 @@ jobs:
         run: python -m pytest tests/morphing --cov=src/piginot/morphing --cov-fail-under=85
       - name: Check S8 FEM coverage
         run: python -m pytest tests/fem --cov=src/piginot/fem --cov-fail-under=85
+      - name: Check S9 DOE coverage
+        run: python -m pytest tests/doe tests/test_s9_anti_scope.py --cov=src/piginot/doe --cov-fail-under=90
       - name: Audit dependencies
         run: python -m pip_audit

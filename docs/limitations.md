@@ -31,9 +31,8 @@ S8 adds manufactured-solution, patch, convergence, error-estimation, physical
 balance, and seeded-defect checks for the primary FEM implementation. Those checks
 verify the stated S8 population only. They are not experimental validation, not a
 certificate for arbitrary geometries or load histories, and not evidence for a second
-concrete FEM implementation. `G8` remains failed until the proposed thresholds in
-`docs/adr/0002-fem-thresholds.md` are explicitly accepted and exact branch-head CI
-passes on Linux and Windows with Python 3.11 and 3.12.
+concrete FEM implementation. The accepted thresholds and passing G8 evidence apply
+only to the exact recorded branch head and test population.
 
 S5 accepts explicitly unitized, planar, linear triangle meshes with named line
 boundary groups and positive named region groups. It rejects healing, defeaturing,
@@ -51,7 +50,18 @@ not call its pullback verified solely because an S6 report passed. S6 does not h
 remesh failed instances.
 
 Family membership enforces exact named canonical quantities, inclusive primitive and
-derived bounds, the reference mesh identity, and a hashed validity policy. The
-invalid-instance ledger records every supplied attempt but does not construct or
-sample a DOE. The project does not yet implement verified datasets, neural-operator
-training, certification, or inference.
+derived bounds, the reference mesh identity, and a hashed validity policy. S9 samples
+that predicate with deterministic, domain-separated DOE streams and reports a vector
+of finite coverage diagnostics. Those diagnostics are evidence about the sampled
+population, not a proof that every admissible point is covered. Version-one targeted
+guard points cross primitive bounds; derived-bound failures remain visible in the
+rejection ledger but are not claimed as dense guard strata.
+
+S9 preregisters immutable case roles and transitive leakage groups, preserves failed
+cases through deterministic reserve replacement, and commits to exactly 64 withheld
+holdout coordinates with BLAKE2b-256. The public commitment proves only that a later
+reveal matches those coordinates. It does not prove that the local holder never saw
+the ignored private reveal. Git also does not preserve historical file mtimes, so S9
+records live ordering when artifacts are created and separately verifies reproducible
+Git first-add ancestry. The project does not yet implement verified datasets,
+neural-operator training, certification, or inference.
