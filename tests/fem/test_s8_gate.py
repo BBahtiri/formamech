@@ -8,10 +8,37 @@ import pytest
 
 from piginot.fem.manufactured import MANUFACTURED_CASE_NAMES
 from piginot.fem.s8_gate import (
+    EstimatorGateEvidence,
     GateStatus,
     S8GateMeasurements,
     evaluate_s8_gate,
 )
+from piginot.fem.verification_meshes import VerificationMeshKind
+
+
+def _estimator_evidence(
+    *,
+    safety_factor: float = 1.97,
+    calibration_population_size: int = 16,
+    validation_population_size: int = 16,
+    bracketed_count: int = 16,
+    conservative_count: int = 16,
+    validation_mesh_kinds: tuple[VerificationMeshKind, ...] = (
+        VerificationMeshKind.STRUCTURED,
+        VerificationMeshKind.UNSTRUCTURED,
+    ),
+    validation_mesh_population_sizes: tuple[int, ...] = (8, 8),
+) -> EstimatorGateEvidence:
+    return EstimatorGateEvidence(
+        safety_factor=safety_factor,
+        calibration_population_size=calibration_population_size,
+        validation_population_size=validation_population_size,
+        bracketed_count=bracketed_count,
+        conservative_count=conservative_count,
+        calibration_mesh_kind=VerificationMeshKind.STRUCTURED,
+        validation_mesh_kinds=validation_mesh_kinds,
+        validation_mesh_population_sizes=validation_mesh_population_sizes,
+    )
 
 
 def _passing_measurements(
@@ -34,8 +61,13 @@ def _passing_measurements(
         energy_relative_error=1.0e-10,
         reaction_relative_error=1.0e-11,
         small_strain_relative_error=1.0e-3,
-        estimator_bracketing_rate=1.0,
-        estimator_conservative_rate=1.0,
+        estimator_families={
+            "richardson": _estimator_evidence(),
+            "recovery": _estimator_evidence(
+                safety_factor=2.61,
+                calibration_population_size=24,
+            ),
+        },
         seeded_defects_detected=6,
         coverage_percent=coverage_percent,
     )
@@ -98,22 +130,66 @@ def test_signed_thresholds_complete_ci_and_all_measurements_pass() -> None:
     assert evaluation.verdict is GateStatus.PASS
 
 
+def test_estimator_checks_retain_counts_and_have_distinct_outcomes_at_15_of_16() -> (
+    None
+):
+    measurements = replace(
+        _passing_measurements(),
+        estimator_families={
+            "richardson": _estimator_evidence(
+                bracketed_count=15,
+                conservative_count=15,
+            ),
+            "recovery": _estimator_evidence(
+                safety_factor=2.61,
+                calibration_population_size=24,
+                bracketed_count=15,
+                conservative_count=15,
+            ),
+        },
+    )
+
+    evaluation = evaluate_s8_gate(
+        measurements,
+        thresholds_signed_off=True,
+        exact_head_ci_complete=True,
+    )
+
+    checks = {check.check_id: check for check in evaluation.checks}
+    assert checks["G8.estimator-brackets"].status is GateStatus.FAIL
+    assert checks["G8.estimator-conservative"].status is GateStatus.PASS
+    measured = checks["G8.estimator-brackets"].measured
+    assert measured["richardson"]["count"] == 15
+    assert measured["richardson"]["population_size"] == 16
+    assert measured["richardson"]["safety_factor"] == pytest.approx(1.97)
+    assert measured["richardson"]["validation_mesh_kinds"] == (
+        "structured",
+        "unstructured",
+    )
+    assert measured["richardson"]["validation_mesh_population_sizes"] == (8, 8)
+
+
+def test_estimator_evidence_must_match_the_fixed_g8_population() -> None:
+    passing = _passing_measurements()
+    with pytest.raises(ValueError, match="fixed G8 estimator population"):
+        replace(
+            passing,
+            estimator_families={
+                "richardson": _estimator_evidence(
+                    validation_population_size=1,
+                    bracketed_count=1,
+                    conservative_count=1,
+                    validation_mesh_kinds=(VerificationMeshKind.STRUCTURED,),
+                    validation_mesh_population_sizes=(1,),
+                ),
+                "recovery": passing.estimator_families["recovery"],
+            },
+        )
+
+
 def test_one_failed_required_measurement_fails_its_named_check_and_gate() -> None:
     passing = _passing_measurements()
-    failing = S8GateMeasurements(
-        displacement_l2_orders=passing.displacement_l2_orders,
-        first_piola_l2_orders=passing.first_piola_l2_orders,
-        patch_max_error=2.0e-12,
-        objectivity_invariant_change=passing.objectivity_invariant_change,
-        angular_skew_ratio=passing.angular_skew_ratio,
-        energy_relative_error=passing.energy_relative_error,
-        reaction_relative_error=passing.reaction_relative_error,
-        small_strain_relative_error=passing.small_strain_relative_error,
-        estimator_bracketing_rate=passing.estimator_bracketing_rate,
-        estimator_conservative_rate=passing.estimator_conservative_rate,
-        seeded_defects_detected=passing.seeded_defects_detected,
-        coverage_percent=passing.coverage_percent,
-    )
+    failing = replace(passing, patch_max_error=2.0e-12)
     evaluation = evaluate_s8_gate(
         failing,
         thresholds_signed_off=True,
@@ -125,6 +201,6 @@ def test_one_failed_required_measurement_fails_its_named_check_and_gate() -> Non
     assert evaluation.verdict is GateStatus.FAIL
 
 
-def test_estimator_rates_outside_probability_range_are_rejected() -> None:
-    with pytest.raises(ValueError, match="estimator rates"):
-        replace(_passing_measurements(), estimator_bracketing_rate=1.01)
+def test_estimator_counts_outside_population_are_rejected() -> None:
+    with pytest.raises(ValueError, match="cannot exceed"):
+        _estimator_evidence(bracketed_count=17)

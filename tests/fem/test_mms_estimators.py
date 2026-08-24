@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import math
+
 import pytest
 
 from piginot.fem.mms_convergence import run_mms_convergence_study
@@ -9,6 +11,7 @@ from piginot.fem.mms_estimators import (
     calibrate_mms_estimators,
     coarse_fine_displacement_l2_difference,
 )
+from piginot.fem.verification_meshes import VerificationMeshKind
 
 
 def test_cross_mesh_difference_uses_the_two_solved_fem_fields() -> None:
@@ -22,13 +25,25 @@ def test_cross_mesh_difference_uses_the_two_solved_fem_fields() -> None:
     assert difference > study.levels[1].norms.displacement_l2_error
 
 
-def test_held_out_estimator_populations_meet_g8_rates() -> None:
+def test_factor_selection_validation_populations_meet_g8_rates() -> None:
     report = calibrate_mms_estimators()
 
     assert report.richardson.calibration.population_size == 16
-    assert report.richardson.validation.population_size == 8
+    assert report.richardson.validation.population_size == 16
     assert report.recovery.calibration.population_size == 24
-    assert report.recovery.validation.population_size == 8
+    assert report.recovery.validation.population_size == 16
+    assert report.calibration_mesh_kind is VerificationMeshKind.STRUCTURED
+    assert report.validation_mesh_kinds == (
+        VerificationMeshKind.STRUCTURED,
+        VerificationMeshKind.UNSTRUCTURED,
+    )
+    assert report.validation_mesh_population_sizes == (8, 8)
+    assert math.ceil(0.95 * report.richardson.validation.population_size) > math.ceil(
+        0.90 * report.richardson.validation.population_size
+    )
+    assert math.ceil(0.95 * report.recovery.validation.population_size) > math.ceil(
+        0.90 * report.recovery.validation.population_size
+    )
     assert report.richardson.safety_factor >= 1.0
     assert report.recovery.safety_factor >= 1.0
     assert report.richardson.validation.bracketing_rate >= 0.95

@@ -10,9 +10,13 @@ from enum import StrEnum
 from piginot.contracts.specs import FrozenMap
 from piginot.fem.manufactured import MANUFACTURED_CASE_NAMES
 from piginot.fem.mms_convergence import run_all_mms_convergence_studies
-from piginot.fem.mms_estimators import calibrate_mms_estimators
+from piginot.fem.mms_estimators import (
+    EstimatorFamilyCalibration,
+    calibrate_mms_estimators,
+)
 from piginot.fem.s8_physical import run_s8_physical_verification
 from piginot.fem.seeded_defects import run_seeded_defect_suite
+from piginot.fem.verification_meshes import VerificationMeshKind
 
 _ORDER_TOLERANCE = 0.15
 _STRESS_ORDER_TOLERANCE = 0.2
@@ -24,6 +28,15 @@ _REACTION_LIMIT = 1.0e-9
 _SMALL_STRAIN_LIMIT = 5.0e-3
 _ESTIMATOR_BRACKETING_MINIMUM = 0.95
 _ESTIMATOR_CONSERVATIVE_MINIMUM = 0.90
+_ESTIMATOR_VALIDATION_MESH_KINDS = (
+    VerificationMeshKind.STRUCTURED,
+    VerificationMeshKind.UNSTRUCTURED,
+)
+_ESTIMATOR_VALIDATION_MESH_POPULATIONS = (8, 8)
+_RICHARDSON_CALIBRATION_POPULATION = 16
+_RICHARDSON_SAFETY_FACTOR = 1.97
+_RECOVERY_CALIBRATION_POPULATION = 24
+_RECOVERY_SAFETY_FACTOR = 2.61
 _SEEDED_DEFECT_COUNT = 6
 _FEM_COVERAGE_MINIMUM = 85.0
 
@@ -34,6 +47,73 @@ class GateStatus(StrEnum):
     PASS = "PASS"
     FAIL = "FAIL"
     NOT_RUN = "NOT_RUN"
+
+
+@dataclass(frozen=True, slots=True)
+class EstimatorGateEvidence:
+    """Auditable calibration and factor-selection validation evidence."""
+
+    safety_factor: float
+    calibration_population_size: int
+    validation_population_size: int
+    bracketed_count: int
+    conservative_count: int
+    calibration_mesh_kind: VerificationMeshKind
+    validation_mesh_kinds: tuple[VerificationMeshKind, ...]
+    validation_mesh_population_sizes: tuple[int, ...]
+
+    def __post_init__(self) -> None:
+        if not math.isfinite(self.safety_factor) or self.safety_factor < 1.0:
+            raise ValueError("estimator safety_factor must be finite and at least one")
+        if self.calibration_population_size <= 0:
+            raise ValueError("calibration_population_size must be positive")
+        if self.validation_population_size <= 0:
+            raise ValueError("validation_population_size must be positive")
+        if self.bracketed_count < 0 or self.conservative_count < 0:
+            raise ValueError("estimator counts must be non-negative")
+        if (
+            self.bracketed_count > self.validation_population_size
+            or self.conservative_count > self.validation_population_size
+        ):
+            raise ValueError("estimator counts cannot exceed the validation population")
+        if not isinstance(self.calibration_mesh_kind, VerificationMeshKind):
+            raise ValueError("calibration_mesh_kind must be a VerificationMeshKind")
+        validation_mesh_kinds = tuple(self.validation_mesh_kinds)
+        if not validation_mesh_kinds or any(
+            not isinstance(kind, VerificationMeshKind) for kind in validation_mesh_kinds
+        ):
+            raise ValueError("validation_mesh_kinds must contain mesh kinds")
+        if len(set(validation_mesh_kinds)) != len(validation_mesh_kinds):
+            raise ValueError("validation_mesh_kinds must not contain duplicates")
+        validation_mesh_population_sizes = tuple(self.validation_mesh_population_sizes)
+        if (
+            len(validation_mesh_population_sizes) != len(validation_mesh_kinds)
+            or any(
+                isinstance(size, bool) or not isinstance(size, int) or size <= 0
+                for size in validation_mesh_population_sizes
+            )
+            or sum(validation_mesh_population_sizes) != self.validation_population_size
+        ):
+            raise ValueError(
+                "validation mesh population sizes must be positive and sum to "
+                "validation_population_size"
+            )
+        if self.conservative_count < self.bracketed_count:
+            raise ValueError("conservative_count cannot be less than bracketed_count")
+        object.__setattr__(self, "validation_mesh_kinds", validation_mesh_kinds)
+        object.__setattr__(
+            self,
+            "validation_mesh_population_sizes",
+            validation_mesh_population_sizes,
+        )
+
+    @property
+    def bracketing_rate(self) -> float:
+        return self.bracketed_count / self.validation_population_size
+
+    @property
+    def conservative_rate(self) -> float:
+        return self.conservative_count / self.validation_population_size
 
 
 @dataclass(frozen=True, slots=True)
@@ -48,14 +128,16 @@ class S8GateMeasurements:
     energy_relative_error: float
     reaction_relative_error: float
     small_strain_relative_error: float
-    estimator_bracketing_rate: float
-    estimator_conservative_rate: float
+    estimator_families: Mapping[str, EstimatorGateEvidence]
     seeded_defects_detected: int
     coverage_percent: float | None
 
     def __post_init__(self) -> None:
         displacement: FrozenMap[float] = FrozenMap.copy_of(self.displacement_l2_orders)
         stress: FrozenMap[float] = FrozenMap.copy_of(self.first_piola_l2_orders)
+        estimator_families: FrozenMap[EstimatorGateEvidence] = FrozenMap.copy_of(
+            self.estimator_families
+        )
         expected_keys = {
             f"{case_name}:p{order}"
             for case_name in MANUFACTURED_CASE_NAMES
@@ -65,6 +147,38 @@ class S8GateMeasurements:
             raise ValueError(
                 "order measurements must cover all four MMS cases at P1/P2"
             )
+        if set(estimator_families) != {"recovery", "richardson"} or any(
+            not isinstance(evidence, EstimatorGateEvidence)
+            for evidence in estimator_families.values()
+        ):
+            raise ValueError(
+                "estimator_families must contain recovery and richardson evidence"
+            )
+        expected_estimators = {
+            "richardson": (
+                _RICHARDSON_CALIBRATION_POPULATION,
+                _RICHARDSON_SAFETY_FACTOR,
+            ),
+            "recovery": (
+                _RECOVERY_CALIBRATION_POPULATION,
+                _RECOVERY_SAFETY_FACTOR,
+            ),
+        }
+        for family, (calibration_size, safety_factor) in expected_estimators.items():
+            evidence = estimator_families[family]
+            if (
+                evidence.safety_factor != safety_factor
+                or evidence.calibration_population_size != calibration_size
+                or evidence.validation_population_size
+                != sum(_ESTIMATOR_VALIDATION_MESH_POPULATIONS)
+                or evidence.calibration_mesh_kind is not VerificationMeshKind.STRUCTURED
+                or evidence.validation_mesh_kinds != _ESTIMATOR_VALIDATION_MESH_KINDS
+                or evidence.validation_mesh_population_sizes
+                != _ESTIMATOR_VALIDATION_MESH_POPULATIONS
+            ):
+                raise ValueError(
+                    f"{family} evidence does not match the fixed G8 estimator population"
+                )
         scalar_values = (
             *displacement.values(),
             *stress.values(),
@@ -74,16 +188,9 @@ class S8GateMeasurements:
             self.energy_relative_error,
             self.reaction_relative_error,
             self.small_strain_relative_error,
-            self.estimator_bracketing_rate,
-            self.estimator_conservative_rate,
         )
         if any(not math.isfinite(value) or value < 0.0 for value in scalar_values):
             raise ValueError("S8 measurements must be finite and non-negative")
-        if (
-            self.estimator_bracketing_rate > 1.0
-            or self.estimator_conservative_rate > 1.0
-        ):
-            raise ValueError("estimator rates must be between 0 and 1")
         if self.seeded_defects_detected < 0:
             raise ValueError("seeded_defects_detected must be non-negative")
         if self.coverage_percent is not None and (
@@ -93,6 +200,19 @@ class S8GateMeasurements:
             raise ValueError("coverage_percent must be between 0 and 100")
         object.__setattr__(self, "displacement_l2_orders", displacement)
         object.__setattr__(self, "first_piola_l2_orders", stress)
+        object.__setattr__(self, "estimator_families", estimator_families)
+
+    @property
+    def estimator_bracketing_rate(self) -> float:
+        return min(
+            evidence.bracketing_rate for evidence in self.estimator_families.values()
+        )
+
+    @property
+    def estimator_conservative_rate(self) -> float:
+        return min(
+            evidence.conservative_rate for evidence in self.estimator_families.values()
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -144,8 +264,24 @@ def collect_s8_gate_measurements(
         energy_relative_error=physical.energy_relative_error,
         reaction_relative_error=physical.reaction_relative_error,
         small_strain_relative_error=physical.small_strain_relative_error,
-        estimator_bracketing_rate=estimators.minimum_validation_bracketing_rate,
-        estimator_conservative_rate=(estimators.minimum_validation_conservative_rate),
+        estimator_families={
+            "richardson": _estimator_evidence(
+                estimators.richardson,
+                calibration_mesh_kind=estimators.calibration_mesh_kind,
+                validation_mesh_kinds=estimators.validation_mesh_kinds,
+                validation_mesh_population_sizes=(
+                    estimators.validation_mesh_population_sizes
+                ),
+            ),
+            "recovery": _estimator_evidence(
+                estimators.recovery,
+                calibration_mesh_kind=estimators.calibration_mesh_kind,
+                validation_mesh_kinds=estimators.validation_mesh_kinds,
+                validation_mesh_population_sizes=(
+                    estimators.validation_mesh_population_sizes
+                ),
+            ),
+        },
         seeded_defects_detected=seeded_defects.detected_count,
         coverage_percent=coverage_percent,
     )
@@ -279,14 +415,14 @@ def _evaluated_checks(measurements: S8GateMeasurements) -> tuple[S8GateCheck, ..
         ),
         _check(
             "G8.estimator-brackets",
-            measurements.estimator_bracketing_rate,
+            _estimator_payload(measurements, conservative=False),
             _ESTIMATOR_BRACKETING_MINIMUM,
             "gte",
             measurements.estimator_bracketing_rate >= _ESTIMATOR_BRACKETING_MINIMUM,
         ),
         _check(
             "G8.estimator-conservative",
-            measurements.estimator_conservative_rate,
+            _estimator_payload(measurements, conservative=True),
             _ESTIMATOR_CONSERVATIVE_MINIMUM,
             "gte",
             measurements.estimator_conservative_rate >= _ESTIMATOR_CONSERVATIVE_MINIMUM,
@@ -318,6 +454,63 @@ def _check(
     )
 
 
+def _estimator_evidence(
+    estimator: EstimatorFamilyCalibration,
+    *,
+    calibration_mesh_kind: VerificationMeshKind,
+    validation_mesh_kinds: tuple[VerificationMeshKind, ...],
+    validation_mesh_population_sizes: tuple[int, ...],
+) -> EstimatorGateEvidence:
+    return EstimatorGateEvidence(
+        safety_factor=estimator.safety_factor,
+        calibration_population_size=estimator.calibration.population_size,
+        validation_population_size=estimator.validation.population_size,
+        bracketed_count=estimator.validation.bracketed_count,
+        conservative_count=estimator.validation.conservative_count,
+        calibration_mesh_kind=calibration_mesh_kind,
+        validation_mesh_kinds=validation_mesh_kinds,
+        validation_mesh_population_sizes=validation_mesh_population_sizes,
+    )
+
+
+def _estimator_payload(
+    measurements: S8GateMeasurements,
+    *,
+    conservative: bool,
+) -> FrozenMap[FrozenMap[object]]:
+    return FrozenMap.copy_of(
+        {
+            family: FrozenMap.copy_of(
+                {
+                    "count": (
+                        evidence.conservative_count
+                        if conservative
+                        else evidence.bracketed_count
+                    ),
+                    "population_size": evidence.validation_population_size,
+                    "rate": (
+                        evidence.conservative_rate
+                        if conservative
+                        else evidence.bracketing_rate
+                    ),
+                    "safety_factor": evidence.safety_factor,
+                    "calibration_population_size": (
+                        evidence.calibration_population_size
+                    ),
+                    "calibration_mesh_kind": evidence.calibration_mesh_kind.value,
+                    "validation_mesh_kinds": tuple(
+                        kind.value for kind in evidence.validation_mesh_kinds
+                    ),
+                    "validation_mesh_population_sizes": (
+                        evidence.validation_mesh_population_sizes
+                    ),
+                }
+            )
+            for family, evidence in measurements.estimator_families.items()
+        }
+    )
+
+
 def _coverage_check(coverage_percent: float | None) -> S8GateCheck:
     if coverage_percent is None:
         return S8GateCheck(
@@ -338,6 +531,7 @@ def _coverage_check(coverage_percent: float | None) -> S8GateCheck:
 
 
 __all__ = (
+    "EstimatorGateEvidence",
     "GateStatus",
     "S8GateCheck",
     "S8GateEvaluation",

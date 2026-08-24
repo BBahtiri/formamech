@@ -1,4 +1,4 @@
-# ADR 0002: S2 canonical identity format v2
+# ADR 0008: S2 canonical identity format v2
 
 - Status: Accepted
 - Date: 2026-08-20

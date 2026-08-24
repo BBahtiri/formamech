@@ -20,15 +20,17 @@ from piginot.fem.error_estimation import (
     richardson_fine_grid_error,
 )
 from piginot.fem.field_providers import FloatArray
+from piginot.fem.manufactured import MANUFACTURED_CASE_NAMES
 from piginot.fem.mms_convergence import run_all_mms_convergence_studies
-from piginot.fem.mms_runner import MmsLevelResult
+from piginot.fem.mms_runner import MmsLevelResult, solve_mms_level
+from piginot.fem.verification_meshes import VerificationMeshKind
 
 _CALIBRATION_MARGIN = 1.25
 
 
 @dataclass(frozen=True, slots=True)
 class EstimatorFamilyCalibration:
-    """One estimator's declared factor plus calibration and held-out results."""
+    """One estimator's factor plus results excluded from its selection."""
 
     safety_factor: float
     calibration: EstimatorCalibration
@@ -41,6 +43,9 @@ class MmsEstimatorCalibration:
 
     richardson: EstimatorFamilyCalibration
     recovery: EstimatorFamilyCalibration
+    calibration_mesh_kind: VerificationMeshKind
+    validation_mesh_kinds: tuple[VerificationMeshKind, ...]
+    validation_mesh_population_sizes: tuple[int, ...]
 
     @property
     def minimum_validation_bracketing_rate(self) -> float:
@@ -89,7 +94,7 @@ def coarse_fine_displacement_l2_difference(
 
 @lru_cache(maxsize=1)
 def calibrate_mms_estimators() -> MmsEstimatorCalibration:
-    """Calibrate on coarse pairs/levels and evaluate only on held-out finest data."""
+    """Calibrate on coarse data and evaluate on factor-selection holdouts."""
 
     richardson_calibration_estimates: list[float] = []
     richardson_calibration_truths: list[float] = []
@@ -101,18 +106,10 @@ def calibrate_mms_estimators() -> MmsEstimatorCalibration:
     recovery_validation_truths: list[float] = []
 
     for study in run_all_mms_convergence_studies():
-        theoretical_order = float(study.element_order + 1)
         for pair_index in (0, 1, 2):
             coarse = study.levels[pair_index]
             fine = study.levels[pair_index + 1]
-            difference = coarse_fine_displacement_l2_difference(coarse, fine)
-            ratio = coarse.h_max_mm / fine.h_max_mm
-            estimate = richardson_fine_grid_error(
-                difference,
-                ratio,
-                theoretical_order=theoretical_order,
-            ).fine_grid_error
-            truth = fine.norms.displacement_l2_error
+            estimate, truth = _richardson_sample(coarse, fine)
             if pair_index < 2:
                 richardson_calibration_estimates.append(estimate)
                 richardson_calibration_truths.append(truth)
@@ -130,6 +127,30 @@ def calibrate_mms_estimators() -> MmsEstimatorCalibration:
                 recovery_validation_estimates.append(estimate)
                 recovery_validation_truths.append(truth)
 
+    (
+        unstructured_richardson_estimates,
+        unstructured_richardson_truths,
+        unstructured_recovery_estimates,
+        unstructured_recovery_truths,
+    ) = _unstructured_validation_population()
+    structured_validation_sizes = (
+        len(richardson_validation_estimates),
+        len(recovery_validation_estimates),
+    )
+    unstructured_validation_sizes = (
+        len(unstructured_richardson_estimates),
+        len(unstructured_recovery_estimates),
+    )
+    if (
+        len(set(structured_validation_sizes)) != 1
+        or len(set(unstructured_validation_sizes)) != 1
+    ):
+        raise RuntimeError("estimator families must use balanced mesh populations")
+    richardson_validation_estimates.extend(unstructured_richardson_estimates)
+    richardson_validation_truths.extend(unstructured_richardson_truths)
+    recovery_validation_estimates.extend(unstructured_recovery_estimates)
+    recovery_validation_truths.extend(unstructured_recovery_truths)
+
     richardson = _calibrate_family(
         richardson_calibration_estimates,
         richardson_calibration_truths,
@@ -142,7 +163,67 @@ def calibrate_mms_estimators() -> MmsEstimatorCalibration:
         recovery_validation_estimates,
         recovery_validation_truths,
     )
-    return MmsEstimatorCalibration(richardson=richardson, recovery=recovery)
+    return MmsEstimatorCalibration(
+        richardson=richardson,
+        recovery=recovery,
+        calibration_mesh_kind=VerificationMeshKind.STRUCTURED,
+        validation_mesh_kinds=(
+            VerificationMeshKind.STRUCTURED,
+            VerificationMeshKind.UNSTRUCTURED,
+        ),
+        validation_mesh_population_sizes=(
+            structured_validation_sizes[0],
+            unstructured_validation_sizes[0],
+        ),
+    )
+
+
+def _unstructured_validation_population() -> tuple[
+    tuple[float, ...], tuple[float, ...], tuple[float, ...], tuple[float, ...]
+]:
+    richardson_estimates: list[float] = []
+    richardson_truths: list[float] = []
+    recovery_estimates: list[float] = []
+    recovery_truths: list[float] = []
+    for case_name in MANUFACTURED_CASE_NAMES:
+        for element_order in (1, 2):
+            coarse = solve_mms_level(
+                case_name,
+                level=3,
+                element_order=element_order,
+                mesh_kind=VerificationMeshKind.UNSTRUCTURED,
+            )
+            fine = solve_mms_level(
+                case_name,
+                level=4,
+                element_order=element_order,
+                mesh_kind=VerificationMeshKind.UNSTRUCTURED,
+            )
+            estimate, truth = _richardson_sample(coarse, fine)
+            richardson_estimates.append(estimate)
+            richardson_truths.append(truth)
+            recovery_estimates.append(fine.norms.recovery_estimator_l2)
+            recovery_truths.append(fine.norms.first_piola_l2_error)
+    return (
+        tuple(richardson_estimates),
+        tuple(richardson_truths),
+        tuple(recovery_estimates),
+        tuple(recovery_truths),
+    )
+
+
+def _richardson_sample(
+    coarse: MmsLevelResult,
+    fine: MmsLevelResult,
+) -> tuple[float, float]:
+    difference = coarse_fine_displacement_l2_difference(coarse, fine)
+    ratio = coarse.h_max_mm / fine.h_max_mm
+    estimate = richardson_fine_grid_error(
+        difference,
+        ratio,
+        theoretical_order=float(coarse.element_order + 1),
+    ).fine_grid_error
+    return estimate, fine.norms.displacement_l2_error
 
 
 def _probe_displacement(

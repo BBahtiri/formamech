@@ -43,8 +43,8 @@ data-derived safety factors.
 | `G8.energy` | One diagonal displacement path, 16-point Gauss integration plus final state (17 solves): relative work/energy difference | `< 1e-8` | No data-derived factor; fixed by STEPS. Path integration is independent of the final-state `external_work` field. |
 | `G8.reaction` | Level-2 P2 square under 0.2 MPa right nominal traction: relative resultant imbalance | `< 1e-9` | No data-derived factor; fixed by STEPS. |
 | `G8.small-strain` | Level-2 P1/P2 square at 0.1 percent axial strain: maximum relative displacement disagreement with plane-stress linear elasticity | `< 0.005` | No data-derived factor; fixed by STEPS. |
-| `G8.estimator-brackets` | Minimum across 8 held-out Richardson and 8 held-out recovery cases of the true-error interval bracketing rate | `>= 0.95` | Richardson factor `1.97`; recovery factor `2.61`. Each is 1.25 times the maximum calibration symmetric ratio, rounded upward to the next `0.01`. |
-| `G8.estimator-conservative` | Same two held-out populations: minimum rate whose calibrated upper bound is at least true error | `>= 0.90` | Same independently calibrated factors; the held-out population never selects them. |
+| `G8.estimator-brackets` | Minimum across two 16-outcome validation populations, each spanning 8 MMS case/order families on structured and unstructured finest meshes, of the true-error interval bracketing rate | `>= 0.95` (`16/16`) | Richardson factor `1.97`; recovery factor `2.61`. Each is 1.25 times the maximum calibration symmetric ratio, rounded upward to the next `0.01`. Every validation outcome is excluded from factor selection. |
+| `G8.estimator-conservative` | Same two 16-outcome validation populations: minimum rate whose calibrated upper bound is at least true error | `>= 0.90` (`15/16`) | Same separately calibrated factors; the validation population never selects them. |
 | `G8.seeded-defects` | Six fixed injections: body-force sign, boundary normal, tag swap, closure wrong root, inconsistent tangent, anisotropic scaling | `6 of 6` | Exact count fixed by STEPS; each control and mutant is separated by a declared real-check threshold. |
 | `G8.coverage` | `tests/fem` over `src/piginot/fem` | `>= 85 percent` | No data-derived factor; fixed by STEPS. Exact-head CI is authoritative. |
 
@@ -54,14 +54,33 @@ metric. Merely exchanging the MMS boundary-type partition is not a valid mutant:
 exact spatial providers re-evaluate exact data on the new boundary, so the exact
 solution still satisfies that different problem.
 
-Richardson estimator calibration uses the first two coarse/fine pairs across all
-eight MMS studies. Its held-out population is the finest pair from each study.
-Recovered-stress estimator calibration uses levels 1 through 3 across all eight
-studies. Its held-out population is level 4 from each study. The safety factor is
-derived only from calibration data as the maximum symmetric estimate/truth ratio
-times 1.25, rounded upward to the next hundredth. The resulting factors are `1.97`
-for Richardson (16 calibration pairs, 8 held-out pairs) and `2.61` for recovery
-(24 calibration levels, 8 held-out levels).
+Richardson estimator calibration uses the first two structured coarse/fine pairs
+across all eight MMS studies. Its validation population contains the structured and
+deterministically perturbed unstructured finest pair from every case/order study.
+Recovered-stress estimator calibration uses structured levels 1 through 3 across
+all eight studies. Its validation population contains structured and unstructured
+level 4 from every case/order study. The safety factor is derived only from
+calibration data as the maximum symmetric estimate/truth ratio times 1.25, rounded
+upward to the next hundredth. The resulting factors are `1.97` for Richardson (16
+structured calibration pairs, 16 validation pairs) and `2.61` for recovery (24
+structured calibration levels, 16 validation levels). The validation population is
+never used to select or widen either factor.
+
+"Excluded from factor selection" does not mean statistically independent. The
+structured Richardson validation pair reuses level 3 as its coarse field after that
+field participates in a calibration pair; its level-4 truth and its pair estimate do
+not select the factor. The 16 outcomes are a deterministic, paired finite population
+over 8 MMS case/order families and 2 mesh families, not 16 independent random cases.
+The reported rates are therefore exact coverage of this declared population, not an
+estimate of a sampling probability.
+
+Sixteen outcomes are the smallest complete balanced structured/unstructured
+population that preserves all four cases and both element orders while making the
+two STEPS rates operationally distinct: `>= 0.95` requires `16/16`, whereas
+`>= 0.90` requires `15/16`. The gate evidence records both family-specific counts,
+population sizes, safety factors, and the exact `8 + 8` mesh-family split; it does
+not retain rates alone. Construction rejects evidence that does not match this fixed
+population.
 
 ## Current Measurements
 
@@ -78,10 +97,10 @@ Current local Windows measurements at the S8 worktree are:
 | `G8.energy` | `1.9048071015750106e-13` |
 | `G8.reaction` | `1.7170000876942464e-11` |
 | `G8.small-strain` | `0.00015219470443983519` |
-| `G8.estimator-brackets` | `1.0` |
-| `G8.estimator-conservative` | `1.0` |
+| `G8.estimator-brackets` | `1.0` (Richardson `16/16`; recovery `16/16`) |
+| `G8.estimator-conservative` | `1.0` (Richardson `16/16`; recovery `16/16`) |
 | `G8.seeded-defects` | `6 of 6` |
-| `G8.coverage` | `91.81 percent` local branch coverage on Windows/Python 3.13.11 (`NOT_RUN` as a gate status pending sign-off and exact-head CI) |
+| `G8.coverage` | `91.41 percent` local branch coverage on Windows/Python 3.13.11 (`NOT_RUN` as a gate status pending sign-off and exact-head CI) |
 
 The complete displacement L2 finest-pair orders are:
 
@@ -139,7 +158,8 @@ Explicit acceptance of this ADR means accepting all of the following together:
 2. finest-pair levels 3-4 as the order gate statistic, with all four-level fits kept
    as visible diagnostics;
 3. Richardson and recovery safety factors `1.97` and `2.61`, selected only from their
-   stated calibration populations; and
+   stated structured calibration populations, with the two deterministic 16-outcome
+   validation populations evaluated without retuning; and
 4. the stated limitations on solver independence and population scope.
 
 Until that acceptance is recorded, every threshold-dependent G8 check remains
