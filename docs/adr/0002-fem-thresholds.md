@@ -1,9 +1,11 @@
 # ADR 0002: S8 FEM verification thresholds
 
-- Status: Proposed, pending human sign-off
+- Status: Accepted
 - Date: 2026-08-24
+- Decision owner: Betim Bahtiri
+- Accepted: 2026-08-24 by explicit task sign-off
 - Step: S8
-- Gate: G8 (FAIL until this ADR is explicitly accepted and exact-head CI passes)
+- Gate: G8 (FAIL until exact-head CI passes)
 - Evidence target: `artifacts/gates/S8.json`
 
 ## Context
@@ -100,7 +102,7 @@ Current local Windows measurements at the S8 worktree are:
 | `G8.estimator-brackets` | `1.0` (Richardson `16/16`; recovery `16/16`) |
 | `G8.estimator-conservative` | `1.0` (Richardson `16/16`; recovery `16/16`) |
 | `G8.seeded-defects` | `6 of 6` |
-| `G8.coverage` | `91.41 percent` local branch coverage on Windows/Python 3.13.11 (`NOT_RUN` as a gate status pending sign-off and exact-head CI) |
+| `G8.coverage` | `91.41 percent` local branch coverage on Windows/Python 3.13.11 (inside the accepted threshold; G8 remains `FAIL` pending exact-head CI) |
 
 The complete displacement L2 finest-pair orders are:
 
@@ -139,7 +141,7 @@ The complete first-Piola L2 finest-pair orders are:
 
 ## Consequences
 
-- No G8 threshold is `PASS` until this ADR is explicitly accepted.
+- Human sign-off on the complete threshold table is satisfied by this ADR.
 - Local single-platform measurements are not sufficient for G8. Exact branch-head CI
   must pass Linux and Windows on Python 3.11 and 3.12.
 - The S8 independent-solver protocol is present, but the current cross-discretization
@@ -150,9 +152,9 @@ The complete first-Piola L2 finest-pair orders are:
 - Any later threshold loosening or change of population requires a new ADR before a
   failing result can be reclassified.
 
-## Sign-off requested
+## Sign-off
 
-Explicit acceptance of this ADR means accepting all of the following together:
+The decision owner explicitly accepted all of the following together on 2026-08-24:
 
 1. the finite 13-check table and its fixed populations;
 2. finest-pair levels 3-4 as the order gate statistic, with all four-level fits kept
@@ -162,9 +164,9 @@ Explicit acceptance of this ADR means accepting all of the following together:
    validation populations evaluated without retuning; and
 4. the stated limitations on solver independence and population scope.
 
-Until that acceptance is recorded, every threshold-dependent G8 check remains
-`NOT_RUN` and G8 remains `FAIL`, even when its local measurement is numerically inside
-the proposed bound.
+This acceptance fixes the threshold contract. G8 nevertheless remains `FAIL` until
+the exact accepted branch head passes every Linux/Windows and Python 3.11/3.12 CI
+cell and that evidence is recorded in `artifacts/gates/S8.json`.
 
 ## Verification
 
