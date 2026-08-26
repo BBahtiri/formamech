@@ -2,12 +2,18 @@
 
 from __future__ import annotations
 
+import re
 import subprocess
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
+from typing import ClassVar
 
+from piginot.contracts import canonical_json_bytes, strict_json_loads
 from piginot.doe.roles import EvidenceRole
+
+_LIVE_EVIDENCE_SCHEMA = "piginot.s9.live-commitment-order-v1"
+_DECIMAL_INTEGER = re.compile(r"^(?:0|[1-9][0-9]*)$")
 
 
 class CommitmentOrderError(ValueError):
@@ -21,6 +27,12 @@ def _relative_path(value: object) -> str:
     if path.is_absolute() or path == Path("."):
         raise ValueError("artifact path must be relative and inside repository")
     return path.as_posix()
+
+
+def _mtime_ns(value: object) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise ValueError("mtime_ns must be a non-negative integer")
+    return value
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,20 +53,53 @@ class ArtifactRecord:
 
 @dataclass(frozen=True, slots=True)
 class LiveArtifactEvidence:
-    """Pure filesystem observation for one non-legacy artifact."""
+    """Persistable creation-time observation for one non-legacy artifact."""
 
     path: str
     role: EvidenceRole
     mtime_ns: int
 
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "path", _relative_path(self.path))
+        try:
+            role = EvidenceRole(self.role)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                "live artifact role must be a declared evidence Role"
+            ) from exc
+        if role is EvidenceRole.LEGACY:
+            raise ValueError("live evidence must exclude LEGACY artifacts")
+        object.__setattr__(self, "role", role)
+        object.__setattr__(self, "mtime_ns", _mtime_ns(self.mtime_ns))
+
 
 @dataclass(frozen=True, slots=True)
 class LiveCommitmentOrderEvidence:
-    """Pure evidence for checks performed before Git artifacts are required."""
+    """Canonical creation-time evidence persisted before checkout mtimes can change."""
+
+    __canonical_namespace__: ClassVar[str] = "piginot.doe"
 
     commitment_path: str
     commitment_mtime_ns: int
     artifacts: tuple[LiveArtifactEvidence, ...]
+
+    def __post_init__(self) -> None:
+        commitment_path = _relative_path(self.commitment_path)
+        commitment_mtime_ns = _mtime_ns(self.commitment_mtime_ns)
+        artifacts = tuple(self.artifacts)
+        if any(not isinstance(item, LiveArtifactEvidence) for item in artifacts):
+            raise ValueError("artifacts must contain LiveArtifactEvidence values")
+        artifacts = tuple(sorted(artifacts, key=lambda item: item.path))
+        paths = tuple(item.path for item in artifacts)
+        if len(paths) != len(set(paths)):
+            raise CommitmentOrderError("persisted artifact paths must be unique")
+        if commitment_path in paths:
+            raise CommitmentOrderError(
+                "persisted commitment path cannot also be an artifact"
+            )
+        object.__setattr__(self, "commitment_path", commitment_path)
+        object.__setattr__(self, "commitment_mtime_ns", commitment_mtime_ns)
+        object.__setattr__(self, "artifacts", artifacts)
 
     def verify(self) -> None:
         for artifact in self.artifacts:
@@ -63,40 +108,119 @@ class LiveCommitmentOrderEvidence:
                     f"commitment mtime must precede artifact mtime: {artifact.path}"
                 )
 
+    def to_canonical_bytes(self) -> bytes:
+        """Serialize the immutable live record as versioned RFC 8785 JSON."""
+
+        record = {
+            "schema": _LIVE_EVIDENCE_SCHEMA,
+            "commitment_path": self.commitment_path,
+            "commitment_mtime_ns": str(self.commitment_mtime_ns),
+            "artifacts": [
+                {
+                    "path": artifact.path,
+                    "role": artifact.role.value,
+                    "mtime_ns": str(artifact.mtime_ns),
+                }
+                for artifact in self.artifacts
+            ],
+        }
+        return canonical_json_bytes(record)
+
+    @classmethod
+    def from_canonical_bytes(cls, document: str | bytes) -> LiveCommitmentOrderEvidence:
+        """Load an exactly canonical persisted record and reject schema drift."""
+
+        if isinstance(document, str):
+            encoded = document.encode("utf-8")
+        elif isinstance(document, bytes):
+            encoded = document
+        else:
+            raise ValueError("live evidence document must be UTF-8 text or bytes")
+        parsed = strict_json_loads(encoded)
+        if not isinstance(parsed, dict):
+            raise ValueError("live evidence document must be a JSON object")
+        if canonical_json_bytes(parsed) != encoded:
+            raise ValueError("live evidence document must use canonical JSON bytes")
+        expected_keys = {
+            "schema",
+            "commitment_path",
+            "commitment_mtime_ns",
+            "artifacts",
+        }
+        if (
+            set(parsed) != expected_keys
+            or parsed.get("schema") != _LIVE_EVIDENCE_SCHEMA
+        ):
+            raise ValueError("live evidence document has an unsupported schema")
+        commitment_path = parsed["commitment_path"]
+        artifacts_value = parsed["artifacts"]
+        if not isinstance(commitment_path, str) or not isinstance(
+            artifacts_value, list
+        ):
+            raise ValueError("live evidence document has invalid field types")
+        artifacts = tuple(_parse_live_artifact(item) for item in artifacts_value)
+        return cls(
+            commitment_path=commitment_path,
+            commitment_mtime_ns=_parse_mtime(parsed["commitment_mtime_ns"]),
+            artifacts=artifacts,
+        )
+
+
+def _parse_mtime(value: object) -> int:
+    if not isinstance(value, str) or _DECIMAL_INTEGER.fullmatch(value) is None:
+        raise ValueError("persisted mtime_ns must be a canonical decimal string")
+    return int(value)
+
+
+def _parse_live_artifact(value: object) -> LiveArtifactEvidence:
+    if not isinstance(value, Mapping) or set(value) != {"path", "role", "mtime_ns"}:
+        raise ValueError("persisted artifact record has invalid fields")
+    path = value["path"]
+    role = value["role"]
+    if not isinstance(path, str) or not isinstance(role, str):
+        raise ValueError("persisted artifact record has invalid field types")
+    return LiveArtifactEvidence(
+        path=path,
+        role=EvidenceRole(role),
+        mtime_ns=_parse_mtime(value["mtime_ns"]),
+    )
+
 
 @dataclass(frozen=True, slots=True)
 class GitPathEvidence:
-    """Pure Git and filesystem observations for one repository-relative path."""
+    """Pure Git observations for one repository-relative path."""
 
     path: str
     exists: bool
     tracked: bool
     clean: bool
-    mtime_ns: int | None
     first_add_commit: str | None
     history_commits: tuple[str, ...]
 
 
 @dataclass(frozen=True, slots=True)
 class CommittedArtifactEvidence:
-    """Pure committed-order observation for a non-legacy training artifact."""
+    """Pure Git-order observation for a non-legacy training artifact."""
 
     path: str
     role: EvidenceRole
-    mtime_ns: int
     first_add_commit: str
     commitment_is_strict_ancestor: bool
 
 
 @dataclass(frozen=True, slots=True)
 class CommittedCommitmentOrderEvidence:
-    """Pure evidence that a clean immutable commitment predates artifacts."""
+    """Pure persisted-mtime and independent Git-order evidence."""
 
     commitment_path: str
-    commitment_mtime_ns: int
     commitment_first_add_commit: str
     commitment_history_commits: tuple[str, ...]
     artifacts: tuple[CommittedArtifactEvidence, ...]
+    live_evidence: LiveCommitmentOrderEvidence
+    live_evidence_path: str
+    live_evidence_first_add_commit: str
+    live_evidence_history_commits: tuple[str, ...]
+    commitment_is_strict_ancestor_of_live_evidence: bool
     reveal_verified: bool
 
     def verify(self) -> None:
@@ -106,10 +230,34 @@ class CommittedCommitmentOrderEvidence:
             raise CommitmentOrderError(
                 "commitment history was modified after first add"
             )
+        if len(self.live_evidence_history_commits) != 1:
+            raise CommitmentOrderError(
+                "persisted live evidence was modified after first add"
+            )
+        if not self.commitment_is_strict_ancestor_of_live_evidence:
+            raise CommitmentOrderError(
+                "commitment must strictly precede the persisted live evidence commit"
+            )
+        self.live_evidence.verify()
+        if self.live_evidence.commitment_path != self.commitment_path:
+            raise CommitmentOrderError(
+                "persisted commitment path does not match declared commitment path"
+            )
+        persisted = tuple(
+            (artifact.path, artifact.role) for artifact in self.live_evidence.artifacts
+        )
+        committed = tuple(
+            sorted((artifact.path, artifact.role) for artifact in self.artifacts)
+        )
+        if persisted != committed:
+            raise CommitmentOrderError(
+                "persisted artifact paths and roles do not match declared artifacts"
+            )
         for artifact in self.artifacts:
-            if self.commitment_mtime_ns >= artifact.mtime_ns:
+            if artifact.first_add_commit != self.live_evidence_first_add_commit:
                 raise CommitmentOrderError(
-                    f"commitment mtime must precede artifact mtime: {artifact.path}"
+                    "persisted live evidence and every witnessed artifact must be "
+                    f"first-added in the same commit: {artifact.path}"
                 )
             if not artifact.commitment_is_strict_ancestor:
                 raise CommitmentOrderError(
@@ -193,10 +341,17 @@ class GitProbe:
             exists=exists,
             tracked=tracked,
             clean=status.strip() == "",
-            mtime_ns=absolute.stat().st_mtime_ns if exists else None,
             first_add_commit=additions[-1] if additions else None,
             history_commits=history,
         )
+
+    def read_bytes(self, path: str) -> bytes:
+        """Read one repository-contained file without following an escape path."""
+
+        relative, absolute = self._resolve(path)
+        if not absolute.is_file():
+            raise CommitmentOrderError(f"missing persisted evidence: {relative}")
+        return absolute.read_bytes()
 
     def is_strict_ancestor(self, ancestor: str, descendant: str) -> bool:
         """Return true only when two distinct commits have an ancestry relation."""
@@ -225,7 +380,12 @@ def _active_records(
         raise CommitmentOrderError("artifact records must have unique paths")
     if commitment_path in paths:
         raise CommitmentOrderError("commitment path cannot also be an artifact")
-    return tuple(record for record in records if record.role is not EvidenceRole.LEGACY)
+    return tuple(
+        sorted(
+            (record for record in records if record.role is not EvidenceRole.LEGACY),
+            key=lambda record: record.path,
+        )
+    )
 
 
 def _live_path(repo_root: Path, relative: str) -> Path:
@@ -245,7 +405,7 @@ def verify_live_pre_artifact_order(
     commitment_path: str,
     artifacts: Iterable[ArtifactRecord],
 ) -> LiveCommitmentOrderEvidence:
-    """Check actual mtimes without claiming that artifacts are Git-committed."""
+    """Capture creation-time mtimes for immediate canonical persistence."""
 
     root = Path(repo_root).resolve()
     if not root.is_dir():
@@ -277,8 +437,31 @@ def _require_committed(record: GitPathEvidence, *, kind: str) -> None:
         raise CommitmentOrderError(f"untracked {kind} record: {record.path}")
     if not record.clean:
         raise CommitmentOrderError(f"modified {kind} record: {record.path}")
-    if record.mtime_ns is None or record.first_add_commit is None:
+    if record.first_add_commit is None:
         raise CommitmentOrderError(f"missing Git first-add evidence: {record.path}")
+
+
+def _verify_live_record_matches(
+    live_evidence: LiveCommitmentOrderEvidence,
+    *,
+    commitment_path: str,
+    records: tuple[ArtifactRecord, ...],
+) -> None:
+    if not isinstance(live_evidence, LiveCommitmentOrderEvidence):
+        raise ValueError("live_evidence must be persisted LiveCommitmentOrderEvidence")
+    live_evidence.verify()
+    if live_evidence.commitment_path != commitment_path:
+        raise CommitmentOrderError(
+            "persisted commitment path does not match declared commitment path"
+        )
+    declared = tuple((record.path, record.role) for record in records)
+    persisted = tuple(
+        (artifact.path, artifact.role) for artifact in live_evidence.artifacts
+    )
+    if persisted != declared:
+        raise CommitmentOrderError(
+            "persisted artifact paths and roles do not match declared artifacts"
+        )
 
 
 def verify_committed_artifact_order(
@@ -286,35 +469,73 @@ def verify_committed_artifact_order(
     repo_root: str | Path,
     commitment_path: str,
     artifacts: Iterable[ArtifactRecord],
+    live_evidence: LiveCommitmentOrderEvidence,
+    live_evidence_path: str,
     reveal_verified: bool,
 ) -> CommittedCommitmentOrderEvidence:
-    """Prove clean Git ancestry and actual mtime order for committed artifacts."""
+    """Verify persisted creation mtimes and independent Git first-add ancestry."""
 
     if not isinstance(reveal_verified, bool):
         raise ValueError("reveal_verified must be boolean")
     probe = GitProbe(repo_root)
     relative_commitment = _relative_path(commitment_path)
     records = _active_records(artifacts, commitment_path=relative_commitment)
+    relative_live_evidence = _relative_path(live_evidence_path)
+    if relative_live_evidence == relative_commitment or relative_live_evidence in {
+        record.path for record in records
+    }:
+        raise CommitmentOrderError(
+            "persisted live evidence path must be distinct from commitment and artifacts"
+        )
+    _verify_live_record_matches(
+        live_evidence,
+        commitment_path=relative_commitment,
+        records=records,
+    )
     commitment = probe.inspect(relative_commitment)
     _require_committed(commitment, kind="commitment")
     if len(commitment.history_commits) != 1:
         raise CommitmentOrderError("commitment history was modified after first add")
     if not reveal_verified:
         raise CommitmentOrderError("holdout reveal has not been verified")
-    if commitment.mtime_ns is None or commitment.first_add_commit is None:
+    if commitment.first_add_commit is None:
         raise AssertionError("validated commitment evidence is incomplete")
+    persisted_record = probe.inspect(relative_live_evidence)
+    _require_committed(persisted_record, kind="live evidence")
+    if len(persisted_record.history_commits) != 1:
+        raise CommitmentOrderError(
+            "persisted live evidence was modified after first add"
+        )
+    if persisted_record.first_add_commit is None:
+        raise AssertionError("validated live evidence is incomplete")
+    if probe.read_bytes(relative_live_evidence) != live_evidence.to_canonical_bytes():
+        raise CommitmentOrderError(
+            "tracked live evidence file does not match the supplied canonical record"
+        )
+    commitment_precedes_live = probe.is_strict_ancestor(
+        commitment.first_add_commit,
+        persisted_record.first_add_commit,
+    )
+    if not commitment_precedes_live:
+        raise CommitmentOrderError(
+            "commitment must strictly precede the persisted live evidence commit"
+        )
 
     artifact_evidence: list[CommittedArtifactEvidence] = []
     for declared in records:
         observed = probe.inspect(declared.path)
         _require_committed(observed, kind="artifact")
-        if observed.mtime_ns is None or observed.first_add_commit is None:
+        if observed.first_add_commit is None:
             raise AssertionError("validated artifact evidence is incomplete")
+        if observed.first_add_commit != persisted_record.first_add_commit:
+            raise CommitmentOrderError(
+                "persisted live evidence and every witnessed artifact must be "
+                f"first-added in the same commit: {declared.path}"
+            )
         artifact_evidence.append(
             CommittedArtifactEvidence(
                 path=declared.path,
                 role=declared.role,
-                mtime_ns=observed.mtime_ns,
                 first_add_commit=observed.first_add_commit,
                 commitment_is_strict_ancestor=probe.is_strict_ancestor(
                     commitment.first_add_commit,
@@ -325,10 +546,14 @@ def verify_committed_artifact_order(
 
     evidence = CommittedCommitmentOrderEvidence(
         commitment_path=relative_commitment,
-        commitment_mtime_ns=commitment.mtime_ns,
         commitment_first_add_commit=commitment.first_add_commit,
         commitment_history_commits=commitment.history_commits,
         artifacts=tuple(artifact_evidence),
+        live_evidence=live_evidence,
+        live_evidence_path=relative_live_evidence,
+        live_evidence_first_add_commit=persisted_record.first_add_commit,
+        live_evidence_history_commits=persisted_record.history_commits,
+        commitment_is_strict_ancestor_of_live_evidence=commitment_precedes_live,
         reveal_verified=reveal_verified,
     )
     evidence.verify()

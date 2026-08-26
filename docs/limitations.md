@@ -57,11 +57,16 @@ population, not a proof that every admissible point is covered. Version-one targ
 guard points cross primitive bounds; derived-bound failures remain visible in the
 rejection ledger but are not claimed as dense guard strata.
 
-S9 preregisters immutable case roles and transitive leakage groups, preserves failed
-cases through deterministic reserve replacement, and commits to exactly 64 withheld
-holdout coordinates with BLAKE2b-256. The public commitment proves only that a later
-reveal matches those coordinates. It does not prove that the local holder never saw
-the ignored private reveal. Git also does not preserve historical file mtimes, so S9
-records live ordering when artifacts are created and separately verifies reproducible
-Git first-add ancestry. The project does not yet implement verified datasets,
-neural-operator training, certification, or inference.
+S9 provides contracts for immutable case roles and transitive leakage groups,
+deterministic non-holdout reserve replacement, and an exact-64 BLAKE2b-256 holdout
+commitment. No production commitment or `CP-ENVELOPE` exists yet because the first
+production family, envelope, budget, DOE quotas, leakage tolerance, and reserve
+distribution have not been approved. A test fixture is not production evidence, so
+G9 remains incomplete and S10 must not begin.
+
+When instantiated, the public commitment will prove only that a later reveal matches
+the committed coordinates. It cannot prove that the local holder never saw the
+ignored private reveal. Git also does not preserve historical file mtimes, so live
+ordering must be captured and committed with each artifact batch, while Git first-add
+ancestry is verified separately. The project does not yet implement verified
+datasets, neural-operator training, certification, or inference.

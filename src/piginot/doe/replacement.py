@@ -1,4 +1,4 @@
-"""Preregistered, role-specific replacement of failed S9 DOE cases."""
+"""Preregistered S9 replacement without changing sealed HOLDOUT coordinates."""
 
 from __future__ import annotations
 
@@ -7,6 +7,17 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 
 from piginot.doe.roles import CaseRoleRegistry, DesignCase, EvidenceRole
+
+_REPLACEABLE_ROLES = frozenset(
+    {
+        EvidenceRole.PILOT,
+        EvidenceRole.TRAIN,
+        EvidenceRole.DEVELOPMENT,
+    }
+)
+_RESERVE_ROLE_MESSAGE = (
+    "version-one reserve candidates must use PILOT, TRAIN, or DEVELOPMENT"
+)
 
 
 class ReplacementPolicyError(ValueError):
@@ -44,9 +55,21 @@ def _case_identity(case: DesignCase) -> tuple[str, str]:
     )
 
 
+def _reserve_role(value: object) -> EvidenceRole:
+    if not isinstance(value, str):
+        raise ReplacementPolicyError(_RESERVE_ROLE_MESSAGE)
+    try:
+        role = EvidenceRole(value)
+    except (TypeError, ValueError) as exc:
+        raise ReplacementPolicyError(_RESERVE_ROLE_MESSAGE) from exc
+    if role not in _REPLACEABLE_ROLES:
+        raise ReplacementPolicyError(_RESERVE_ROLE_MESSAGE)
+    return role
+
+
 @dataclass(frozen=True, slots=True)
 class ReserveCandidate:
-    """One reserve case at a fixed rank within one evidence role."""
+    """One ranked reserve for a replaceable PILOT, TRAIN, or DEVELOPMENT case."""
 
     case_id: str
     leakage_group_id: str
@@ -60,7 +83,7 @@ class ReserveCandidate:
             "leakage_group_id",
             _identifier(self.leakage_group_id, "leakage_group_id"),
         )
-        object.__setattr__(self, "role", EvidenceRole(self.role))
+        object.__setattr__(self, "role", _reserve_role(self.role))
         if isinstance(self.rank, bool) or not isinstance(self.rank, int):
             raise ReplacementPolicyError("reserve rank must be an integer")
         if self.rank <= 0:
@@ -69,7 +92,7 @@ class ReserveCandidate:
 
 @dataclass(frozen=True, slots=True)
 class OrderedReservePolicy:
-    """Immutable role-specific reserve order fixed before failures occur."""
+    """Immutable v1 reserve order that excludes HOLDOUT and LEGACY roles."""
 
     rule_id: str
     candidates: tuple[ReserveCandidate, ...] = ()
@@ -81,6 +104,8 @@ class OrderedReservePolicy:
             raise ReplacementPolicyError(
                 "candidates must contain ReserveCandidate values"
             )
+        for candidate in candidates:
+            _reserve_role(candidate.role)
         case_ids = tuple(candidate.case_id for candidate in candidates)
         if len(case_ids) != len(set(case_ids)):
             raise ReplacementPolicyError("candidate case_id values must be unique")
@@ -118,11 +143,12 @@ class OrderedReservePolicy:
         rule_id: str,
         reserves_by_role: Mapping[EvidenceRole, Sequence[DesignCase]],
     ) -> OrderedReservePolicy:
-        """Freeze caller-declared reserve sequences into a canonical policy."""
+        """Freeze reserves for replaceable roles into a canonical v1 policy."""
 
         candidates: list[ReserveCandidate] = []
         normalized = {
-            EvidenceRole(role): tuple(cases) for role, cases in reserves_by_role.items()
+            _reserve_role(role): tuple(cases)
+            for role, cases in reserves_by_role.items()
         }
         for role in sorted(normalized, key=lambda item: item.value):
             for rank, case in enumerate(normalized[role], start=1):
@@ -298,7 +324,7 @@ class FailureReplacementLedger:
         reason: str,
         roles: CaseRoleRegistry,
     ) -> FailureReplacementLedger:
-        """Append one failure and apply the fixed policy without caller choice."""
+        """Append a failure; sealed roles remain visible as EXHAUSTED events."""
 
         failed_case_id, failed_group_id = _case_identity(failed)
         if failed_case_id in self.failed_case_ids:

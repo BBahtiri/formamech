@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import subprocess
 from pathlib import Path
 
 
@@ -62,3 +63,24 @@ def test_s9_does_not_create_downstream_modules() -> None:
     }
 
     assert not ({path.stem for path in _doe_sources()} & forbidden_stems)
+
+
+def test_private_preregistration_material_is_ignored_and_untracked() -> None:
+    repository_root = Path(__file__).resolve().parents[1]
+    ignore_entries = {
+        line.strip()
+        for line in (repository_root / ".gitignore")
+        .read_text(encoding="utf-8")
+        .splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    }
+    tracked = subprocess.run(
+        ["git", "ls-files", "--", ".piginot-private"],
+        cwd=repository_root,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    assert ".piginot-private/" in ignore_entries
+    assert tracked.stdout.strip() == ""

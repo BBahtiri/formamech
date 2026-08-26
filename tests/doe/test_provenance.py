@@ -12,6 +12,8 @@ from piginot.doe.provenance import (
     CommittedArtifactEvidence,
     CommittedCommitmentOrderEvidence,
     GitProbe,
+    LiveArtifactEvidence,
+    LiveCommitmentOrderEvidence,
     verify_committed_artifact_order,
     verify_live_pre_artifact_order,
 )
@@ -55,6 +57,56 @@ def _set_mtime(path: Path, nanoseconds: int) -> None:
     os.utime(path, ns=(nanoseconds, nanoseconds))
 
 
+def _live_evidence(
+    artifacts: tuple[ArtifactRecord, ...] = (),
+    *,
+    commitment_path: str = "holdout.json",
+    commitment_mtime_ns: int = 1,
+    artifact_mtime_ns: int = 2,
+) -> LiveCommitmentOrderEvidence:
+    active = tuple(
+        sorted(
+            (
+                artifact
+                for artifact in artifacts
+                if artifact.role is not EvidenceRole.LEGACY
+            ),
+            key=lambda artifact: artifact.path,
+        )
+    )
+    return LiveCommitmentOrderEvidence(
+        commitment_path=commitment_path,
+        commitment_mtime_ns=commitment_mtime_ns,
+        artifacts=tuple(
+            LiveArtifactEvidence(
+                path=artifact.path,
+                role=artifact.role,
+                mtime_ns=artifact_mtime_ns + index,
+            )
+            for index, artifact in enumerate(active)
+        ),
+    )
+
+
+_LIVE_EVIDENCE_PATH = "audit/live-order.json"
+
+
+def _commit_live_batch(
+    repo: Path,
+    live_evidence: LiveCommitmentOrderEvidence,
+    *,
+    artifact_paths: tuple[str, ...] = (),
+    message: str = "artifact batch and live evidence",
+) -> str:
+    _write(
+        repo / _LIVE_EVIDENCE_PATH,
+        live_evidence.to_canonical_bytes().decode("utf-8"),
+    )
+    _git(repo, "add", "--", _LIVE_EVIDENCE_PATH, *artifact_paths)
+    _git(repo, "commit", "-m", message)
+    return _git(repo, "rev-parse", "HEAD")
+
+
 def test_live_pre_artifact_check_uses_actual_file_mtimes(git_repo: Path) -> None:
     commitment = git_repo / "holdout.json"
     artifact = git_repo / "train" / "model.pt"
@@ -85,14 +137,20 @@ def test_committed_check_proves_first_add_commit_ancestry_and_mtime(
     git_repo: Path,
 ) -> None:
     commitment_commit = _commit(git_repo, "holdout.json", "sealed", "commit")
-    artifact_commit = _commit(git_repo, "train/model.pt", "weights", "train")
-    _set_mtime(git_repo / "holdout.json", 1_000_000_000)
-    _set_mtime(git_repo / "train/model.pt", 2_000_000_000)
-
+    artifacts = (ArtifactRecord("train/model.pt", EvidenceRole.TRAIN),)
+    live = _live_evidence(artifacts)
+    _write(git_repo / "train/model.pt", "weights")
+    artifact_commit = _commit_live_batch(
+        git_repo,
+        live,
+        artifact_paths=("train/model.pt",),
+    )
     evidence = verify_committed_artifact_order(
         repo_root=git_repo,
         commitment_path="holdout.json",
-        artifacts=(ArtifactRecord("train/model.pt", EvidenceRole.TRAIN),),
+        artifacts=artifacts,
+        live_evidence=live,
+        live_evidence_path=_LIVE_EVIDENCE_PATH,
         reveal_verified=True,
     )
 
@@ -103,16 +161,23 @@ def test_committed_check_proves_first_add_commit_ancestry_and_mtime(
 
 def test_modified_commitment_history_is_rejected(git_repo: Path) -> None:
     _commit(git_repo, "holdout.json", "sealed", "commit")
-    _commit(git_repo, "train/model.pt", "weights", "train")
+    artifacts = (ArtifactRecord("train/model.pt", EvidenceRole.TRAIN),)
+    live = _live_evidence(artifacts)
+    _write(git_repo / "train/model.pt", "weights")
+    _commit_live_batch(
+        git_repo,
+        live,
+        artifact_paths=("train/model.pt",),
+    )
     _commit(git_repo, "holdout.json", "rewritten", "rewrite commitment")
-    _set_mtime(git_repo / "holdout.json", 1_000_000_000)
-    _set_mtime(git_repo / "train/model.pt", 2_000_000_000)
 
     with pytest.raises(CommitmentOrderError, match="modified"):
         verify_committed_artifact_order(
             repo_root=git_repo,
             commitment_path="holdout.json",
-            artifacts=(ArtifactRecord("train/model.pt", EvidenceRole.TRAIN),),
+            artifacts=artifacts,
+            live_evidence=live,
+            live_evidence_path=_LIVE_EVIDENCE_PATH,
             reveal_verified=True,
         )
 
@@ -125,19 +190,31 @@ def test_committed_check_rejects_missing_untracked_or_modified_artifacts(
     _commit(git_repo, "holdout.json", "sealed", "commit")
     if kind == "missing":
         record = ArtifactRecord("train/missing.pt", EvidenceRole.TRAIN)
+        live = _live_evidence((record,))
+        _commit_live_batch(git_repo, live)
     elif kind == "untracked":
+        record = ArtifactRecord("train/model.pt", EvidenceRole.TRAIN)
+        live = _live_evidence((record,))
+        _commit_live_batch(git_repo, live)
         _write(git_repo / "train/model.pt", "weights")
-        record = ArtifactRecord("train/model.pt", EvidenceRole.TRAIN)
     else:
-        _commit(git_repo, "train/model.pt", "weights", "train")
-        _write(git_repo / "train/model.pt", "changed")
         record = ArtifactRecord("train/model.pt", EvidenceRole.TRAIN)
+        live = _live_evidence((record,))
+        _write(git_repo / "train/model.pt", "weights")
+        _commit_live_batch(
+            git_repo,
+            live,
+            artifact_paths=("train/model.pt",),
+        )
+        _write(git_repo / "train/model.pt", "changed")
 
     with pytest.raises(CommitmentOrderError, match=kind):
         verify_committed_artifact_order(
             repo_root=git_repo,
             commitment_path="holdout.json",
             artifacts=(record,),
+            live_evidence=live,
+            live_evidence_path=_LIVE_EVIDENCE_PATH,
             reveal_verified=True,
         )
 
@@ -147,33 +224,42 @@ def test_only_explicit_legacy_role_is_excluded(git_repo: Path) -> None:
     suspicious_path = git_repo / "experiments" / "legacy-looking.pt"
     _write(suspicious_path, "old")
     legacy = ArtifactRecord("arbitrary/absent.pt", EvidenceRole.LEGACY)
+    empty_live = _live_evidence((legacy,))
+    _commit_live_batch(git_repo, empty_live)
 
     verify_committed_artifact_order(
         repo_root=git_repo,
         commitment_path="holdout.json",
         artifacts=(legacy,),
+        live_evidence=empty_live,
+        live_evidence_path=_LIVE_EVIDENCE_PATH,
         reveal_verified=True,
     )
 
-    with pytest.raises(CommitmentOrderError, match="untracked"):
+    suspicious = ArtifactRecord("experiments/legacy-looking.pt", EvidenceRole.TRAIN)
+    with pytest.raises(CommitmentOrderError, match="persisted"):
         verify_committed_artifact_order(
             repo_root=git_repo,
             commitment_path="holdout.json",
-            artifacts=(
-                ArtifactRecord("experiments/legacy-looking.pt", EvidenceRole.TRAIN),
-            ),
+            artifacts=(suspicious,),
+            live_evidence=empty_live,
+            live_evidence_path=_LIVE_EVIDENCE_PATH,
             reveal_verified=True,
         )
 
 
 def test_reveal_must_be_verified_for_committed_artifacts(git_repo: Path) -> None:
     _commit(git_repo, "holdout.json", "sealed", "commit")
+    live = _live_evidence()
+    _commit_live_batch(git_repo, live)
 
     with pytest.raises(CommitmentOrderError, match="reveal"):
         verify_committed_artifact_order(
             repo_root=git_repo,
             commitment_path="holdout.json",
             artifacts=(),
+            live_evidence=live,
+            live_evidence_path=_LIVE_EVIDENCE_PATH,
             reveal_verified=False,
         )
 
@@ -185,17 +271,23 @@ def test_commitment_itself_must_be_tracked_clean_and_unmodified(git_repo: Path) 
             repo_root=git_repo,
             commitment_path="holdout.json",
             artifacts=(),
+            live_evidence=_live_evidence(),
+            live_evidence_path=_LIVE_EVIDENCE_PATH,
             reveal_verified=True,
         )
 
     _git(git_repo, "add", "--", "holdout.json")
     _git(git_repo, "commit", "-m", "commit")
+    live = _live_evidence()
+    _commit_live_batch(git_repo, live)
     _write(git_repo / "holdout.json", "dirty")
     with pytest.raises(CommitmentOrderError, match="modified"):
         verify_committed_artifact_order(
             repo_root=git_repo,
             commitment_path="holdout.json",
             artifacts=(),
+            live_evidence=live,
+            live_evidence_path=_LIVE_EVIDENCE_PATH,
             reveal_verified=True,
         )
 
@@ -232,20 +324,34 @@ def _pure_committed_evidence(
     artifact_mtime_ns: int = 2,
     strict_ancestor: bool = True,
 ) -> CommittedCommitmentOrderEvidence:
-    return CommittedCommitmentOrderEvidence(
+    live = LiveCommitmentOrderEvidence(
         commitment_path="holdout.json",
         commitment_mtime_ns=1,
+        artifacts=(
+            LiveArtifactEvidence(
+                path="train/model.pt",
+                role=EvidenceRole.TRAIN,
+                mtime_ns=artifact_mtime_ns,
+            ),
+        ),
+    )
+    return CommittedCommitmentOrderEvidence(
+        commitment_path="holdout.json",
         commitment_first_add_commit="commitment-add",
         commitment_history_commits=history,
         artifacts=(
             CommittedArtifactEvidence(
                 path="train/model.pt",
                 role=EvidenceRole.TRAIN,
-                mtime_ns=artifact_mtime_ns,
                 first_add_commit="artifact-add",
                 commitment_is_strict_ancestor=strict_ancestor,
             ),
         ),
+        live_evidence=live,
+        live_evidence_path=_LIVE_EVIDENCE_PATH,
+        live_evidence_first_add_commit="artifact-add",
+        live_evidence_history_commits=("artifact-add",),
+        commitment_is_strict_ancestor_of_live_evidence=True,
         reveal_verified=reveal_verified,
     )
 
@@ -369,6 +475,8 @@ def test_committed_check_rejects_non_boolean_reveal_flag(git_repo: Path) -> None
             repo_root=git_repo,
             commitment_path="holdout.json",
             artifacts=(),
+            live_evidence=_live_evidence(),
+            live_evidence_path=_LIVE_EVIDENCE_PATH,
             reveal_verified=1,  # type: ignore[arg-type]
         )
 
@@ -378,15 +486,250 @@ def test_commitment_and_artifact_added_together_do_not_prove_order(
 ) -> None:
     _write(git_repo / "holdout.json", "sealed")
     _write(git_repo / "train/model.pt", "weights")
-    _git(git_repo, "add", "--", "holdout.json", "train/model.pt")
+    artifacts = (ArtifactRecord("train/model.pt", EvidenceRole.TRAIN),)
+    live = _live_evidence(artifacts)
+    _write(
+        git_repo / _LIVE_EVIDENCE_PATH,
+        live.to_canonical_bytes().decode("utf-8"),
+    )
+    _git(
+        git_repo,
+        "add",
+        "--",
+        "holdout.json",
+        "train/model.pt",
+        _LIVE_EVIDENCE_PATH,
+    )
     _git(git_repo, "commit", "-m", "added together")
-    _set_mtime(git_repo / "holdout.json", 1_000_000_000)
-    _set_mtime(git_repo / "train/model.pt", 2_000_000_000)
 
     with pytest.raises(CommitmentOrderError, match="strictly precede"):
         verify_committed_artifact_order(
             repo_root=git_repo,
             commitment_path="holdout.json",
-            artifacts=(ArtifactRecord("train/model.pt", EvidenceRole.TRAIN),),
+            artifacts=artifacts,
+            live_evidence=live,
+            live_evidence_path=_LIVE_EVIDENCE_PATH,
+            reveal_verified=True,
+        )
+
+
+def test_fresh_clone_uses_persisted_live_mtimes_not_checkout_mtimes(
+    git_repo: Path,
+    tmp_path: Path,
+) -> None:
+    _commit(git_repo, "holdout.json", "sealed", "commit")
+    artifact = git_repo / "train/model.pt"
+    _write(artifact, "weights")
+    _set_mtime(git_repo / "holdout.json", 1_000_000_000)
+    _set_mtime(artifact, 2_000_000_000)
+    live = verify_live_pre_artifact_order(
+        repo_root=git_repo,
+        commitment_path="holdout.json",
+        artifacts=(ArtifactRecord("train/model.pt", EvidenceRole.TRAIN),),
+    )
+    _write(
+        git_repo / "audit/live-order.json",
+        live.to_canonical_bytes().decode("utf-8"),
+    )
+    _git(git_repo, "add", "--", "train/model.pt", "audit/live-order.json")
+    _git(git_repo, "commit", "-m", "training artifact")
+
+    clone = tmp_path / "fresh-clone"
+    _git(tmp_path, "clone", str(git_repo), str(clone))
+    _set_mtime(clone / "holdout.json", 9_000_000_000)
+    _set_mtime(clone / "train/model.pt", 8_000_000_000)
+    persisted = LiveCommitmentOrderEvidence.from_canonical_bytes(
+        (clone / "audit/live-order.json").read_bytes()
+    )
+
+    evidence = verify_committed_artifact_order(
+        repo_root=clone,
+        commitment_path="holdout.json",
+        artifacts=(ArtifactRecord("train/model.pt", EvidenceRole.TRAIN),),
+        live_evidence=persisted,
+        live_evidence_path="audit/live-order.json",
+        reveal_verified=True,
+    )
+
+    assert evidence.live_evidence == persisted
+
+
+def test_persisted_record_must_exactly_match_declared_paths_and_roles(
+    git_repo: Path,
+) -> None:
+    _commit(git_repo, "holdout.json", "sealed", "commit")
+    _commit(git_repo, "train/model.pt", "weights", "training artifact")
+    declared = (ArtifactRecord("train/model.pt", EvidenceRole.TRAIN),)
+    mismatches = (
+        _live_evidence(declared, commitment_path="other.json"),
+        _live_evidence((ArtifactRecord("train/other.pt", EvidenceRole.TRAIN),)),
+        _live_evidence((ArtifactRecord("train/model.pt", EvidenceRole.DEVELOPMENT),)),
+        _live_evidence(),
+    )
+
+    for persisted in mismatches:
+        with pytest.raises(CommitmentOrderError, match="persisted"):
+            verify_committed_artifact_order(
+                repo_root=git_repo,
+                commitment_path="holdout.json",
+                artifacts=declared,
+                live_evidence=persisted,
+                live_evidence_path=_LIVE_EVIDENCE_PATH,
+                reveal_verified=True,
+            )
+
+
+def test_pure_committed_evidence_rechecks_persisted_identity() -> None:
+    evidence = _pure_committed_evidence()
+    wrong_commitment = CommittedCommitmentOrderEvidence(
+        commitment_path="other.json",
+        commitment_first_add_commit=evidence.commitment_first_add_commit,
+        commitment_history_commits=evidence.commitment_history_commits,
+        artifacts=evidence.artifacts,
+        live_evidence=evidence.live_evidence,
+        live_evidence_path=evidence.live_evidence_path,
+        live_evidence_first_add_commit=evidence.live_evidence_first_add_commit,
+        live_evidence_history_commits=evidence.live_evidence_history_commits,
+        commitment_is_strict_ancestor_of_live_evidence=(
+            evidence.commitment_is_strict_ancestor_of_live_evidence
+        ),
+        reveal_verified=True,
+    )
+    wrong_artifacts = CommittedCommitmentOrderEvidence(
+        commitment_path=evidence.commitment_path,
+        commitment_first_add_commit=evidence.commitment_first_add_commit,
+        commitment_history_commits=evidence.commitment_history_commits,
+        artifacts=(),
+        live_evidence=evidence.live_evidence,
+        live_evidence_path=evidence.live_evidence_path,
+        live_evidence_first_add_commit=evidence.live_evidence_first_add_commit,
+        live_evidence_history_commits=evidence.live_evidence_history_commits,
+        commitment_is_strict_ancestor_of_live_evidence=(
+            evidence.commitment_is_strict_ancestor_of_live_evidence
+        ),
+        reveal_verified=True,
+    )
+
+    with pytest.raises(CommitmentOrderError, match="commitment path"):
+        wrong_commitment.verify()
+    with pytest.raises(CommitmentOrderError, match="artifact paths and roles"):
+        wrong_artifacts.verify()
+
+
+def test_committed_check_requires_a_persisted_live_record(git_repo: Path) -> None:
+    with pytest.raises(ValueError, match="persisted LiveCommitmentOrderEvidence"):
+        verify_committed_artifact_order(
+            repo_root=git_repo,
+            commitment_path="holdout.json",
+            artifacts=(),
+            live_evidence=object(),  # type: ignore[arg-type]
+            live_evidence_path=_LIVE_EVIDENCE_PATH,
+            reveal_verified=True,
+        )
+
+
+def test_committed_check_rejects_untracked_and_wrong_live_evidence_files(
+    git_repo: Path,
+) -> None:
+    _commit(git_repo, "holdout.json", "sealed", "commitment")
+    live = _live_evidence()
+    _write(git_repo / _LIVE_EVIDENCE_PATH, "not the supplied canonical record")
+
+    with pytest.raises(CommitmentOrderError, match="untracked live evidence"):
+        verify_committed_artifact_order(
+            repo_root=git_repo,
+            commitment_path="holdout.json",
+            artifacts=(),
+            live_evidence=live,
+            live_evidence_path=_LIVE_EVIDENCE_PATH,
+            reveal_verified=True,
+        )
+
+    _git(git_repo, "add", "--", _LIVE_EVIDENCE_PATH)
+    _git(git_repo, "commit", "-m", "wrong witness file")
+    with pytest.raises(CommitmentOrderError, match="does not match"):
+        verify_committed_artifact_order(
+            repo_root=git_repo,
+            commitment_path="holdout.json",
+            artifacts=(),
+            live_evidence=live,
+            live_evidence_path=_LIVE_EVIDENCE_PATH,
+            reveal_verified=True,
+        )
+
+
+def test_committed_check_rejects_modified_live_evidence_file(git_repo: Path) -> None:
+    _commit(git_repo, "holdout.json", "sealed", "commitment")
+    live = _live_evidence()
+    _commit_live_batch(git_repo, live)
+    _write(git_repo / _LIVE_EVIDENCE_PATH, "working-tree tamper")
+
+    with pytest.raises(CommitmentOrderError, match="modified live evidence"):
+        verify_committed_artifact_order(
+            repo_root=git_repo,
+            commitment_path="holdout.json",
+            artifacts=(),
+            live_evidence=live,
+            live_evidence_path=_LIVE_EVIDENCE_PATH,
+            reveal_verified=True,
+        )
+
+
+def test_committed_check_rejects_witness_modified_in_git_history(
+    git_repo: Path,
+) -> None:
+    _commit(git_repo, "holdout.json", "sealed", "commitment")
+    live = _live_evidence()
+    _commit_live_batch(git_repo, live)
+    _commit(
+        git_repo,
+        _LIVE_EVIDENCE_PATH,
+        live.to_canonical_bytes().decode("utf-8") + " ",
+        "rewrite witness",
+    )
+
+    with pytest.raises(CommitmentOrderError, match="modified after first add"):
+        verify_committed_artifact_order(
+            repo_root=git_repo,
+            commitment_path="holdout.json",
+            artifacts=(),
+            live_evidence=live,
+            live_evidence_path=_LIVE_EVIDENCE_PATH,
+            reveal_verified=True,
+        )
+
+
+def test_witness_and_artifact_must_share_their_first_add_commit(
+    git_repo: Path,
+) -> None:
+    _commit(git_repo, "holdout.json", "sealed", "commitment")
+    artifact = ArtifactRecord("train/model.pt", EvidenceRole.TRAIN)
+    _commit(git_repo, artifact.path, "weights", "artifact without witness")
+    live = _live_evidence((artifact,))
+    _commit_live_batch(git_repo, live)
+
+    with pytest.raises(CommitmentOrderError, match="same commit"):
+        verify_committed_artifact_order(
+            repo_root=git_repo,
+            commitment_path="holdout.json",
+            artifacts=(artifact,),
+            live_evidence=live,
+            live_evidence_path=_LIVE_EVIDENCE_PATH,
+            reveal_verified=True,
+        )
+
+
+def test_commitment_must_strictly_precede_witness_commit(git_repo: Path) -> None:
+    live = _live_evidence()
+    _commit_live_batch(git_repo, live)
+    _commit(git_repo, "holdout.json", "sealed", "late commitment")
+
+    with pytest.raises(CommitmentOrderError, match="strictly precede"):
+        verify_committed_artifact_order(
+            repo_root=git_repo,
+            commitment_path="holdout.json",
+            artifacts=(),
+            live_evidence=live,
+            live_evidence_path=_LIVE_EVIDENCE_PATH,
             reveal_verified=True,
         )

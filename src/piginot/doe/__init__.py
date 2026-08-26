@@ -1,6 +1,24 @@
 """S9 DOE, evidence-role, and preregistration contracts."""
 
-from piginot.doe.checkpoint import CampaignBudget, CPEnvelope, EvidenceReference
+from piginot.doe.allocation import (
+    ALLOCATION_ALGORITHM_ID,
+    DuplicateDesignCaseError,
+    ImpossibleRoleAllocationError,
+    InvalidAllocationSeedError,
+    InvalidProductionBudgetError,
+    ProductionRoleBudget,
+    RoleAllocation,
+    RoleAllocationError,
+    allocate_evidence_roles,
+)
+from piginot.doe.checkpoint import (
+    CampaignBinding,
+    CampaignBudget,
+    CampaignCore,
+    CPEnvelope,
+    EvidenceReference,
+    compute_campaign_hash,
+)
 from piginot.doe.commitment import (
     HoldoutCommitment,
     compute_holdout_commitment,
@@ -18,8 +36,10 @@ from piginot.doe.design import (
     CoupledDesignSpec,
     DesignPoint,
     DifficultRegion,
+    DoeSeed,
     InteractionSpec,
     RejectedProposal,
+    SeedEncoding,
     generate_coupled_design,
     normalized_coordinates,
     quota_requirements,
@@ -36,6 +56,12 @@ from piginot.doe.gate import (
     evaluate_s9_gate,
 )
 from piginot.doe.leakage import LeakageDescriptor, bind_leakage_groups
+from piginot.doe.preregistration import (
+    LegacyCaseLedger,
+    PreregistrationError,
+    PreregistrationResult,
+    build_preregistration,
+)
 from piginot.doe.provenance import (
     ArtifactRecord,
     CommitmentOrderError,
@@ -47,6 +73,11 @@ from piginot.doe.provenance import (
     LiveCommitmentOrderEvidence,
     verify_committed_artifact_order,
     verify_live_pre_artifact_order,
+)
+from piginot.doe.publication import (
+    PublishedCase,
+    PublishedCaseManifest,
+    PublishedCaseStatus,
 )
 from piginot.doe.replacement import (
     DuplicateFailureError,
@@ -75,11 +106,14 @@ from piginot.doe.roles import (
 )
 
 __all__ = (
+    "ALLOCATION_ALGORITHM_ID",
     "ArtifactRecord",
     "AxisSource",
     "AxisSpec",
     "CPEnvelope",
+    "CampaignBinding",
     "CampaignBudget",
+    "CampaignCore",
     "CaseRoleRegistry",
     "CommitmentOrderError",
     "CommittedArtifactEvidence",
@@ -90,7 +124,9 @@ __all__ = (
     "DesignCoverageDiagnostics",
     "DesignPoint",
     "DifficultRegion",
+    "DoeSeed",
     "DuplicateFailureError",
+    "DuplicateDesignCaseError",
     "EvidenceReference",
     "EvidenceRole",
     "FailureReplacementEvent",
@@ -100,16 +136,26 @@ __all__ = (
     "GitProbe",
     "HoldoutCommitment",
     "ImmutableRoleAssignmentError",
+    "ImpossibleRoleAllocationError",
     "InteractionSpec",
+    "InvalidAllocationSeedError",
+    "InvalidProductionBudgetError",
     "LeakageDescriptor",
     "LeakageGroupRoleError",
+    "LegacyCaseLedger",
     "LiveArtifactEvidence",
     "LiveCommitmentOrderEvidence",
     "MissingRoleAssignmentError",
     "NodeObservation",
     "NodeRoleMismatchError",
     "OrderedReservePolicy",
+    "PreregistrationError",
+    "PreregistrationResult",
+    "ProductionRoleBudget",
     "ProductionLabelAuthorization",
+    "PublishedCase",
+    "PublishedCaseManifest",
+    "PublishedCaseStatus",
     "RandomNodeSplitError",
     "RejectedProposal",
     "ReplacementEvidence",
@@ -117,13 +163,19 @@ __all__ = (
     "ReplacementStatus",
     "ReserveCandidate",
     "Role",
+    "RoleAllocation",
+    "RoleAllocationError",
     "RoleAssignment",
     "S9GateCheck",
     "S9GateEvaluation",
     "S9GateMeasurements",
+    "SeedEncoding",
     "assign_group",
+    "allocate_evidence_roles",
     "authorize_production_label",
     "bind_leakage_groups",
+    "build_preregistration",
+    "compute_campaign_hash",
     "compute_holdout_commitment",
     "coverage_gate_checks",
     "evaluate_s9_gate",

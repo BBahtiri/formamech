@@ -318,7 +318,7 @@ def test_policy_rejects_duplicate_or_noncontiguous_role_ranks() -> None:
     skipped_rank = ReserveCandidate(
         "reserve-3",
         "group-3",
-        EvidenceRole.HOLDOUT,
+        EvidenceRole.DEVELOPMENT,
         2,
     )
 
@@ -450,3 +450,97 @@ def test_ledger_rejects_out_of_order_replacement_history() -> None:
 
     with pytest.raises(ReplacementPolicyError, match="role-specific order"):
         FailureReplacementLedger(policy=policy, events=(out_of_order,))
+
+
+@pytest.mark.parametrize(
+    "forbidden_role",
+    (EvidenceRole.HOLDOUT, EvidenceRole.LEGACY),
+)
+def test_reserve_candidate_constructor_rejects_sealed_roles(
+    forbidden_role: EvidenceRole,
+) -> None:
+    with pytest.raises(
+        ReplacementPolicyError,
+        match="PILOT, TRAIN, or DEVELOPMENT",
+    ):
+        ReserveCandidate("reserve", "reserve-group", forbidden_role, 1)
+
+
+@pytest.mark.parametrize("unknown_role", ("UNKNOWN", object()))
+def test_reserve_candidate_constructor_rejects_unknown_role(
+    unknown_role: Any,
+) -> None:
+    with pytest.raises(
+        ReplacementPolicyError,
+        match="PILOT, TRAIN, or DEVELOPMENT",
+    ):
+        ReserveCandidate(
+            "reserve",
+            "reserve-group",
+            unknown_role,
+            1,
+        )
+
+
+@pytest.mark.parametrize(
+    "forbidden_role",
+    (EvidenceRole.HOLDOUT, EvidenceRole.LEGACY),
+)
+def test_preregister_rejects_reserves_for_sealed_roles(
+    forbidden_role: EvidenceRole,
+) -> None:
+    with pytest.raises(
+        ReplacementPolicyError,
+        match="PILOT, TRAIN, or DEVELOPMENT",
+    ):
+        OrderedReservePolicy.preregister(
+            rule_id="ordered-v1",
+            reserves_by_role={forbidden_role: (Case("reserve", "reserve-group"),)},
+        )
+
+
+@pytest.mark.parametrize(
+    "mutant_role",
+    (EvidenceRole.HOLDOUT, EvidenceRole.LEGACY),
+)
+def test_policy_constructor_catches_mutated_sealed_role_candidate(
+    mutant_role: EvidenceRole,
+) -> None:
+    candidate = ReserveCandidate(
+        "reserve",
+        "reserve-group",
+        EvidenceRole.TRAIN,
+        1,
+    )
+    object.__setattr__(candidate, "role", mutant_role)
+
+    with pytest.raises(
+        ReplacementPolicyError,
+        match="PILOT, TRAIN, or DEVELOPMENT",
+    ):
+        OrderedReservePolicy("ordered-v1", (candidate,))
+
+
+def test_holdout_failure_is_visible_exhaustion_without_coordinate_replacement() -> None:
+    holdout = Case("holdout-001", "sealed-coordinate-001")
+    train_reserve = Case("train-reserve", "train-reserve-group")
+    roles = _roles(
+        (holdout, EvidenceRole.HOLDOUT),
+        (train_reserve, EvidenceRole.TRAIN),
+    )
+    policy = OrderedReservePolicy.preregister(
+        rule_id="ordered-v1",
+        reserves_by_role={EvidenceRole.TRAIN: (train_reserve,)},
+    )
+
+    ledger = FailureReplacementLedger.empty(policy).record_failure(
+        holdout,
+        reason="FEM_NONCONVERGENCE",
+        roles=roles,
+    )
+
+    assert ledger.failed_case_ids == ("holdout-001",)
+    assert ledger.replacement_case_ids == ()
+    assert ledger.events[0].status is ReplacementStatus.EXHAUSTED
+    assert ledger.events[0].replacement_case_id is None
+    assert policy.candidates_for_role(EvidenceRole.HOLDOUT) == ()

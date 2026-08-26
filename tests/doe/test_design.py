@@ -5,7 +5,13 @@ from types import MappingProxyType
 
 import pytest
 
-from piginot.contracts import CanonicalQuantity, Dimension, Unit
+from piginot.contracts import (
+    CanonicalQuantity,
+    Dimension,
+    Unit,
+    canonical_json_bytes,
+    hash_spec,
+)
 from piginot.doe.design import (
     AxisSource,
     AxisSpec,
@@ -152,6 +158,29 @@ def test_design_is_deterministic_and_validation_stream_is_domain_separated() -> 
     assert {point.case_id for point in first.selected_points}.isdisjoint(
         point.case_id for point in first.validation_points
     )
+
+
+def test_design_spec_has_stable_unambiguous_canonical_seed_identity() -> None:
+    text = replace(_spec(), seed="same-seed")
+    text_replay = replace(_spec(), seed="same-seed")
+    binary = replace(_spec(), seed=b"same-seed")
+
+    text_bytes = canonical_json_bytes(text)
+    binary_bytes = canonical_json_bytes(binary)
+
+    assert text_bytes == canonical_json_bytes(text_replay)
+    assert hash_spec(text, "bundle") == hash_spec(text_replay, "bundle")
+    assert text_bytes != binary_bytes
+    assert hash_spec(text, "bundle") != hash_spec(binary, "bundle")
+    assert b'"encoding":"text-utf8-base64url-v1"' in text_bytes
+    assert b'"encoding":"bytes-base64url-v1"' in binary_bytes
+
+    text_design = generate_coupled_design(_CoupledPredicate(), text)
+    text_replay_design = generate_coupled_design(_CoupledPredicate(), text_replay)
+    binary_design = generate_coupled_design(_CoupledPredicate(), binary)
+    assert text_design == text_replay_design
+    assert text_design.candidate_stream_id != binary_design.candidate_stream_id
+    assert "same-seed" not in repr(text)
 
 
 def test_design_requires_all_variable_primitive_and_derived_governing_axes() -> None:
