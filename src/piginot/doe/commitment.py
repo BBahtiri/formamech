@@ -17,6 +17,7 @@ from piginot.contracts import canonical_json_bytes
 _SCHEME = "blake2b-256"
 _PRODUCTION_HOLDOUT_COUNT = 64
 _MINIMUM_SALT_BYTES = 32
+_MINIMUM_DISTINCT_SALT_OCTETS = 16
 _LOWER_HEX_256 = re.compile(r"^[0-9a-f]{64}$")
 _UTC_TIMESTAMP = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?Z$")
 
@@ -40,7 +41,18 @@ def _validate_utc_timestamp(value: object) -> str:
 def _validate_salt(salt: object) -> bytes:
     if not isinstance(salt, bytes) or len(salt) < _MINIMUM_SALT_BYTES:
         raise ValueError("salt must be bytes containing at least 32 bytes")
+    if len(set(salt)) < _MINIMUM_DISTINCT_SALT_OCTETS or _is_periodic(salt):
+        raise ValueError("salt has obviously insufficient octet diversity")
     return salt
+
+
+def _is_periodic(value: bytes) -> bool:
+    for period in range(1, len(value) // 2 + 1):
+        if len(value) % period == 0 and value == value[:period] * (
+            len(value) // period
+        ):
+            return True
+    return False
 
 
 def _coordinate_payload(

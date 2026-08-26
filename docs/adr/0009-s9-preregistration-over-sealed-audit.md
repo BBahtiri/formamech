@@ -83,10 +83,11 @@ schema. Its public record is:
 ```
 
 The salt is at least 32 random bytes. The DOE seed, allocation seed and salt are
-pairwise independent, and campaign closure rejects short, periodic or obviously
-low-diversity material. Salt and coordinates are retained only in an ignored private
-reveal file and never enter Git, CP-ENVELOPE, gate artifacts, tests or training
-inputs. Reveal comparison is constant-time. The commitment file must be
+pairwise independent. Both the exported commitment primitive and campaign closure
+reject short, periodic or obviously low-diversity salt material. Salt and coordinates
+are retained only in an ignored private reveal file and never enter Git, CP-ENVELOPE,
+gate artifacts, tests or training inputs. Reveal comparison is constant-time. The
+commitment file must be
 clean, tracked and added in exactly one Git commit. At artifact creation, the live
 filesystem ordering is captured in a canonical record committed atomically with the
 artifact batch. Later verification consumes that persisted record and separately

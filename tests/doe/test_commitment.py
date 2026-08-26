@@ -12,6 +12,9 @@ from piginot.doe.commitment import (
     verify_holdout_reveal,
 )
 
+_STRONG_SALT = bytes(range(32))
+_ALTERNATE_STRONG_SALT = bytes(range(32, 64))
+
 
 def _coordinates(count: int = 64) -> tuple[dict[str, float], ...]:
     return tuple(
@@ -23,7 +26,7 @@ def _coordinates(count: int = 64) -> tuple[dict[str, float], ...]:
 def _commitment(
     coordinates: object | None = None,
     *,
-    salt: bytes = b"s" * 32,
+    salt: bytes = _STRONG_SALT,
     created_utc: str = "2026-08-24T10:00:00Z",
 ) -> HoldoutCommitment:
     return compute_holdout_commitment(
@@ -43,7 +46,7 @@ def test_commitment_is_rfc8785_digest_of_salt_and_sorted_coordinates() -> None:
         key=lambda coordinate: rfc8785.dumps(coordinate),
     )
     expected = hashlib.blake2b(
-        b"s" * 32 + rfc8785.dumps(sorted_payload),
+        _STRONG_SALT + rfc8785.dumps(sorted_payload),
         digest_size=32,
     ).hexdigest()
 
@@ -85,7 +88,7 @@ def test_production_commitment_rejects_wrong_count_duplicates_and_mixed_schemas(
 def test_test_only_helper_is_explicitly_nonproduction() -> None:
     fixture = commitment_module._compute_holdout_commitment_for_test(
         campaign_hash="a" * 64,
-        salt=b"s" * 32,
+        salt=_STRONG_SALT,
         holdout_coordinates=_coordinates(2),
         created_utc="2026-08-24T10:00:00Z",
     )
@@ -101,6 +104,43 @@ def test_test_only_helper_is_explicitly_nonproduction() -> None:
 def test_salt_must_be_at_least_32_bytes(salt: object) -> None:
     with pytest.raises(ValueError, match="at least 32 bytes"):
         _commitment(salt=salt)  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    "salt",
+    (bytes(32), b"x" * 32, bytes(range(8)) * 4),
+)
+def test_exported_commitment_primitive_rejects_obviously_weak_salts(
+    salt: bytes,
+) -> None:
+    with pytest.raises(ValueError, match="salt.*diversity"):
+        _commitment(salt=salt)
+
+
+def test_reveal_refuses_a_weak_salt_even_for_a_preexisting_record() -> None:
+    coordinates = _coordinates()
+    sorted_payload = sorted(
+        coordinates,
+        key=lambda coordinate: rfc8785.dumps(coordinate),
+    )
+    weak_salt = bytes(32)
+    record = HoldoutCommitment(
+        scheme="blake2b-256",
+        campaign_hash="a" * 64,
+        n_holdout_points=64,
+        commitment=hashlib.blake2b(
+            weak_salt + rfc8785.dumps(sorted_payload),
+            digest_size=32,
+        ).hexdigest(),
+        created_utc="2026-08-24T10:00:00Z",
+    )
+
+    with pytest.raises(ValueError, match="salt.*diversity"):
+        verify_holdout_reveal(
+            record,
+            salt=weak_salt,
+            holdout_coordinates=coordinates,
+        )
 
 
 @pytest.mark.parametrize(
@@ -160,7 +200,7 @@ def test_reveal_uses_constant_time_digest_comparison(
 
     assert verify_holdout_reveal(
         commitment,
-        salt=b"s" * 32,
+        salt=_STRONG_SALT,
         holdout_coordinates=reversed(_coordinates()),
     )
     assert calls == [(commitment.commitment, commitment.commitment)]
@@ -171,13 +211,13 @@ def test_reveal_rejects_wrong_secret_and_malformed_coordinates() -> None:
 
     assert not verify_holdout_reveal(
         commitment,
-        salt=b"x" * 32,
+        salt=_ALTERNATE_STRONG_SALT,
         holdout_coordinates=_coordinates(),
     )
     with pytest.raises(ValueError, match="duplicate"):
         verify_holdout_reveal(
             commitment,
-            salt=b"s" * 32,
+            salt=_STRONG_SALT,
             holdout_coordinates=(*_coordinates(63), _coordinates(63)[0]),
         )
 
@@ -213,7 +253,7 @@ def test_empty_test_fixture_population_is_rejected() -> None:
     with pytest.raises(ValueError, match="must not be empty"):
         commitment_module._compute_holdout_commitment_for_test(
             campaign_hash="a" * 64,
-            salt=b"s" * 32,
+            salt=_STRONG_SALT,
             holdout_coordinates=(),
             created_utc="2026-08-24T10:00:00Z",
         )
@@ -260,7 +300,7 @@ def test_commitment_instance_verifies_its_reveal() -> None:
     commitment = _commitment()
 
     assert commitment.verify_reveal(
-        salt=b"s" * 32,
+        salt=_STRONG_SALT,
         holdout_coordinates=_coordinates(),
     )
 
@@ -269,6 +309,6 @@ def test_reveal_rejects_non_commitment_record() -> None:
     with pytest.raises(ValueError, match="HoldoutCommitment"):
         verify_holdout_reveal(
             object(),  # type: ignore[arg-type]
-            salt=b"s" * 32,
+            salt=_STRONG_SALT,
             holdout_coordinates=_coordinates(),
         )
