@@ -42,10 +42,13 @@ from piginot.doe.publication import (
 )
 from piginot.doe.replacement import OrderedReservePolicy, ReserveCandidate
 from piginot.doe.roles import EvidenceRole
+from piginot.doe.secret_material import (
+    CampaignSecrets,
+    SecretMaterialError,
+    validate_secret_bytes,
+)
 
 _CANONICAL_NAMESPACE = "piginot.doe"
-_MINIMUM_SEED_BYTES = 32
-_MINIMUM_DISTINCT_OCTETS = 16
 _REPLACEABLE_ROLES = (
     EvidenceRole.PILOT,
     EvidenceRole.TRAIN,
@@ -128,32 +131,14 @@ class PreregistrationResult:
             raise ValueError("checkpoint does not match the holdout commitment")
 
 
-def _validate_secret_bytes(value: object, label: str) -> bytes:
-    if not isinstance(value, bytes) or len(value) < _MINIMUM_SEED_BYTES:
-        raise PreregistrationError(
-            f"{label} must contain at least {_MINIMUM_SEED_BYTES} raw bytes"
-        )
-    if len(set(value)) < _MINIMUM_DISTINCT_OCTETS or _is_periodic(value):
-        raise PreregistrationError(
-            f"{label} has obviously insufficient octet diversity"
-        )
-    return value
-
-
 def _decode_and_validate_seed(seed: DoeSeed) -> bytes:
     if seed.encoding is not SeedEncoding.BYTES_BASE64URL_V1:
         raise PreregistrationError("DOE seed must have byte origin, not text origin")
     raw = base64.urlsafe_b64decode(seed.payload + "=" * (-len(seed.payload) % 4))
-    return _validate_secret_bytes(raw, "DOE seed")
-
-
-def _is_periodic(value: bytes) -> bool:
-    for period in range(1, len(value) // 2 + 1):
-        if len(value) % period == 0 and value == value[:period] * (
-            len(value) // period
-        ):
-            return True
-    return False
+    try:
+        return validate_secret_bytes(raw, "DOE seed")
+    except SecretMaterialError as exc:
+        raise PreregistrationError(str(exc)) from exc
 
 
 def _axis_schemas(
@@ -516,8 +501,7 @@ def build_preregistration(
     legacy_ledger: LegacyCaseLedger,
     replacement_policy: OrderedReservePolicy,
     budget: CampaignBudget,
-    allocation_seed: bytes,
-    holdout_salt: bytes,
+    campaign_secrets: CampaignSecrets,
     created_utc: str,
     manifest_id: str = "s9-public-cases",
 ) -> PreregistrationResult:
@@ -535,17 +519,29 @@ def build_preregistration(
         raise PreregistrationError("replacement_policy must be an OrderedReservePolicy")
     if not isinstance(budget, CampaignBudget):
         raise PreregistrationError("budget must be a CampaignBudget")
+    if type(campaign_secrets) is not CampaignSecrets:
+        raise PreregistrationError(
+            "campaign_secrets must come from generate_campaign_secrets()"
+        )
 
     seed = spec.seed
     if not isinstance(seed, DoeSeed):
         raise PreregistrationError("spec seed was not canonicalized")
     doe_seed = _decode_and_validate_seed(seed)
-    checked_allocation_seed = _validate_secret_bytes(
-        allocation_seed,
-        "allocation seed",
-    )
-    checked_holdout_salt = _validate_secret_bytes(holdout_salt, "holdout salt")
-    if len({doe_seed, checked_allocation_seed, checked_holdout_salt}) != 3:
+    if doe_seed != campaign_secrets.doe_seed:
+        raise PreregistrationError(
+            "DOE seed must match the generated campaign secret bundle"
+        )
+    if (
+        len(
+            {
+                campaign_secrets.doe_seed,
+                campaign_secrets.allocation_seed,
+                campaign_secrets.holdout_salt,
+            }
+        )
+        != 3
+    ):
         raise PreregistrationError(
             "DOE seed, allocation seed, and holdout salt require independent secret material"
         )
@@ -563,7 +559,7 @@ def build_preregistration(
         design,
         role_allocation,
         budget,
-        checked_allocation_seed,
+        campaign_secrets.allocation_seed,
     )
     reserve_candidates = _validate_reserve_policy(
         design,
@@ -594,6 +590,7 @@ def build_preregistration(
         replacement_policy_hash=hash_spec(replacement_policy, "content"),
         public_case_manifest_hash=public_manifest.content_hash,
         doe_seed_commitment=hash_spec(seed, "content"),
+        secret_generator_id=campaign_secrets.generator_id,
         budget=budget,
         derived_axes=derived_axes,
     )
@@ -605,13 +602,13 @@ def build_preregistration(
     )
     commitment = compute_holdout_commitment(
         campaign_hash=campaign_hash,
-        salt=checked_holdout_salt,
+        campaign_secrets=campaign_secrets,
         holdout_coordinates=holdout_coordinates,
         created_utc=created_utc,
     )
     reveal_verified = verify_holdout_reveal(
         commitment,
-        salt=checked_holdout_salt,
+        salt=campaign_secrets.holdout_salt,
         holdout_coordinates=holdout_coordinates,
     )
     if not reveal_verified:
@@ -626,6 +623,7 @@ def build_preregistration(
         replacement_policy_hash=binding.replacement_policy_hash,
         public_case_manifest_hash=binding.public_case_manifest_hash,
         doe_seed_commitment=binding.doe_seed_commitment,
+        secret_generator_id=binding.secret_generator_id,
         holdout_commitment=commitment,
         budget=binding.budget,
         derived_axes=binding.derived_axes,

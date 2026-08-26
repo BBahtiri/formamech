@@ -15,10 +15,12 @@ from piginot.contracts import (
 )
 from piginot.doe.commitment import HoldoutCommitment
 from piginot.doe.roles import EvidenceRole
+from piginot.doe.secret_material import CAMPAIGN_SECRET_GENERATOR_ID
 
 _HASH = re.compile(r"[0-9a-f]{64}\Z")
 _UTC_TIMESTAMP = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?Z\Z")
 _MAX_SAFE_INTEGER = 2**53 - 1
+_CP_ENVELOPE_SCHEMA_VERSION = "1.1"
 
 
 def _text(value: object, label: str) -> str:
@@ -31,6 +33,13 @@ def _hash(value: object, label: str) -> str:
     text = _text(value, label)
     if _HASH.fullmatch(text) is None:
         raise ValueError(f"{label} must be a lowercase 64-character hex hash")
+    return text
+
+
+def _secret_generator_id(value: object) -> str:
+    text = _text(value, "secret_generator_id")
+    if text != CAMPAIGN_SECRET_GENERATOR_ID:
+        raise ValueError("secret_generator_id is not supported")
     return text
 
 
@@ -200,6 +209,7 @@ class CampaignBinding:
     replacement_policy_hash: str
     public_case_manifest_hash: str
     doe_seed_commitment: str
+    secret_generator_id: str
     budget: CampaignBudget
     derived_axes: tuple[str, ...]
 
@@ -217,6 +227,11 @@ class CampaignBinding:
                 self, field_name, _hash(getattr(self, field_name), field_name)
             )
         object.__setattr__(self, "pilot_evidence", _pilot_evidence(self.pilot_evidence))
+        object.__setattr__(
+            self,
+            "secret_generator_id",
+            _secret_generator_id(self.secret_generator_id),
+        )
         if not isinstance(self.budget, CampaignBudget):
             raise ValueError("budget must be a CampaignBudget")
         object.__setattr__(self, "derived_axes", _axes(self.derived_axes))
@@ -260,12 +275,13 @@ class CPEnvelope:
     replacement_policy_hash: str
     public_case_manifest_hash: str
     doe_seed_commitment: str
+    secret_generator_id: str
     holdout_commitment: HoldoutCommitment
     budget: CampaignBudget
     derived_axes: tuple[str, ...]
     created_utc: str
     checkpoint_id: str = "CP-ENVELOPE"
-    schema_version: str = "1.0"
+    schema_version: str = _CP_ENVELOPE_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -280,6 +296,7 @@ class CPEnvelope:
             replacement_policy_hash=self.replacement_policy_hash,
             public_case_manifest_hash=self.public_case_manifest_hash,
             doe_seed_commitment=self.doe_seed_commitment,
+            secret_generator_id=self.secret_generator_id,
             budget=self.budget,
             derived_axes=self.derived_axes,
         )
@@ -292,6 +309,7 @@ class CPEnvelope:
             "replacement_policy_hash",
             "public_case_manifest_hash",
             "doe_seed_commitment",
+            "secret_generator_id",
             "budget",
             "derived_axes",
         ):
@@ -309,7 +327,7 @@ class CPEnvelope:
             raise ValueError("holdout budget must match the committed holdout count")
         if self.checkpoint_id != "CP-ENVELOPE":
             raise ValueError("checkpoint_id must be CP-ENVELOPE")
-        if self.schema_version != "1.0":
+        if self.schema_version != _CP_ENVELOPE_SCHEMA_VERSION:
             raise ValueError("unsupported CP-ENVELOPE schema version")
         object.__setattr__(
             self, "created_utc", _utc_timestamp(self.created_utc, "created_utc")
@@ -328,6 +346,7 @@ class CPEnvelope:
             replacement_policy_hash=self.replacement_policy_hash,
             public_case_manifest_hash=self.public_case_manifest_hash,
             doe_seed_commitment=self.doe_seed_commitment,
+            secret_generator_id=self.secret_generator_id,
             budget=self.budget,
             derived_axes=self.derived_axes,
         )
@@ -372,6 +391,7 @@ class CPEnvelope:
                     "replacement_policy_hash",
                     "public_case_manifest_hash",
                     "doe_seed_commitment",
+                    "secret_generator_id",
                     "holdout_commitment",
                     "budget",
                     "derived_axes",
@@ -449,6 +469,7 @@ class CPEnvelope:
             replacement_policy_hash=payload["replacement_policy_hash"],  # type: ignore[arg-type]
             public_case_manifest_hash=payload["public_case_manifest_hash"],  # type: ignore[arg-type]
             doe_seed_commitment=payload["doe_seed_commitment"],  # type: ignore[arg-type]
+            secret_generator_id=payload["secret_generator_id"],  # type: ignore[arg-type]
             holdout_commitment=commitment,
             budget=budget,
             derived_axes=_axes(axes_payload),

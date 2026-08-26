@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+from unittest.mock import patch
 
 import pytest
 import rfc8785
@@ -11,9 +12,22 @@ from piginot.doe.commitment import (
     compute_holdout_commitment,
     verify_holdout_reveal,
 )
+from piginot.doe.secret_material import CampaignSecrets, generate_campaign_secrets
 
 _STRONG_SALT = bytes(range(32))
 _ALTERNATE_STRONG_SALT = bytes(range(32, 64))
+
+
+def _campaign_secrets() -> CampaignSecrets:
+    with patch(
+        "piginot.doe.secret_material.secrets.token_bytes",
+        side_effect=(
+            bytes(range(64, 96)),
+            bytes(range(96, 128)),
+            _STRONG_SALT,
+        ),
+    ):
+        return generate_campaign_secrets()
 
 
 def _coordinates(count: int = 64) -> tuple[dict[str, float], ...]:
@@ -26,12 +40,12 @@ def _coordinates(count: int = 64) -> tuple[dict[str, float], ...]:
 def _commitment(
     coordinates: object | None = None,
     *,
-    salt: bytes = _STRONG_SALT,
+    campaign_secrets: CampaignSecrets | None = None,
     created_utc: str = "2026-08-24T10:00:00Z",
 ) -> HoldoutCommitment:
     return compute_holdout_commitment(
         campaign_hash="a" * 64,
-        salt=salt,
+        campaign_secrets=campaign_secrets or _campaign_secrets(),
         holdout_coordinates=(_coordinates() if coordinates is None else coordinates),
         created_utc=created_utc,
     )
@@ -102,19 +116,41 @@ def test_test_only_helper_is_explicitly_nonproduction() -> None:
     [b"", b"s" * 31, bytearray(b"s" * 32), "s" * 32],
 )
 def test_salt_must_be_at_least_32_bytes(salt: object) -> None:
+    commitment = _commitment()
+
     with pytest.raises(ValueError, match="at least 32 bytes"):
-        _commitment(salt=salt)  # type: ignore[arg-type]
+        verify_holdout_reveal(
+            commitment,
+            salt=salt,  # type: ignore[arg-type]
+            holdout_coordinates=_coordinates(),
+        )
 
 
 @pytest.mark.parametrize(
     "salt",
     (bytes(32), b"x" * 32, bytes(range(8)) * 4),
 )
-def test_exported_commitment_primitive_rejects_obviously_weak_salts(
+def test_exported_reveal_primitive_rejects_obviously_weak_salts(
     salt: bytes,
 ) -> None:
+    commitment = _commitment()
+
     with pytest.raises(ValueError, match="salt.*diversity"):
-        _commitment(salt=salt)
+        verify_holdout_reveal(
+            commitment,
+            salt=salt,
+            holdout_coordinates=_coordinates(),
+        )
+
+
+def test_production_compute_does_not_accept_caller_supplied_salt() -> None:
+    with pytest.raises(TypeError, match="salt"):
+        compute_holdout_commitment(
+            campaign_hash="a" * 64,
+            salt=_STRONG_SALT,  # type: ignore[call-arg]
+            holdout_coordinates=_coordinates(),
+            created_utc="2026-08-24T10:00:00Z",
+        )
 
 
 def test_reveal_refuses_a_weak_salt_even_for_a_preexisting_record() -> None:

@@ -11,6 +11,7 @@ from typing import ClassVar
 
 from piginot.contracts import canonical_json_bytes
 from piginot.doe.roles import CaseRoleRegistry, DesignCase, EvidenceRole
+from piginot.doe.secret_material import SecretMaterialError, validate_secret_bytes
 
 ALLOCATION_ALGORITHM_ID = "s9-leakage-group-role-allocation-blake2b-256-v1"
 
@@ -19,8 +20,6 @@ _COMMITMENT_PERSON = b"piginot-s9-seed"
 _KEY_PERSON = b"piginot-s9-key"
 _GROUP_PERSON = b"piginot-s9-grp"
 _ROLE_PERSON = b"piginot-s9-role"
-_MINIMUM_SEED_BYTES = 32
-_MINIMUM_DISTINCT_OCTETS = 16
 _PRODUCTION_ROLES = (
     EvidenceRole.PILOT,
     EvidenceRole.TRAIN,
@@ -279,24 +278,10 @@ def _resolve_budget(
 
 
 def _validate_seed(seed: object) -> bytes:
-    if type(seed) is not bytes:
-        raise InvalidAllocationSeedError("allocation seed must be bytes")
-    if len(seed) < _MINIMUM_SEED_BYTES:
-        raise InvalidAllocationSeedError(
-            f"allocation seed must contain at least {_MINIMUM_SEED_BYTES} bytes"
-        )
-    if len(set(seed)) < _MINIMUM_DISTINCT_OCTETS or _is_periodic(seed):
-        raise InvalidAllocationSeedError(
-            "allocation seed has obviously insufficient octet diversity"
-        )
-    return seed
-
-
-def _is_periodic(seed: bytes) -> bool:
-    for period in range(1, len(seed) // 2 + 1):
-        if len(seed) % period == 0 and seed == seed[:period] * (len(seed) // period):
-            return True
-    return False
+    try:
+        return validate_secret_bytes(seed, "allocation seed")
+    except SecretMaterialError as exc:
+        raise InvalidAllocationSeedError(str(exc)) from exc
 
 
 def _seed_commitment(seed: bytes) -> str:

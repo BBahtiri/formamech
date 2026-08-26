@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import base64
 from dataclasses import FrozenInstanceError, dataclass, replace
 from typing import Any
+from unittest.mock import patch
 
 import pytest
 
@@ -28,6 +28,28 @@ from piginot.doe.preregistration import (
 from piginot.doe.publication import PublishedCaseStatus
 from piginot.doe.replacement import OrderedReservePolicy, ReserveCandidate
 from piginot.doe.roles import CaseRoleRegistry, EvidenceRole
+from piginot.doe.secret_material import (
+    CAMPAIGN_SECRET_GENERATOR_ID,
+    CampaignSecrets,
+    generate_campaign_secrets,
+)
+
+_DOE_SEED = bytes(range(32))
+_HOLDOUT_SALT = bytes(range(32, 64))
+_ALLOCATION_SEED = bytes(range(64, 96))
+
+
+def _campaign_secrets(
+    *,
+    doe_seed: bytes = _DOE_SEED,
+    allocation_seed: bytes = _ALLOCATION_SEED,
+    holdout_salt: bytes = _HOLDOUT_SALT,
+) -> CampaignSecrets:
+    with patch(
+        "piginot.doe.secret_material.secrets.token_bytes",
+        side_effect=(doe_seed, allocation_seed, holdout_salt),
+    ):
+        return generate_campaign_secrets()
 
 
 @dataclass(frozen=True, slots=True)
@@ -47,6 +69,7 @@ def _point(case_id: str, index: int, *, group_id: str | None = None) -> DesignPo
 
 
 def _inputs() -> dict[str, Any]:
+    campaign_secrets = _campaign_secrets()
     selected = tuple(_point(f"active-{index:03d}", index) for index in range(67))
     reserves = tuple(_point(f"reserve-{index:03d}", 100 + index) for index in range(4))
     validation = (_point("validation-000", 200),)
@@ -66,7 +89,7 @@ def _inputs() -> dict[str, Any]:
         validation_stream_id="validation-stream",
     )
     spec = CoupledDesignSpec(
-        seed=bytes(range(32)),
+        seed=campaign_secrets.doe_seed,
         sample_count=67,
         reserve_count=4,
         candidate_count=71,
@@ -77,7 +100,6 @@ def _inputs() -> dict[str, Any]:
             AxisSpec("net_section_ratio", AxisSource.DERIVED),
         ),
     )
-    allocation_seed = bytes(range(64, 96))
     reserve_roles = (
         EvidenceRole.PILOT,
         EvidenceRole.TRAIN,
@@ -92,7 +114,7 @@ def _inputs() -> dict[str, Any]:
             development=1,
             holdout=64,
         ),
-        seed=allocation_seed,
+        seed=campaign_secrets.allocation_seed,
     )
     policy = OrderedReservePolicy.preregister(
         rule_id="role-local-design-order-v1",
@@ -122,7 +144,7 @@ def _inputs() -> dict[str, Any]:
         "spec": spec,
         "design": design,
         "role_allocation": allocation,
-        "allocation_seed": allocation_seed,
+        "campaign_secrets": campaign_secrets,
         "legacy_ledger": LegacyCaseLedger(("legacy-0", "legacy-1")),
         "replacement_policy": policy,
         "budget": CampaignBudget(
@@ -133,7 +155,6 @@ def _inputs() -> dict[str, Any]:
             legacy=2,
             reserve=4,
         ),
-        "holdout_salt": bytes(range(32, 64)),
         "created_utc": "2026-08-24T12:00:00Z",
         "manifest_id": "s9-public-cases",
     }
@@ -179,6 +200,8 @@ def test_builder_closes_the_campaign_and_publishes_only_nonsealed_cases() -> Non
     assert result.binding.doe_seed_commitment == hash_spec(
         values["spec"].seed, "content"
     )
+    assert result.binding.secret_generator_id == CAMPAIGN_SECRET_GENERATOR_ID
+    assert result.checkpoint.secret_generator_id == CAMPAIGN_SECRET_GENERATOR_ID
     assert len(result.public_manifest.cases) == 7
     assert {case.role for case in result.public_manifest.cases} == {
         EvidenceRole.PILOT,
@@ -219,8 +242,8 @@ def test_result_is_immutable_and_contains_no_seed_salt_or_holdout_coordinates() 
     )
 
     assert seed_payload not in encoded
-    assert values["holdout_salt"].hex().encode() not in encoded
-    assert values["allocation_seed"].hex().encode() not in encoded
+    assert _HOLDOUT_SALT.hex().encode() not in encoded
+    assert _ALLOCATION_SEED.hex().encode() not in encoded
     assert holdout_coordinate not in result.public_manifest.to_bytes()
     assert b'"seed"' not in encoded
     assert b'"salt"' not in encoded
@@ -335,16 +358,33 @@ def test_supplied_allocation_must_replay_from_the_private_seed() -> None:
         _build(role_allocation=forged)
 
 
-def test_allocation_seed_must_be_strong_and_independent() -> None:
-    with pytest.raises(PreregistrationError, match="allocation seed"):
-        _build(allocation_seed=b"weak")
+def test_campaign_secrets_must_come_from_csprng_bundle() -> None:
+    with pytest.raises(PreregistrationError, match="campaign_secrets"):
+        _build(campaign_secrets=object())
 
+
+def test_preregistration_no_longer_accepts_raw_secret_keywords() -> None:
     values = _inputs()
-    doe_seed = base64.urlsafe_b64decode(
-        values["spec"].seed.payload + "=" * (-len(values["spec"].seed.payload) % 4)
-    )
-    with pytest.raises(PreregistrationError, match="independent"):
-        _build(allocation_seed=doe_seed)
+    values.pop("campaign_secrets")
+
+    with pytest.raises(TypeError, match="unexpected keyword"):
+        build_preregistration(
+            **values,
+            allocation_seed=_ALLOCATION_SEED,
+            holdout_salt=_HOLDOUT_SALT,
+        )
+
+
+def test_spec_seed_must_match_private_doe_secret() -> None:
+    with pytest.raises(PreregistrationError, match="DOE seed"):
+        _build(campaign_secrets=_campaign_secrets(doe_seed=bytes(range(96, 128))))
+
+
+def test_allocation_seed_must_replay_from_private_secret() -> None:
+    with pytest.raises(PreregistrationError, match="allocation replay"):
+        _build(
+            campaign_secrets=_campaign_secrets(allocation_seed=bytes(range(96, 128)))
+        )
 
 
 def test_reserves_must_exactly_match_policy_role_distribution_and_ranks() -> None:
@@ -455,12 +495,6 @@ def test_seed_must_have_strong_byte_origin(seed: bytes | str) -> None:
 
     with pytest.raises(PreregistrationError, match="seed"):
         _build(spec=spec)
-
-
-@pytest.mark.parametrize("salt", (b"x" * 32, bytes(32), bytes(range(8)) * 4))
-def test_holdout_salt_must_not_be_obviously_low_entropy(salt: bytes) -> None:
-    with pytest.raises(PreregistrationError, match="salt"):
-        _build(holdout_salt=salt)
 
 
 def test_exact64_holdout_coordinates_must_be_unique() -> None:

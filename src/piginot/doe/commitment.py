@@ -13,11 +13,10 @@ from types import MappingProxyType
 from typing import ClassVar, TypeVar
 
 from piginot.contracts import canonical_json_bytes
+from piginot.doe.secret_material import CampaignSecrets, validate_secret_bytes
 
 _SCHEME = "blake2b-256"
 _PRODUCTION_HOLDOUT_COUNT = 64
-_MINIMUM_SALT_BYTES = 32
-_MINIMUM_DISTINCT_SALT_OCTETS = 16
 _LOWER_HEX_256 = re.compile(r"^[0-9a-f]{64}$")
 _UTC_TIMESTAMP = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?Z$")
 
@@ -39,20 +38,7 @@ def _validate_utc_timestamp(value: object) -> str:
 
 
 def _validate_salt(salt: object) -> bytes:
-    if not isinstance(salt, bytes) or len(salt) < _MINIMUM_SALT_BYTES:
-        raise ValueError("salt must be bytes containing at least 32 bytes")
-    if len(set(salt)) < _MINIMUM_DISTINCT_SALT_OCTETS or _is_periodic(salt):
-        raise ValueError("salt has obviously insufficient octet diversity")
-    return salt
-
-
-def _is_periodic(value: bytes) -> bool:
-    for period in range(1, len(value) // 2 + 1):
-        if len(value) % period == 0 and value == value[:period] * (
-            len(value) // period
-        ):
-            return True
-    return False
+    return validate_secret_bytes(salt, "salt")
 
 
 def _coordinate_payload(
@@ -205,17 +191,19 @@ def _compute(
 def compute_holdout_commitment(
     *,
     campaign_hash: str,
-    salt: bytes,
+    campaign_secrets: CampaignSecrets,
     holdout_coordinates: Iterable[Mapping[str, float]] | object,
     created_utc: str,
 ) -> HoldoutCommitment:
     """Create a production commitment for exactly 64 unique coordinates."""
 
+    if type(campaign_secrets) is not CampaignSecrets:
+        raise ValueError("campaign_secrets must come from generate_campaign_secrets()")
     return _compute(
         record_type=HoldoutCommitment,
         expected_count=_PRODUCTION_HOLDOUT_COUNT,
         campaign_hash=campaign_hash,
-        salt=salt,
+        salt=campaign_secrets.holdout_salt,
         holdout_coordinates=holdout_coordinates,
         created_utc=created_utc,
     )

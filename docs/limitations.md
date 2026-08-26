@@ -59,10 +59,14 @@ rejection ledger but are not claimed as dense guard strata.
 
 S9 provides contracts for immutable case roles and transitive leakage groups,
 deterministic non-holdout reserve replacement, and an exact-64 BLAKE2b-256 holdout
-commitment. No production commitment or `CP-ENVELOPE` exists yet because the first
-production family, envelope, budget, DOE quotas, leakage tolerance, and reserve
-distribution have not been approved. A test fixture is not production evidence, so
-G9 remains incomplete and S10 must not begin.
+commitment. The production ceremony begins with three 32-byte OS-CSPRNG draws for the
+DOE seed, allocation seed, and holdout salt; closure accepts only that generated
+bundle and CP-ENVELOPE schema 1.1 binds its generator identity. This code path guards
+against accidental caller-chosen secrets, but cannot attest that hostile code in the
+same Python process was unmodified. No production commitment or `CP-ENVELOPE` exists
+yet because the first production family, envelope, budget, DOE quotas, leakage
+tolerance, and reserve distribution have not been approved. A test fixture is not
+production evidence, so G9 remains incomplete and S10 must not begin.
 
 When instantiated, the public commitment will prove only that a later reveal matches
 the committed coordinates. It cannot prove that the local holder never saw the

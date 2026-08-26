@@ -17,6 +17,7 @@ from piginot.doe.checkpoint import (
 )
 from piginot.doe.commitment import HoldoutCommitment
 from piginot.doe.roles import EvidenceRole
+from piginot.doe.secret_material import CAMPAIGN_SECRET_GENERATOR_ID
 
 
 def _budget(**overrides: object) -> CampaignBudget:
@@ -48,6 +49,7 @@ def _binding(**overrides: object) -> CampaignBinding:
         "replacement_policy_hash": "2" * 64,
         "public_case_manifest_hash": "3" * 64,
         "doe_seed_commitment": "4" * 64,
+        "secret_generator_id": CAMPAIGN_SECRET_GENERATOR_ID,
         "budget": _budget(),
         "derived_axes": ("net_section_ratio",),
     }
@@ -80,6 +82,7 @@ def _checkpoint(
         "replacement_policy_hash": bound.replacement_policy_hash,
         "public_case_manifest_hash": bound.public_case_manifest_hash,
         "doe_seed_commitment": bound.doe_seed_commitment,
+        "secret_generator_id": bound.secret_generator_id,
         "holdout_commitment": _commitment(campaign_hash=campaign_hash),
         "budget": bound.budget,
         "derived_axes": bound.derived_axes,
@@ -95,12 +98,15 @@ def test_checkpoint_binds_every_preregistered_input_without_holdout_secrets() ->
     payload = checkpoint.to_bytes()
 
     assert checkpoint.checkpoint_id == "CP-ENVELOPE"
+    assert checkpoint.schema_version == "1.1"
     assert checkpoint.budget.holdout == 64
     assert checkpoint.budget.production_cases == 232
     assert checkpoint.binding == _binding()
     assert checkpoint.doe_plan_hash == checkpoint.private_doe_plan_hash
     assert checkpoint.doe_seed_commitment_hash == checkpoint.doe_seed_commitment
+    assert checkpoint.secret_generator_id == CAMPAIGN_SECRET_GENERATOR_ID
     assert checkpoint.campaign_hash == compute_campaign_hash(checkpoint.binding)
+    assert CAMPAIGN_SECRET_GENERATOR_ID.encode() in payload
     assert b'"salt":' not in payload
     assert b'"seed":' not in payload
     assert b'"coordinates":' not in payload
@@ -268,6 +274,8 @@ def test_campaign_binding_rejects_malformed_hashes(field_name: str) -> None:
             "IDs must be unique",
         ),
         ({"budget": object()}, "CampaignBudget"),
+        ({"secret_generator_id": ""}, "secret_generator_id"),
+        ({"secret_generator_id": "different-generator-v1"}, "secret_generator"),
         ({"derived_axes": ("not an identifier",)}, "valid identifiers"),
         ({"derived_axes": ("net_section_ratio", 1)}, "valid identifiers"),
         (
@@ -365,6 +373,7 @@ def test_checkpoint_from_bytes_rejects_duplicate_keys() -> None:
     (
         ({"holdout_commitment": object()}, "HoldoutCommitment"),
         ({"checkpoint_id": "CP-OTHER"}, "checkpoint_id"),
+        ({"schema_version": "1.0"}, "schema version"),
         ({"schema_version": "2.0"}, "schema version"),
         ({"created_utc": "2026-08-24T12:05:00+00:00"}, "ending in Z"),
         ({"created_utc": "not-a-timestampZ"}, "valid RFC 3339"),

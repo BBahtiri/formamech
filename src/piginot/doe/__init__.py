@@ -104,6 +104,12 @@ from piginot.doe.roles import (
     authorize_production_label,
     validate_node_observations,
 )
+from piginot.doe.secret_material import (
+    CAMPAIGN_SECRET_GENERATOR_ID,
+    CampaignSecrets,
+    SecretGenerationError,
+    generate_campaign_secrets,
+)
 
 __all__ = (
     "ALLOCATION_ALGORITHM_ID",
@@ -111,9 +117,11 @@ __all__ = (
     "AxisSource",
     "AxisSpec",
     "CPEnvelope",
+    "CAMPAIGN_SECRET_GENERATOR_ID",
     "CampaignBinding",
     "CampaignBudget",
     "CampaignCore",
+    "CampaignSecrets",
     "CaseRoleRegistry",
     "CommitmentOrderError",
     "CommittedArtifactEvidence",
@@ -170,6 +178,7 @@ __all__ = (
     "S9GateEvaluation",
     "S9GateMeasurements",
     "SeedEncoding",
+    "SecretGenerationError",
     "assign_group",
     "allocate_evidence_roles",
     "authorize_production_label",
@@ -179,6 +188,7 @@ __all__ = (
     "compute_holdout_commitment",
     "coverage_gate_checks",
     "evaluate_s9_gate",
+    "generate_campaign_secrets",
     "generate_coupled_design",
     "measure_design_coverage",
     "normalized_coordinates",
