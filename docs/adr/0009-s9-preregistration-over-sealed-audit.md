@@ -56,6 +56,16 @@ The five evidence roles are `PILOT`, `TRAIN`, `DEVELOPMENT`, `HOLDOUT` and `LEGA
 A case can be assigned exactly once, even if the second write repeats the same role.
 Cases joined by geometry lineage, morph seed or a preregistered near-duplicate
 tolerance form one transitive `leakage_group_id` and are assigned atomically.
+The tolerance is carried by a required, versioned `LeakagePolicy`; a caller cannot
+substitute already-materialised group strings for that policy. The built-in DOE
+records one pre-role `LeakageDescriptor` per selected or reserve case. Its lineage
+identity comes from the exact primitive coordinate identity, its morph-seed identity
+comes from the domain-separated proposal stream, and its proximity coordinates are
+the normalized primitive-plus-derived DOE axes. The design constructor and campaign
+closure independently replay the policy over those descriptors and reject any group
+identifier that differs. The policy and descriptors are private because they include
+the sealed population, but both are committed by `private_doe_plan_hash` before any
+production label is generated.
 Production roles are allocated by an exact whole-group partition driven by the second
 secret in the same generated campaign-secret bundle. Campaign closure verifies that
 the bundle's DOE seed is exactly the seed encoded in the design specification,

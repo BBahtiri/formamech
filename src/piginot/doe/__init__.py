@@ -55,7 +55,7 @@ from piginot.doe.gate import (
     S9GateMeasurements,
     evaluate_s9_gate,
 )
-from piginot.doe.leakage import LeakageDescriptor, bind_leakage_groups
+from piginot.doe.leakage import LeakageDescriptor, LeakagePolicy, bind_leakage_groups
 from piginot.doe.preregistration import (
     LegacyCaseLedger,
     PreregistrationError,
@@ -150,6 +150,7 @@ __all__ = (
     "InvalidProductionBudgetError",
     "LeakageDescriptor",
     "LeakageGroupRoleError",
+    "LeakagePolicy",
     "LegacyCaseLedger",
     "LiveArtifactEvidence",
     "LiveCommitmentOrderEvidence",

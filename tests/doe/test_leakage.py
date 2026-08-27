@@ -5,7 +5,8 @@ from typing import Any
 
 import pytest
 
-from piginot.doe.leakage import LeakageDescriptor, bind_leakage_groups
+from piginot.contracts import canonical_json_bytes
+from piginot.doe.leakage import LeakageDescriptor, LeakagePolicy, bind_leakage_groups
 
 
 def _descriptor(
@@ -33,7 +34,10 @@ def test_groups_bind_lineage_seed_and_near_duplicate_relations_transitively() ->
         _descriptor("isolated", lineage="lineage-z", seed=100, x=0.95, y=0.05),
     )
 
-    groups = bind_leakage_groups(descriptors, near_duplicate_tolerance=0.01)
+    groups = bind_leakage_groups(
+        descriptors,
+        policy=LeakagePolicy(near_duplicate_tolerance=0.01),
+    )
 
     assert groups["a"] == groups["b"] == groups["c"] == groups["d"]
     assert groups["isolated"] != groups["a"]
@@ -46,9 +50,11 @@ def test_group_binding_is_order_independent_and_byte_stable() -> None:
         _descriptor("b", lineage="same", seed=2, x=0.9, y=0.8),
     )
 
-    forward = bind_leakage_groups(descriptors, near_duplicate_tolerance=0.0)
+    policy = LeakagePolicy(near_duplicate_tolerance=0.0)
+    forward = bind_leakage_groups(descriptors, policy=policy)
     reverse = bind_leakage_groups(
-        tuple(reversed(descriptors)), near_duplicate_tolerance=0.0
+        tuple(reversed(descriptors)),
+        policy=policy,
     )
 
     assert dict(forward) == dict(reverse)
@@ -94,7 +100,7 @@ def test_group_binding_rejects_ambiguous_or_invalid_populations(
     with pytest.raises(ValueError, match=message):
         bind_leakage_groups(
             descriptors,
-            near_duplicate_tolerance=tolerance,
+            policy=LeakagePolicy(near_duplicate_tolerance=tolerance),
         )
 
 
@@ -133,6 +139,15 @@ def test_group_binding_rejects_ambiguous_or_invalid_populations(
                 "case_id": "case",
                 "geometry_lineage_id": "lineage",
                 "morph_seed": -1,
+                "normalized_coordinates": {"x": 0.5},
+            },
+            "morph_seed",
+        ),
+        (
+            {
+                "case_id": "case",
+                "geometry_lineage_id": "lineage",
+                "morph_seed": 2**53,
                 "normalized_coordinates": {"x": 0.5},
             },
             "morph_seed",
@@ -207,13 +222,10 @@ def test_group_binding_rejects_non_descriptor_and_non_numeric_tolerance() -> Non
     with pytest.raises(ValueError, match="LeakageDescriptor"):
         bind_leakage_groups(
             (descriptor, object()),  # type: ignore[arg-type]
-            near_duplicate_tolerance=0.0,
+            policy=LeakagePolicy(near_duplicate_tolerance=0.0),
         )
     with pytest.raises(ValueError, match="must be numeric"):
-        bind_leakage_groups(
-            (descriptor,),
-            near_duplicate_tolerance=True,
-        )
+        LeakagePolicy(near_duplicate_tolerance=True)
 
 
 def test_redundant_correlation_edges_preserve_one_component() -> None:
@@ -228,16 +240,43 @@ def test_redundant_correlation_edges_preserve_one_component() -> None:
         for index in range(3)
     )
 
-    groups = bind_leakage_groups(descriptors, near_duplicate_tolerance=0.0)
+    groups = bind_leakage_groups(
+        descriptors,
+        policy=LeakagePolicy(near_duplicate_tolerance=0.0),
+    )
 
     assert len(set(groups.values())) == 1
 
 
 def test_group_mapping_and_descriptor_coordinates_are_immutable() -> None:
     descriptor = _descriptor("case", lineage="lineage", seed=1, x=0.5, y=0.5)
-    groups = bind_leakage_groups((descriptor,), near_duplicate_tolerance=0.0)
+    groups = bind_leakage_groups(
+        (descriptor,),
+        policy=LeakagePolicy(near_duplicate_tolerance=0.0),
+    )
 
     with pytest.raises(TypeError):
         descriptor.normalized_coordinates["x"] = 0.8  # type: ignore[index]
     with pytest.raises(TypeError):
         groups["case"] = "rewritten"  # type: ignore[index]
+
+
+def test_leakage_policy_is_explicit_versioned_and_canonical() -> None:
+    with pytest.raises(TypeError):
+        LeakagePolicy()  # type: ignore[call-arg]
+    with pytest.raises(ValueError, match="unsupported"):
+        LeakagePolicy(near_duplicate_tolerance=0.01, policy_id="unversioned")
+
+    policy = LeakagePolicy(near_duplicate_tolerance=0.01)
+
+    assert policy.policy_id == "geometry-lineage-morph-seed-chebyshev-v1"
+    assert b'"$type":"piginot.doe.LeakagePolicy"' in canonical_json_bytes(policy)
+
+
+def test_group_binding_requires_the_exact_policy_contract() -> None:
+    descriptor = _descriptor("case", lineage="lineage", seed=1, x=0.5, y=0.5)
+
+    with pytest.raises(TypeError):
+        bind_leakage_groups((descriptor,))  # type: ignore[call-arg]
+    with pytest.raises(ValueError, match="LeakagePolicy"):
+        bind_leakage_groups((descriptor,), policy=object())  # type: ignore[arg-type]

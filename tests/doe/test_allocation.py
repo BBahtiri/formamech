@@ -16,7 +16,7 @@ from piginot.doe.allocation import (
     RoleAllocation,
     allocate_evidence_roles,
 )
-from piginot.doe.leakage import LeakageDescriptor, bind_leakage_groups
+from piginot.doe.leakage import LeakageDescriptor, LeakagePolicy, bind_leakage_groups
 from piginot.doe.roles import CaseRoleRegistry, EvidenceRole
 
 
@@ -107,7 +107,10 @@ def test_transitively_bound_groups_stay_atomic() -> None:
         LeakageDescriptor("e", "lineage-e", 4, {"x": 0.4}),
         LeakageDescriptor("f", "lineage-f", 5, {"x": 0.8}),
     )
-    group_ids = bind_leakage_groups(descriptors, near_duplicate_tolerance=0.0)
+    group_ids = bind_leakage_groups(
+        descriptors,
+        policy=LeakagePolicy(near_duplicate_tolerance=0.0),
+    )
     cases = tuple(Case(item.case_id, group_ids[item.case_id]) for item in descriptors)
     budget = ProductionRoleBudget(pilot=3, train=1, development=1, holdout=1)
 

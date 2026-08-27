@@ -3,8 +3,8 @@
 - Status: Draft for human approval
 - Step: S9
 - Blocks: G9 and S10
-- Drafted against branch: `codex/s9-doe-preregistration`
-- Drafted against commit: `cea6fff`
+- Branch: `codex/s9-doe-preregistration`
+- Contract baseline: `CP-ENVELOPE` schema 1.1 and ADR 0009
 
 This page records the scientific campaign choices that must be approved before a
 production `CP-ENVELOPE` can be created. It is deliberately not a commitment,
@@ -45,16 +45,22 @@ Each row needs an explicit owner decision before the production ceremony.
 
 | Item | Required Decision | Current Draft Position |
 | --- | --- | --- |
-| Campaign identifier | Stable human-readable ID for the first production campaign. | `s9-production-v1` is only a placeholder. |
 | Production family | Exact compiled family, reference mesh identity, morph map recipe, validity policy hash, and S6 membership predicate. | Not approved. The S1 spike families are `role=LEGACY` and cannot be reused as release evidence. |
+| Pilot evidence | Non-empty ordered set of content-addressed `EvidenceReference` records with role `PILOT` or `LEGACY`. | Not approved. The tracked S1 closeout is eligible only as a `LEGACY` decision reference; its cases remain ineligible as release evidence. |
 | Executable envelope | Primitive bounds, derived bounds, material bounds, load bounds, and refusal policy for out-of-envelope inputs. | Not approved. The envelope must be declared in derived-ratio space. |
 | Derived axes | Non-empty ordered list of derived stratification axes to bind into `CP-ENVELOPE`. | Must include the governing concentration or net-section ratio for any notched/tapered family. Other axes depend on the approved family. |
 | DOE axis policy | Axis weights, stratum counts, minimum per stratum, boundary widths, boundary quotas, interactions, and difficult-region quotas. | Not approved. The high-concentration region must have an explicit quota rather than relying on maximin fill alone. |
-| Role budget | Positive `PILOT`, `TRAIN`, `DEVELOPMENT`, exact `HOLDOUT=64`, `LEGACY`, and `RESERVE` counts. | Not approved. The DOE `sample_count` must equal `pilot + train + development + holdout`; `reserve_count` must equal `reserve`. |
+| Role budget | Positive `PILOT`, `TRAIN`, `DEVELOPMENT`, exact `HOLDOUT=64`, and explicit non-negative `LEGACY` and `RESERVE` counts. | Not approved. The DOE `sample_count` must equal `pilot + train + development + holdout`; `reserve_count` must equal `reserve`. |
 | Candidate streams | `candidate_count`, `validation_count`, `validation_candidate_count`, `guard_band_count`, and `guard_band_fraction`. | Not approved. Candidate counts must be large enough to expose S6 family-membership and derived-bound rejections. |
-| Leakage tolerance | Exact rule for transitive `leakage_group_id` creation: geometry lineage, morph seed, near-duplicate tolerance, and any family-specific equivalence. | Not approved. This must be fixed before role allocation. |
+| Leakage policy | Near-duplicate tolerance in normalized primitive-plus-derived axis space. | Not approved. The algorithm is fixed as `geometry-lineage-morph-seed-chebyshev-v1`; the DOE records descriptors, and closure replays them before accepting the role allocation. The private DOE-plan hash binds both policy and descriptors. |
 | Reserve distribution | Ordered reserve policy per replaceable role and exhaustion behavior. | Not approved. Version one permits reserves only for `PILOT`, `TRAIN`, and `DEVELOPMENT`; `HOLDOUT` is never replaced. |
+| Public naming | Stable public `manifest_id` and replacement `rule_id`. | Not approved. `s9-public-cases` is only the code default; guard and DOE stream algorithm IDs are fixed by code. |
 | Private reveal handling | Local ignored path and access controls for salt plus exact holdout coordinates. | Not approved. The reveal file must not enter Git, gate artifacts, tests, or training inputs. |
+
+The production family is the first decision. It fixes the reference mesh, primitive
+and derived vocabulary, executable envelope, meaningful difficult regions, and the
+cost basis for every population count. Numeric DOE or budget values approved before
+that choice would be unsupported assumptions and must not be used.
 
 ## Derived-Quantity Requirement
 
@@ -88,8 +94,13 @@ committed:
 6. Persist the private reveal outside Git before publication.
 7. Call `build_preregistration()` once with the approved campaign inputs and the
    same `CampaignSecrets` bundle.
-8. Commit the public `CP-ENVELOPE`, public manifest, role ledger, replacement
-   policy, and gate artifact in the order required by ADR 0009.
+8. Commit only the public S9 artifacts: `CP-ENVELOPE`, public non-holdout case
+   manifest, replacement policy, and any public provenance needed by ADR 0009.
+   Keep private DOE-plan preimages, production role-allocation preimages, holdout
+   coordinates, salt, and reveal material outside Git.
+9. Create downstream artifacts only after the public commitment is tracked and
+   clean; capture live mtime evidence at artifact creation and verify Git first-add
+   ancestry before claiming `G9.commitment-order`.
 
 ## Non-Approvals
 
@@ -108,6 +119,7 @@ The following are intentionally not approved by this draft:
 ## Sign-Off Record
 
 Approval requires replacing this section with the actual decision record, including
-the decision owner, UTC timestamp, approved campaign identifier, and the committed
-hashes of the family, envelope, DOE plan, role budget, leakage policy, and reserve
-policy.
+the decision owner, UTC timestamp, approved public identifiers, exact scientific and
+population values above, and the resulting hashes of the family, pilot evidence,
+envelope, private DOE plan (including leakage policy and descriptors), role registry,
+reserve policy, and public case manifest.

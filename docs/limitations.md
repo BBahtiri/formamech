@@ -63,7 +63,11 @@ commitment. The production ceremony begins with three 32-byte OS-CSPRNG draws fo
 DOE seed, allocation seed, and holdout salt; closure accepts only that generated
 bundle and CP-ENVELOPE schema 1.1 binds its generator identity. This code path guards
 against accidental caller-chosen secrets, but cannot attest that hostile code in the
-same Python process was unmodified. No production commitment or `CP-ENVELOPE` exists
+same Python process was unmodified. The required near-duplicate tolerance and the
+pre-role lineage, morph-seed, and normalized-coordinate descriptors are replayed at
+design construction and campaign closure, then committed through the private DOE-plan
+hash; they are finite campaign metadata, not proof that no unrecorded correlation
+exists. No production commitment or `CP-ENVELOPE` exists
 yet because the first production family, envelope, budget, DOE quotas, leakage
 tolerance, and reserve distribution have not been approved. A test fixture is not
 production evidence, so G9 remains incomplete and S10 must not begin.

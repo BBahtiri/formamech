@@ -13,6 +13,7 @@ from piginot.doe.design import (
     InteractionSpec,
     generate_coupled_design,
 )
+from piginot.doe.leakage import LeakagePolicy
 from tests.doe.test_design import _CoupledPredicate, _spec
 
 
@@ -66,6 +67,7 @@ def test_minimum_stratum_count_includes_zero_and_ids_uncovered_requirements() ->
                 minimum_per_boundary=1,
             ),
         ),
+        leakage_policy=LeakagePolicy(near_duplicate_tolerance=0.0),
         interactions=(InteractionSpec("xy", ("x", "y"), minimum_per_cell=1),),
         difficult_regions=(
             DifficultRegion(

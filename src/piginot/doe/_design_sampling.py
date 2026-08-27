@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from piginot.contracts import CanonicalQuantity, Dimension, Unit
 from piginot.doe.design import (
@@ -25,6 +25,7 @@ from piginot.doe.design import (
     requirement_ids_for_point,
     weighted_distance,
 )
+from piginot.doe.leakage import LeakageDescriptor, LeakagePolicy, bind_leakage_groups
 
 _CANDIDATE_DOMAIN = "piginot.s9.doe.candidate-lhs.v1"
 _VALIDATION_DOMAIN = "piginot.s9.doe.validation-lhs.v1"
@@ -49,6 +50,7 @@ class _CompiledAxis:
 class _Candidate:
     point: DesignPoint
     normalized: Mapping[str, float]
+    leakage_descriptor: LeakageDescriptor
 
 
 def generate_coupled_design_impl(
@@ -85,6 +87,11 @@ def generate_coupled_design_impl(
         selected,
         spec.axes,
     )
+    selected_points, reserve_points, leakage_descriptors = _bind_selected_leakage(
+        selected,
+        reserves,
+        spec,
+    )
     validation_pool, validation_rejections = _evaluate_lhs_proposals(
         predicate,
         spec,
@@ -103,8 +110,8 @@ def generate_coupled_design_impl(
         if counts.get(quota_id, 0) < target
     )
     return CoupledDesign(
-        selected_points=tuple(candidate.point for candidate in selected),
-        reserve_points=tuple(candidate.point for candidate in reserves),
+        selected_points=selected_points,
+        reserve_points=reserve_points,
         guard_band_points=guards,
         validation_points=tuple(candidate.point for candidate in validation),
         candidate_rejections=candidate_rejections,
@@ -116,6 +123,36 @@ def generate_coupled_design_impl(
         unresolved_quota_ids=unresolved,
         candidate_stream_id=_stream_id(spec.seed, _CANDIDATE_DOMAIN),
         validation_stream_id=_stream_id(spec.seed, _VALIDATION_DOMAIN),
+        leakage_policy=spec.leakage_policy,
+        leakage_descriptors=leakage_descriptors,
+    )
+
+
+def _bind_selected_leakage(
+    selected: Sequence[_Candidate],
+    reserves: Sequence[_Candidate],
+    spec: CoupledDesignSpec,
+) -> tuple[
+    tuple[DesignPoint, ...],
+    tuple[DesignPoint, ...],
+    tuple[LeakageDescriptor, ...],
+]:
+    campaign_candidates = (*tuple(selected), *tuple(reserves))
+    descriptors = tuple(
+        candidate.leakage_descriptor for candidate in campaign_candidates
+    )
+    groups = bind_leakage_groups(descriptors, policy=spec.leakage_policy)
+
+    def with_bound_group(candidate: _Candidate) -> DesignPoint:
+        return replace(
+            candidate.point,
+            leakage_group_id=groups[candidate.point.case_id],
+        )
+
+    return (
+        tuple(with_bound_group(candidate) for candidate in selected),
+        tuple(with_bound_group(candidate) for candidate in reserves),
+        descriptors,
     )
 
 
@@ -131,6 +168,7 @@ def normalized_coordinates_impl(
         validation_count=1,
         validation_candidate_count=1,
         axes=tuple(axes),
+        leakage_policy=LeakagePolicy(near_duplicate_tolerance=0.0),
     )
     compiled = _compile_axes(predicate, temporary)
     combined = point.all_coordinates
@@ -233,6 +271,7 @@ def _evaluate_lhs_proposals(
             raw,
             case_id=f"{case_prefix}-{row:06d}",
             stream_domain=domain,
+            morph_seed=_proposal_seed(spec.seed, domain, row),
         )
         if isinstance(evaluated, _Candidate):
             accepted = (*accepted, evaluated)
@@ -248,6 +287,7 @@ def _evaluate_candidate(
     *,
     case_id: str,
     stream_domain: str,
+    morph_seed: int,
 ) -> _Candidate | RejectedProposal:
     primitive = _bound_table(predicate.primitive_bounds, "primitive")
     theta: dict[str, object] = {}
@@ -296,6 +336,12 @@ def _evaluate_candidate(
             strata=strata,
         ),
         normalized=_freeze(normalized),
+        leakage_descriptor=LeakageDescriptor(
+            case_id=case_id,
+            geometry_lineage_id=f"geometry-{_coordinate_id(raw)}",
+            morph_seed=morph_seed,
+            normalized_coordinates=normalized,
+        ),
     )
 
 
@@ -541,3 +587,12 @@ def _coordinate_id(coordinates: Mapping[str, float]) -> str:
         f"{name}={value.hex()}" for name, value in sorted(coordinates.items())
     ).encode("ascii")
     return hashlib.blake2b(payload, digest_size=12, person=_PERSON).hexdigest()
+
+
+def _proposal_seed(seed: DoeSeed | bytes | str, domain: str, index: int) -> int:
+    """Return one canonical-JSON-safe seed identity for a DOE proposal."""
+
+    return int.from_bytes(
+        _digest(seed, f"{domain}/morph-seed", index)[:6],
+        "big",
+    )

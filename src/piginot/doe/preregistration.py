@@ -35,6 +35,7 @@ from piginot.doe.design import (
     DoeSeed,
     SeedEncoding,
 )
+from piginot.doe.leakage import LeakageDescriptor, bind_leakage_groups
 from piginot.doe.publication import (
     PublishedCase,
     PublishedCaseManifest,
@@ -200,6 +201,7 @@ def _validate_design_shape(
         raise PreregistrationError(
             "DOE reserve_count must equal the fixed reserve budget"
         )
+    _validate_leakage_grouping(spec, design)
 
     primitive, derived, strata = _axis_schemas(spec)
     for collection, points, expected_guard in (
@@ -228,6 +230,42 @@ def _validate_design_shape(
             "selected and reserve case IDs must be globally unique"
         )
     return primitive, derived, strata
+
+
+def _validate_leakage_grouping(
+    spec: CoupledDesignSpec,
+    design: CoupledDesign,
+) -> None:
+    if design.leakage_policy != spec.leakage_policy:
+        raise PreregistrationError("design leakage policy does not match DOE spec")
+    campaign_points = (*design.selected_points, *design.reserve_points)
+    if any(
+        type(descriptor) is not LeakageDescriptor
+        for descriptor in design.leakage_descriptors
+    ):
+        raise PreregistrationError(
+            "leakage descriptors must contain LeakageDescriptor values"
+        )
+    expected_case_ids = {point.case_id for point in campaign_points}
+    descriptor_case_ids = {
+        descriptor.case_id for descriptor in design.leakage_descriptors
+    }
+    if descriptor_case_ids != expected_case_ids:
+        raise PreregistrationError(
+            "leakage descriptors must match selected and reserve cases"
+        )
+    try:
+        groups = bind_leakage_groups(
+            design.leakage_descriptors,
+            policy=spec.leakage_policy,
+        )
+    except ValueError as exc:
+        raise PreregistrationError(f"invalid leakage grouping: {exc}") from exc
+    for point in campaign_points:
+        if point.leakage_group_id != groups[point.case_id]:
+            raise PreregistrationError(
+                f"case {point.case_id!r} does not match the approved leakage grouping"
+            )
 
 
 def _validate_campaign_budget_shape(budget: CampaignBudget) -> None:

@@ -20,6 +20,11 @@ from piginot.doe.design import (
     CoupledDesignSpec,
     DesignPoint,
 )
+from piginot.doe.leakage import (
+    LeakageDescriptor,
+    LeakagePolicy,
+    bind_leakage_groups,
+)
 from piginot.doe.preregistration import (
     LegacyCaseLedger,
     PreregistrationError,
@@ -68,10 +73,42 @@ def _point(case_id: str, index: int, *, group_id: str | None = None) -> DesignPo
     )
 
 
+def _leakage_descriptor(point: DesignPoint) -> LeakageDescriptor:
+    return LeakageDescriptor(
+        case_id=point.case_id,
+        geometry_lineage_id=f"lineage-{point.case_id}",
+        morph_seed=int(point.coordinates["width"]),
+        normalized_coordinates={
+            "width": point.coordinates["width"] / 256.0,
+            "net_section_ratio": point.derived_coordinates["net_section_ratio"] / 2.0,
+        },
+    )
+
+
 def _inputs() -> dict[str, Any]:
     campaign_secrets = _campaign_secrets()
-    selected = tuple(_point(f"active-{index:03d}", index) for index in range(67))
-    reserves = tuple(_point(f"reserve-{index:03d}", 100 + index) for index in range(4))
+    unbound_selected = tuple(
+        _point(f"active-{index:03d}", index) for index in range(67)
+    )
+    unbound_reserves = tuple(
+        _point(f"reserve-{index:03d}", 100 + index) for index in range(4)
+    )
+    leakage_policy = LeakagePolicy(near_duplicate_tolerance=0.0)
+    leakage_descriptors = tuple(
+        _leakage_descriptor(point) for point in (*unbound_selected, *unbound_reserves)
+    )
+    leakage_groups = bind_leakage_groups(
+        leakage_descriptors,
+        policy=leakage_policy,
+    )
+    selected = tuple(
+        replace(point, leakage_group_id=leakage_groups[point.case_id])
+        for point in unbound_selected
+    )
+    reserves = tuple(
+        replace(point, leakage_group_id=leakage_groups[point.case_id])
+        for point in unbound_reserves
+    )
     validation = (_point("validation-000", 200),)
     design = CoupledDesign(
         selected_points=selected,
@@ -87,6 +124,8 @@ def _inputs() -> dict[str, Any]:
         unresolved_quota_ids=(),
         candidate_stream_id="candidate-stream",
         validation_stream_id="validation-stream",
+        leakage_policy=leakage_policy,
+        leakage_descriptors=leakage_descriptors,
     )
     spec = CoupledDesignSpec(
         seed=campaign_secrets.doe_seed,
@@ -99,6 +138,7 @@ def _inputs() -> dict[str, Any]:
             AxisSpec("width", AxisSource.PRIMITIVE),
             AxisSpec("net_section_ratio", AxisSource.DERIVED),
         ),
+        leakage_policy=leakage_policy,
     )
     reserve_roles = (
         EvidenceRole.PILOT,
@@ -318,10 +358,26 @@ def test_registry_cannot_contain_an_extra_nonlegacy_campaign_case() -> None:
 def test_whole_point_leakage_identity_must_match_registry() -> None:
     values = _inputs()
     design = values["design"]
-    changed = replace(design.selected_points[0], leakage_group_id="substituted-group")
+    first_descriptor, *remaining_descriptors = design.leakage_descriptors
+    changed_descriptors = (
+        replace(
+            first_descriptor,
+            geometry_lineage_id=f"{first_descriptor.geometry_lineage_id}-changed",
+        ),
+        *remaining_descriptors,
+    )
+    changed_groups = bind_leakage_groups(
+        changed_descriptors,
+        policy=design.leakage_policy,
+    )
+    changed = replace(
+        design.selected_points[0],
+        leakage_group_id=changed_groups[design.selected_points[0].case_id],
+    )
     changed_design = replace(
         design,
         selected_points=(changed, *design.selected_points[1:]),
+        leakage_descriptors=changed_descriptors,
     )
 
     with pytest.raises(PreregistrationError, match="leakage_group_id"):
@@ -432,35 +488,102 @@ def test_reserves_must_exactly_match_policy_role_distribution_and_ranks() -> Non
 
 def test_public_reserve_cannot_share_a_hidden_holdout_leakage_group() -> None:
     values = _inputs()
-    allocation = values["role_allocation"]
-    holdout_group = next(
-        assignment.leakage_group_id
-        for assignment in allocation.registry.assignments.values()
-        if assignment.role is EvidenceRole.HOLDOUT
-    )
     design = values["design"]
-    changed_reserve = replace(
-        design.reserve_points[0],
-        leakage_group_id=holdout_group,
-    )
-    changed_design = replace(
-        design,
-        reserve_points=(changed_reserve, *design.reserve_points[1:]),
-    )
-    policy = values["replacement_policy"]
-    changed_candidates = tuple(
-        replace(candidate, leakage_group_id=holdout_group)
-        if candidate.case_id == changed_reserve.case_id
-        else candidate
-        for candidate in policy.candidates
-    )
-    changed_policy = OrderedReservePolicy(
-        rule_id=policy.rule_id,
-        candidates=changed_candidates,
+    descriptor_by_id = {
+        descriptor.case_id: descriptor for descriptor in design.leakage_descriptors
+    }
+    first_reserve = design.reserve_points[0]
+    for active in design.selected_points:
+        active_seed = descriptor_by_id[active.case_id].morph_seed
+        changed_descriptors = tuple(
+            replace(descriptor, morph_seed=active_seed)
+            if descriptor.case_id == first_reserve.case_id
+            else descriptor
+            for descriptor in design.leakage_descriptors
+        )
+        changed_groups = bind_leakage_groups(
+            changed_descriptors,
+            policy=design.leakage_policy,
+        )
+        changed_selected = tuple(
+            replace(point, leakage_group_id=changed_groups[point.case_id])
+            for point in design.selected_points
+        )
+        changed_reserves = tuple(
+            replace(point, leakage_group_id=changed_groups[point.case_id])
+            for point in design.reserve_points
+        )
+        changed_design = replace(
+            design,
+            selected_points=changed_selected,
+            reserve_points=changed_reserves,
+            leakage_descriptors=changed_descriptors,
+        )
+        changed_allocation = allocate_evidence_roles(
+            changed_design.selected_points,
+            values["role_allocation"].budget,
+            seed=values["campaign_secrets"].allocation_seed,
+        )
+        if (
+            changed_allocation.registry.assignments[active.case_id].role
+            is EvidenceRole.HOLDOUT
+        ):
+            break
+    else:  # pragma: no cover - exact 64/67 HOLDOUT budget makes this unreachable
+        raise AssertionError("no deterministic HOLDOUT case found")
+
+    changed_policy = OrderedReservePolicy.preregister(
+        rule_id="role-local-design-order-v1",
+        reserves_by_role={
+            EvidenceRole.PILOT: (changed_design.reserve_points[0],),
+            EvidenceRole.TRAIN: changed_design.reserve_points[1:3],
+            EvidenceRole.DEVELOPMENT: (changed_design.reserve_points[3],),
+        },
     )
 
     with pytest.raises(PreregistrationError, match="HOLDOUT|leakage group"):
-        _build(design=changed_design, replacement_policy=changed_policy)
+        _build(
+            design=changed_design,
+            role_allocation=changed_allocation,
+            replacement_policy=changed_policy,
+        )
+
+
+def test_preregistration_replays_approved_leakage_policy_before_closure() -> None:
+    values = _inputs()
+    design = values["design"]
+    first, second, *remaining = design.leakage_descriptors
+    split_descriptors = (
+        replace(first, morph_seed=777),
+        replace(second, morph_seed=777),
+        *remaining,
+    )
+    object.__setattr__(design, "leakage_descriptors", split_descriptors)
+
+    with pytest.raises(PreregistrationError, match="leakage grouping"):
+        _build(design=design)
+
+
+def test_leakage_policy_is_bound_even_when_group_partition_is_unchanged() -> None:
+    values = _inputs()
+    baseline = build_preregistration(**values)
+    changed_policy = LeakagePolicy(near_duplicate_tolerance=1e-6)
+    changed_spec = replace(values["spec"], leakage_policy=changed_policy)
+    changed_design = replace(values["design"], leakage_policy=changed_policy)
+
+    changed = build_preregistration(
+        **{
+            **values,
+            "spec": changed_spec,
+            "design": changed_design,
+        }
+    )
+
+    assert changed.binding.role_ledger_hash == baseline.binding.role_ledger_hash
+    assert (
+        changed.binding.private_doe_plan_hash != baseline.binding.private_doe_plan_hash
+    )
+    assert changed.campaign_hash != baseline.campaign_hash
 
 
 def test_legacy_ledger_is_exact_unique_and_disjoint() -> None:

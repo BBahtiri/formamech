@@ -21,8 +21,10 @@ from piginot.doe.design import (
     InteractionSpec,
     RejectedProposal,
     generate_coupled_design,
+    normalized_coordinates,
     weighted_distance,
 )
+from piginot.doe.leakage import LeakagePolicy, bind_leakage_groups
 
 
 @dataclass(frozen=True, slots=True)
@@ -119,6 +121,7 @@ def _spec(*, validation_count: int = 40) -> CoupledDesignSpec:
                 minimum_per_boundary=1,
             ),
         ),
+        leakage_policy=LeakagePolicy(near_duplicate_tolerance=0.0),
         interactions=(
             InteractionSpec(
                 "x-by-governing-ratio",
@@ -157,6 +160,30 @@ def test_design_is_deterministic_and_validation_stream_is_domain_separated() -> 
     assert first.candidate_stream_id != first.validation_stream_id
     assert {point.case_id for point in first.selected_points}.isdisjoint(
         point.case_id for point in first.validation_points
+    )
+
+
+def test_design_binds_approved_leakage_policy_before_role_allocation() -> None:
+    predicate = _CoupledPredicate()
+    policy = LeakagePolicy(near_duplicate_tolerance=1.0)
+    spec = replace(_spec(), leakage_policy=policy)
+
+    design = generate_coupled_design(predicate, spec)
+    replayed = bind_leakage_groups(design.leakage_descriptors, policy=policy)
+    campaign_points = (*design.selected_points, *design.reserve_points)
+    descriptor_by_id = {
+        descriptor.case_id: descriptor for descriptor in design.leakage_descriptors
+    }
+
+    assert design.leakage_policy == policy
+    assert len(set(replayed.values())) == 1
+    assert all(
+        point.leakage_group_id == replayed[point.case_id] for point in campaign_points
+    )
+    assert all(
+        descriptor_by_id[point.case_id].normalized_coordinates
+        == normalized_coordinates(predicate, spec.axes, point)
+        for point in campaign_points
     )
 
 
@@ -307,6 +334,22 @@ def test_design_records_reject_incoherent_case_and_rejection_evidence() -> None:
         replace(rejection, reason_codes=())
 
 
+def test_design_contract_rejects_leakage_group_or_descriptor_drift() -> None:
+    design = generate_coupled_design(_CoupledPredicate(), _spec())
+    changed_point = replace(
+        design.selected_points[0],
+        leakage_group_id="caller-substituted-group",
+    )
+
+    with pytest.raises(ValueError, match="leakage grouping policy"):
+        replace(
+            design,
+            selected_points=(changed_point, *design.selected_points[1:]),
+        )
+    with pytest.raises(ValueError, match="selected and reserve"):
+        replace(design, leakage_descriptors=design.leakage_descriptors[1:])
+
+
 def test_spec_rejects_undeclared_or_nonpositive_design_controls() -> None:
     with pytest.raises(ValueError, match="weights"):
         replace(_spec(), axes=(AxisSpec("x", AxisSource.PRIMITIVE, weight=0.0),))
@@ -353,6 +396,7 @@ def test_declarations_fail_closed_on_invalid_values(factory: object) -> None:
         {"guard_band_count": -1},
         {"guard_band_fraction": 0.0},
         {"axes": ()},
+        {"leakage_policy": object()},
         {"axes": (_spec().axes[0], _spec().axes[0])},
         {"interactions": (InteractionSpec("same", ("x", "y")),) * 2},
         {

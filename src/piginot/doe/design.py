@@ -13,6 +13,7 @@ from types import MappingProxyType
 from typing import ClassVar, Protocol, TypeVar
 
 from piginot.contracts import Dimension, Unit
+from piginot.doe.leakage import LeakageDescriptor, LeakagePolicy, bind_leakage_groups
 
 _BASE64URL_CHARACTERS = frozenset(
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
@@ -345,6 +346,7 @@ class CoupledDesignSpec:
     validation_count: int
     validation_candidate_count: int
     axes: tuple[AxisSpec, ...]
+    leakage_policy: LeakagePolicy
     reserve_count: int = 0
     guard_band_count: int = 0
     guard_band_fraction: float = 0.05
@@ -377,6 +379,8 @@ class CoupledDesignSpec:
         if len(names) != len(set(names)):
             raise ValueError("declared axis names must be unique")
         object.__setattr__(self, "axes", axes)
+        if type(self.leakage_policy) is not LeakagePolicy:
+            raise ValueError("leakage_policy must be a LeakagePolicy")
 
         interactions = tuple(self.interactions)
         if any(not isinstance(item, InteractionSpec) for item in interactions):
@@ -418,6 +422,8 @@ class CoupledDesign:
     unresolved_quota_ids: tuple[str, ...]
     candidate_stream_id: str
     validation_stream_id: str
+    leakage_policy: LeakagePolicy
+    leakage_descriptors: tuple[LeakageDescriptor, ...]
     guard_band_policy_id: str = "primitive-bound-negative-v1"
 
     def __post_init__(self) -> None:
@@ -458,6 +464,35 @@ class CoupledDesign:
             raise ValueError("guard-band points and rejection records must align")
         if self.guard_band_policy_id != "primitive-bound-negative-v1":
             raise ValueError("unsupported guard-band policy")
+        if type(self.leakage_policy) is not LeakagePolicy:
+            raise ValueError("leakage_policy must be a LeakagePolicy")
+        descriptors = tuple(self.leakage_descriptors)
+        if any(type(item) is not LeakageDescriptor for item in descriptors):
+            raise ValueError(
+                "leakage_descriptors must contain LeakageDescriptor values"
+            )
+        campaign_points = (*self.selected_points, *self.reserve_points)
+        campaign_case_ids = tuple(point.case_id for point in campaign_points)
+        descriptor_case_ids = tuple(item.case_id for item in descriptors)
+        if set(descriptor_case_ids) != set(campaign_case_ids):
+            raise ValueError(
+                "leakage descriptors must match selected and reserve cases"
+            )
+        if len(descriptor_case_ids) != len(set(descriptor_case_ids)):
+            raise ValueError("leakage descriptors must have unique case IDs")
+        canonical_descriptors = tuple(
+            sorted(descriptors, key=lambda item: item.case_id)
+        )
+        groups = bind_leakage_groups(
+            canonical_descriptors,
+            policy=self.leakage_policy,
+        )
+        for point in campaign_points:
+            if point.leakage_group_id != groups[point.case_id]:
+                raise ValueError(
+                    f"case {point.case_id!r} does not match leakage grouping policy"
+                )
+        object.__setattr__(self, "leakage_descriptors", canonical_descriptors)
 
     @property
     def points(self) -> tuple[DesignPoint, ...]:
