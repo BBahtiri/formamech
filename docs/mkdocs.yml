@@ -7,6 +7,8 @@ strict: true
 nav:
   - Home: index.md
   - Limitations: limitations.md
+  - Campaigns:
+      - S9 Production Campaign Sign-Off: campaigns/s9-production-campaign-signoff.md
 
 theme:
   name: readthedocs
