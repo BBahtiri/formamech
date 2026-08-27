@@ -317,7 +317,7 @@ class CPEnvelope:
         expected_campaign_hash = compute_campaign_hash(binding)
         if self.campaign_hash != expected_campaign_hash:
             raise ValueError("campaign_hash must equal the recomputed campaign hash")
-        if not isinstance(self.holdout_commitment, HoldoutCommitment):
+        if type(self.holdout_commitment) is not HoldoutCommitment:
             raise ValueError("holdout_commitment must be a HoldoutCommitment")
         if expected_campaign_hash != self.holdout_commitment.campaign_hash:
             raise ValueError(

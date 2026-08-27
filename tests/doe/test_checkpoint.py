@@ -5,6 +5,7 @@ from dataclasses import FrozenInstanceError, replace
 
 import pytest
 
+import piginot.doe.commitment as commitment_module
 from piginot.contracts import canonical_json_bytes
 from piginot.contracts.errors import DuplicateKeyError
 from piginot.doe.checkpoint import (
@@ -157,6 +158,20 @@ def test_checkpoint_rejects_arbitrary_hash_even_when_commitment_repeats_it() -> 
 def test_checkpoint_rejects_holdout_commitment_for_another_campaign() -> None:
     with pytest.raises(ValueError, match="holdout commitment"):
         _checkpoint(holdout_commitment=_commitment(campaign_hash="9" * 64))
+
+
+def test_checkpoint_rejects_a_64_point_test_fixture_commitment() -> None:
+    binding = _binding()
+    campaign_hash = compute_campaign_hash(binding)
+    fixture = commitment_module._compute_holdout_commitment_for_test(
+        campaign_hash=campaign_hash,
+        salt=bytes(range(32)),
+        holdout_coordinates=tuple({"x": float(index)} for index in range(64)),
+        created_utc="2026-08-24T12:00:00Z",
+    )
+
+    with pytest.raises(ValueError, match="HoldoutCommitment"):
+        _checkpoint(binding=binding, holdout_commitment=fixture)
 
 
 @pytest.mark.parametrize(
