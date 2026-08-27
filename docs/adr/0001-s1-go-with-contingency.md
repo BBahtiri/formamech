@@ -136,3 +136,154 @@ This decision stops being valid if any of the following is measured:
   run, in which case the basis for GO with contingency no longer holds.
 
 Revisit at `CP-ENVELOPE` (S9) and again at `CP-FREEZE` (S13).
+
+---
+
+## Revisit 1 — `CP-ENVELOPE` (S9)
+
+- Date: 2026-08-27
+- Trigger: this ADR's own Verification section — *"Revisit at `CP-ENVELOPE` (S9)"*
+- Decision status: **unchanged.** GO with contingency stands. Nothing below
+  re-validates it; this records what has and has not moved since 2026-08-20.
+
+The original decision text above is not edited. Two of its three accepted risks
+were measured after it was written, in the closeout committed as `56dac44`, and
+the register it presents is now stale in those two rows. The row that is still
+accurate is the one bearing on the S9 family decision.
+
+### Method
+
+Every figure below is recomputed from the committed closeout artifacts, not
+quoted from a commit message. The pooled statistic is
+
+```
+pooled_relative_l2_P = sqrt( Σ err ) / sqrt( Σ ref )
+```
+
+over the cases in a slice, where each row's `err` and `ref` are **squared**
+norms. That formula reproduces all six `pooled_relative_l2_P` values recorded in
+`experiments/spike/_closeout_phaseB/phaseB_attribution.json` to machine
+precision, and is then applied unchanged to `phaseC_result.json`.
+
+Ground truth differs between arms and the numbers are **not** comparable across
+that boundary. Phase B attribution used P1 ground truth, matching the frozen
+incumbent's own training targets. Phase C and its baseline used P2. The `−48%`
+and `−27%` figures in the decision text above are both correct and are measured
+against different solvers.
+
+### Risk 1 — peak stress systematically under-predicted
+
+**Status: materially reduced in the spike, not closed.** The decision text's
+`−27%` is superseded.
+
+Phase C preregistered three switches in `431c39b` before training, then enabled
+them at weight 1.0. Same DOE, same fresh 50-case campaign, same P2 ground truth,
+same seeds; only the switches differ.
+
+| slice | n | switches OFF | switches ON |
+|---|---|---|---|
+| dogbone, in-envelope | 21 | −12.90% | **−4.78%** |
+| dogbone, all | 25 | −12.90% | **−4.38%** |
+| centre-notched, in-envelope | 22 | −27.44% | **−5.26%** |
+| centre-notched, all | 25 | −28.07% | **−4.33%** |
+
+Cases under-predicting, in-envelope: dogbone 21/21 → 20/21; centre-notched
+22/22 → 14/22.
+
+The median remains negative in every slice. The bias is smaller, not absent, and
+the evidence is `role=LEGACY`. The requirement this ADR pushes into S11/S12 is
+**not** discharged.
+
+### Risk 2 — speedup unproven at scale
+
+**Status: figure superseded, risk open.** The decision text's `~15×` came from
+spike meshes against the pre-Phase-A solver. Phase C measures, against the P2
+solver on the same meshes:
+
+| aggregation | speedup |
+|---|---|
+| total FEM time / total inference time | 116.7× |
+| mean of per-case ratios | 118.9× |
+| median of per-case ratios | 122.9× |
+| ratio of medians | 123.1× |
+
+Every aggregation clears the `G14.latency` threshold of ≥100×. It does not
+discharge the risk: `G14.latency` is against the **primary** solver on
+**realistic** meshes, and neither condition is met by spike evidence. The "at
+scale" half of this risk is untouched.
+
+### Risk 3 — family generality untested
+
+**Status: unchanged, and now the dominant carried risk.** Both spike families
+are produced by the same generator with topology signature
+`quarter-single-component-no-holes`, differing only in a profile function.
+Nothing in the closeout addressed this. `G17.non-dogbone` still has to be earned
+against a genuinely different topology, and no step between here and S17
+currently schedules that work.
+
+### What did not change, and should not be misread
+
+The closeout moved peak bias and envelope width. It did not move headline field
+accuracy:
+
+| slice | n | switches OFF | switches ON |
+|---|---|---|---|
+| dogbone, in-envelope | 21 | 9.32% | 8.69% |
+| centre-notched, in-envelope | 22 | 8.74% | 8.76% |
+
+In-envelope pooled stress error sits at ~8.7% across every closeout arm, against
+this ADR's 15% invalidation threshold. That margin is real but not comfortable,
+and it has not improved.
+
+Phase A's ground-truth correction stands: production remaining error at P2 on
+the four worst-case geometries is 0.44%, 0.54%, 0.64% and 1.40% against a 2%
+limit. One of the four (`dogbone-3778c574631c19f0`) records
+`richardson_study_p2.status = NOT_RUN` with a direct settled bound of 0.439%
+substituted. `A.order` permits that explicitly — "observed order **or** a settled
+bound" — and the substitution is visible rather than silent, but it is a
+weaker form of evidence than the other three.
+
+### Correction to the S1 review
+
+The review that produced this ADR reported that in-envelope the two families were
+equivalent — dogbone 8.88%, centre-notched 8.53%. Both figures are correct, but
+the centre-notched slice contains **n = 3** cases: 22 of the 25 fresh draws fell
+outside the incumbent's training envelope. That is the coverage confound, stated
+correctly, but it will not support a claim that either family is more accurate
+than the other. The defensible claim is narrower: the iteration-8 gap was a
+coverage artifact, not a family-difficulty result. After the covering DOE, the
+in-envelope centre-notched slice holds 22 of 25 cases.
+
+### Requirements pushed into later steps — status at S9
+
+| Step | Requirement | Status at `CP-ENVELOPE` |
+|---|---|---|
+| S7 | vertex-recovered stress, P2 or graded mesh | Implemented in the primary FEM kernel; `G7` closed |
+| S9 | DOE stratified on derived governing ratios | Enforced — `checkpoint.py` refuses a `CP-ENVELOPE` that declares no derived stratification axes |
+| S10 | samplers must not down-weight the QoI region | Open; S10 not started |
+| S12 | traction-free `P_served` as a named objective term | Open |
+| S14 | envelope declared in derived-ratio space, OOE cases refused | Open |
+
+### Invalidation conditions
+
+| Condition | Verdict at S9 |
+|---|---|
+| In-envelope stress error > 15% on a preregistered fresh campaign | **Not met.** ~8.7% on closeout evidence, which is `LEGACY` and cannot discharge the condition either way |
+| Peak bias not materially reduced by S12, or persists into S14 | **Not yet measurable.** S12 has not run. Spike evidence is indicative only |
+| `G17.non-dogbone` fails against a genuinely distinct topology | **Not yet measurable.** This is Risk 3 and remains live |
+| S11–S12 contingency iteration consumed by schedule pressure | **Not yet.** S10 has not started |
+
+Nothing invalidates the decision. Three of the four conditions cannot be
+evaluated until S12, S14 and S17, so this revisit narrows the register without
+strengthening the GO.
+
+### Bearing on the S9 family choice
+
+Risk 3 is the only accepted risk that is neither reduced nor superseded, and it
+is the one the production-family decision acts on. Choosing the family that most
+resembles the prior single-family work postpones the first real test of
+`G17.non-dogbone` to the release gate. That is a legitimate risk-management
+choice if made deliberately; it is not supported by any accuracy evidence in this
+repository, and the sign-off should record which of the two it is.
+
+Next revisit: `CP-FREEZE` (S13), unchanged.
