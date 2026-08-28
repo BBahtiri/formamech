@@ -46,6 +46,11 @@ from piginot.doe.design import (
     requirement_ids_for_point,
     weighted_distance,
 )
+from piginot.doe.envelope import (
+    EnvelopeDecision,
+    EnvelopeReasonCode,
+    ExecutableEnvelope,
+)
 from piginot.doe.gate import (
     DesignCoverageDiagnostics,
     GateStatus,
@@ -137,6 +142,9 @@ __all__ = (
     "DuplicateDesignCaseError",
     "EvidenceReference",
     "EvidenceRole",
+    "EnvelopeDecision",
+    "EnvelopeReasonCode",
+    "ExecutableEnvelope",
     "FailureReplacementEvent",
     "FailureReplacementLedger",
     "GateStatus",

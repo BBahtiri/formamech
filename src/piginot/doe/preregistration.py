@@ -8,7 +8,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import ClassVar
 
-from piginot.contracts import hash_spec
+from piginot.contracts import CanonicalQuantity, canonical_json_bytes, hash_spec
 from piginot.doe.allocation import (
     ProductionRoleBudget,
     RoleAllocation,
@@ -33,8 +33,11 @@ from piginot.doe.design import (
     CoupledDesignSpec,
     DesignPoint,
     DoeSeed,
+    RejectedProposal,
     SeedEncoding,
+    generate_coupled_design,
 )
+from piginot.doe.envelope import ExecutableEnvelope
 from piginot.doe.leakage import LeakageDescriptor, bind_leakage_groups
 from piginot.doe.publication import (
     PublishedCase,
@@ -48,6 +51,7 @@ from piginot.doe.secret_material import (
     SecretMaterialError,
     validate_secret_bytes,
 )
+from piginot.morphing.membership import FamilyMembershipPredicate
 
 _CANONICAL_NAMESPACE = "piginot.doe"
 _REPLACEABLE_ROLES = (
@@ -162,12 +166,20 @@ def _validate_projection(
     derived_axes: tuple[str, ...],
     stratum_axes: tuple[str, ...],
     collection: str,
+    allow_partial_derived: bool = False,
 ) -> None:
     if set(point.coordinates) != set(primitive_axes):
         raise PreregistrationError(
             f"{collection} point {point.case_id!r} primitive projection mismatch"
         )
-    if set(point.derived_coordinates) != set(derived_axes):
+    observed_derived = set(point.derived_coordinates)
+    expected_derived = set(derived_axes)
+    derived_mismatch = (
+        not observed_derived <= expected_derived
+        if allow_partial_derived
+        else observed_derived != expected_derived
+    )
+    if derived_mismatch:
         raise PreregistrationError(
             f"{collection} point {point.case_id!r} derived projection mismatch"
         )
@@ -221,6 +233,7 @@ def _validate_design_shape(
                 derived_axes=derived,
                 stratum_axes=strata,
                 collection=collection,
+                allow_partial_derived=expected_guard,
             )
 
     campaign_points = (*design.selected_points, *design.reserve_points)
@@ -230,6 +243,132 @@ def _validate_design_shape(
             "selected and reserve case IDs must be globally unique"
         )
     return primitive, derived, strata
+
+
+def _theta_from_point(
+    envelope: ExecutableEnvelope,
+    point: DesignPoint,
+) -> dict[str, CanonicalQuantity]:
+    quantities: dict[str, CanonicalQuantity] = {}
+    for bound in envelope.primitive_bounds:
+        if bound.name not in point.coordinates:
+            raise PreregistrationError(
+                f"point {point.case_id!r} omits envelope coordinate {bound.name!r}"
+            )
+        quantities[bound.name] = CanonicalQuantity(
+            point.coordinates[bound.name],
+            bound.unit,
+            bound.dimension,
+        )
+    return quantities
+
+
+def _validate_positive_point_against_envelope(
+    envelope: ExecutableEnvelope,
+    point: DesignPoint,
+    *,
+    collection: str,
+) -> None:
+    decision = envelope.evaluate(_theta_from_point(envelope, point))
+    if not decision.accepted:
+        raise PreregistrationError(
+            f"{collection} point {point.case_id!r} is not accepted by ExecutableEnvelope"
+        )
+    observed = {
+        name: quantity.value for name, quantity in decision.derived_values.items()
+    }
+    if observed != dict(point.derived_coordinates):
+        raise PreregistrationError(
+            f"{collection} point {point.case_id!r} derived coordinates do not replay"
+        )
+
+
+def _validate_guard_point_against_envelope(
+    envelope: ExecutableEnvelope,
+    point: DesignPoint,
+    recorded_rejection: RejectedProposal,
+    *,
+    collection: str,
+) -> None:
+    if dict(recorded_rejection.coordinates) != dict(point.coordinates):
+        raise PreregistrationError(
+            f"{collection} point {point.case_id!r} coordinates differ from rejection evidence"
+        )
+    decision = envelope.evaluate(_theta_from_point(envelope, point))
+    if decision.accepted:
+        raise PreregistrationError(
+            f"{collection} point {point.case_id!r} is accepted by ExecutableEnvelope"
+        )
+    replayed_reasons = tuple(
+        getattr(reason, "value", reason) for reason in decision.reason_codes
+    )
+    if replayed_reasons != recorded_rejection.reason_codes:
+        raise PreregistrationError(
+            f"{collection} point {point.case_id!r} rejection reasons do not replay"
+        )
+    replayed_derived = {
+        name: quantity.value for name, quantity in decision.derived_values.items()
+    }
+    if replayed_derived != dict(point.derived_coordinates):
+        raise PreregistrationError(
+            f"{collection} point {point.case_id!r} derived coordinates do not replay"
+        )
+
+
+def _validate_envelope_replay(
+    envelope: ExecutableEnvelope,
+    spec: CoupledDesignSpec,
+    design: CoupledDesign,
+) -> None:
+    primitive_names = {bound.name for bound in envelope.primitive_bounds}
+    derived_names = {bound.name for bound in envelope.derived_bounds}
+    spec_primitive_names = {
+        axis.name for axis in spec.axes if axis.source is AxisSource.PRIMITIVE
+    }
+    spec_derived_names = {
+        axis.name for axis in spec.axes if axis.source is AxisSource.DERIVED
+    }
+    if primitive_names != spec_primitive_names:
+        raise PreregistrationError("DOE primitive axes do not match ExecutableEnvelope")
+    if derived_names != spec_derived_names:
+        raise PreregistrationError("DOE derived axes do not match ExecutableEnvelope")
+    for collection, points in (
+        ("selected", design.selected_points),
+        ("reserve", design.reserve_points),
+        ("validation", design.validation_points),
+    ):
+        for point in points:
+            _validate_positive_point_against_envelope(
+                envelope,
+                point,
+                collection=collection,
+            )
+    for point, rejection in zip(
+        design.guard_band_points,
+        design.guard_band_rejections,
+        strict=True,
+    ):
+        _validate_guard_point_against_envelope(
+            envelope,
+            point,
+            rejection,
+            collection="guard-band",
+        )
+
+
+def _validate_complete_doe_replay(
+    envelope: ExecutableEnvelope,
+    spec: CoupledDesignSpec,
+    design: CoupledDesign,
+) -> None:
+    try:
+        replayed = generate_coupled_design(envelope, spec)
+    except ValueError as exc:
+        raise PreregistrationError(f"complete DOE replay failed: {exc}") from exc
+    if canonical_json_bytes(replayed) != canonical_json_bytes(design):
+        raise PreregistrationError(
+            "complete DOE replay from ExecutableEnvelope and secret seed differs"
+        )
 
 
 def _validate_leakage_grouping(
@@ -549,6 +688,8 @@ def build_preregistration(
         raise PreregistrationError("spec must be a CoupledDesignSpec")
     if not isinstance(design, CoupledDesign):
         raise PreregistrationError("design must be a CoupledDesign")
+    if type(executable_envelope) is not ExecutableEnvelope:
+        raise PreregistrationError("executable_envelope must be an ExecutableEnvelope")
     if not isinstance(role_allocation, RoleAllocation):
         raise PreregistrationError("role_allocation must be a RoleAllocation")
     if not isinstance(legacy_ledger, LegacyCaseLedger):
@@ -560,6 +701,24 @@ def build_preregistration(
     if type(campaign_secrets) is not CampaignSecrets:
         raise PreregistrationError(
             "campaign_secrets must come from generate_campaign_secrets()"
+        )
+
+    compiled_family_hash = hash_spec(compiled_family, "content")
+    if executable_envelope.compiled_family_hash != compiled_family_hash:
+        raise PreregistrationError(
+            "ExecutableEnvelope compiled_family_hash does not match compiled_family"
+        )
+    compiled_membership = getattr(compiled_family, "membership", None)
+    if type(compiled_membership) is not FamilyMembershipPredicate:
+        raise PreregistrationError(
+            "compiled_family must expose an exact FamilyMembershipPredicate"
+        )
+    if (
+        hash_spec(compiled_membership, "content")
+        != executable_envelope.geometry_membership_hash
+    ):
+        raise PreregistrationError(
+            "ExecutableEnvelope geometry membership does not match compiled_family"
         )
 
     seed = spec.seed
@@ -592,6 +751,7 @@ def build_preregistration(
         design,
         budget,
     )
+    _validate_envelope_replay(executable_envelope, spec, design)
     active_roles = _validate_active_allocation(design, role_allocation, budget)
     _verify_allocation_replay(
         design,
@@ -617,7 +777,7 @@ def build_preregistration(
     )
 
     binding = CampaignBinding(
-        compiled_family_hash=hash_spec(compiled_family, "content"),
+        compiled_family_hash=compiled_family_hash,
         pilot_evidence=tuple(pilot_evidence),
         executable_envelope_hash=hash_spec(executable_envelope, "content"),
         private_doe_plan_hash=hash_spec(
@@ -651,6 +811,7 @@ def build_preregistration(
     )
     if not reveal_verified:
         raise PreregistrationError("computed holdout reveal did not verify")
+    _validate_complete_doe_replay(executable_envelope, spec, design)
     checkpoint = CPEnvelope(
         campaign_hash=campaign_hash,
         compiled_family_hash=binding.compiled_family_hash,

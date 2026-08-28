@@ -59,20 +59,33 @@ def _freeze(values: Mapping[str, _Value]) -> Mapping[str, _Value]:
 
 
 class _QuantityLike(Protocol):
-    value: float
-    unit: Unit
-    dimension: Dimension | None
+    @property
+    def value(self) -> float: ...
+
+    @property
+    def unit(self) -> Unit: ...
+
+    @property
+    def dimension(self) -> Dimension | None: ...
 
 
 class _BoundLike(Protocol):
-    name: str
-    lower_bound: _QuantityLike
-    upper_bound: _QuantityLike
+    @property
+    def name(self) -> str: ...
+
+    @property
+    def lower_bound(self) -> _QuantityLike: ...
+
+    @property
+    def upper_bound(self) -> _QuantityLike: ...
 
 
 class _DecisionLike(Protocol):
-    accepted: bool
-    derived_values: Mapping[str, _QuantityLike]
+    @property
+    def accepted(self) -> bool: ...
+
+    @property
+    def derived_values(self) -> Mapping[str, _QuantityLike]: ...
 
 
 class FamilyMembershipPredicateLike(Protocol):

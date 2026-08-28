@@ -32,10 +32,16 @@ generating replacement secrets after the design exists. The generator identity i
 
 The DOE is generated from domain-separated BLAKE2b Latin-hypercube streams. The
 public checkpoint contains only a domain-separated commitment to its seed; the seed
-remains with the private reveal. Candidate parameters are evaluated only through the
-public S6 family-membership predicate.
-Every variable primitive parameter and every compiled derived quantity is a declared,
-fixed-width normalized axis. Selection satisfies preregistered marginal strata,
+remains with the private reveal. Candidate parameters are evaluated only through a
+typed `ExecutableEnvelope`. That canonical object embeds the exact S6
+family-membership predicate, non-empty material bounds, non-empty load bounds, the
+compiled-family hash, and the fixed fail-closed refusal-policy identifier. Geometry
+coordinates are partitioned back through S6; material and load coordinates are
+checked with the same exact-name, unit, dimension, and bound discipline.
+Every primitive parameter, including a fixed parameter, and every compiled derived
+quantity is a declared, fixed-width normalized axis. Fixed primitive axes declare
+one stratum and remain visible in every case coordinate mapping. Selection satisfies
+preregistered marginal strata,
 boundaries, interactions and difficult-region quotas rarest-first, then fills the
 remaining budget by weighted maximin distance. Candidate/selection, independent
 validation, and guard-band streams have distinct identities; reserves are a
@@ -75,6 +81,18 @@ allocation-seed and holdout-salt parameters are not accepted by the production
 closure API. The public ledger retains only a domain-separated seed commitment.
 Public reserves cannot share a leakage group with a differently assigned active
 case, including a concealed `HOLDOUT` case.
+
+Campaign closure accepts only the exact `ExecutableEnvelope` type. It verifies that
+the envelope hash binds the supplied compiled family and that the embedded geometry
+membership is the family membership. It then requires the DOE axis vocabulary to
+match the complete envelope and replays every selected, reserve, and validation case
+as accepted. Guard negatives replay as rejected with identical primitive
+coordinates, reason codes, and every derived coordinate that was computable before
+rejection. Before returning a checkpoint, closure regenerates the complete coupled
+design from that envelope and the secret DOE seed and requires canonical byte
+identity, covering selections, reserves, strata, stream identities, proposal
+rejections, guard evidence, leakage descriptors, and selection trace. This makes the
+envelope an executed closure boundary rather than an opaque hash preimage.
 Production-label authorization fails until the exact case and leakage group already
 exist in the role registry. Materialized node observations are checked against that
 case-level registry, which makes `RANDOM_NODE_SPLIT` observable.
@@ -139,10 +157,11 @@ canonical public manifest; it does not regenerate the hidden DOE from a public s
 
 ## Instantiation status
 
-This ADR fixes the S9 contract shape, not a scientific campaign. At the time of this
-decision the non-legacy repository does not contain a human-approved production
-family, reference mesh and morph recipe, executable envelope, role budget, DOE quota
-policy, leakage tolerance, or reserve distribution. Therefore no production holdout
+This ADR fixes the S9 contract shape, not a scientific campaign. The DogBone family
+direction is approved and ADR 0010 proposes an exact compiled geometry, reference
+mesh, and morph recipe, but that preimage is not yet owner-ratified. The repository
+still has no approved complete material/load envelope, role budget, DOE quota policy,
+leakage tolerance, or reserve distribution. Therefore no production holdout
 commitment or `CP-ENVELOPE` is created from a fixture. Those inputs must be approved
 and committed first; until then `G9.commitment-order` is `NOT_RUN`, G9 is not PASS,
 and S10 must not begin.

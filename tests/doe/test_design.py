@@ -229,7 +229,7 @@ def test_design_requires_all_variable_primitive_and_derived_governing_axes() -> 
         interactions=(),
         difficult_regions=(),
     )
-    with pytest.raises(ValueError, match="variable primitive axes"):
+    with pytest.raises(ValueError, match="primitive axes"):
         generate_coupled_design(predicate, without_primitive)
 
 

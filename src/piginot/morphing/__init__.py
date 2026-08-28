@@ -1,5 +1,12 @@
 """Deterministic S6 morphing and family-membership contracts."""
 
+from piginot.morphing.circular_transition import (
+    BoundCircularTransitionDeformation,
+    CircularTransitionMap,
+    CircularTransitionMeshSpec,
+    CircularTransitionParameters,
+    build_circular_transition_reference_mesh,
+)
 from piginot.morphing.ledger import apply_morph, run_morph_sweep
 from piginot.morphing.maps import FFDMap, RBFMap
 from piginot.morphing.membership import (
@@ -25,6 +32,10 @@ from piginot.morphing.models import (
 )
 
 __all__ = (
+    "BoundCircularTransitionDeformation",
+    "CircularTransitionMap",
+    "CircularTransitionMeshSpec",
+    "CircularTransitionParameters",
     "DerivedBound",
     "FFDControlPoint",
     "FFDMap",
@@ -45,5 +56,6 @@ __all__ = (
     "RBFControlPoint",
     "RBFMap",
     "apply_morph",
+    "build_circular_transition_reference_mesh",
     "run_morph_sweep",
 )

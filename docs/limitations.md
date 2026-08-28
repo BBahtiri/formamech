@@ -39,23 +39,32 @@ boundary groups and positive named region groups. It rejects healing, defeaturin
 remeshing, inferred units, quads, high-order elements, mixed area elements, 3D
 meshes, unclassified facets, duplicate nodes or cells, inverted elements,
 non-manifold edges, and query points outside the mesh when containment is required.
-S6 deforms an existing S5 reference mesh with interpolatory Gaussian RBF maps or
-tensor-product Bernstein FFD maps. It preserves connectivity and accepts a morph only
-when the declared topology and tags remain unchanged, feature-size and mesh-quality
-bounds pass, and `det(grad(Phi))` is strictly above the configured margin at every
-point of a fixed seven-point, degree-5 triangle rule. This finite check is an
+S6 deforms an existing S5 reference mesh with interpolatory Gaussian RBF maps,
+tensor-product Bernstein FFD maps, or the exact circular-transition profile map used
+by the proposed first production family. It preserves connectivity and accepts a
+morph only when the declared topology and tags remain unchanged, feature-size and
+mesh-quality bounds pass, and `det(grad(Phi))` is strictly above the configured margin
+at every point of a fixed seven-point, degree-5 triangle rule. This finite check is an
 executable acceptance predicate; it is not a mathematical proof of global injectivity
 or of the Jacobian sign between quadrature points. A later cross-mesh comparison must
-not call its pullback verified solely because an S6 report passed. S6 does not heal or
-remesh failed instances.
+not call an RBF/FFD pullback verified solely because an S6 report passed. The circular
+transition map separately exposes an analytic inverse and positive piecewise
+determinant; that family-specific property does not strengthen the generic RBF/FFD
+claim. S6 does not heal or remesh failed instances.
 
 Family membership enforces exact named canonical quantities, inclusive primitive and
 derived bounds, the reference mesh identity, and a hashed validity policy. S9 samples
-that predicate with deterministic, domain-separated DOE streams and reports a vector
-of finite coverage diagnostics. Those diagnostics are evidence about the sampled
-population, not a proof that every admissible point is covered. Version-one targeted
-guard points cross primitive bounds; derived-bound failures remain visible in the
-rejection ledger but are not claimed as dense guard strata.
+that predicate only through a typed executable envelope with explicit non-empty
+material and load bounds. Every primitive coordinate, including fixed coordinates,
+is bound into the DOE; fixed axes use one stratum. Campaign closure verifies the
+compiled-family and membership identities, then replays accepted cases and recorded
+guard rejections against the same envelope. It also regenerates the complete design
+from the private DOE seed and requires canonical byte identity before returning a
+checkpoint. It reports a vector of finite coverage diagnostics. Those diagnostics
+are evidence about the sampled population, not a proof that every admissible point
+is covered. Version-one targeted guard points cross primitive bounds; derived-bound
+failures remain visible in the rejection ledger but are not claimed as dense guard
+strata.
 
 S9 provides contracts for immutable case roles and transitive leakage groups,
 deterministic non-holdout reserve replacement, and an exact-64 BLAKE2b-256 holdout
@@ -67,10 +76,11 @@ same Python process was unmodified. The required near-duplicate tolerance and th
 pre-role lineage, morph-seed, and normalized-coordinate descriptors are replayed at
 design construction and campaign closure, then committed through the private DOE-plan
 hash; they are finite campaign metadata, not proof that no unrecorded correlation
-exists. No production commitment or `CP-ENVELOPE` exists
-yet because the first production family, envelope, budget, DOE quotas, leakage
-tolerance, and reserve distribution have not been approved. A test fixture is not
-production evidence, so G9 remains incomplete and S10 must not begin.
+exists. No production commitment or `CP-ENVELOPE` exists yet. The first production
+family direction is approved and its exact preimage is proposed, but the complete
+envelope, budget, DOE quotas, leakage tolerance, and reserve distribution have not
+been approved. A test fixture is not production evidence, so G9 remains incomplete
+and S10 must not begin.
 
 When instantiated, the public commitment will prove only that a later reveal matches
 the committed coordinates. It cannot prove that the local holder never saw the

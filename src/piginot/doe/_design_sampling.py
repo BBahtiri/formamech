@@ -185,14 +185,10 @@ def _compile_axes(
     primitive = _bound_table(predicate.primitive_bounds, "primitive")
     derived = _bound_table(predicate.derived_bounds, "derived")
     declarations = {axis.name: axis for axis in spec.axes}
-    variable_primitive = {
-        name for name, (lower, upper, _bound) in primitive.items() if upper > lower
-    }
-    missing_primitive = variable_primitive - set(declarations)
+    missing_primitive = set(primitive) - set(declarations)
     if missing_primitive:
         raise ValueError(
-            "DOE is missing variable primitive axes: "
-            + ", ".join(sorted(missing_primitive))
+            "DOE is missing primitive axes: " + ", ".join(sorted(missing_primitive))
         )
     missing_derived = set(derived) - set(declarations)
     if missing_derived:

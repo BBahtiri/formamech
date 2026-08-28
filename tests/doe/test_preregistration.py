@@ -1,12 +1,19 @@
 from __future__ import annotations
 
 from dataclasses import FrozenInstanceError, dataclass, replace
-from typing import Any
+from typing import Any, ClassVar
 from unittest.mock import patch
 
 import pytest
 
-from piginot.contracts import canonical_json_bytes, hash_spec
+from piginot.contracts import (
+    CanonicalQuantity,
+    DerivedExpression,
+    Dimension,
+    Unit,
+    canonical_json_bytes,
+    hash_spec,
+)
 from piginot.contracts.errors import ContractValidationError
 from piginot.doe.allocation import (
     ProductionRoleBudget,
@@ -19,9 +26,10 @@ from piginot.doe.design import (
     CoupledDesign,
     CoupledDesignSpec,
     DesignPoint,
+    generate_coupled_design,
 )
+from piginot.doe.envelope import ExecutableEnvelope
 from piginot.doe.leakage import (
-    LeakageDescriptor,
     LeakagePolicy,
     bind_leakage_groups,
 )
@@ -38,6 +46,12 @@ from piginot.doe.secret_material import (
     CampaignSecrets,
     generate_campaign_secrets,
 )
+from piginot.morphing.membership import (
+    DerivedBound,
+    FamilyMembershipPredicate,
+    PrimitiveBound,
+)
+from piginot.morphing.models import MorphValidityCriteria
 
 _DOE_SEED = bytes(range(32))
 _HOLDOUT_SALT = bytes(range(32, 64))
@@ -57,89 +71,121 @@ def _campaign_secrets(
         return generate_campaign_secrets()
 
 
+def _quantity(
+    value: float,
+    unit: Unit = Unit.ONE,
+    dimension: Dimension = Dimension.DIMENSIONLESS,
+) -> CanonicalQuantity:
+    return CanonicalQuantity(value, unit, dimension)
+
+
+def _predicate(*, upper_width: float = 256.0) -> FamilyMembershipPredicate:
+    criteria = MorphValidityCriteria(
+        jacobian_margin=0.01,
+        minimum_feature_size_mm=0.05,
+        minimum_angle_degrees=5.0,
+        maximum_aspect_ratio=20.0,
+    )
+    return FamilyMembershipPredicate(
+        family_name="coupled-family-v1",
+        primitive_bounds=(
+            PrimitiveBound("width", _quantity(1.0), _quantity(upper_width)),
+        ),
+        derived_bounds=(
+            DerivedBound(
+                name="net_section_ratio",
+                canonical_ast=DerivedExpression.parse("width / 100").canonical_ast,
+                lower_bound=_quantity(0.01),
+                upper_bound=_quantity(upper_width / 100.0),
+            ),
+        ),
+        reference_mesh_id="reference-mesh",
+        reference_topology_signature="topology",
+        semantic_tag_counts={"loaded": 1},
+        criteria=criteria,
+        validity_policy_hash=hash_spec(criteria, "content"),
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class _CompiledFamily:
+    __canonical_namespace__: ClassVar[str] = "piginot.tests"
+
+    family_id: str
+    membership: FamilyMembershipPredicate
+
+
+def _compiled_family(*, upper_width: float = 256.0) -> _CompiledFamily:
+    return _CompiledFamily(
+        family_id="coupled-family-v1",
+        membership=_predicate(upper_width=upper_width),
+    )
+
+
+def _envelope(
+    compiled_family: _CompiledFamily,
+    *,
+    compiled_family_hash: str | None = None,
+) -> ExecutableEnvelope:
+    predicate = compiled_family.membership
+    return ExecutableEnvelope(
+        envelope_id="accepted-envelope-v1",
+        compiled_family_hash=compiled_family_hash
+        or hash_spec(compiled_family, "content"),
+        geometry_membership=predicate,
+        geometry_membership_hash=hash_spec(predicate, "content"),
+        material_bounds=(
+            PrimitiveBound(
+                "elastic_modulus",
+                _quantity(760.0, Unit.MPA, Dimension.STRESS),
+                _quantity(760.0, Unit.MPA, Dimension.STRESS),
+            ),
+            PrimitiveBound(
+                "poisson_ratio",
+                _quantity(0.23),
+                _quantity(0.23),
+            ),
+        ),
+        load_bounds=(
+            PrimitiveBound(
+                "prescribed_displacement",
+                _quantity(1.0, Unit.MM, Dimension.LENGTH),
+                _quantity(1.0, Unit.MM, Dimension.LENGTH),
+            ),
+        ),
+    )
+
+
 @dataclass(frozen=True, slots=True)
 class _Identity:
     case_id: str
     leakage_group_id: str
 
 
-def _point(case_id: str, index: int, *, group_id: str | None = None) -> DesignPoint:
-    return DesignPoint(
-        case_id=case_id,
-        leakage_group_id=group_id or f"group-{case_id}",
-        coordinates={"width": float(index + 1)},
-        derived_coordinates={"net_section_ratio": float(index + 1) / 100.0},
-        strata={"width": index % 4, "net_section_ratio": index % 4},
-    )
-
-
-def _leakage_descriptor(point: DesignPoint) -> LeakageDescriptor:
-    return LeakageDescriptor(
-        case_id=point.case_id,
-        geometry_lineage_id=f"lineage-{point.case_id}",
-        morph_seed=int(point.coordinates["width"]),
-        normalized_coordinates={
-            "width": point.coordinates["width"] / 256.0,
-            "net_section_ratio": point.derived_coordinates["net_section_ratio"] / 2.0,
-        },
-    )
-
-
 def _inputs() -> dict[str, Any]:
     campaign_secrets = _campaign_secrets()
-    unbound_selected = tuple(
-        _point(f"active-{index:03d}", index) for index in range(67)
-    )
-    unbound_reserves = tuple(
-        _point(f"reserve-{index:03d}", 100 + index) for index in range(4)
-    )
+    compiled_family = _compiled_family()
+    envelope = _envelope(compiled_family)
     leakage_policy = LeakagePolicy(near_duplicate_tolerance=0.0)
-    leakage_descriptors = tuple(
-        _leakage_descriptor(point) for point in (*unbound_selected, *unbound_reserves)
-    )
-    leakage_groups = bind_leakage_groups(
-        leakage_descriptors,
-        policy=leakage_policy,
-    )
-    selected = tuple(
-        replace(point, leakage_group_id=leakage_groups[point.case_id])
-        for point in unbound_selected
-    )
-    reserves = tuple(
-        replace(point, leakage_group_id=leakage_groups[point.case_id])
-        for point in unbound_reserves
-    )
-    validation = (_point("validation-000", 200),)
-    design = CoupledDesign(
-        selected_points=selected,
-        reserve_points=reserves,
-        guard_band_points=(),
-        validation_points=validation,
-        candidate_rejections=(),
-        validation_rejections=(),
-        guard_band_rejections=(),
-        candidate_accepted_count=71,
-        validation_accepted_count=1,
-        selection_trace=(),
-        unresolved_quota_ids=(),
-        candidate_stream_id="candidate-stream",
-        validation_stream_id="validation-stream",
-        leakage_policy=leakage_policy,
-        leakage_descriptors=leakage_descriptors,
-    )
     spec = CoupledDesignSpec(
         seed=campaign_secrets.doe_seed,
         sample_count=67,
         reserve_count=4,
-        candidate_count=71,
+        candidate_count=80,
         validation_count=1,
-        validation_candidate_count=1,
+        validation_candidate_count=8,
         axes=(
             AxisSpec("width", AxisSource.PRIMITIVE),
+            AxisSpec("elastic_modulus", AxisSource.PRIMITIVE, strata=1),
+            AxisSpec("poisson_ratio", AxisSource.PRIMITIVE, strata=1),
+            AxisSpec("prescribed_displacement", AxisSource.PRIMITIVE, strata=1),
             AxisSpec("net_section_ratio", AxisSource.DERIVED),
         ),
         leakage_policy=leakage_policy,
     )
+    design = generate_coupled_design(envelope, spec)
+    selected = design.selected_points
+    reserves = design.reserve_points
     reserve_roles = (
         EvidenceRole.PILOT,
         EvidenceRole.TRAIN,
@@ -172,8 +218,8 @@ def _inputs() -> dict[str, Any]:
         },
     )
     return {
-        "compiled_family": {"family_id": "coupled-family-v1"},
-        "executable_envelope": {"envelope_id": "accepted-envelope-v1"},
+        "compiled_family": compiled_family,
+        "executable_envelope": envelope,
         "pilot_evidence": (
             EvidenceReference(
                 "legacy-closeout",
@@ -358,21 +404,23 @@ def test_registry_cannot_contain_an_extra_nonlegacy_campaign_case() -> None:
 def test_whole_point_leakage_identity_must_match_registry() -> None:
     values = _inputs()
     design = values["design"]
-    first_descriptor, *remaining_descriptors = design.leakage_descriptors
-    changed_descriptors = (
+    first_point = design.selected_points[0]
+    changed_descriptors = tuple(
         replace(
-            first_descriptor,
-            geometry_lineage_id=f"{first_descriptor.geometry_lineage_id}-changed",
-        ),
-        *remaining_descriptors,
+            descriptor,
+            geometry_lineage_id=f"{descriptor.geometry_lineage_id}-changed",
+        )
+        if descriptor.case_id == first_point.case_id
+        else descriptor
+        for descriptor in design.leakage_descriptors
     )
     changed_groups = bind_leakage_groups(
         changed_descriptors,
         policy=design.leakage_policy,
     )
     changed = replace(
-        design.selected_points[0],
-        leakage_group_id=changed_groups[design.selected_points[0].case_id],
+        first_point,
+        leakage_group_id=changed_groups[first_point.case_id],
     )
     changed_design = replace(
         design,
@@ -591,8 +639,9 @@ def test_legacy_ledger_is_exact_unique_and_disjoint() -> None:
         _build(legacy_ledger=LegacyCaseLedger(("legacy-0",)))
     with pytest.raises(ValueError, match="unique"):
         LegacyCaseLedger(("legacy", "legacy"))
+    active_case_id = _inputs()["design"].selected_points[0].case_id
     with pytest.raises(PreregistrationError, match="overlap"):
-        _build(legacy_ledger=LegacyCaseLedger(("active-000", "legacy")))
+        _build(legacy_ledger=LegacyCaseLedger((active_case_id, "legacy")))
 
 
 def test_production_allocation_budget_must_match_campaign_budget() -> None:
@@ -684,10 +733,144 @@ def test_spec_and_design_population_counts_must_agree() -> None:
         _build(design=short_design)
 
 
-@pytest.mark.parametrize("field", ("compiled_family", "executable_envelope"))
-def test_family_and_envelope_must_be_canonically_hashable(field: str) -> None:
+def test_family_must_be_canonically_hashable() -> None:
     with pytest.raises(ContractValidationError, match="unsupported canonical"):
-        _build(**{field: object()})
+        _build(compiled_family=object())
+
+
+def test_preregistration_requires_a_typed_executable_envelope() -> None:
+    with pytest.raises(PreregistrationError, match="ExecutableEnvelope"):
+        _build(executable_envelope={"envelope_id": "hashable-but-not-executable"})
+
+
+def test_envelope_must_bind_the_same_compiled_family_as_checkpoint() -> None:
+    values = _inputs()
+
+    with pytest.raises(PreregistrationError, match="compiled_family_hash"):
+        _build(
+            executable_envelope=_envelope(
+                values["compiled_family"],
+                compiled_family_hash="b" * 64,
+            )
+        )
+
+
+def test_envelope_must_bind_the_compiled_family_membership() -> None:
+    values = _inputs()
+    other_family = _compiled_family(upper_width=255.0)
+    forged = replace(
+        values["executable_envelope"],
+        compiled_family_hash=hash_spec(other_family, "content"),
+    )
+
+    with pytest.raises(PreregistrationError, match="geometry membership"):
+        _build(compiled_family=other_family, executable_envelope=forged)
+
+
+def test_preregistration_replays_positive_points_against_the_envelope() -> None:
+    narrow_family = _compiled_family(upper_width=200.0)
+
+    with pytest.raises(PreregistrationError, match="(selected|reserve|validation) point"):
+        _build(
+            compiled_family=narrow_family,
+            executable_envelope=_envelope(narrow_family),
+        )
+
+
+def test_preregistration_rejects_material_and_load_omitted_from_the_doe() -> None:
+    values = _inputs()
+    omitted = frozenset({"elastic_modulus", "poisson_ratio", "prescribed_displacement"})
+
+    def geometry_only(point: DesignPoint) -> DesignPoint:
+        return replace(
+            point,
+            coordinates={
+                name: value
+                for name, value in point.coordinates.items()
+                if name not in omitted
+            },
+            strata={
+                name: value
+                for name, value in point.strata.items()
+                if name not in omitted
+            },
+        )
+
+    design = values["design"]
+    geometry_only_design = replace(
+        design,
+        selected_points=tuple(geometry_only(point) for point in design.selected_points),
+        reserve_points=tuple(geometry_only(point) for point in design.reserve_points),
+        validation_points=tuple(
+            geometry_only(point) for point in design.validation_points
+        ),
+    )
+    geometry_only_spec = replace(
+        values["spec"],
+        axes=tuple(axis for axis in values["spec"].axes if axis.name not in omitted),
+    )
+
+    with pytest.raises(PreregistrationError, match="primitive axes"):
+        _build(spec=geometry_only_spec, design=geometry_only_design)
+
+
+def _guarded_design(
+    values: dict[str, Any],
+    *,
+    reason_codes: tuple[str, ...] = ("PARAMETER_OUT_OF_BOUNDS",),
+) -> tuple[CoupledDesignSpec, CoupledDesign]:
+    spec = replace(values["spec"], guard_band_count=1)
+    design = generate_coupled_design(values["executable_envelope"], spec)
+    if reason_codes != design.guard_band_rejections[0].reason_codes:
+        changed_rejection = replace(
+            design.guard_band_rejections[0],
+            reason_codes=reason_codes,
+        )
+        design = replace(design, guard_band_rejections=(changed_rejection,))
+    return spec, design
+
+
+def test_preregistration_accepts_a_guard_with_partial_derived_coordinates() -> None:
+    values = _inputs()
+    spec, design = _guarded_design(values)
+
+    result = _build(spec=spec, design=design)
+
+    assert result.reveal_verified is True
+
+
+def test_preregistration_replays_the_recorded_guard_rejection_reason() -> None:
+    values = _inputs()
+    spec, design = _guarded_design(values, reason_codes=("FORGED_REASON",))
+
+    with pytest.raises(PreregistrationError, match="guard-band.*reason"):
+        _build(spec=spec, design=design)
+
+
+def test_preregistration_binds_guard_coordinates_to_rejection_evidence() -> None:
+    values = _inputs()
+    spec, design = _guarded_design(values)
+    rejection = design.guard_band_rejections[0]
+    changed_coordinates = {
+        **rejection.coordinates,
+        "elastic_modulus": 759.94,
+    }
+    forged = replace(rejection, coordinates=changed_coordinates)
+    changed_design = replace(design, guard_band_rejections=(forged,))
+
+    with pytest.raises(PreregistrationError, match="guard-band.*coordinates"):
+        _build(spec=spec, design=changed_design)
+
+
+def test_preregistration_replays_the_complete_doe_from_envelope_and_seed() -> None:
+    values = _inputs()
+    forged = replace(
+        values["design"],
+        selection_trace=("caller-substituted-selection",),
+    )
+
+    with pytest.raises(PreregistrationError, match="complete DOE replay"):
+        _build(design=forged)
 
 
 def test_recomputation_is_byte_deterministic() -> None:

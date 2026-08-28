@@ -1,0 +1,1 @@
+"""Production-campaign contract tests."""
