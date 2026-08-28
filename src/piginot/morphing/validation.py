@@ -7,7 +7,7 @@ from collections.abc import Mapping, Sequence
 from typing import Protocol
 
 from piginot.contracts import CanonicalMesh, hash_spec
-from piginot.geometry import canonicalize_mesh
+from piginot.geometry.canonicalize import canonicalize_mesh
 from piginot.geometry.errors import GeometryReasonCode, GeometryValidationError
 from piginot.geometry.models import CellType, MeshPayload
 from piginot.morphing.models import (

@@ -16,6 +16,7 @@ from piginot.morphing import apply_morph
 PUBLIC_VALIDATION_SEED = "dogbone-family-validation-20260828-v1"
 SAMPLE_GENERATOR_ID = "blake2b-latin-hypercube-four-axis-v1"
 _PERSON = b"piginot-dbv1"
+_REPORTED_METRIC_DECIMALS = 12
 _BOUNDS = (
     (40.0, 70.0),
     (16.0, 26.0),
@@ -51,6 +52,17 @@ class FamilyValidationSummary:
     worst_case_parameters: Mapping[str, tuple[float, float, float, float]]
 
     def __post_init__(self) -> None:
+        for name in (
+            "minimum_jacobian_determinant",
+            "minimum_feature_size_mm",
+            "minimum_angle_degrees",
+            "maximum_aspect_ratio",
+        ):
+            object.__setattr__(
+                self,
+                name,
+                _reported_metric(getattr(self, name)),
+            )
         object.__setattr__(
             self,
             "membership_rejections",
@@ -66,6 +78,11 @@ class FamilyValidationSummary:
             "worst_case_parameters",
             MappingProxyType(dict(sorted(self.worst_case_parameters.items()))),
         )
+
+
+def _reported_metric(value: float) -> float:
+    rounded = round(value, _REPORTED_METRIC_DECIMALS)
+    return 0.0 if rounded == 0.0 else rounded
 
 
 def _digest(seed_key: bytes, domain: str, index: int) -> bytes:

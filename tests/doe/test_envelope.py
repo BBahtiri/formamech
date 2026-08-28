@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import replace
+from dataclasses import MISSING, fields, replace
 
 import pytest
 
@@ -101,6 +101,16 @@ def _envelope() -> ExecutableEnvelope:
         ),
         load_bounds=(_length_bound("prescribed_displacement", 1.0, 1.0),),
     )
+
+
+def test_envelope_decision_uses_python_311_safe_default_factory() -> None:
+    derived_field = next(
+        field for field in fields(EnvelopeDecision) if field.name == "derived_values"
+    )
+
+    assert derived_field.default is MISSING
+    assert derived_field.default_factory is not MISSING
+    assert EnvelopeDecision(True).derived_values == {}
 
 
 def test_executable_envelope_extends_geometry_membership_with_material_axes() -> None:

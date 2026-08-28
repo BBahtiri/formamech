@@ -1,18 +1,30 @@
 # ADR 0010: First S9 production-family proposal
 
-- Status: Proposed — family direction approved; exact envelope awaiting sign-off
+- Status: Proposed — source direction requested; exact family awaiting sign-off
 - Date: 2026-08-27
+- Last reviewed: 2026-08-28
+- Proposal author: Codex
+- Decision owner: Betim Bahtiri (ratification pending)
+- Recorded basis: repeated user direction to use the pinned DogBone repository as the
+  reference source; selection as the first ceremony is an implementation proposal,
+  not a recorded claim that its model or exact compiled family is proven
 - Step: S9
 
 ## Context
 
-The user approved the DogBone reference family as the first production-family
-direction.
+The user repeatedly directed the project to use the DogBone repository as its
+reference implementation. That records a source direction, not owner approval of
+the exact mesh, morph recipe, membership bounds, or compiled hash proposed here.
+This ADR selects it as the first ceremony proposal because a no-hole quarter specimen
+de-risks the identity, validation, and preregistration path before a genuinely
+different topology is attempted. The basis is ceremony risk reduction, not a claim
+that the pinned neural-operator implementation is proven.
+
 The tracked framework did not yet contain a production reference mesh or a compiled
 family for that geometry: S6's gate fixtures exercised only generic rectangular RBF
 and FFD morphs. Reusing the S1 spike implementation would violate its permanent
-`LEGACY` boundary, while substituting that rectangle would not implement the approved
-family.
+`LEGACY` boundary, while substituting that rectangle would not implement the requested
+reference direction.
 
 The designated source is
 [`BBahtiri/PI-GINOT-DogBone`](https://github.com/BBahtiri/PI-GINOT-DogBone) at commit
@@ -64,6 +76,17 @@ The validity policy is Jacobian `> 0.01`, minimum boundary feature size 0.05 mm,
 minimum triangle angle 5°, and maximum aspect ratio 20. Its hash is
 `b3c2df59eed939f1aa14a69d05a6fd2dc57be571ffba33c6355982713cc6931d`.
 
+Compiled-family schema 1.1 retains the full reference mesh at runtime but excludes it
+from the outer canonical preimage. The membership predicate binds the structural
+`mesh_id`, and construction refuses any runtime mesh whose identity differs. This is
+the same structural boundary already used by S5: nodes, cells, facets, tags, regions,
+unit, and orientation determine `mesh_id`; recomputable quality diagnostics do not.
+The public validation summary rounds its four diagnostic measurements to 12 decimal
+places only after raw S6 validity decisions. This prevents platform `libm` variation
+from changing public evidence without moving an acceptance threshold.
+No production checkpoint references the superseded schema-1.0 proposal hash, so this
+pre-ratification correction needs no stored-object migration or compatibility shim.
+
 The geometry membership above is only one part of an S9 executable envelope.
 Material and load bounds remain an explicit owner decision; values in the pinned
 reference implementation are evidence for that decision, not approval to encode a
@@ -86,19 +109,24 @@ Worst accepted measurements were:
 
 The canonical evidence is
 `artifacts/campaigns/dogbone-v1/family-validation.json`, with content hash
-`c83e09c38a01fe87765a258310071ceb03e08ca6ef4618d169b973c8a8bad75a`.
+`4dfac913a1fdbc5d752e83e5053e62fe45cada814b90638cdb89f05169aeb92d`.
 The compiled-family hash proposed for `CP-ENVELOPE` is
-`f5bac9413c0f602b7ad5e9605ffca9b998fe1875118009e68b6a296c6724b35d`.
+`a8143a75e62c614d40f52049cfc88c1cda74d38c9bd488cc3bed4c5678d973a4`.
 
 ## Consequences
 
-- The approved family direction now has an exact, reproducible public preimage.
+- The requested source direction now has an exact, reproducible proposal preimage;
+  owner ratification is still pending.
 - The source parameter box is retained, with one visible coupled exclusion needed by
   the FEM mesh-quality contract.
 - No DogBone executable-envelope preimage or hash is created until material and load
   bounds are approved.
-- Family-specific names remain outside `src/`; the generic framework still has no
-  family-name branching.
+- Family-specific names remain outside `src/`, and
+  `tests/test_no_fixture_names.py` enforces that hygiene property. This supports
+  `G17.fixture-names` only. The 548-line circular-transition provider is generic in
+  naming but currently has only the DogBone campaign as a consumer, so
+  `G17.non-dogbone` remains `NOT_RUN`; the notched-plate example must still reach a
+  verified bundle through the same API with no framework branch.
 - The original PI-GINOT architecture is not copied or replaced by this change. Model
   architecture remains an S11 decision; this ADR only establishes geometry identity.
 - This evidence does not approve material/load bounds, DOE populations, leakage

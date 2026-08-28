@@ -8,7 +8,6 @@ from piginot.morphing.circular_transition import (
     build_circular_transition_reference_mesh,
 )
 from piginot.morphing.ledger import apply_morph, run_morph_sweep
-from piginot.morphing.maps import FFDMap, RBFMap
 from piginot.morphing.membership import (
     DerivedBound,
     FamilyMembershipPredicate,
@@ -30,6 +29,18 @@ from piginot.morphing.models import (
     Point,
     RBFControlPoint,
 )
+
+
+def __getattr__(name: str) -> object:
+    if name == "FFDMap":
+        from piginot.morphing.maps import FFDMap
+
+        return FFDMap
+    if name == "RBFMap":
+        from piginot.morphing.maps import RBFMap
+
+        return RBFMap
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 __all__ = (
     "BoundCircularTransitionDeformation",

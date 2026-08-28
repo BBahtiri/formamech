@@ -1,6 +1,6 @@
 # S9 Production Campaign Sign-Off
 
-- Status: Family direction approved; exact family and remaining campaign choices proposed
+- Status: DogBone source direction recorded; exact campaign choices proposed
 - Step: S9
 - Blocks: G9 and S10
 - Branch: `codex/s9-doe-preregistration`
@@ -13,9 +13,10 @@ holdout salt, holdout coordinate, or production role label belongs in this file.
 
 ## Current Verdict
 
-G9 remains open. The user approved DogBone as the first production-family direction,
-and ADR 0010 now proposes its exact executable family. The repository still lacks
-human approval of that exact preimage, its complete material/load envelope, DOE
+G9 remains open. The user requested alignment with the pinned DogBone repository,
+and ADR 0010 now proposes one exact executable family to de-risk the first ceremony.
+The repository has no recorded owner ratification of that exact preimage and still
+lacks approval of its complete material/load envelope, DOE
 budgets and quotas, leakage tolerance, reserve distribution, public identifiers, and
 private reveal-handling decision. S10 must not begin until those choices are approved
 and committed, then used to create the first production `CP-ENVELOPE`.
@@ -49,8 +50,8 @@ Each row needs an explicit owner decision before the production ceremony.
 
 | Item | Required Decision | Current Draft Position |
 | --- | --- | --- |
-| Production family | Exact compiled family, reference mesh identity, morph map recipe, validity policy hash, and S6 membership predicate. | Direction approved and exact proposal ready. Recipe `dogbone-quarter-no-hole-v1`; compiled hash `f5bac941…b35d`; mesh `3bfc1043…d82c`; analytic circular-transition map; policy `b3c2df59…931d`. Exact preimage still needs owner ratification. |
-| Pilot evidence | Non-empty ordered set of content-addressed `EvidenceReference` records with role `PILOT` or `LEGACY`. | Proposed: DogBone family validation `c83e09c3…d75a` as `PILOT`, plus S1 gate `cd0b01e8…9470` as `LEGACY`. A FEM cost/solvability pilot is still required before approving population counts. |
+| Production family | Exact compiled family, reference mesh identity, morph map recipe, validity policy hash, and S6 membership predicate. | Source direction requested and exact proposal ready. Recipe `dogbone-quarter-no-hole-v1`; compiled hash `a8143a75…973a4`; mesh `3bfc1043…d82c`; analytic circular-transition map; policy `b3c2df59…931d`. Exact preimage still needs owner ratification. |
+| Pilot evidence | Non-empty ordered set of content-addressed `EvidenceReference` records with role `PILOT` or `LEGACY`. | Proposed: DogBone family validation `4dfac913…eb92d` as `PILOT`, plus S1 gate `cd0b01e8…9470` as `LEGACY`. A FEM cost/solvability pilot is still required before approving population counts. |
 | Executable envelope | Primitive bounds, derived bounds, material bounds, load bounds, and refusal policy for out-of-envelope inputs. | Geometry proposal ready: original four geometry ranges plus `arc_feasibility_ratio >= 1.35`. Material/load bounds are not approved, so no DogBone executable-envelope preimage or hash exists. |
 | Derived axes | Non-empty ordered list of derived stratification axes to bind into `CP-ENVELOPE`. | Proposed: `grip_to_gauge_ratio`, `fillet_to_gauge_ratio`, `length_to_gauge_ratio`, and `arc_feasibility_ratio`, all compiled through S2 and evaluated by S6. |
 | DOE axis policy | Axis weights, stratum counts, minimum per stratum, boundary widths, boundary quotas, interactions, and difficult-region quotas. | Not approved. The high-concentration region must have an explicit quota rather than relying on maximin fill alone. |
@@ -66,11 +67,17 @@ and derived vocabulary, executable envelope, meaningful difficult regions, and t
 cost basis for every population count. Numeric DOE or budget values approved before
 that choice would be unsupported assumptions and must not be used.
 
-The approved first-campaign direction has now been resolved to the exact proposal in
-ADR 0010. The proposal retains the pinned reference implementation's four primitive
-ranges and makes its fixed-connectivity exclusion explicit rather than hiding failed
-geometries. Ratification of ADR 0010 is still required before its hash enters a
-production commitment.
+The requested first-campaign source direction has now been resolved to the exact
+proposal in ADR 0010. The proposal retains the pinned reference implementation's four
+primitive ranges and makes its fixed-connectivity exclusion explicit rather than
+hiding failed geometries. Ratification of ADR 0010 is still required before its hash
+enters a production commitment.
+
+This proposal does not close the family-generality risk from ADR 0001.
+`tests/test_no_fixture_names.py` checks `G17.fixture-names` hygiene, but
+`G17.non-dogbone` remains `NOT_RUN` until a genuinely different notched-plate topology
+reaches a verified bundle through the same API. The circular-transition provider is
+currently exercised by only this campaign.
 
 ## Derived-Quantity Requirement
 

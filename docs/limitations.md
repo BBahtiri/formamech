@@ -76,11 +76,15 @@ same Python process was unmodified. The required near-duplicate tolerance and th
 pre-role lineage, morph-seed, and normalized-coordinate descriptors are replayed at
 design construction and campaign closure, then committed through the private DOE-plan
 hash; they are finite campaign metadata, not proof that no unrecorded correlation
-exists. No production commitment or `CP-ENVELOPE` exists yet. The first production
-family direction is approved and its exact preimage is proposed, but the complete
-envelope, budget, DOE quotas, leakage tolerance, and reserve distribution have not
-been approved. A test fixture is not production evidence, so G9 remains incomplete
-and S10 must not begin.
+exists. No production commitment or `CP-ENVELOPE` exists yet. A DogBone source
+direction is recorded and an exact preimage is proposed, but neither that preimage
+nor the complete envelope, budget, DOE quotas, leakage tolerance, and reserve
+distribution has owner ratification. A test fixture is not production evidence, so
+G9 remains incomplete and S10 must not begin. The absence of family-specific words
+and branches in `src/` addresses only `G17.fixture-names`; `G17.non-dogbone` remains
+`NOT_RUN` because the circular-transition provider currently has one campaign
+consumer and no distinct-topology example has reached a verified bundle through the
+same API.
 
 When instantiated, the public commitment will prove only that a later reveal matches
 the committed coordinates. It cannot prove that the local holder never saw the

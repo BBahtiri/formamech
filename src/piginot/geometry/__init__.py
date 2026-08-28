@@ -10,13 +10,16 @@ from piginot.geometry.errors import (
     QueryContainmentError,
 )
 from piginot.geometry.family import classify_mesh_family, require_variable_family
-from piginot.geometry.gmsh import canonicalize_meshio, read_gmsh, to_meshio, write_gmsh
 from piginot.geometry.ingest import (
     GeometryFamilyClassification,
+    canonicalize_meshio,
     classify_geometry_family,
     contains_points,
     from_gmsh,
+    read_gmsh,
     to_gmsh,
+    to_meshio,
+    write_gmsh,
 )
 from piginot.geometry.models import CellType, MeshFamilyKind, MeshPayload, PointLocation
 from piginot.geometry.queries import locate_points, require_points_contained

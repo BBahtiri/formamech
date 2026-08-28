@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import math
+from dataclasses import replace
 from pathlib import Path
+
+import pytest
 
 from campaigns.dogbone_v1.family import (
     REFERENCE_REPOSITORY_COMMIT,
@@ -8,7 +12,10 @@ from campaigns.dogbone_v1.family import (
     compiled_family,
     parameter_point,
 )
-from campaigns.dogbone_v1.pilot import run_family_validation_sweep
+from campaigns.dogbone_v1.pilot import (
+    FamilyValidationSummary,
+    run_family_validation_sweep,
+)
 from piginot.contracts import (
     Dimension,
     Unit,
@@ -21,7 +28,7 @@ _REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 _ARTIFACT_ROOT = _REPOSITORY_ROOT / "artifacts" / "campaigns" / "dogbone-v1"
 
 
-def test_family_is_pinned_to_the_user_approved_reference_implementation() -> None:
+def test_family_is_pinned_to_the_user_requested_reference_implementation() -> None:
     family = compiled_family()
 
     assert REFERENCE_REPOSITORY_URL == ("https://github.com/BBahtiri/PI-GINOT-DogBone")
@@ -53,6 +60,74 @@ def test_compiled_family_binds_reference_map_membership_and_policy() -> None:
         first.membership.criteria, "content"
     )
     assert set(first.morph_map.parameter_names) == set(first.membership.parameter_names)
+
+
+def test_compiled_family_identity_excludes_reference_mesh_diagnostics() -> None:
+    family = compiled_family()
+    metrics = dict(family.reference_mesh.quality_metrics)
+    metrics["maximum_angle_degrees"] = math.nextafter(
+        metrics["maximum_angle_degrees"], math.inf
+    )
+    changed_mesh = replace(family.reference_mesh, quality_metrics=metrics)
+    changed_family = replace(family, reference_mesh=changed_mesh)
+
+    assert changed_family.reference_mesh.quality_metrics != (
+        family.reference_mesh.quality_metrics
+    )
+    assert canonical_json_bytes(changed_family) == canonical_json_bytes(family)
+    assert hash_spec(changed_family, "content") == hash_spec(family, "content")
+    assert b'"reference_mesh"' not in canonical_json_bytes(family)
+
+
+def test_compiled_family_refuses_a_reference_mesh_identity_mismatch() -> None:
+    family = compiled_family()
+    changed_mesh = replace(family.reference_mesh, mesh_id="0" * 64)
+
+    with pytest.raises(ValueError, match="reference mesh identity"):
+        replace(family, reference_mesh=changed_mesh)
+
+
+def test_compiled_family_refuses_forged_reference_mesh_identity() -> None:
+    family = compiled_family()
+    first_node = family.reference_mesh.nodes[0]
+    changed_nodes = (
+        (first_node[0], first_node[1] + 1.0e-9),
+        *family.reference_mesh.nodes[1:],
+    )
+    changed_mesh = replace(family.reference_mesh, nodes=changed_nodes)
+
+    with pytest.raises(ValueError, match="reference mesh structural identity"):
+        replace(family, reference_mesh=changed_mesh)
+
+
+def test_validation_summary_quantizes_portable_diagnostic_reports() -> None:
+    def summary_with_angle(angle: float) -> FamilyValidationSummary:
+        return FamilyValidationSummary(
+            recipe_id="fixture",
+            public_seed="fixture",
+            sample_generator_id="fixture",
+            candidate_count=1,
+            attempted=1,
+            membership_accepted=1,
+            accepted=1,
+            membership_rejections={},
+            morph_rejections={},
+            minimum_jacobian_determinant=0.5,
+            minimum_feature_size_mm=0.5,
+            minimum_angle_degrees=angle,
+            maximum_aspect_ratio=2.0,
+            quadrature_points_per_shape=7,
+            reference_mesh_id="mesh",
+            validity_policy_hash="1" * 64,
+            compiled_family_hash="2" * 64,
+            worst_case_parameters={},
+        )
+
+    windows = summary_with_angle(142.40718111619464)
+    linux = summary_with_angle(142.4071811161946)
+
+    assert windows.minimum_angle_degrees == 142.407181116195
+    assert canonical_json_bytes(windows) == canonical_json_bytes(linux)
 
 
 def test_committed_compiled_family_is_the_exact_canonical_preimage() -> None:

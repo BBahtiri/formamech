@@ -10,7 +10,6 @@ from typing import Any
 from piginot.contracts import CanonicalMesh, GeometryFamilySpec, Unit
 from piginot.geometry.canonicalize import canonicalize_mesh
 from piginot.geometry.family import classify_mesh_family, require_variable_family
-from piginot.geometry.gmsh import canonicalize_meshio, read_gmsh, to_meshio, write_gmsh
 from piginot.geometry.models import CellType, MeshFamilyKind, MeshPayload, PointLocation
 from piginot.geometry.queries import locate_points, require_points_contained
 from piginot.geometry.topology import TopologySummary, topology_summary
@@ -23,6 +22,49 @@ class GeometryFamilyClassification:
     kind: str
     can_be_used_as_variable: bool
     topology_signature: str
+
+
+def read_gmsh(path: str | Path, *, unit: Unit) -> CanonicalMesh:
+    """Read a tagged, planar Gmsh v4.1 mesh into canonical form."""
+
+    from piginot.geometry.gmsh import read_gmsh as _read_gmsh
+
+    return _read_gmsh(path, unit=unit)
+
+
+def canonicalize_meshio(
+    raw_mesh: Any,
+    *,
+    unit: Unit,
+    source_path: Path | None = None,
+    source_format: str | None = None,
+) -> CanonicalMesh:
+    """Canonicalize an in-memory meshio mesh using the strict Gmsh tag contract."""
+
+    from piginot.geometry.gmsh import canonicalize_meshio as _canonicalize_meshio
+
+    return _canonicalize_meshio(
+        raw_mesh,
+        unit=unit,
+        source_path=source_path,
+        source_format=source_format,
+    )
+
+
+def write_gmsh(mesh: CanonicalMesh, path: str | Path) -> None:
+    """Write canonical triangles as deterministic ASCII Gmsh v4.1."""
+
+    from piginot.geometry.gmsh import write_gmsh as _write_gmsh
+
+    _write_gmsh(mesh, path)
+
+
+def to_meshio(mesh: CanonicalMesh) -> Any:
+    """Convert a canonical mesh to a deterministic in-memory meshio object."""
+
+    from piginot.geometry.gmsh import to_meshio as _to_meshio
+
+    return _to_meshio(mesh)
 
 
 def from_gmsh(path: str | Path, *, unit: Unit) -> CanonicalMesh:

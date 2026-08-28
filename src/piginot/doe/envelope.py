@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 import re
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 from types import MappingProxyType
 from typing import ClassVar, cast
@@ -45,7 +45,7 @@ class EnvelopeDecision:
 
     accepted: bool
     reason_codes: tuple[object, ...] = ()
-    derived_values: Mapping[str, CanonicalQuantity] = MappingProxyType({})
+    derived_values: Mapping[str, CanonicalQuantity] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if not isinstance(self.accepted, bool):

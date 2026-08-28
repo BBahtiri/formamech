@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import ClassVar
 
 from piginot.contracts import (
@@ -14,6 +14,7 @@ from piginot.contracts import (
     GeometryFamilySpec,
     ParameterSpec,
     Unit,
+    hash_spec,
 )
 from piginot.morphing import (
     CircularTransitionMap,
@@ -57,6 +58,29 @@ _VALIDITY = MorphValidityCriteria(
     minimum_angle_degrees=5.0,
     maximum_aspect_ratio=20.0,
 )
+
+
+def _reference_mesh_structural_hash(mesh: CanonicalMesh) -> str:
+    return hash_spec(
+        {
+            "schema": "canonical-triangle-mesh-v1",
+            "nodes": mesh.nodes,
+            "cells": mesh.cells,
+            "cell_type": mesh.cell_type,
+            "boundary_facets": mesh.boundary_facets,
+            "semantic_tags": mesh.semantic_tags,
+            "region_ids": mesh.region_ids,
+            "unit": mesh.unit,
+            "orientation": mesh.orientation,
+        },
+        domain="content",
+    )
+
+
+def _semantic_tag_counts(mesh: CanonicalMesh) -> dict[str, int]:
+    return {
+        name: len(facet_ids) for name, facet_ids in sorted(mesh.semantic_tags.items())
+    }
 
 
 def _length(value: float) -> CanonicalQuantity:
@@ -130,18 +154,44 @@ def _family_spec(reference: CanonicalMesh) -> GeometryFamilySpec:
 
 @dataclass(frozen=True, slots=True)
 class CompiledFamily:
-    """Public canonical preimage bound by the later CP-ENVELOPE."""
+    """Runtime family whose canonical identity binds the structural mesh ID."""
 
     __canonical_namespace__: ClassVar[str] = "piginot.campaigns"
 
     recipe_id: str
     source_repository_url: str
     source_repository_commit: str
-    reference_mesh: CanonicalMesh
+    reference_mesh: CanonicalMesh = field(
+        repr=False,
+        metadata={"canonical": False},
+    )
     mesh_spec: CircularTransitionMeshSpec
     morph_map: CircularTransitionMap
     membership: FamilyMembershipPredicate
-    schema_version: str = "1.0"
+    schema_version: str = "1.1"
+
+    def __post_init__(self) -> None:
+        if type(self.reference_mesh) is not CanonicalMesh:
+            raise ValueError("reference_mesh must be a CanonicalMesh")
+        if type(self.membership) is not FamilyMembershipPredicate:
+            raise ValueError("membership must be a FamilyMembershipPredicate")
+        if self.reference_mesh.mesh_id != self.membership.reference_mesh_id:
+            raise ValueError("reference mesh identity does not match membership")
+        if self.reference_mesh.mesh_id != _reference_mesh_structural_hash(
+            self.reference_mesh
+        ):
+            raise ValueError("reference mesh structural identity does not match")
+        if (
+            self.reference_mesh.topology_signature
+            != self.membership.reference_topology_signature
+        ):
+            raise ValueError("reference mesh topology does not match membership")
+        if _semantic_tag_counts(self.reference_mesh) != dict(
+            self.membership.semantic_tag_counts
+        ):
+            raise ValueError("reference mesh semantic tags do not match membership")
+        if self.schema_version != "1.1":
+            raise ValueError(f"unsupported compiled family {self.schema_version!r}")
 
 
 def compiled_family() -> CompiledFamily:

@@ -13,7 +13,8 @@ from piginot.contracts import (
     Unit,
     hash_spec,
 )
-from piginot.geometry import CellType, MeshPayload, canonicalize_mesh
+from piginot.geometry.canonicalize import canonicalize_mesh
+from piginot.geometry.models import CellType, MeshPayload
 from piginot.morphing.models import Matrix2, MorphingError, MorphReasonCode, Point
 
 

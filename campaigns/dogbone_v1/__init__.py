@@ -1,4 +1,4 @@
-"""Exact proposal for the approved first S9 production-family direction."""
+"""Exact proposal for the requested first S9 production-family direction."""
 
 from campaigns.dogbone_v1.family import (
     CompiledFamily,
