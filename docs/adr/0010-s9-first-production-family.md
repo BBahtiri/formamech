@@ -1,24 +1,26 @@
-# ADR 0010: First S9 production-family proposal
+# ADR 0010: First S9 production-family decision
 
-- Status: Proposed — source direction requested; exact family awaiting sign-off
+- Status: Accepted — exact production family ratified
 - Date: 2026-08-27
-- Last reviewed: 2026-08-28
+- Last reviewed: 2026-08-29
 - Proposal author: Codex
-- Decision owner: Betim Bahtiri (ratification pending)
+- Decision owner: Betim Bahtiri
+- Accepted: 2026-08-29T13:00:53Z by explicit task-thread ratification
 - Recorded basis: repeated user direction to use the pinned DogBone repository as the
-  reference source; selection as the first ceremony is an implementation proposal,
-  not a recorded claim that its model or exact compiled family is proven
+  reference source, followed by explicit owner ratification on 2026-08-29 of the
+  compiled family, reference mesh, and validity-policy hashes listed in this ADR;
+  selection as the first ceremony is not a recorded claim that its model is proven
 - Step: S9
 
 ## Context
 
 The user repeatedly directed the project to use the DogBone repository as its
-reference implementation. That records a source direction, not owner approval of
-the exact mesh, morph recipe, membership bounds, or compiled hash proposed here.
-This ADR selects it as the first ceremony proposal because a no-hole quarter specimen
-de-risks the identity, validation, and preregistration path before a genuinely
-different topology is attempted. The basis is ceremony risk reduction, not a claim
-that the pinned neural-operator implementation is proven.
+reference implementation, then ratified the exact mesh, morph recipe, membership
+bounds, and compiled hash recorded here. This ADR selects it as the first ceremony
+decision because a no-hole quarter specimen de-risks the identity, validation, and
+preregistration path before a genuinely different topology is attempted. The basis
+is ceremony risk reduction, not a claim that the pinned neural-operator
+implementation is proven.
 
 The tracked framework did not yet contain a production reference mesh or a compiled
 family for that geometry: S6's gate fixtures exercised only generic rectangular RBF
@@ -33,7 +35,7 @@ with four physical dimensions: total length, outer width, reduced width, and cir
 transition radius. The published primitive ranges are 40–70 mm, 16–26 mm, 6–14 mm,
 and 8–20 mm respectively.
 
-## Proposed Decision
+## Decision
 
 Use recipe `dogbone-quarter-no-hole-v1`, implemented outside the family-agnostic
 package surface in `campaigns/dogbone_v1`. The reusable package addition is an exact
@@ -110,13 +112,13 @@ Worst accepted measurements were:
 The canonical evidence is
 `artifacts/campaigns/dogbone-v1/family-validation.json`, with content hash
 `4dfac913a1fdbc5d752e83e5053e62fe45cada814b90638cdb89f05169aeb92d`.
-The compiled-family hash proposed for `CP-ENVELOPE` is
+The accepted compiled-family hash for later `CP-ENVELOPE` use is
 `a8143a75e62c614d40f52049cfc88c1cda74d38c9bd488cc3bed4c5678d973a4`.
 
 ## Consequences
 
-- The requested source direction now has an exact, reproducible proposal preimage;
-  owner ratification is still pending.
+- The requested source direction now has an owner-ratified, exact, reproducible
+  production-family preimage.
 - The source parameter box is retained, with one visible coupled exclusion needed by
   the FEM mesh-quality contract.
 - No DogBone executable-envelope preimage or hash is created until material and load

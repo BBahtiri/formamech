@@ -77,11 +77,11 @@ pre-role lineage, morph-seed, and normalized-coordinate descriptors are replayed
 design construction and campaign closure, then committed through the private DOE-plan
 hash; they are finite campaign metadata, not proof that no unrecorded correlation
 exists. No production commitment or `CP-ENVELOPE` exists yet. A DogBone source
-direction is recorded and an exact preimage is proposed, but neither that preimage
-nor the complete envelope, budget, DOE quotas, leakage tolerance, and reserve
-distribution has owner ratification. A test fixture is not production evidence, so
-G9 remains incomplete and S10 must not begin. The absence of family-specific words
-and branches in `src/` addresses only `G17.fixture-names`; `G17.non-dogbone` remains
+direction is recorded and ADR 0010 ratifies its exact production-family preimage, but
+the complete envelope, budget, DOE quotas, leakage tolerance, and reserve distribution
+still lack owner ratification. A test fixture is not production evidence, so G9
+remains incomplete and S10 must not begin. The absence of family-specific words and
+branches in `src/` addresses only `G17.fixture-names`; `G17.non-dogbone` remains
 `NOT_RUN` because the circular-transition provider currently has one campaign
 consumer and no distinct-topology example has reached a verified bundle through the
 same API.

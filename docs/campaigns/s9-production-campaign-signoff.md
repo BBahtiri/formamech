@@ -1,6 +1,6 @@
 # S9 Production Campaign Sign-Off
 
-- Status: DogBone source direction recorded; exact campaign choices proposed
+- Status: Production family ratified; remaining campaign choices open
 - Step: S9
 - Blocks: G9 and S10
 - Branch: `codex/s9-doe-preregistration`
@@ -14,12 +14,12 @@ holdout salt, holdout coordinate, or production role label belongs in this file.
 ## Current Verdict
 
 G9 remains open. The user requested alignment with the pinned DogBone repository,
-and ADR 0010 now proposes one exact executable family to de-risk the first ceremony.
-The repository has no recorded owner ratification of that exact preimage and still
-lacks approval of its complete material/load envelope, DOE
-budgets and quotas, leakage tolerance, reserve distribution, public identifiers, and
-private reveal-handling decision. S10 must not begin until those choices are approved
-and committed, then used to create the first production `CP-ENVELOPE`.
+and ADR 0010 now records owner ratification of one exact executable family to
+de-risk the first ceremony. The repository still lacks approval of its complete
+material/load envelope, DOE budgets and quotas, leakage tolerance, reserve
+distribution, public identifiers, and private reveal-handling decision. S10 must not
+begin until those choices are approved and committed, then used to create the first
+production `CP-ENVELOPE`.
 
 ## Evidence Basis
 
@@ -40,7 +40,7 @@ and committed, then used to create the first production `CP-ENVELOPE`.
 - `docs/adr/0009-s9-preregistration-over-sealed-audit.md` fixes the S9 closure
   ceremony, exact-64 holdout, CSPRNG-origin campaign secrets, leakage boundary,
   replacement rule, and `CP-ENVELOPE` schema 1.1.
-- `docs/adr/0010-s9-first-production-family.md` proposes the exact pinned DogBone
+- `docs/adr/0010-s9-first-production-family.md` accepts the exact pinned DogBone
   family. `artifacts/campaigns/dogbone-v1/family-validation.json` records a disjoint
   public sweep with 500 accepted and zero morph-validation failures.
 
@@ -48,9 +48,9 @@ and committed, then used to create the first production `CP-ENVELOPE`.
 
 Each row needs an explicit owner decision before the production ceremony.
 
-| Item | Required Decision | Current Draft Position |
+| Item | Required Decision | Current Position |
 | --- | --- | --- |
-| Production family | Exact compiled family, reference mesh identity, morph map recipe, validity policy hash, and S6 membership predicate. | Source direction requested and exact proposal ready. Recipe `dogbone-quarter-no-hole-v1`; compiled hash `a8143a75…973a4`; mesh `3bfc1043…d82c`; analytic circular-transition map; policy `b3c2df59…931d`. Exact preimage still needs owner ratification. |
+| Production family | Exact compiled family, reference mesh identity, morph map recipe, validity policy hash, and S6 membership predicate. | Approved 2026-08-29. Recipe `dogbone-quarter-no-hole-v1`; compiled hash `a8143a75…973a4`; mesh `3bfc1043…d82c`; analytic circular-transition map; policy `b3c2df59…931d`. |
 | Pilot evidence | Non-empty ordered set of content-addressed `EvidenceReference` records with role `PILOT` or `LEGACY`. | Proposed: DogBone family validation `4dfac913…eb92d` as `PILOT`, plus S1 gate `cd0b01e8…9470` as `LEGACY`. A FEM cost/solvability pilot is still required before approving population counts. |
 | Executable envelope | Primitive bounds, derived bounds, material bounds, load bounds, and refusal policy for out-of-envelope inputs. | Geometry proposal ready: original four geometry ranges plus `arc_feasibility_ratio >= 1.35`. Material/load bounds are not approved, so no DogBone executable-envelope preimage or hash exists. |
 | Derived axes | Non-empty ordered list of derived stratification axes to bind into `CP-ENVELOPE`. | Proposed: `grip_to_gauge_ratio`, `fillet_to_gauge_ratio`, `length_to_gauge_ratio`, and `arc_feasibility_ratio`, all compiled through S2 and evaluated by S6. |
@@ -68,10 +68,10 @@ cost basis for every population count. Numeric DOE or budget values approved bef
 that choice would be unsupported assumptions and must not be used.
 
 The requested first-campaign source direction has now been resolved to the exact
-proposal in ADR 0010. The proposal retains the pinned reference implementation's four
-primitive ranges and makes its fixed-connectivity exclusion explicit rather than
-hiding failed geometries. Ratification of ADR 0010 is still required before its hash
-enters a production commitment.
+accepted decision in ADR 0010. The decision retains the pinned reference
+implementation's four primitive ranges and makes its fixed-connectivity exclusion
+explicit rather than hiding failed geometries. Its hash may enter a later production
+commitment only after the remaining approval items on this page are ratified.
 
 This proposal does not close the family-generality risk from ADR 0001.
 `tests/test_no_fixture_names.py` checks `G17.fixture-names` hygiene, but
@@ -125,7 +125,6 @@ committed:
 
 The following are intentionally not approved by this draft:
 
-- no owner-ratified exact compiled production-family record;
 - no owner-ratified complete material/load executable envelope;
 - no role budget;
 - no DOE quota table;
@@ -137,8 +136,19 @@ The following are intentionally not approved by this draft:
 
 ## Sign-Off Record
 
-Approval requires replacing this section with the actual decision record, including
-the decision owner, UTC timestamp, approved public identifiers, exact scientific and
-population values above, and the resulting hashes of the family, pilot evidence,
-envelope, private DOE plan (including leakage policy and descriptors), role registry,
-reserve policy, and public case manifest.
+Partial decision record only; this is not a full S9 campaign sign-off.
+
+- Decision owner: Betim Bahtiri
+- Recorded UTC timestamp: 2026-08-29T13:00:53Z
+- Approved production family: `dogbone-quarter-no-hole-v1`
+- Approved compiled-family hash:
+  `a8143a75e62c614d40f52049cfc88c1cda74d38c9bd488cc3bed4c5678d973a4`
+- Approved reference mesh:
+  `3bfc1043f5aa9e989469adacb0ee1d0b483825ffabcd5dfac4bf9caca580d82c`
+- Approved validity-policy hash:
+  `b3c2df59eed939f1aa14a69d05a6fd2dc57be571ffba33c6355982713cc6931d`
+
+Full campaign approval still requires the exact scientific and population values
+above, plus the resulting hashes of the pilot evidence, executable envelope, private
+DOE plan including leakage policy and descriptors, role registry, reserve policy,
+and public case manifest.
