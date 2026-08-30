@@ -446,6 +446,25 @@ def _summary(records: tuple[FemPilotRecord, ...]) -> FemPilotSummary:
     )
 
 
+def record_pilot_attempt(
+    case: PilotGeometryCase,
+    request: FemRequest,
+    attempt: FemAttempt,
+    elapsed_seconds: float,
+) -> FemPilotRecord:
+    """Validate and reduce one backend attempt to public pilot evidence."""
+
+    return _record(case, request, attempt, elapsed_seconds)
+
+
+def summarize_pilot_records(
+    records: tuple[FemPilotRecord, ...],
+) -> FemPilotSummary:
+    """Summarize an ordered finite population of pilot outcomes."""
+
+    return _summary(records)
+
+
 def run_fem_pilot(
     *,
     backend: FemBackend,
@@ -492,5 +511,7 @@ __all__ = (
     "SELECTION_POLICY_ID",
     "build_pilot_requests",
     "pilot_geometry_cases",
+    "record_pilot_attempt",
     "run_fem_pilot",
+    "summarize_pilot_records",
 )

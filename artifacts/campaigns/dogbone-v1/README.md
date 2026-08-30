@@ -15,6 +15,10 @@ These files contain no campaign secret, role allocation, or holdout coordinate.
   request/result identities, convergence diagnostics, canonical result-payload size,
   timing, and runtime environment for 12 geometry sentinels selected before solving.
   It does not contain the full FEM result payloads.
+- `fem-strain-envelope-pilot.json` is the canonical public report from
+  `campaigns.dogbone_v1.strain_pilot.run_strain_pilot()`. It repeats the 12 FEM
+  sentinels at 10% and 20% nominal axial strain, computing prescribed right-grip
+  displacement as `nominal_axial_strain * L_total / 2`.
 
 Pinned identities:
 
@@ -25,6 +29,7 @@ Pinned identities:
 - validity policy: `b3c2df59eed939f1aa14a69d05a6fd2dc57be571ffba33c6355982713cc6931d`
 - validation evidence: `4dfac913a1fdbc5d752e83e5053e62fe45cada814b90638cdb89f05169aeb92d`
 - FEM solvability evidence: `e2aa1e0e2cd9d20b31043d9c6cb066c138c9b3cb00c7432111ddd38e6f156928`
+- FEM strain-load evidence: `4ff6dba3f311ff949d5cf662b2d68dd358e5b6f2592157677797f6173d0f14d2`
 
 The FEM pilot fixes the pinned source values `E = 760 MPa`, `nu = 0.23`, and
 prescribed grip displacement `1 mm`, then uses P2 displacement, eight load steps, and
@@ -35,6 +40,14 @@ payloads totalled 52,117,983 bytes. Each P2 solve had 7,458 scalar displacement 
 These measurements size one candidate campaign on one host; they do not estimate a
 domain-wide failure probability or portable runtime.
 
+The fixed `1 mm` displacement from the pinned source is not a ratified production
+load because it couples nominal strain to specimen length. The strain-load pilot
+evaluates the replacement primitive but does not approve a final load envelope:
+21 of 24 attempts succeeded, with `wide_gauge_long` failing at both 10% and 20% and
+`arc_margin` failing at 20%. Successful paired cases departed from linear right
+reaction scaling by 5.46% to 5.70%.
+
 The JSON artifacts are generated mechanically from typed contracts and verified by
 `tests/campaigns/test_dogbone_v1_family.py` and
-`tests/campaigns/test_dogbone_fem_pilot.py`.
+`tests/campaigns/test_dogbone_fem_pilot.py` plus
+`tests/campaigns/test_dogbone_strain_pilot.py`.
