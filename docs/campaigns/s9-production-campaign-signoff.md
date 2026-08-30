@@ -46,7 +46,7 @@ production `CP-ENVELOPE`.
 - `artifacts/campaigns/dogbone-v1/fem-solvability-pilot.json` records the ordered
   results of 12 preselected reference, boundary, and difficult-geometry P2 solves at
   the pinned source material and displacement. Its content hash is
-  `ecc8057de75414fe7931695b9e9d589c83d50254aa548554c260fcadb7eba9ec`.
+  `e2aa1e0e2cd9d20b31043d9c6cb066c138c9b3cb00c7432111ddd38e6f156928`.
 
 ## Approval Items
 
@@ -55,16 +55,16 @@ Each row needs an explicit owner decision before the production ceremony.
 | Item | Required Decision | Current Position |
 | --- | --- | --- |
 | Production family | Exact compiled family, reference mesh identity, morph map recipe, validity policy hash, and S6 membership predicate. | Approved 2026-08-29. Recipe `dogbone-quarter-no-hole-v1`; compiled hash `a8143a75…973a4`; mesh `3bfc1043…d82c`; analytic circular-transition map; policy `b3c2df59…931d`. |
-| Pilot evidence | Non-empty ordered set of content-addressed `EvidenceReference` records with role `PILOT` or `LEGACY`. | Available for approval: FEM solvability pilot `ecc8057d…a9ec` and DogBone family validation `4dfac913…eb92d` as `PILOT`, plus S1 gate `cd0b01e8…9470` as `LEGACY`. The finite FEM cost/solvability pilot is complete; the exact checkpoint evidence set is not yet approved. |
+| Pilot evidence | Non-empty ordered set of content-addressed `EvidenceReference` records with role `PILOT` or `LEGACY`. | Available for approval: FEM solvability pilot `e2aa1e0e…6928` and DogBone family validation `4dfac913…eb92d` as `PILOT`, plus S1 gate `cd0b01e8…9470` as `LEGACY`. The finite FEM cost/solvability pilot is complete; the exact checkpoint evidence set is not yet approved. |
 | Executable envelope | Primitive bounds, derived bounds, material bounds, load bounds, and refusal policy for out-of-envelope inputs. | Geometry proposal ready: original four geometry ranges plus `arc_feasibility_ratio >= 1.35`. Source-aligned fixed-point proposal exercised by the FEM pilot: `E = 760 MPa`, `nu = 0.23`, prescribed displacement `1 mm`. Those material/load bounds are not approved, so no DogBone executable-envelope preimage or hash exists. |
-| Derived axes | Non-empty ordered list of derived stratification axes to bind into `CP-ENVELOPE`. | Proposed: `grip_to_gauge_ratio`, `fillet_to_gauge_ratio`, `length_to_gauge_ratio`, and `arc_feasibility_ratio`, all compiled through S2 and evaluated by S6. |
-| DOE axis policy | Axis weights, stratum counts, minimum per stratum, boundary widths, boundary quotas, interactions, and difficult-region quotas. | Not approved. The high-concentration region must have an explicit quota rather than relying on maximin fill alone. |
-| Role budget | Positive `PILOT`, `TRAIN`, `DEVELOPMENT`, exact `HOLDOUT=64`, and explicit non-negative `LEGACY` and `RESERVE` counts. | Proposed first campaign: `PILOT=24`, `TRAIN=256`, `DEVELOPMENT=64`, `HOLDOUT=64`, `LEGACY=1`, `RESERVE=32`; DOE `sample_count=408`, `reserve_count=32`. Not approved. |
-| Candidate streams | `candidate_count`, `validation_count`, `validation_candidate_count`, `guard_band_count`, and `guard_band_fraction`. | Proposed first campaign: `candidate_count=2400`, `validation_count=96`, `validation_candidate_count=800`, `guard_band_count=32`, `guard_band_fraction=0.05`. Not approved. |
+| Derived axes | Non-empty ordered list of derived stratification axes to bind into `CP-ENVELOPE`. | Proposed order: `arc_feasibility_ratio`, `fillet_to_gauge_ratio`, `grip_to_gauge_ratio`, `length_to_gauge_ratio`, all compiled through S2 and evaluated by S6. Not approved. |
+| DOE axis policy | Axis weights, stratum counts, minimum per stratum, boundary widths, boundary quotas, interactions, difficult-region quotas, and coverage thresholds. | Exact proposal is recorded below. A public non-production dry run resolved every declared requirement with fill distance `0.0865461`, minimum stratum count 10, and all four quota fractions equal to 1.0. Not approved. |
+| Role budget | Positive `PILOT`, `TRAIN`, `DEVELOPMENT`, exact `HOLDOUT=64`, and explicit non-negative `LEGACY` and `RESERVE` counts. | Proposed first campaign: `PILOT=24`, `TRAIN=256`, `DEVELOPMENT=64`, `HOLDOUT=64`, `LEGACY=0`, `RESERVE=32`; DOE `sample_count=408`, `reserve_count=32`. The S1 gate remains a `LEGACY` evidence reference, but no pre-S9 case enters the production case ledger. Not approved. |
+| Candidate streams | `candidate_count`, `validation_count`, `validation_candidate_count`, `guard_band_count`, and `guard_band_fraction`. | Proposed first campaign: `candidate_count=4096`, `validation_count=512`, `validation_candidate_count=4096`, `guard_band_count=32`, `guard_band_fraction=0.05`. Not approved. |
 | Leakage policy | Near-duplicate tolerance in normalized primitive-plus-derived axis space. | Proposed first campaign: `near_duplicate_tolerance=0.015` under `geometry-lineage-morph-seed-chebyshev-v1`. The DOE records descriptors, and closure replays them before accepting the role allocation. The private DOE-plan hash binds both policy and descriptors. Not approved. |
 | Reserve distribution | Ordered reserve policy per replaceable role and exhaustion behavior. | Proposed first campaign: `PILOT=4`, `TRAIN=20`, `DEVELOPMENT=8`, `HOLDOUT=0`, `LEGACY=0` reserves, ranked by the committed reserve order. Version one permits reserves only for `PILOT`, `TRAIN`, and `DEVELOPMENT`; `HOLDOUT` is never replaced. Not approved. |
-| Public naming | Stable public `manifest_id` and replacement `rule_id`. | Not approved. `s9-public-cases` is only the code default; guard and DOE stream algorithm IDs are fixed by code. |
-| Private reveal handling | Local ignored path and access controls for salt plus exact holdout coordinates. | Not approved. The reveal file must not enter Git, gate artifacts, tests, or training inputs. |
+| Public naming | Stable public `manifest_id` and replacement `rule_id`. | Proposed: manifest `dogbone-v1-public-cases`; replacement rule `role-local-design-order-v1`. Guard and DOE stream algorithm IDs remain fixed by code. Not approved. |
+| Private reveal handling | Local ignored path and access controls for salt plus exact holdout coordinates. | Proposed: `.piginot-private/dogbone-v1/reveal-v1.json`, created before public commitment, readable only by the ceremony operator, with a separately access-controlled backup. The reveal must not enter Git, gate artifacts, tests, or training inputs. Not approved. |
 
 The production family is the first decision. It fixes the reference mesh, primitive
 and derived vocabulary, executable envelope, meaningful difficult regions, and the
@@ -92,7 +92,8 @@ converged. Total solve time was 261.094054 s; median time was 21.019403 s; p95 a
 maximum time were 25.600437 s. No load step required more than eight Newton
 iterations, and the largest final residual was
 `7.128736607124267e-11`. The uncompressed canonical FEM result payloads totalled
-52,117,983 bytes, with a maximum single payload of 4,403,090 bytes.
+52,117,983 bytes, with a maximum single payload of 4,403,090 bytes. Every P2 solve
+had 7,458 scalar displacement DOFs (3,729 vector-valued basis sites).
 
 This is finite sentinel evidence and a local cost measurement. It is not a uniform
 solvability proof, a portable performance benchmark, or approval of the fixed
@@ -115,6 +116,56 @@ development decisions, and keeps 24 production `PILOT` cases for pipeline shakeo
 after commitment but before using the training labels. Thirty-two reserves give
 approximately 7.8% replacement capacity over active production cases without ever
 replacing `HOLDOUT`.
+
+## Proposed DOE Policy and Public Dry Run
+
+The proposed axis table is finite and exact. Fixed material/load coordinates retain
+one visible stratum but weight `0.01`, so zero-width axes do not materially dilute the
+weighted distance. `arc_feasibility_ratio` uses two strata because the ratified upper
+bound of 20 is reachable only near a measure-small primitive corner; an equal
+four-stratum policy left its highest cell empty even in a 2,400-candidate public
+stream. Its load-bearing lower edge is covered by explicit difficult-region quotas
+instead of a misleading symmetric boundary quota.
+
+| Axis | Source | Weight | Strata | Minimum/stratum | Boundary width | Minimum/boundary |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| `L_total` | primitive | 1.00 | 4 | 8 | 0.10 | 8 |
+| `W_grip` | primitive | 1.00 | 4 | 8 | 0.10 | 8 |
+| `W_gauge` | primitive | 1.00 | 4 | 8 | 0.10 | 8 |
+| `R_fillet` | primitive | 1.00 | 4 | 8 | 0.10 | 8 |
+| `elastic_modulus` | primitive, fixed | 0.01 | 1 | 1 | 0.10 | 0 |
+| `poisson_ratio` | primitive, fixed | 0.01 | 1 | 1 | 0.10 | 0 |
+| `prescribed_displacement` | primitive, fixed | 0.01 | 1 | 1 | 0.10 | 0 |
+| `arc_feasibility_ratio` | derived | 1.50 | 2 | 8 | 0.10 | 0 |
+| `fillet_to_gauge_ratio` | derived | 1.50 | 4 | 8 | 0.15 | 8 |
+| `grip_to_gauge_ratio` | derived | 2.00 | 4 | 8 | 0.15 | 8 |
+| `length_to_gauge_ratio` | derived | 1.25 | 4 | 8 | 0.15 | 8 |
+
+Proposed interactions require two samples per cell for
+`W_grip x W_gauge`, `W_gauge x R_fillet`, and
+`L_total x grip_to_gauge_ratio`. Proposed difficult regions are:
+
+- `high-concentration`: normalized `grip_to_gauge_ratio` in `[0.75, 1]` and
+  `arc_feasibility_ratio` in `[0, 0.10]`, minimum 32;
+- `near-arc-margin`: normalized `arc_feasibility_ratio` in `[0, 0.025]`, minimum 16;
+- `short-high-concentration`: normalized `L_total` in `[0, 0.25]`,
+  `grip_to_gauge_ratio` in `[0.75, 1]`, and `arc_feasibility_ratio` in
+  `[0, 0.10]`, minimum 8.
+
+The proposed acceptance thresholds are maximum empirical fill distance `0.10`,
+minimum stratum count 8, all marginal/boundary/interaction/difficult-region coverage
+fractions equal to 1.0, and no unresolved requirement identifier.
+
+A public, non-production dry run used seed
+`public-dogbone-s9-proposal-dry-run-v2`; it did not create campaign secrets, roles, a
+holdout, or a commitment. Of 4,096 candidate proposals, 3,842 passed membership; of
+4,096 independent validation proposals, 3,841 passed. The selector produced 408
+active cases, 32 reserves, 512 validation points, and 32 negative guards with no
+unresolved quota. Measured fill distance was `0.08654600038744202`, minimum stratum
+count was 10, difficult-region counts were 34, 75, and 9 respectively, and all 440
+active-plus-reserve points had distinct leakage groups at tolerance `0.015`. This
+dry run shows that the proposal is executable; it is not the production DOE and its
+public seed must never be reused for closure.
 
 This proposal does not close the family-generality risk from ADR 0001.
 `tests/test_no_fixture_names.py` checks `G17.fixture-names` hygiene, but

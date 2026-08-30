@@ -376,7 +376,7 @@ def _record(
             failure_code=None,
             message=attempt.message,
             elapsed_seconds=_reported_seconds(elapsed_seconds),
-            scalar_dof_count=len(attempt.result.displacement),
+            scalar_dof_count=2 * len(attempt.result.displacement),
             canonical_result_bytes=len(canonical_json_bytes(attempt.result)),
             newton_iterations_by_load_step=_iteration_counts(attempt),
             final_residual_norm=history[-1].residual_norm,

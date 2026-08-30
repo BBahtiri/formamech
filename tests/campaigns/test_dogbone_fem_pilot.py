@@ -9,7 +9,9 @@ import pytest
 
 from campaigns.dogbone_v1.family import compiled_family, parameter_point
 from campaigns.dogbone_v1.fem_pilot import (
+    FemPilotRecord,
     FemPilotReport,
+    FemPilotSummary,
     PilotGeometryCase,
     build_pilot_requests,
     pilot_geometry_cases,
@@ -359,7 +361,7 @@ def test_runner_preserves_order_failures_timing_hashes_and_diagnostics(
             expected_iterations = 1 + index % 3
             assert record.success
             assert record.result_hash is not None
-            assert record.scalar_dof_count == 5 + index
+            assert record.scalar_dof_count == 2 * (5 + index)
             assert record.canonical_result_bytes is not None
             assert record.canonical_result_bytes > 0
             assert record.newton_iterations_by_load_step == (expected_iterations,) * 8
@@ -443,6 +445,236 @@ def test_case_contract_rejects_invalid_sentinel_text() -> None:
         )
 
 
+def test_case_record_summary_and_report_contracts_fail_closed(
+    execution_profile: ExecutionProfile,
+) -> None:
+    with pytest.raises(ValueError, match="case_id"):
+        PilotGeometryCase("", (54.0, 20.0, 10.0, 12.0), "reference")
+    with pytest.raises(ValueError, match="four values"):
+        PilotGeometryCase("short", (54.0, 20.0, 10.0), "reference")  # type: ignore[arg-type]
+
+    valid_record = FemPilotRecord(
+        case_id="reference",
+        parameters=(54.0, 20.0, 10.0, 12.0),
+        sentinel="reference",
+        request_id="request",
+        mesh_id="mesh",
+        recipe_hash="a" * 64,
+        success=True,
+        result_hash="b" * 64,
+        failure_code=None,
+        message="succeeded",
+        elapsed_seconds=1.0,
+        scalar_dof_count=1,
+        canonical_result_bytes=1,
+        newton_iterations_by_load_step=(1,),
+        final_residual_norm=0.0,
+    )
+    with pytest.raises(ValueError, match="scalar DOFs"):
+        replace(valid_record, scalar_dof_count=0)
+    with pytest.raises(ValueError, match="result bytes"):
+        replace(valid_record, canonical_result_bytes=0)
+    with pytest.raises(ValueError, match="Newton diagnostics"):
+        replace(valid_record, newton_iterations_by_load_step=())
+    with pytest.raises(ValueError, match="final residual"):
+        replace(valid_record, final_residual_norm=None)
+    with pytest.raises(ValueError, match="failed pilot record"):
+        replace(
+            valid_record, success=False, failure_code=FemFailureCode.CLOSURE_FAILURE
+        )
+
+    with pytest.raises(ValueError, match="at least one attempt"):
+        FemPilotSummary(
+            attempted_count=0,
+            success_count=0,
+            failure_counts={},
+            total_runtime_seconds=0.0,
+            median_runtime_seconds=0.0,
+            p95_runtime_seconds=0.0,
+            max_runtime_seconds=0.0,
+            total_result_bytes=0,
+            max_result_bytes=0,
+            max_newton_iterations_observed=0,
+            max_final_residual_norm=None,
+        )
+    with pytest.raises(ValueError, match="failure counts"):
+        FemPilotSummary(
+            attempted_count=2,
+            success_count=1,
+            failure_counts={},
+            total_runtime_seconds=1.0,
+            median_runtime_seconds=1.0,
+            p95_runtime_seconds=1.0,
+            max_runtime_seconds=1.0,
+            total_result_bytes=1,
+            max_result_bytes=1,
+            max_newton_iterations_observed=1,
+            max_final_residual_norm=0.0,
+        )
+
+    report = run_fem_pilot(
+        backend=_FakeBackend(),
+        execution_profile=execution_profile,
+        clock=_clock_for((1.0,) * 12),
+        runtime_environment={"operating_system": "fixture-os"},
+    )
+    with pytest.raises(ValueError, match="runtime environment"):
+        replace(report, runtime_environment={"": "fixture-os"})
+    with pytest.raises(ValueError, match="population"):
+        replace(report, records=report.records[:-1])
+    with pytest.raises(ValueError, match="record order"):
+        replace(report, records=tuple(reversed(report.records)))
+    with pytest.raises(ValueError, match="unsupported FEM pilot schema"):
+        replace(report, schema_version="2.0")
+
+
+class _NoAttemptBackend:
+    backend_name = "no-attempt-backend"
+
+    def solve_many(self, requests: tuple[FemRequest, ...]) -> tuple[FemAttempt, ...]:
+        return ()
+
+
+class _WrongRecipeBackend:
+    backend_name = "wrong-recipe-backend"
+
+    def solve_many(self, requests: tuple[FemRequest, ...]) -> tuple[FemAttempt, ...]:
+        request = requests[0]
+        return (
+            replace(
+                _failure_attempt(request, FemFailureCode.UNSUPPORTED_REQUEST),
+                recipe_hash="0" * 64,
+            ),
+        )
+
+
+class _WrongRequestBackend:
+    backend_name = "wrong-request-backend"
+
+    def __init__(self, wrong_request: FemRequest) -> None:
+        self._wrong_request = wrong_request
+
+    def solve_many(self, requests: tuple[FemRequest, ...]) -> tuple[FemAttempt, ...]:
+        request = requests[0]
+        return (
+            FemAttempt(
+                request=self._wrong_request,
+                recipe_hash=request.recipe_hash,
+                success=False,
+                result=None,
+                result_hash=None,
+                store_content_hash=None,
+                failure_code=FemFailureCode.UNSUPPORTED_REQUEST,
+                message="wrong request",
+            ),
+        )
+
+
+class _MalformedSuccessBackend:
+    backend_name = "malformed-success-backend"
+
+    def __init__(self, mode: str) -> None:
+        self._mode = mode
+
+    def solve_many(self, requests: tuple[FemRequest, ...]) -> tuple[FemAttempt, ...]:
+        request = requests[0]
+        if self._mode == "missing-result":
+            return (
+                FemAttempt(
+                    request=request,
+                    recipe_hash=request.recipe_hash,
+                    success=True,
+                    result=None,
+                    result_hash=None,
+                    store_content_hash=None,
+                    failure_code=None,
+                    message="missing result",
+                ),
+            )
+        result = _result(request, scalar_dof_count=3, iterations_per_step=1)
+        if self._mode == "wrong-result-request":
+            result = replace(result, request_id="different")
+        elif self._mode == "wrong-result-mesh":
+            result = replace(result, mesh_id="different")
+        elif self._mode == "empty-history":
+            result = replace(result, convergence_history=())
+        return (
+            FemAttempt(
+                request=request,
+                recipe_hash=request.recipe_hash,
+                success=True,
+                result=result,
+                result_hash=hash_spec(result, "content"),
+                store_content_hash=None,
+                failure_code=None,
+                message=self._mode,
+            ),
+        )
+
+
+class _MalformedFailureBackend:
+    backend_name = "malformed-failure-backend"
+
+    def __init__(self, retain_result: bool) -> None:
+        self._retain_result = retain_result
+
+    def solve_many(self, requests: tuple[FemRequest, ...]) -> tuple[FemAttempt, ...]:
+        request = requests[0]
+        result = _result(request, scalar_dof_count=3, iterations_per_step=1)
+        return (
+            FemAttempt(
+                request=request,
+                recipe_hash=request.recipe_hash,
+                success=False,
+                result=result if self._retain_result else None,
+                result_hash=None,
+                store_content_hash=None,
+                failure_code=None
+                if not self._retain_result
+                else FemFailureCode.UNSUPPORTED_REQUEST,
+                message="malformed failure",
+            ),
+        )
+
+
+@pytest.mark.parametrize(
+    ("backend", "message"),
+    (
+        (_NoAttemptBackend(), "exactly one attempt"),
+        (_WrongRecipeBackend(), "different recipe"),
+        (_MalformedSuccessBackend("missing-result"), "omitted its result"),
+        (_MalformedSuccessBackend("wrong-result-request"), "request identity"),
+        (_MalformedSuccessBackend("wrong-result-mesh"), "mesh identity"),
+        (_MalformedSuccessBackend("empty-history"), "convergence history"),
+        (_MalformedFailureBackend(retain_result=True), "retained a result"),
+        (_MalformedFailureBackend(retain_result=False), "omitted a reason code"),
+    ),
+)
+def test_runner_rejects_backend_protocol_violations(
+    backend: object,
+    message: str,
+    execution_profile: ExecutionProfile,
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        run_fem_pilot(
+            backend=backend,  # type: ignore[arg-type]
+            execution_profile=execution_profile,
+            clock=_clock_for((1.0,) * 12),
+        )
+
+
+def test_runner_rejects_attempts_for_a_different_request(
+    requests: tuple[FemRequest, ...],
+    execution_profile: ExecutionProfile,
+) -> None:
+    with pytest.raises(ValueError, match="different request"):
+        run_fem_pilot(
+            backend=_WrongRequestBackend(requests[1]),
+            execution_profile=execution_profile,
+            clock=_clock_for((1.0,) * 12),
+        )
+
+
 def test_recorded_fem_pilot_artifact_is_exact_public_evidence() -> None:
     payload = _PILOT_ARTIFACT.read_bytes()
     assert payload.endswith(b"\n")
@@ -457,6 +689,7 @@ def test_recorded_fem_pilot_artifact_is_exact_public_evidence() -> None:
     assert isinstance(records, list)
     assert len(records) == 12
     assert all(isinstance(record, dict) and record["success"] for record in records)
+    assert {record["scalar_dof_count"] for record in records} == {7_458}
     summary = document["summary"]
     assert isinstance(summary, dict)
     assert summary["attempted_count"] == summary["success_count"] == 12
@@ -464,5 +697,5 @@ def test_recorded_fem_pilot_artifact_is_exact_public_evidence() -> None:
     assert summary["total_result_bytes"] == 52_117_983
     framed = b'{"domain":"content","payload":' + canonical_payload + b"}"
     assert hashlib.blake2b(framed, digest_size=32).hexdigest() == (
-        "ecc8057de75414fe7931695b9e9d589c83d50254aa548554c260fcadb7eba9ec"
+        "e2aa1e0e2cd9d20b31043d9c6cb066c138c9b3cb00c7432111ddd38e6f156928"
     )

@@ -360,22 +360,20 @@ def _select_rarest_quota_first(
         candidate.point.case_id: requirement_ids_for_point(candidate.normalized, spec)
         for candidate in candidates
     }
+    reachable_counts = {
+        quota_id: sum(
+            quota_id in coverage[candidate.point.case_id] for candidate in remaining
+        )
+        for quota_id in requirements
+    }
+    nearest_distances = _nearest_distances(remaining, (), spec.axes)
     for _ in range(count):
         unmet = tuple(
             quota_id
             for quota_id, target in requirements.items()
             if counts[quota_id] < target
         )
-        reachable = tuple(
-            (
-                sum(
-                    quota_id in coverage[candidate.point.case_id]
-                    for candidate in remaining
-                ),
-                quota_id,
-            )
-            for quota_id in unmet
-        )
+        reachable = tuple((reachable_counts[quota_id], quota_id) for quota_id in unmet)
         reachable = tuple(item for item in reachable if item[0] > 0)
         target = min(reachable)[1] if reachable else None
         eligible = (
@@ -387,7 +385,12 @@ def _select_rarest_quota_first(
             if target is not None
             else remaining
         )
-        chosen = _maximin_choice(eligible, selected, spec.axes, coverage, unmet)
+        chosen = _cached_maximin_choice(
+            eligible,
+            nearest_distances,
+            coverage,
+            unmet,
+        )
         chosen_ids = coverage[chosen.point.case_id]
         counts = _freeze(
             {
@@ -401,6 +404,20 @@ def _select_rarest_quota_first(
             for candidate in remaining
             if candidate.point.case_id != chosen.point.case_id
         )
+        reachable_counts = {
+            quota_id: value - int(quota_id in chosen_ids)
+            for quota_id, value in reachable_counts.items()
+        }
+        nearest_distances = (
+            _nearest_distances(remaining, (chosen,), spec.axes)
+            if len(selected) == 1
+            else _updated_nearest_distances(
+                remaining,
+                nearest_distances,
+                chosen,
+                spec.axes,
+            )
+        )
         trace = (*trace, f"quota:{target}" if target is not None else "maximin")
     return selected, remaining, trace, counts
 
@@ -413,11 +430,11 @@ def _select_maximin(
 ) -> tuple[_Candidate, ...]:
     selected: tuple[_Candidate, ...] = ()
     remaining = tuple(candidates)
+    nearest_distances = _nearest_distances(remaining, anchors, axes)
     for _ in range(count):
-        chosen = _maximin_choice(
+        chosen = _cached_maximin_choice(
             remaining,
-            (*tuple(anchors), *selected),
-            axes,
+            nearest_distances,
             {},
             (),
         )
@@ -427,13 +444,53 @@ def _select_maximin(
             for candidate in remaining
             if candidate.point.case_id != chosen.point.case_id
         )
+        nearest_distances = (
+            _nearest_distances(remaining, (chosen,), axes)
+            if len(selected) == 1 and not anchors
+            else _updated_nearest_distances(
+                remaining,
+                nearest_distances,
+                chosen,
+                axes,
+            )
+        )
     return selected
 
 
-def _maximin_choice(
+def _nearest_distances(
     candidates: Sequence[_Candidate],
-    selected: Sequence[_Candidate],
+    anchors: Sequence[_Candidate],
     axes: Sequence[AxisSpec],
+) -> Mapping[str, float]:
+    if not anchors:
+        return {candidate.point.case_id: 0.0 for candidate in candidates}
+    return {
+        candidate.point.case_id: min(
+            weighted_distance(candidate.normalized, anchor.normalized, axes)
+            for anchor in anchors
+        )
+        for candidate in candidates
+    }
+
+
+def _updated_nearest_distances(
+    candidates: Sequence[_Candidate],
+    distances: Mapping[str, float],
+    chosen: _Candidate,
+    axes: Sequence[AxisSpec],
+) -> Mapping[str, float]:
+    return {
+        candidate.point.case_id: min(
+            distances[candidate.point.case_id],
+            weighted_distance(candidate.normalized, chosen.normalized, axes),
+        )
+        for candidate in candidates
+    }
+
+
+def _cached_maximin_choice(
+    candidates: Sequence[_Candidate],
+    nearest_distances: Mapping[str, float],
     coverage: Mapping[str, frozenset[str]],
     unmet: Sequence[str],
 ) -> _Candidate:
@@ -442,16 +499,12 @@ def _maximin_choice(
     unmet_set = frozenset(unmet)
 
     def key(candidate: _Candidate) -> tuple[float, int, str]:
-        distance = (
-            min(
-                weighted_distance(candidate.normalized, other.normalized, axes)
-                for other in selected
-            )
-            if selected
-            else 0.0
-        )
         extra = len(coverage.get(candidate.point.case_id, frozenset()) & unmet_set)
-        return (-distance, -extra, candidate.point.case_id)
+        return (
+            -nearest_distances[candidate.point.case_id],
+            -extra,
+            candidate.point.case_id,
+        )
 
     return min(candidates, key=key)
 

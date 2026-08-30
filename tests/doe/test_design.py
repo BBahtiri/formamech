@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 from types import MappingProxyType
 
@@ -12,6 +13,7 @@ from piginot.contracts import (
     canonical_json_bytes,
     hash_spec,
 )
+from piginot.doe import _design_sampling as design_sampling
 from piginot.doe.design import (
     AxisSource,
     AxisSpec,
@@ -160,6 +162,31 @@ def test_design_is_deterministic_and_validation_stream_is_domain_separated() -> 
     assert first.candidate_stream_id != first.validation_stream_id
     assert {point.case_id for point in first.selected_points}.isdisjoint(
         point.case_id for point in first.validation_points
+    )
+
+
+def test_selection_reuses_nearest_distances_without_changing_fixture_identity(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    original = design_sampling.weighted_distance
+    distance_calls = 0
+
+    def counted_distance(
+        left: Mapping[str, float],
+        right: Mapping[str, float],
+        axes: Sequence[AxisSpec],
+    ) -> float:
+        nonlocal distance_calls
+        distance_calls += 1
+        return original(left, right, axes)
+
+    monkeypatch.setattr(design_sampling, "weighted_distance", counted_distance)
+
+    design = generate_coupled_design(_CoupledPredicate(), _spec())
+
+    assert distance_calls <= 20_000
+    assert hash_spec(design, "content") == (
+        "7e78a417b3d58e7bf46e93c878ca5e85e5509cca333fb59bde79158b3779caa9"
     )
 
 
