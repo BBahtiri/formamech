@@ -36,13 +36,13 @@ from piginot.contracts.errors import NonFiniteNumberError
 from piginot.fem import FemAttempt, FemBackend, FemRequest, FemResult, FemSolverConfig
 from piginot.fem.backend import ScikitFemBackend
 
-STRAIN_PILOT_ID = "dogbone-strain-envelope-20260830-v1"
+STRAIN_PILOT_ID = "dogbone-strain-envelope-20260830-v2"
 LOAD_POLICY_ID = "nominal-axial-strain-times-half-length-v1"
 NOMINAL_STRAIN_LEVELS = (0.10, 0.20)
-STRAIN_PILOT_LOAD_STEPS = 16
+STRAIN_PILOT_LOAD_STEPS = 32
 _RIGHT_DISPLACEMENT_NAME = "right_grip_displacement"
 _ARTIFACT_RELATIVE_PATH = Path(
-    "artifacts/campaigns/dogbone-v1/fem-strain-envelope-pilot.json"
+    "artifacts/campaigns/dogbone-v1/fem-strain-envelope-qualification.json"
 )
 
 

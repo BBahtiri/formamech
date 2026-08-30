@@ -27,12 +27,19 @@ from piginot.contracts import (
 from piginot.contracts.errors import NonFiniteNumberError
 from piginot.fem import FemAttempt, FemConvergenceEntry, FemRequest, FemResult
 
-_PILOT_ARTIFACT = (
+_SCREENING_ARTIFACT = (
     Path(__file__).resolve().parents[2]
     / "artifacts"
     / "campaigns"
     / "dogbone-v1"
     / "fem-strain-envelope-pilot.json"
+)
+_QUALIFICATION_ARTIFACT = (
+    Path(__file__).resolve().parents[2]
+    / "artifacts"
+    / "campaigns"
+    / "dogbone-v1"
+    / "fem-strain-envelope-qualification.json"
 )
 
 
@@ -72,7 +79,7 @@ def test_strain_requests_normalize_displacement_by_model_length(
                 strain * total_length_mm / 2.0
             )
             assert request.config.element_order == 2
-            assert request.config.load_steps == 16
+            assert request.config.load_steps == 32
             assert request.execution_profile == execution_profile
 
     short_low = requests[4 * len(NOMINAL_STRAIN_LEVELS)]
@@ -210,8 +217,8 @@ def test_writer_emits_one_canonical_newline_terminated_document(
     assert target.read_bytes() == canonical_json_bytes(report) + b"\n"
 
 
-def test_recorded_strain_pilot_artifact_is_exact_public_evidence() -> None:
-    payload = _PILOT_ARTIFACT.read_bytes()
+def test_recorded_strain_screening_artifact_is_exact_public_evidence() -> None:
+    payload = _SCREENING_ARTIFACT.read_bytes()
     assert payload.endswith(b"\n")
     canonical_payload = payload[:-1]
     document = strict_json_loads(canonical_payload)
@@ -230,4 +237,26 @@ def test_recorded_strain_pilot_artifact_is_exact_public_evidence() -> None:
 
     assert digest == (
         "4ff6dba3f311ff949d5cf662b2d68dd358e5b6f2592157677797f6173d0f14d2"
+    )
+
+
+def test_recorded_strain_qualification_is_exact_public_evidence() -> None:
+    payload = _QUALIFICATION_ARTIFACT.read_bytes()
+    assert payload.endswith(b"\n")
+    canonical_payload = payload[:-1]
+    document = strict_json_loads(canonical_payload)
+    assert isinstance(document, dict)
+    assert document["pilot_id"] == "dogbone-strain-envelope-20260830-v2"
+    assert document["nominal_strain_levels"] == [0.1, 0.2]
+    assert document["solver_config"]["load_steps"] == 32
+    assert document["outcome_summary"]["attempted_count"] == 24
+    assert document["outcome_summary"]["success_count"] == 23
+    assert document["outcome_summary"]["failure_counts"] == {
+        "CLOSURE_FAILURE": 1,
+    }
+    framed = b'{"domain":"content","payload":' + canonical_payload + b"}"
+    digest = hashlib.blake2b(framed, digest_size=32).hexdigest()
+
+    assert digest == (
+        "fa5f031b761101987d8af642b86e2b893babf4d0e6e9289b27846bd12479f325"
     )
