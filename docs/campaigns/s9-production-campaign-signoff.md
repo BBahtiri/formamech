@@ -43,6 +43,10 @@ production `CP-ENVELOPE`.
 - `docs/adr/0010-s9-first-production-family.md` accepts the exact pinned DogBone
   family. `artifacts/campaigns/dogbone-v1/family-validation.json` records a disjoint
   public sweep with 500 accepted and zero morph-validation failures.
+- `artifacts/campaigns/dogbone-v1/fem-solvability-pilot.json` records the ordered
+  results of 12 preselected reference, boundary, and difficult-geometry P2 solves at
+  the pinned source material and displacement. Its content hash is
+  `ecc8057de75414fe7931695b9e9d589c83d50254aa548554c260fcadb7eba9ec`.
 
 ## Approval Items
 
@@ -51,14 +55,14 @@ Each row needs an explicit owner decision before the production ceremony.
 | Item | Required Decision | Current Position |
 | --- | --- | --- |
 | Production family | Exact compiled family, reference mesh identity, morph map recipe, validity policy hash, and S6 membership predicate. | Approved 2026-08-29. Recipe `dogbone-quarter-no-hole-v1`; compiled hash `a8143a75…973a4`; mesh `3bfc1043…d82c`; analytic circular-transition map; policy `b3c2df59…931d`. |
-| Pilot evidence | Non-empty ordered set of content-addressed `EvidenceReference` records with role `PILOT` or `LEGACY`. | Proposed: DogBone family validation `4dfac913…eb92d` as `PILOT`, plus S1 gate `cd0b01e8…9470` as `LEGACY`. A FEM cost/solvability pilot is still required before approving population counts. |
-| Executable envelope | Primitive bounds, derived bounds, material bounds, load bounds, and refusal policy for out-of-envelope inputs. | Geometry proposal ready: original four geometry ranges plus `arc_feasibility_ratio >= 1.35`. Material/load bounds are not approved, so no DogBone executable-envelope preimage or hash exists. |
+| Pilot evidence | Non-empty ordered set of content-addressed `EvidenceReference` records with role `PILOT` or `LEGACY`. | Available for approval: FEM solvability pilot `ecc8057d…a9ec` and DogBone family validation `4dfac913…eb92d` as `PILOT`, plus S1 gate `cd0b01e8…9470` as `LEGACY`. The finite FEM cost/solvability pilot is complete; the exact checkpoint evidence set is not yet approved. |
+| Executable envelope | Primitive bounds, derived bounds, material bounds, load bounds, and refusal policy for out-of-envelope inputs. | Geometry proposal ready: original four geometry ranges plus `arc_feasibility_ratio >= 1.35`. Source-aligned fixed-point proposal exercised by the FEM pilot: `E = 760 MPa`, `nu = 0.23`, prescribed displacement `1 mm`. Those material/load bounds are not approved, so no DogBone executable-envelope preimage or hash exists. |
 | Derived axes | Non-empty ordered list of derived stratification axes to bind into `CP-ENVELOPE`. | Proposed: `grip_to_gauge_ratio`, `fillet_to_gauge_ratio`, `length_to_gauge_ratio`, and `arc_feasibility_ratio`, all compiled through S2 and evaluated by S6. |
 | DOE axis policy | Axis weights, stratum counts, minimum per stratum, boundary widths, boundary quotas, interactions, and difficult-region quotas. | Not approved. The high-concentration region must have an explicit quota rather than relying on maximin fill alone. |
-| Role budget | Positive `PILOT`, `TRAIN`, `DEVELOPMENT`, exact `HOLDOUT=64`, and explicit non-negative `LEGACY` and `RESERVE` counts. | Not approved. The DOE `sample_count` must equal `pilot + train + development + holdout`; `reserve_count` must equal `reserve`. |
-| Candidate streams | `candidate_count`, `validation_count`, `validation_candidate_count`, `guard_band_count`, and `guard_band_fraction`. | Not approved. Candidate counts must be large enough to expose S6 family-membership and derived-bound rejections. |
-| Leakage policy | Near-duplicate tolerance in normalized primitive-plus-derived axis space. | Not approved. The algorithm is fixed as `geometry-lineage-morph-seed-chebyshev-v1`; the DOE records descriptors, and closure replays them before accepting the role allocation. The private DOE-plan hash binds both policy and descriptors. |
-| Reserve distribution | Ordered reserve policy per replaceable role and exhaustion behavior. | Not approved. Version one permits reserves only for `PILOT`, `TRAIN`, and `DEVELOPMENT`; `HOLDOUT` is never replaced. |
+| Role budget | Positive `PILOT`, `TRAIN`, `DEVELOPMENT`, exact `HOLDOUT=64`, and explicit non-negative `LEGACY` and `RESERVE` counts. | Proposed first campaign: `PILOT=24`, `TRAIN=256`, `DEVELOPMENT=64`, `HOLDOUT=64`, `LEGACY=1`, `RESERVE=32`; DOE `sample_count=408`, `reserve_count=32`. Not approved. |
+| Candidate streams | `candidate_count`, `validation_count`, `validation_candidate_count`, `guard_band_count`, and `guard_band_fraction`. | Proposed first campaign: `candidate_count=2400`, `validation_count=96`, `validation_candidate_count=800`, `guard_band_count=32`, `guard_band_fraction=0.05`. Not approved. |
+| Leakage policy | Near-duplicate tolerance in normalized primitive-plus-derived axis space. | Proposed first campaign: `near_duplicate_tolerance=0.015` under `geometry-lineage-morph-seed-chebyshev-v1`. The DOE records descriptors, and closure replays them before accepting the role allocation. The private DOE-plan hash binds both policy and descriptors. Not approved. |
+| Reserve distribution | Ordered reserve policy per replaceable role and exhaustion behavior. | Proposed first campaign: `PILOT=4`, `TRAIN=20`, `DEVELOPMENT=8`, `HOLDOUT=0`, `LEGACY=0` reserves, ranked by the committed reserve order. Version one permits reserves only for `PILOT`, `TRAIN`, and `DEVELOPMENT`; `HOLDOUT` is never replaced. Not approved. |
 | Public naming | Stable public `manifest_id` and replacement `rule_id`. | Not approved. `s9-public-cases` is only the code default; guard and DOE stream algorithm IDs are fixed by code. |
 | Private reveal handling | Local ignored path and access controls for salt plus exact holdout coordinates. | Not approved. The reveal file must not enter Git, gate artifacts, tests, or training inputs. |
 
@@ -72,6 +76,45 @@ accepted decision in ADR 0010. The decision retains the pinned reference
 implementation's four primitive ranges and makes its fixed-connectivity exclusion
 explicit rather than hiding failed geometries. Its hash may enter a later production
 commitment only after the remaining approval items on this page are ratified.
+
+## FEM Solvability and Cost Pilot
+
+The public pilot population was fixed before any FEM outcome was observed. It
+contains the reference geometry; the worst accepted angle, Jacobian, and boundary
+feature cases from the public S6 validation stream; coupled parameter-box boundary
+sentinels; one near-arc-margin case; and two high-concentration cases. Each request
+uses the ratified family, the pinned source values `E = 760 MPa`, `nu = 0.23`, and
+prescribed displacement `1 mm`, P2 displacement, eight load steps, solver tolerance
+`1e-10`, and the verified S7 scikit-fem backend.
+
+On the artifact's recorded Windows/Python 3.12 CPU environment, all 12 of 12 cases
+converged. Total solve time was 261.094054 s; median time was 21.019403 s; p95 and
+maximum time were 25.600437 s. No load step required more than eight Newton
+iterations, and the largest final residual was
+`7.128736607124267e-11`. The uncompressed canonical FEM result payloads totalled
+52,117,983 bytes, with a maximum single payload of 4,403,090 bytes.
+
+This is finite sentinel evidence and a local cost measurement. It is not a uniform
+solvability proof, a portable performance benchmark, or approval of the fixed
+material/load point. Population projections must identify whether they use average
+or conservative per-case timing and whether result payloads are stored as canonical
+JSON, compressed, or converted to a later verified dataset representation.
+
+Sequential single-host projections from this finite pilot are:
+
+| Production solves | Mean-time projection | p95-time projection | Raw JSON size projection |
+| --- | ---: | ---: | ---: |
+| 408 active + 32 reserve | 2.66 h | 3.13 h | 1.69 GiB |
+| 512 | 3.09 h | 3.64 h | 2.07 GiB |
+| 1024 | 6.19 h | 7.28 h | 4.14 GiB |
+| 2048 | 12.38 h | 14.56 h | 8.28 GiB |
+
+The proposed first role budget keeps the original DogBone training scale of 256
+training cases, adds an exact 64-case sealed holdout, reserves 64 cases for visible
+development decisions, and keeps 24 production `PILOT` cases for pipeline shakeout
+after commitment but before using the training labels. Thirty-two reserves give
+approximately 7.8% replacement capacity over active production cases without ever
+replacing `HOLDOUT`.
 
 This proposal does not close the family-generality risk from ADR 0001.
 `tests/test_no_fixture_names.py` checks `G17.fixture-names` hygiene, but
@@ -126,6 +169,7 @@ committed:
 The following are intentionally not approved by this draft:
 
 - no owner-ratified complete material/load executable envelope;
+- no owner-ratified exact pilot-evidence set;
 - no role budget;
 - no DOE quota table;
 - no leakage tolerance;

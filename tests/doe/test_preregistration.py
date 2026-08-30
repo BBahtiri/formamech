@@ -15,6 +15,7 @@ from piginot.contracts import (
     hash_spec,
 )
 from piginot.contracts.errors import ContractValidationError
+from piginot.doe import commitment as commitment_module
 from piginot.doe.allocation import (
     ProductionRoleBudget,
     allocate_evidence_roles,
@@ -36,6 +37,7 @@ from piginot.doe.leakage import (
 from piginot.doe.preregistration import (
     LegacyCaseLedger,
     PreregistrationError,
+    PreregistrationResult,
     build_preregistration,
 )
 from piginot.doe.publication import PublishedCaseStatus
@@ -316,6 +318,28 @@ def test_builder_closes_the_campaign_and_publishes_only_nonsealed_cases() -> Non
         if assignment.role is EvidenceRole.HOLDOUT
     }
     assert holdout_ids.isdisjoint(case.case_id for case in result.public_manifest.cases)
+
+
+def test_result_rejects_fixture_holdout_commitment_subclasses() -> None:
+    result = _build()
+    fixture = commitment_module._compute_holdout_commitment_for_test(
+        campaign_hash=result.campaign_hash,
+        salt=bytes(range(32)),
+        holdout_coordinates=tuple({"x": float(index)} for index in range(64)),
+        created_utc="2026-08-24T12:00:00Z",
+    )
+
+    with pytest.raises(ValueError, match="HoldoutCommitment"):
+        PreregistrationResult(
+            production_allocation=result.production_allocation,
+            legacy_ledger=result.legacy_ledger,
+            public_manifest=result.public_manifest,
+            binding=result.binding,
+            campaign_hash=result.campaign_hash,
+            holdout_commitment=fixture,
+            checkpoint=result.checkpoint,
+            reveal_verified=True,
+        )
 
 
 def test_result_is_immutable_and_contains_no_seed_salt_or_holdout_coordinates() -> None:
@@ -770,7 +794,9 @@ def test_envelope_must_bind_the_compiled_family_membership() -> None:
 def test_preregistration_replays_positive_points_against_the_envelope() -> None:
     narrow_family = _compiled_family(upper_width=200.0)
 
-    with pytest.raises(PreregistrationError, match="(selected|reserve|validation) point"):
+    with pytest.raises(
+        PreregistrationError, match="(selected|reserve|validation) point"
+    ):
         _build(
             compiled_family=narrow_family,
             executable_envelope=_envelope(narrow_family),

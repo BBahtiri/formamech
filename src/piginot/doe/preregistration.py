@@ -113,7 +113,7 @@ class PreregistrationResult:
             raise ValueError("public_manifest must be a PublishedCaseManifest")
         if not isinstance(self.binding, CampaignBinding):
             raise ValueError("binding must be a CampaignBinding")
-        if not isinstance(self.holdout_commitment, HoldoutCommitment):
+        if type(self.holdout_commitment) is not HoldoutCommitment:
             raise ValueError("holdout_commitment must be a HoldoutCommitment")
         if not isinstance(self.checkpoint, CPEnvelope):
             raise ValueError("checkpoint must be a CPEnvelope")

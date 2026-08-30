@@ -86,6 +86,12 @@ branches in `src/` addresses only `G17.fixture-names`; `G17.non-dogbone` remains
 consumer and no distinct-topology example has reached a verified bundle through the
 same API.
 
+The public DogBone FEM solvability pilot covers 12 preselected geometry sentinels at
+one fixed material/load point. Its 12 successful solves support local campaign-cost
+sizing only; they do not establish a domain-wide failure rate, portable runtime, or
+solvability at untested material/load values. The recorded payload sizes are for
+uncompressed canonical FEM results, not a final dataset storage format.
+
 When instantiated, the public commitment will prove only that a later reveal matches
 the committed coordinates. It cannot prove that the local holder never saw the
 ignored private reveal. Git also does not preserve historical file mtimes, so live
