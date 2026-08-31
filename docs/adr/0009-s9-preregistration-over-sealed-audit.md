@@ -157,14 +157,13 @@ canonical public manifest; it does not regenerate the hidden DOE from a public s
 
 ## Instantiation status
 
-This ADR fixes the S9 contract shape, not a complete scientific campaign. The DogBone
-family direction is approved, and ADR 0010 records owner ratification of its exact
-compiled geometry, reference mesh, morph recipe, and validity policy. The repository
-still has no approved complete material/load envelope, role budget, DOE quota policy,
-leakage tolerance, or reserve distribution. Therefore no production holdout
-commitment or `CP-ENVELOPE` is created from a fixture. Those inputs must be approved
-and committed first; until then `G9.commitment-order` is `NOT_RUN`, G9 is not PASS,
-and S10 must not begin.
+This ADR fixes the S9 contract shape. The DogBone family, material point, exact
+10%–20% strain-controlled load envelope and solver recipe, role budget, DOE quota
+policy, leakage tolerance, reserve distribution, public IDs, and private reveal
+handling now have owner ratification. The repository still has no production holdout
+commitment or `CP-ENVELOPE`; those must be created by the one-shot ceremony rather
+than from a fixture. Until the commitment is tracked and the remaining G9 evidence
+passes, `G9.commitment-order` is `NOT_RUN`, G9 is not PASS, and S10 must not begin.
 
 ## Consequences
 

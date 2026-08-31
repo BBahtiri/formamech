@@ -79,15 +79,16 @@ hash; they are finite campaign metadata, not proof that no unrecorded correlatio
 exists. No production commitment or `CP-ENVELOPE` exists yet. A DogBone source
 direction is recorded and ADR 0010 ratifies its exact production-family preimage.
 The first campaign's family, material point, population budgets, DOE quotas, leakage
-tolerance, reserve distribution, public identifiers, and private reveal policy have
-owner ratification; the load envelope does not. Fixed `1 mm` displacement is rejected
-because it makes nominal strain vary monotonically with specimen length. The
-candidate strain-controlled load primitive removes that confound. Its 16-step screen
+tolerance, reserve distribution, public identifiers, private reveal policy, and exact
+10%–20% strain-controlled load envelope now have owner ratification. Fixed `1 mm`
+displacement remains rejected because it makes nominal strain vary monotonically with
+specimen length. The ratified strain-controlled load primitive removes that confound.
+Its 16-step screen
 recorded 21/24 successes, its 32-step follow-up recorded 23/24, and its final uniform
-64-step qualification recorded 24/24. Those finite sentinels support proposing a
-10%–20% envelope with the 64-step recipe; they are not a domain-wide solvability proof
-or owner approval. A test fixture is not production evidence, so G9 remains incomplete
-and S10 must not begin. The absence of family-specific words and branches in `src/`
+64-step qualification recorded 24/24. Those finite sentinels support the ratified
+10%–20% envelope with the 64-step recipe; they are not a domain-wide solvability
+proof. Until the production ceremony and G9 are complete, S10 must not begin. The
+absence of family-specific words and branches in `src/`
 addresses only `G17.fixture-names`; `G17.non-dogbone` remains `NOT_RUN` because the
 circular-transition provider currently has one campaign consumer and no
 distinct-topology example has reached a verified bundle through the same API.

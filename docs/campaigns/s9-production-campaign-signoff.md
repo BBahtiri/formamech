@@ -1,6 +1,6 @@
 # S9 Production Campaign Sign-Off
 
-- Status: Family, material, and non-load campaign policy ratified; load policy open
+- Status: Complete scientific campaign policy ratified; production ceremony pending
 - Step: S9
 - Blocks: G9 and S10
 - Branch: `codex/s9-doe-preregistration`
@@ -18,11 +18,11 @@ and ADR 0010 now records owner ratification of one exact executable family to
 de-risk the first ceremony. On 2026-08-30 the owner ratified the evidence basis,
 material point, role budget, candidate streams, non-load DOE policy and thresholds,
 leakage tolerance, reserve distribution, public identifiers, and private
-reveal-handling policy. The load envelope and every load-axis policy addition remain
-open. Fixed `1 mm` prescribed displacement is rejected for production because it
-makes nominal strain a deterministic function of `L_total`. S10 must not begin until
-a replacement load rule and its DOE policy are approved and committed, then used to
-create the first production `CP-ENVELOPE`.
+reveal-handling policy. On 2026-08-31 the owner then ratified the exact 10%–20%
+nominal-strain envelope, its 64-step solver recipe, load-axis policy, and qualified
+evidence hash. The scientific campaign choices are complete. G9 remains open, and
+S10 must not begin, until the one-shot production ceremony creates and commits the
+first `CP-ENVELOPE` and all G9 evidence passes.
 
 ## Evidence Basis
 
@@ -72,10 +72,10 @@ Each row needs an explicit owner decision before the production ceremony.
 | Item | Required Decision | Current Position |
 | --- | --- | --- |
 | Production family | Exact compiled family, reference mesh identity, morph map recipe, validity policy hash, and S6 membership predicate. | Approved 2026-08-29. Recipe `dogbone-quarter-no-hole-v1`; compiled hash `a8143a75…973a4`; mesh `3bfc1043…d82c`; analytic circular-transition map; policy `b3c2df59…931d`. |
-| Pilot evidence | Non-empty ordered set of content-addressed `EvidenceReference` records with role `PILOT` or `LEGACY`. | Approved 2026-08-30 for campaign input: FEM solvability pilot `e2aa1e0e…6928` and DogBone family validation `4dfac913…eb92d` as `PILOT`, plus S1 gate `cd0b01e8…9470` as `LEGACY`. The three strain-envelope artifacts are diagnostic evidence for the still-open load decision and are not silently added to the approved checkpoint evidence set. |
-| Executable envelope | Primitive bounds, derived bounds, material bounds, load bounds, and refusal policy for out-of-envelope inputs. | Geometry approved: original four geometry ranges plus `arc_feasibility_ratio >= 1.35`. Material approved: `E = 760 MPa`, `nu = 0.23`. Load not approved: fixed `1 mm` displacement is rejected. Proposed replacement: `nominal_axial_strain in [0.10, 0.20]`, applied by policy `nominal-axial-strain-times-half-length-v1` as `u = strain * L_total / 2`, with 64 uniform load steps. The unratified proposal envelope hash is `be25dabb…690`; it may not enter a production checkpoint. |
+| Pilot evidence | Non-empty ordered set of content-addressed `EvidenceReference` records with role `PILOT` or `LEGACY`. | Approved campaign input: FEM solvability pilot `e2aa1e0e…6928`, DogBone family validation `4dfac913…eb92d`, and uniform 64-step strain qualification `2f6cfcb9…02a0` as `PILOT`, plus S1 gate `cd0b01e8…9470` as `LEGACY`. The failed 16/32-step screens remain visible diagnostics and are not checkpoint inputs. |
+| Executable envelope | Primitive bounds, derived bounds, material bounds, load bounds, and refusal policy for out-of-envelope inputs. | Approved: original four geometry ranges plus `arc_feasibility_ratio >= 1.35`; `E = 760 MPa`; `nu = 0.23`; `nominal_axial_strain in [0.10, 0.20]`; policy `nominal-axial-strain-times-half-length-v1`, applying `u = strain * L_total / 2`; and 64 uniform load steps. Approved envelope hash: `be25dabbc501dfc52dec6335254c07ae0d0355d533364de9dcc6c21907522690`. |
 | Derived axes | Non-empty ordered list of derived stratification axes to bind into `CP-ENVELOPE`. | Approved 2026-08-30 in order: `arc_feasibility_ratio`, `fillet_to_gauge_ratio`, `grip_to_gauge_ratio`, `length_to_gauge_ratio`, all compiled through S2 and evaluated by S6. |
-| DOE axis policy | Axis weights, stratum counts, minimum per stratum, boundary widths, boundary quotas, interactions, difficult-region quotas, and coverage thresholds. | Approved 2026-08-30 except for the load-axis row. The proposed replacement uses weight `0.05`, four strata, both boundary quotas, a strain-by-concentration interaction, and a high-strain/high-concentration difficult region. Its paired public dry run resolved every requirement with fill distance `0.0923852`, minimum stratum count 8, and all four quota fractions equal to 1.0; closure refuses any non-empty `unresolved_quota_ids`. |
+| DOE axis policy | Axis weights, stratum counts, minimum per stratum, boundary widths, boundary quotas, interactions, difficult-region quotas, and coverage thresholds. | Approved in full on 2026-08-31. The load axis uses weight `0.05`, four strata, both boundary quotas, a strain-by-concentration interaction, and a high-strain/high-concentration difficult region. Its paired public dry run resolved every requirement with fill distance `0.0923852`, minimum stratum count 8, and all four quota fractions equal to 1.0; closure refuses any non-empty `unresolved_quota_ids`. |
 | Role budget | Positive `PILOT`, `TRAIN`, `DEVELOPMENT`, exact `HOLDOUT=64`, and explicit non-negative `LEGACY` and `RESERVE` counts. | Approved 2026-08-30: `PILOT=24`, `TRAIN=256`, `DEVELOPMENT=64`, `HOLDOUT=64`, `LEGACY=0`, `RESERVE=32`; DOE `sample_count=408`, `reserve_count=32`. The S1 gate remains a `LEGACY` evidence reference, but no pre-S9 case enters the production case ledger. |
 | Candidate streams | `candidate_count`, `validation_count`, `validation_candidate_count`, `guard_band_count`, and `guard_band_fraction`. | Approved 2026-08-30: `candidate_count=4096`, `validation_count=512`, `validation_candidate_count=4096`, `guard_band_count=32`, `guard_band_fraction=0.05`. |
 | Leakage policy | Near-duplicate tolerance in normalized primitive-plus-derived axis space. | Approved 2026-08-30: `near_duplicate_tolerance=0.015` under `geometry-lineage-morph-seed-chebyshev-v1`. The DOE records descriptors, and closure replays them before accepting the role allocation. The private DOE-plan hash binds both policy and descriptors. |
@@ -83,12 +83,11 @@ Each row needs an explicit owner decision before the production ceremony.
 | Public naming | Stable public `manifest_id` and replacement `rule_id`. | Approved 2026-08-30: manifest `dogbone-v1-public-cases`; replacement rule `role-local-design-order-v1`. Guard and DOE stream algorithm IDs remain fixed by code. |
 | Private reveal handling | Local ignored path and access controls for salt plus exact holdout coordinates. | Approved 2026-08-30: `.piginot-private/dogbone-v1/reveal-v1.json`, created before public commitment, readable only by the ceremony operator, with a separately access-controlled backup. The reveal must not enter Git, gate artifacts, tests, or training inputs. |
 
-The production-family decision fixes the reference mesh and the geometry primitive
-and derived vocabulary. It does not fix the complete executable envelope,
-load-coupled difficult regions, or final solver cost basis; those remain conditional
-on load ratification. Numeric DOE or budget values chosen before the family decision
-would have been unsupported assumptions and must not be substituted for the recorded
-ratifications.
+The recorded decisions now fix the reference mesh, geometry primitive and derived
+vocabulary, complete executable envelope, load-coupled difficult regions, solver
+recipe, and population cost basis. Numeric DOE or budget values chosen before the
+family decision would have been unsupported assumptions and must not be substituted
+for these ratified values.
 
 The requested first-campaign source direction has now been resolved to the exact
 accepted decision in ADR 0010. The decision retains the pinned reference
@@ -283,19 +282,19 @@ committed:
    clean; capture live mtime evidence at artifact creation and verify Git first-add
    ancestry before claiming `G9.commitment-order`.
 
-## Non-Approvals
+## Remaining Ceremony Preconditions
 
-The following are intentionally not approved by this draft:
+Scientific approval is complete. The following artifacts and gates do not yet exist:
 
-- no owner-ratified load envelope;
-- no owner-ratified executable-envelope preimage or hash;
 - no production commitment;
 - no `CP-ENVELOPE`;
+- no passing G9 artifact;
 - no S10 start.
 
 ## Sign-Off Record
 
-Partial decision record only; this is not a full S9 campaign sign-off.
+Complete scientific decision record; this is not a claim that the production
+ceremony or G9 has passed.
 
 - Decision owner: Betim Bahtiri
 - Recorded UTC timestamp: 2026-08-29T13:00:53Z
@@ -311,12 +310,12 @@ Partial decision record only; this is not a full S9 campaign sign-off.
   quota policy except the load-axis row, leakage tolerance, reserve distribution,
   public identifiers, and private reveal handling.
 - Explicitly rejected 2026-08-30: fixed `1 mm` prescribed displacement.
-- Awaiting owner ratification: `nominal_axial_strain in [0.10, 0.20]`, load policy
+- Owner ratification recorded 2026-08-31: `nominal_axial_strain in [0.10, 0.20]`, load policy
   `nominal-axial-strain-times-half-length-v1`, the 64-step solver recipe, load-axis
   weight `0.05`, its interaction and difficult-region quotas, and the qualified-load
   evidence hash `2f6cfcb9…02a0`.
 
-Full campaign approval still requires the exact scientific and population values
-above to be restated with an approved load rule, plus the resulting hashes of the
+The production ceremony must now materialize the resulting hashes of the approved
 pilot evidence, executable envelope, private DOE plan including leakage policy and
-descriptors, role registry, reserve policy, and public case manifest.
+descriptors, role registry, reserve policy, and public case manifest without changing
+any scientific or population value above.
