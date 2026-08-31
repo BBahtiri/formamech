@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import FrozenInstanceError, dataclass, replace
-from typing import Any, ClassVar
+from typing import Any, ClassVar, cast
 from unittest.mock import patch
 
 import pytest
@@ -27,6 +27,7 @@ from piginot.doe.design import (
     CoupledDesign,
     CoupledDesignSpec,
     DesignPoint,
+    DifficultRegion,
     generate_coupled_design,
 )
 from piginot.doe.envelope import ExecutableEnvelope
@@ -178,9 +179,24 @@ def _inputs() -> dict[str, Any]:
         validation_candidate_count=8,
         axes=(
             AxisSpec("width", AxisSource.PRIMITIVE),
-            AxisSpec("elastic_modulus", AxisSource.PRIMITIVE, strata=1),
-            AxisSpec("poisson_ratio", AxisSource.PRIMITIVE, strata=1),
-            AxisSpec("prescribed_displacement", AxisSource.PRIMITIVE, strata=1),
+            AxisSpec(
+                "elastic_modulus",
+                AxisSource.PRIMITIVE,
+                strata=1,
+                minimum_per_boundary=0,
+            ),
+            AxisSpec(
+                "poisson_ratio",
+                AxisSource.PRIMITIVE,
+                strata=1,
+                minimum_per_boundary=0,
+            ),
+            AxisSpec(
+                "prescribed_displacement",
+                AxisSource.PRIMITIVE,
+                strata=1,
+                minimum_per_boundary=0,
+            ),
             AxisSpec("net_section_ratio", AxisSource.DERIVED),
         ),
         leakage_policy=leakage_policy,
@@ -496,7 +512,7 @@ def test_preregistration_no_longer_accepts_raw_secret_keywords() -> None:
     values.pop("campaign_secrets")
 
     with pytest.raises(TypeError, match="unexpected keyword"):
-        build_preregistration(
+        cast(Any, build_preregistration)(
             **values,
             allocation_seed=_ALLOCATION_SEED,
             holdout_salt=_HOLDOUT_SALT,
@@ -755,6 +771,37 @@ def test_spec_and_design_population_counts_must_agree() -> None:
 
     with pytest.raises(PreregistrationError, match="validation_count"):
         _build(design=short_design)
+
+
+def test_design_with_unresolved_quotas_cannot_close() -> None:
+    values = _inputs()
+    design = values["design"]
+    unresolved_design = replace(
+        design,
+        unresolved_quota_ids=("difficult:near-arc-margin",),
+    )
+
+    with pytest.raises(PreregistrationError, match="unresolved quota"):
+        _build(design=unresolved_design)
+
+
+def test_generated_design_with_unreachable_quota_cannot_close() -> None:
+    values = _inputs()
+    spec = replace(
+        values["spec"],
+        difficult_regions=(
+            DifficultRegion(
+                "unreachable-midpoint",
+                {"width": (0.5, 0.5)},
+                minimum_count=1,
+            ),
+        ),
+    )
+    design = generate_coupled_design(values["executable_envelope"], spec)
+
+    assert design.unresolved_quota_ids == ("difficult:unreachable-midpoint",)
+    with pytest.raises(PreregistrationError, match="unresolved quota"):
+        _build(spec=spec, design=design)
 
 
 def test_family_must_be_canonically_hashable() -> None:

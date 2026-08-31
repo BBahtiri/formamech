@@ -213,6 +213,10 @@ def _validate_design_shape(
         raise PreregistrationError(
             "DOE reserve_count must equal the fixed reserve budget"
         )
+    if design.unresolved_quota_ids:
+        raise PreregistrationError(
+            "design has unresolved quota requirements and cannot close"
+        )
     _validate_leakage_grouping(spec, design)
 
     primitive, derived, strata = _axis_schemas(spec)
