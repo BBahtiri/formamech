@@ -77,20 +77,33 @@ pre-role lineage, morph-seed, and normalized-coordinate descriptors are replayed
 design construction and campaign closure, then committed through the private DOE-plan
 hash; they are finite campaign metadata, not proof that no unrecorded correlation
 exists. No production commitment or `CP-ENVELOPE` exists yet. A DogBone source
-direction is recorded and ADR 0010 ratifies its exact production-family preimage, but
-the complete envelope, budget, DOE quotas, leakage tolerance, and reserve distribution
-still lack owner ratification. A test fixture is not production evidence, so G9
-remains incomplete and S10 must not begin. The absence of family-specific words and
-branches in `src/` addresses only `G17.fixture-names`; `G17.non-dogbone` remains
-`NOT_RUN` because the circular-transition provider currently has one campaign
-consumer and no distinct-topology example has reached a verified bundle through the
-same API.
+direction is recorded and ADR 0010 ratifies its exact production-family preimage.
+The first campaign's family, material point, population budgets, DOE quotas, leakage
+tolerance, reserve distribution, public identifiers, and private reveal policy have
+owner ratification; the load envelope does not. Fixed `1 mm` displacement is rejected
+because it makes nominal strain vary monotonically with specimen length. The
+candidate strain-controlled load primitive removes that confound. Its 16-step screen
+recorded 21/24 successes, its 32-step follow-up recorded 23/24, and its final uniform
+64-step qualification recorded 24/24. Those finite sentinels support proposing a
+10%–20% envelope with the 64-step recipe; they are not a domain-wide solvability proof
+or owner approval. A test fixture is not production evidence, so G9 remains incomplete
+and S10 must not begin. The absence of family-specific words and branches in `src/`
+addresses only `G17.fixture-names`; `G17.non-dogbone` remains `NOT_RUN` because the
+circular-transition provider currently has one campaign consumer and no
+distinct-topology example has reached a verified bundle through the same API.
 
 The public DogBone FEM solvability pilot covers 12 preselected geometry sentinels at
 one fixed material/load point. Its 12 successful solves support local campaign-cost
 sizing only; they do not establish a domain-wide failure rate, portable runtime, or
-solvability at untested material/load values. The recorded payload sizes are for
-uncompressed canonical FEM results, not a final dataset storage format.
+approval of the fixed load value. The recorded payload sizes are for uncompressed
+canonical FEM results, not a final dataset storage format. The public strain-load
+qualification covers the same 12 sentinels at 10% and 20% nominal axial strain. The
+final 64-step population recorded 24 successful solves, minimum deformation Jacobian
+`0.9909092600273233`, and reaction-scaling departure from the linear reference of
+5.46%–5.70%. Its 440-case host-local cost projection is 13.32 h at the median,
+16.31 h at p95, and 1.915 GB decimal (1.784 GiB) of canonical result bytes. None of
+those measurements proves every envelope point will converge or transfers as a
+portable runtime guarantee.
 
 When instantiated, the public commitment will prove only that a later reveal matches
 the committed coordinates. It cannot prove that the local holder never saw the

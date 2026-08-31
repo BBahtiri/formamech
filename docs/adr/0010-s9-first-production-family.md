@@ -2,7 +2,7 @@
 
 - Status: Accepted — exact production family ratified
 - Date: 2026-08-27
-- Last reviewed: 2026-08-29
+- Last reviewed: 2026-08-31
 - Proposal author: Codex
 - Decision owner: Betim Bahtiri
 - Accepted: 2026-08-29T13:00:53Z by explicit task-thread ratification
@@ -90,9 +90,9 @@ No production checkpoint references the superseded schema-1.0 proposal hash, so 
 pre-ratification correction needs no stored-object migration or compatibility shim.
 
 The geometry membership above is only one part of an S9 executable envelope.
-Material and load bounds remain an explicit owner decision; values in the pinned
-reference implementation are evidence for that decision, not approval to encode a
-production envelope.
+Material and load bounds remain separate owner decisions. The pinned material point
+was later ratified for the first campaign; the fixed `1 mm` source displacement was
+not, because it entangles load magnitude with `L_total`.
 
 ## Evidence
 
@@ -121,8 +121,9 @@ The accepted compiled-family hash for later `CP-ENVELOPE` use is
   production-family preimage.
 - The source parameter box is retained, with one visible coupled exclusion needed by
   the FEM mesh-quality contract.
-- No DogBone executable-envelope preimage or hash is created until material and load
-  bounds are approved.
+- A secret-free strain-controlled executable-envelope proposal may be reviewed, but
+  its preimage and hash cannot enter a production checkpoint until the load bounds
+  are separately ratified.
 - Family-specific names remain outside `src/`, and
   `tests/test_no_fixture_names.py` enforces that hygiene property. This supports
   `G17.fixture-names` only. The 548-line circular-transition provider is generic in
@@ -131,5 +132,5 @@ The accepted compiled-family hash for later `CP-ENVELOPE` use is
   verified bundle through the same API with no framework branch.
 - The original PI-GINOT architecture is not copied or replaced by this change. Model
   architecture remains an S11 decision; this ADR only establishes geometry identity.
-- This evidence does not approve material/load bounds, DOE populations, leakage
-  tolerance, reserves, or the production commitment. G9 and S10 remain blocked.
+- This evidence does not approve load bounds or the production commitment. G9 and
+  S10 remain blocked.

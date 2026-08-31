@@ -1,6 +1,6 @@
 # S9 Production Campaign Sign-Off
 
-- Status: Production family ratified; remaining campaign choices open
+- Status: Family, material, and non-load campaign policy ratified; load policy open
 - Step: S9
 - Blocks: G9 and S10
 - Branch: `codex/s9-doe-preregistration`
@@ -15,11 +15,14 @@ holdout salt, holdout coordinate, or production role label belongs in this file.
 
 G9 remains open. The user requested alignment with the pinned DogBone repository,
 and ADR 0010 now records owner ratification of one exact executable family to
-de-risk the first ceremony. The repository still lacks approval of its complete
-material/load envelope, DOE budgets and quotas, leakage tolerance, reserve
-distribution, public identifiers, and private reveal-handling decision. S10 must not
-begin until those choices are approved and committed, then used to create the first
-production `CP-ENVELOPE`.
+de-risk the first ceremony. On 2026-08-30 the owner ratified the evidence basis,
+material point, role budget, candidate streams, non-load DOE policy and thresholds,
+leakage tolerance, reserve distribution, public identifiers, and private
+reveal-handling policy. The load envelope and every load-axis policy addition remain
+open. Fixed `1 mm` prescribed displacement is rejected for production because it
+makes nominal strain a deterministic function of `L_total`. S10 must not begin until
+a replacement load rule and its DOE policy are approved and committed, then used to
+create the first production `CP-ENVELOPE`.
 
 ## Evidence Basis
 
@@ -47,6 +50,20 @@ production `CP-ENVELOPE`.
   results of 12 preselected reference, boundary, and difficult-geometry P2 solves at
   the pinned source material and displacement. Its content hash is
   `e2aa1e0e2cd9d20b31043d9c6cb066c138c9b3cb00c7432111ddd38e6f156928`.
+- `artifacts/campaigns/dogbone-v1/fem-strain-envelope-pilot.json` records the
+  ordered results of 24 P2 solves using the replacement load primitive
+  `nominal_axial_strain`, with right-grip displacement computed as
+  `nominal_axial_strain * L_total / 2`. Its content hash is
+  `4ff6dba3f311ff949d5cf662b2d68dd358e5b6f2592157677797f6173d0f14d2`.
+- `artifacts/campaigns/dogbone-v1/fem-strain-envelope-qualification.json` records
+  the same population with 32 continuation steps. Its content hash is
+  `fa5f031b761101987d8af642b86e2b893babf4d0e6e9289b27846bd12479f325`.
+- `artifacts/campaigns/dogbone-v1/fem-strain-envelope-qualified.json` records the
+  final uniform 64-step qualification. Its content hash is
+  `2f6cfcb9ed56e072a25ed3b09ade2de9666ade5c7be15fcd33489eb67e4502a0`.
+- `artifacts/campaigns/dogbone-v1/s9-strain-load-proposal-dry-run.json` records the
+  executable, secret-free DOE proposal. Its content hash is
+  `42cb8f7ee8a16f89663289ecf39cc959d656f3fbba152c9826c469f0a920be34`.
 
 ## Approval Items
 
@@ -55,21 +72,23 @@ Each row needs an explicit owner decision before the production ceremony.
 | Item | Required Decision | Current Position |
 | --- | --- | --- |
 | Production family | Exact compiled family, reference mesh identity, morph map recipe, validity policy hash, and S6 membership predicate. | Approved 2026-08-29. Recipe `dogbone-quarter-no-hole-v1`; compiled hash `a8143a75…973a4`; mesh `3bfc1043…d82c`; analytic circular-transition map; policy `b3c2df59…931d`. |
-| Pilot evidence | Non-empty ordered set of content-addressed `EvidenceReference` records with role `PILOT` or `LEGACY`. | Available for approval: FEM solvability pilot `e2aa1e0e…6928` and DogBone family validation `4dfac913…eb92d` as `PILOT`, plus S1 gate `cd0b01e8…9470` as `LEGACY`. The finite FEM cost/solvability pilot is complete; the exact checkpoint evidence set is not yet approved. |
-| Executable envelope | Primitive bounds, derived bounds, material bounds, load bounds, and refusal policy for out-of-envelope inputs. | Geometry proposal ready: original four geometry ranges plus `arc_feasibility_ratio >= 1.35`. Source-aligned fixed-point proposal exercised by the FEM pilot: `E = 760 MPa`, `nu = 0.23`, prescribed displacement `1 mm`. Those material/load bounds are not approved, so no DogBone executable-envelope preimage or hash exists. |
-| Derived axes | Non-empty ordered list of derived stratification axes to bind into `CP-ENVELOPE`. | Proposed order: `arc_feasibility_ratio`, `fillet_to_gauge_ratio`, `grip_to_gauge_ratio`, `length_to_gauge_ratio`, all compiled through S2 and evaluated by S6. Not approved. |
-| DOE axis policy | Axis weights, stratum counts, minimum per stratum, boundary widths, boundary quotas, interactions, difficult-region quotas, and coverage thresholds. | Exact proposal is recorded below. A public non-production dry run resolved every declared requirement with fill distance `0.0865461`, minimum stratum count 10, and all four quota fractions equal to 1.0. Not approved. |
-| Role budget | Positive `PILOT`, `TRAIN`, `DEVELOPMENT`, exact `HOLDOUT=64`, and explicit non-negative `LEGACY` and `RESERVE` counts. | Proposed first campaign: `PILOT=24`, `TRAIN=256`, `DEVELOPMENT=64`, `HOLDOUT=64`, `LEGACY=0`, `RESERVE=32`; DOE `sample_count=408`, `reserve_count=32`. The S1 gate remains a `LEGACY` evidence reference, but no pre-S9 case enters the production case ledger. Not approved. |
-| Candidate streams | `candidate_count`, `validation_count`, `validation_candidate_count`, `guard_band_count`, and `guard_band_fraction`. | Proposed first campaign: `candidate_count=4096`, `validation_count=512`, `validation_candidate_count=4096`, `guard_band_count=32`, `guard_band_fraction=0.05`. Not approved. |
-| Leakage policy | Near-duplicate tolerance in normalized primitive-plus-derived axis space. | Proposed first campaign: `near_duplicate_tolerance=0.015` under `geometry-lineage-morph-seed-chebyshev-v1`. The DOE records descriptors, and closure replays them before accepting the role allocation. The private DOE-plan hash binds both policy and descriptors. Not approved. |
-| Reserve distribution | Ordered reserve policy per replaceable role and exhaustion behavior. | Proposed first campaign: `PILOT=4`, `TRAIN=20`, `DEVELOPMENT=8`, `HOLDOUT=0`, `LEGACY=0` reserves, ranked by the committed reserve order. Version one permits reserves only for `PILOT`, `TRAIN`, and `DEVELOPMENT`; `HOLDOUT` is never replaced. Not approved. |
-| Public naming | Stable public `manifest_id` and replacement `rule_id`. | Proposed: manifest `dogbone-v1-public-cases`; replacement rule `role-local-design-order-v1`. Guard and DOE stream algorithm IDs remain fixed by code. Not approved. |
-| Private reveal handling | Local ignored path and access controls for salt plus exact holdout coordinates. | Proposed: `.piginot-private/dogbone-v1/reveal-v1.json`, created before public commitment, readable only by the ceremony operator, with a separately access-controlled backup. The reveal must not enter Git, gate artifacts, tests, or training inputs. Not approved. |
+| Pilot evidence | Non-empty ordered set of content-addressed `EvidenceReference` records with role `PILOT` or `LEGACY`. | Approved 2026-08-30 for campaign input: FEM solvability pilot `e2aa1e0e…6928` and DogBone family validation `4dfac913…eb92d` as `PILOT`, plus S1 gate `cd0b01e8…9470` as `LEGACY`. The three strain-envelope artifacts are diagnostic evidence for the still-open load decision and are not silently added to the approved checkpoint evidence set. |
+| Executable envelope | Primitive bounds, derived bounds, material bounds, load bounds, and refusal policy for out-of-envelope inputs. | Geometry approved: original four geometry ranges plus `arc_feasibility_ratio >= 1.35`. Material approved: `E = 760 MPa`, `nu = 0.23`. Load not approved: fixed `1 mm` displacement is rejected. Proposed replacement: `nominal_axial_strain in [0.10, 0.20]`, applied by policy `nominal-axial-strain-times-half-length-v1` as `u = strain * L_total / 2`, with 64 uniform load steps. The unratified proposal envelope hash is `be25dabb…690`; it may not enter a production checkpoint. |
+| Derived axes | Non-empty ordered list of derived stratification axes to bind into `CP-ENVELOPE`. | Approved 2026-08-30 in order: `arc_feasibility_ratio`, `fillet_to_gauge_ratio`, `grip_to_gauge_ratio`, `length_to_gauge_ratio`, all compiled through S2 and evaluated by S6. |
+| DOE axis policy | Axis weights, stratum counts, minimum per stratum, boundary widths, boundary quotas, interactions, difficult-region quotas, and coverage thresholds. | Approved 2026-08-30 except for the load-axis row. The proposed replacement uses weight `0.05`, four strata, both boundary quotas, a strain-by-concentration interaction, and a high-strain/high-concentration difficult region. Its paired public dry run resolved every requirement with fill distance `0.0923852`, minimum stratum count 8, and all four quota fractions equal to 1.0; closure refuses any non-empty `unresolved_quota_ids`. |
+| Role budget | Positive `PILOT`, `TRAIN`, `DEVELOPMENT`, exact `HOLDOUT=64`, and explicit non-negative `LEGACY` and `RESERVE` counts. | Approved 2026-08-30: `PILOT=24`, `TRAIN=256`, `DEVELOPMENT=64`, `HOLDOUT=64`, `LEGACY=0`, `RESERVE=32`; DOE `sample_count=408`, `reserve_count=32`. The S1 gate remains a `LEGACY` evidence reference, but no pre-S9 case enters the production case ledger. |
+| Candidate streams | `candidate_count`, `validation_count`, `validation_candidate_count`, `guard_band_count`, and `guard_band_fraction`. | Approved 2026-08-30: `candidate_count=4096`, `validation_count=512`, `validation_candidate_count=4096`, `guard_band_count=32`, `guard_band_fraction=0.05`. |
+| Leakage policy | Near-duplicate tolerance in normalized primitive-plus-derived axis space. | Approved 2026-08-30: `near_duplicate_tolerance=0.015` under `geometry-lineage-morph-seed-chebyshev-v1`. The DOE records descriptors, and closure replays them before accepting the role allocation. The private DOE-plan hash binds both policy and descriptors. |
+| Reserve distribution | Ordered reserve policy per replaceable role and exhaustion behavior. | Approved 2026-08-30: `PILOT=4`, `TRAIN=20`, `DEVELOPMENT=8`, `HOLDOUT=0`, `LEGACY=0` reserves, ranked by the committed reserve order. Version one permits reserves only for `PILOT`, `TRAIN`, and `DEVELOPMENT`; `HOLDOUT` is never replaced. |
+| Public naming | Stable public `manifest_id` and replacement `rule_id`. | Approved 2026-08-30: manifest `dogbone-v1-public-cases`; replacement rule `role-local-design-order-v1`. Guard and DOE stream algorithm IDs remain fixed by code. |
+| Private reveal handling | Local ignored path and access controls for salt plus exact holdout coordinates. | Approved 2026-08-30: `.piginot-private/dogbone-v1/reveal-v1.json`, created before public commitment, readable only by the ceremony operator, with a separately access-controlled backup. The reveal must not enter Git, gate artifacts, tests, or training inputs. |
 
-The production family is the first decision. It fixes the reference mesh, primitive
-and derived vocabulary, executable envelope, meaningful difficult regions, and the
-cost basis for every population count. Numeric DOE or budget values approved before
-that choice would be unsupported assumptions and must not be used.
+The production-family decision fixes the reference mesh and the geometry primitive
+and derived vocabulary. It does not fix the complete executable envelope,
+load-coupled difficult regions, or final solver cost basis; those remain conditional
+on load ratification. Numeric DOE or budget values chosen before the family decision
+would have been unsupported assumptions and must not be substituted for the recorded
+ratifications.
 
 The requested first-campaign source direction has now been resolved to the exact
 accepted decision in ADR 0010. The decision retains the pinned reference
@@ -96,19 +115,56 @@ iterations, and the largest final residual was
 had 7,458 scalar displacement DOFs (3,729 vector-valued basis sites).
 
 This is finite sentinel evidence and a local cost measurement. It is not a uniform
-solvability proof, a portable performance benchmark, or approval of the fixed
-material/load point. Population projections must identify whether they use average
+solvability proof, a portable performance benchmark, or approval of the fixed load
+point. Population projections must identify whether they use average
 or conservative per-case timing and whether result payloads are stored as canonical
 JSON, compressed, or converted to a later verified dataset representation.
 
-Sequential single-host projections from this finite pilot are:
+For the ratified 408-active plus 32-reserve population, the fixed-load pilot projects
+2.57 h from the median case, 2.66 h from the mean, and 3.13 h from the observed p95
+case on that host. Mean payload size projects to 1.911 GB decimal (1.780 GiB) of
+uncompressed canonical JSON. The 512 validation points are membership probes, not
+FEM solves, and add no solve or result-storage cost.
 
-| Production solves | Mean-time projection | p95-time projection | Raw JSON size projection |
-| --- | ---: | ---: | ---: |
-| 408 active + 32 reserve | 2.66 h | 3.13 h | 1.69 GiB |
-| 512 | 3.09 h | 3.64 h | 2.07 GiB |
-| 1024 | 6.19 h | 7.28 h | 4.14 GiB |
-| 2048 | 12.38 h | 14.56 h | 8.28 GiB |
+The fixed `1 mm` load row is rejected for production. Across the approved geometry
+range `L_total in [40, 70] mm`, it induces half-model nominal strain from 5.00% down
+to 2.86%, monotonically entangling `length_to_gauge_ratio` with load magnitude.
+
+## Strain-Controlled Load Pilot
+
+The replacement load primitive under review is `nominal_axial_strain`, with the
+right-grip displacement computed per case as `u = nominal_axial_strain * L_total / 2`.
+This preserves a constant nominal axial strain across the family and removes the
+fixed-displacement confound with `L_total`.
+
+The public strain qualification used the same 12 sentinel geometries, approved
+material point, P2 displacement basis, solver tolerance `1e-10`, and S7 backend. It
+evaluated two endpoints, 10% and 20% nominal axial strain. The initial 16-step screen
+recorded 21 successes in 24 attempts:
+
+| Case | Nominal strain | Displacement | Failure |
+| --- | ---: | ---: | --- |
+| `wide_gauge_long` | 10% | 3.5 mm | `CLOSURE_FAILURE` |
+| `wide_gauge_long` | 20% | 7.0 mm | `NEGATIVE_JACOBIAN` |
+| `arc_margin` | 20% | 7.0 mm | `CLOSURE_FAILURE` |
+
+The transparent 32-step follow-up recorded 23/24 successes; only
+`wide_gauge_long` at 20% remained a closure failure. A targeted 64-step diagnostic
+then succeeded for that case, so the final qualification reran the complete fixed
+population uniformly at 64 steps rather than mixing continuation recipes. All 24/24
+final attempts succeeded. Maximum observed Newton iterations were 7, maximum final
+residual was `8.874514776412887e-11`, and the minimum recorded deformation Jacobian
+was `0.9909092600273233`.
+
+All 12 geometry pairs showed right-reaction scaling 5.46% to 5.70% below the linear
+2:1 reference. That establishes measurable finite-strain response on these finite
+sentinels; it is not a domain-wide proof. On the recorded host, the 64-step recipe
+projects 13.32 h at the median, 16.31 h at p95, and 19.17 h at the observed maximum
+for 440 solves. Mean payload size projects to 1.915 GB decimal (1.784 GiB).
+
+This evidence supports proposing the exact 10%–20% envelope with 64 uniform steps.
+It does not ratify the proposal, and the earlier failures remain part of the evidence
+rather than being overwritten.
 
 The proposed first role budget keeps the original DogBone training scale of 256
 training cases, adds an exact 64-case sealed holdout, reserves 64 cases for visible
@@ -119,13 +175,19 @@ replacing `HOLDOUT`.
 
 ## Proposed DOE Policy and Public Dry Run
 
-The proposed axis table is finite and exact. Fixed material/load coordinates retain
-one visible stratum but weight `0.01`, so zero-width axes do not materially dilute the
-weighted distance. `arc_feasibility_ratio` uses two strata because the ratified upper
-bound of 20 is reachable only near a measure-small primitive corner; an equal
-four-stratum policy left its highest cell empty even in a 2,400-candidate public
-stream. Its load-bearing lower edge is covered by explicit difficult-region quotas
-instead of a misleading symmetric boundary quota.
+The proposed axis table is finite and exact. Fixed material coordinates retain one
+visible stratum but weight `0.01`, so zero-width axes do not materially dilute the
+weighted distance. The variable strain coordinate has distance weight `0.05`; this is
+not a claim that load is unimportant. Its marginal and joint coverage are instead
+enforced directly by four strata, both endpoint bands, a strain-by-concentration
+interaction, and a high-strain difficult-region quota, while the already-ratified
+`0.10` fill threshold remains focused on morphology coverage.
+
+`arc_feasibility_ratio` uses two strata because the ratified upper bound of 20 is
+reachable only near a measure-small primitive corner; an equal four-stratum policy
+left its highest cell empty even in a 2,400-candidate public stream. Its load-bearing
+lower edge is covered by explicit difficult-region quotas instead of a misleading
+symmetric boundary quota.
 
 | Axis | Source | Weight | Strata | Minimum/stratum | Boundary width | Minimum/boundary |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
@@ -135,37 +197,43 @@ instead of a misleading symmetric boundary quota.
 | `R_fillet` | primitive | 1.00 | 4 | 8 | 0.10 | 8 |
 | `elastic_modulus` | primitive, fixed | 0.01 | 1 | 1 | 0.10 | 0 |
 | `poisson_ratio` | primitive, fixed | 0.01 | 1 | 1 | 0.10 | 0 |
-| `prescribed_displacement` | primitive, fixed | 0.01 | 1 | 1 | 0.10 | 0 |
+| `nominal_axial_strain` | primitive, variable | 0.05 | 4 | 8 | 0.10 | 8 |
 | `arc_feasibility_ratio` | derived | 1.50 | 2 | 8 | 0.10 | 0 |
 | `fillet_to_gauge_ratio` | derived | 1.50 | 4 | 8 | 0.15 | 8 |
 | `grip_to_gauge_ratio` | derived | 2.00 | 4 | 8 | 0.15 | 8 |
 | `length_to_gauge_ratio` | derived | 1.25 | 4 | 8 | 0.15 | 8 |
 
 Proposed interactions require two samples per cell for
-`W_grip x W_gauge`, `W_gauge x R_fillet`, and
-`L_total x grip_to_gauge_ratio`. Proposed difficult regions are:
+`W_grip x W_gauge`, `W_gauge x R_fillet`,
+`L_total x grip_to_gauge_ratio`, and
+`nominal_axial_strain x grip_to_gauge_ratio`. Proposed difficult regions are:
 
 - `high-concentration`: normalized `grip_to_gauge_ratio` in `[0.75, 1]` and
   `arc_feasibility_ratio` in `[0, 0.10]`, minimum 32;
 - `near-arc-margin`: normalized `arc_feasibility_ratio` in `[0, 0.025]`, minimum 16;
 - `short-high-concentration`: normalized `L_total` in `[0, 0.25]`,
   `grip_to_gauge_ratio` in `[0.75, 1]`, and `arc_feasibility_ratio` in
+  `[0, 0.10]`, minimum 8;
+- `high-strain-high-concentration`: normalized `nominal_axial_strain` and
+  `grip_to_gauge_ratio` in `[0.75, 1]`, with `arc_feasibility_ratio` in
   `[0, 0.10]`, minimum 8.
 
 The proposed acceptance thresholds are maximum empirical fill distance `0.10`,
 minimum stratum count 8, all marginal/boundary/interaction/difficult-region coverage
 fractions equal to 1.0, and no unresolved requirement identifier.
 
-A public, non-production dry run used seed
-`public-dogbone-s9-proposal-dry-run-v2`; it did not create campaign secrets, roles, a
-holdout, or a commitment. Of 4,096 candidate proposals, 3,842 passed membership; of
-4,096 independent validation proposals, 3,841 passed. The selector produced 408
-active cases, 32 reserves, 512 validation points, and 32 negative guards with no
-unresolved quota. Measured fill distance was `0.08654600038744202`, minimum stratum
-count was 10, difficult-region counts were 34, 75, and 9 respectively, and all 440
-active-plus-reserve points had distinct leakage groups at tolerance `0.015`. This
-dry run shows that the proposal is executable; it is not the production DOE and its
-public seed must never be reused for closure.
+Public dry run `public-dogbone-s9-strain-proposal-dry-run-v1` deliberately reused the
+prior public seed `public-dogbone-s9-proposal-dry-run-v2` for a paired policy
+comparison. It did not create campaign secrets, roles, a holdout, or a commitment.
+Of 4,096 candidate proposals, 3,829 passed membership; of 4,096 independent
+validation proposals, 3,821 passed. The selector produced 408 active cases, 32
+reserves, 512 validation points, and 32 negative guards with no unresolved quota.
+Measured fill distance was `0.09238521285946635`, minimum stratum count was 8, all
+four coverage fractions were 1.0, and all 440 active-plus-reserve points had distinct
+leakage groups at tolerance `0.015`. The proposal envelope, design spec, and design
+hashes are respectively `be25dabb…690`, `0e879a43…179`, and `ac6c3f82…2f27`.
+This dry run shows that the load-aware proposal is executable; it is not the
+production DOE, and its public seed must never be reused for closure.
 
 This proposal does not close the family-generality risk from ADR 0001.
 `tests/test_no_fixture_names.py` checks `G17.fixture-names` hygiene, but
@@ -219,12 +287,8 @@ committed:
 
 The following are intentionally not approved by this draft:
 
-- no owner-ratified complete material/load executable envelope;
-- no owner-ratified exact pilot-evidence set;
-- no role budget;
-- no DOE quota table;
-- no leakage tolerance;
-- no reserve distribution;
+- no owner-ratified load envelope;
+- no owner-ratified executable-envelope preimage or hash;
 - no production commitment;
 - no `CP-ENVELOPE`;
 - no S10 start.
@@ -242,8 +306,17 @@ Partial decision record only; this is not a full S9 campaign sign-off.
   `3bfc1043f5aa9e989469adacb0ee1d0b483825ffabcd5dfac4bf9caca580d82c`
 - Approved validity-policy hash:
   `b3c2df59eed939f1aa14a69d05a6fd2dc57be571ffba33c6355982713cc6931d`
+- Additional owner ratification recorded 2026-08-30: evidence basis, material
+  point `E = 760 MPa`, `nu = 0.23`, role budget, candidate stream sizes, DOE
+  quota policy except the load-axis row, leakage tolerance, reserve distribution,
+  public identifiers, and private reveal handling.
+- Explicitly rejected 2026-08-30: fixed `1 mm` prescribed displacement.
+- Awaiting owner ratification: `nominal_axial_strain in [0.10, 0.20]`, load policy
+  `nominal-axial-strain-times-half-length-v1`, the 64-step solver recipe, load-axis
+  weight `0.05`, its interaction and difficult-region quotas, and the qualified-load
+  evidence hash `2f6cfcb9…02a0`.
 
 Full campaign approval still requires the exact scientific and population values
-above, plus the resulting hashes of the pilot evidence, executable envelope, private
-DOE plan including leakage policy and descriptors, role registry, reserve policy,
-and public case manifest.
+above to be restated with an approved load rule, plus the resulting hashes of the
+pilot evidence, executable envelope, private DOE plan including leakage policy and
+descriptors, role registry, reserve policy, and public case manifest.
