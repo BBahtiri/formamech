@@ -76,8 +76,10 @@ same Python process was unmodified. The required near-duplicate tolerance and th
 pre-role lineage, morph-seed, and normalized-coordinate descriptors are replayed at
 design construction and campaign closure, then committed through the private DOE-plan
 hash; they are finite campaign metadata, not proof that no unrecorded correlation
-exists. No production commitment or `CP-ENVELOPE` exists yet. A DogBone source
-direction is recorded and ADR 0010 ratifies its exact production-family preimage.
+exists. The production `CP-ENVELOPE` and exact-64 commitment are now public, while
+the reveal remains ignored and operator-only with a separately access-controlled
+backup. A DogBone source direction is recorded and ADR 0010 ratifies its exact
+production-family preimage.
 The first campaign's family, material point, population budgets, DOE quotas, leakage
 tolerance, reserve distribution, public identifiers, private reveal policy, and exact
 10%–20% strain-controlled load envelope now have owner ratification. Fixed `1 mm`
@@ -87,8 +89,10 @@ Its 16-step screen
 recorded 21/24 successes, its 32-step follow-up recorded 23/24, and its final uniform
 64-step qualification recorded 24/24. Those finite sentinels support the ratified
 10%–20% envelope with the 64-step recipe; they are not a domain-wide solvability
-proof. Until the production ceremony and G9 are complete, S10 must not begin. The
-absence of family-specific words and branches in `src/`
+proof. G9 is PASS, but its live order record deliberately witnesses zero downstream
+artifacts at the pre-training boundary. S10 must independently exclude HOLDOUT from
+sampling, and every later artifact batch must prove commitment ancestry and live
+file ordering. The absence of family-specific words and branches in `src/`
 addresses only `G17.fixture-names`; `G17.non-dogbone` remains `NOT_RUN` because the
 circular-transition provider currently has one campaign consumer and no
 distinct-topology example has reached a verified bundle through the same API.
@@ -106,8 +110,8 @@ final 64-step population recorded 24 successful solves, minimum deformation Jaco
 those measurements proves every envelope point will converge or transfers as a
 portable runtime guarantee.
 
-When instantiated, the public commitment will prove only that a later reveal matches
-the committed coordinates. It cannot prove that the local holder never saw the
+The public commitment proves only that a later reveal matches the committed
+coordinates. It cannot prove that the local holder never saw the
 ignored private reveal. Git also does not preserve historical file mtimes, so live
 ordering must be captured and committed with each artifact batch, while Git first-add
 ancestry is verified separately. The project does not yet implement verified

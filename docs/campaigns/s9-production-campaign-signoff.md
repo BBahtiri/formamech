@@ -1,28 +1,29 @@
 # S9 Production Campaign Sign-Off
 
-- Status: Complete scientific campaign policy ratified; production ceremony pending
+- Status: Production campaign sealed; G9 PASS
 - Step: S9
-- Blocks: G9 and S10
+- Gate: `G9` PASS at `6c02449`
+- Next: S10 verified dataset and sampler boundary
 - Branch: `codex/s9-doe-preregistration`
 - Contract baseline: `CP-ENVELOPE` schema 1.1 and ADR 0009
 
-This page records the scientific campaign choices that must be approved before a
-production `CP-ENVELOPE` can be created. It is deliberately not a commitment,
-not a private reveal, and not a gate artifact. No DOE seed, allocation seed,
-holdout salt, holdout coordinate, or production role label belongs in this file.
+This page records the ratified scientific campaign choices and their completed S9
+closure. It is deliberately not the commitment, private reveal, or gate artifact.
+No DOE seed, allocation seed, holdout salt, holdout coordinate, or private production
+role label belongs in this file.
 
 ## Current Verdict
 
-G9 remains open. The user requested alignment with the pinned DogBone repository,
-and ADR 0010 now records owner ratification of one exact executable family to
-de-risk the first ceremony. On 2026-08-30 the owner ratified the evidence basis,
-material point, role budget, candidate streams, non-load DOE policy and thresholds,
-leakage tolerance, reserve distribution, public identifiers, and private
-reveal-handling policy. On 2026-08-31 the owner then ratified the exact 10%–20%
-nominal-strain envelope, its 64-step solver recipe, load-axis policy, and qualified
-evidence hash. The scientific campaign choices are complete. G9 remains open, and
-S10 must not begin, until the one-shot production ceremony creates and commits the
-first `CP-ENVELOPE` and all G9 evidence passes.
+G9 is PASS. The one-shot ceremony created the restricted primary reveal and its
+separately access-controlled backup before publishing `CP-ENVELOPE`. The public
+commitment was first added at `55b9315`; live order evidence was first added later at
+`7d26a98`; and `artifacts/gates/S9.json` closed the gate at `6c02449` after a fresh
+reveal check and private-material exclusion scan. The sealed production DOE, rather
+than the public dry run, measured fill distance `0.09423190587886651`, minimum
+stratum count 10, all four coverage fractions equal to 1.0, and no uncovered or
+unresolved requirement. S10 may now begin, but its sampler must independently
+enforce HOLDOUT exclusion and each future artifact batch must carry its own
+commitment-order evidence.
 
 ## Evidence Basis
 
@@ -43,6 +44,9 @@ first `CP-ENVELOPE` and all G9 evidence passes.
 - `docs/adr/0009-s9-preregistration-over-sealed-audit.md` fixes the S9 closure
   ceremony, exact-64 holdout, CSPRNG-origin campaign secrets, leakage boundary,
   replacement rule, and `CP-ENVELOPE` schema 1.1.
+- `artifacts/gates/S9.json` records all eight passing G9 checks, sealed-production
+  coverage diagnostics, aggregate public-versus-HOLDOUT visibility evidence, and
+  the deliberately empty pre-training artifact-order population.
 - `docs/adr/0010-s9-first-production-family.md` accepts the exact pinned DogBone
   family. `artifacts/campaigns/dogbone-v1/family-validation.json` records a disjoint
   public sweep with 500 accepted and zero morph-validation failures.
@@ -67,7 +71,8 @@ first `CP-ENVELOPE` and all G9 evidence passes.
 
 ## Approval Items
 
-Each row needs an explicit owner decision before the production ceremony.
+Each row records the explicit owner decision used by the completed production
+ceremony.
 
 | Item | Required Decision | Current Position |
 | --- | --- | --- |
@@ -259,10 +264,9 @@ chosen. At minimum:
   machinery and evaluated by the S6 membership predicate; no textual `eval` or
   post-hoc notebook calculation is acceptable.
 
-## Ceremony Preconditions
+## Ceremony Procedure
 
-The production ceremony may start only after the approval items above are
-committed:
+The completed production ceremony followed this committed order:
 
 1. Generate one campaign-secret bundle with `generate_campaign_secrets()`.
 2. Build `CoupledDesignSpec` using `campaign_secrets.doe_seed`.
@@ -282,19 +286,20 @@ committed:
    clean; capture live mtime evidence at artifact creation and verify Git first-add
    ancestry before claiming `G9.commitment-order`.
 
-## Remaining Ceremony Preconditions
+## Ceremony Closure Evidence
 
-Scientific approval is complete. The following artifacts and gates do not yet exist:
+Scientific approval and the one-shot ceremony are complete:
 
-- no production commitment;
-- no `CP-ENVELOPE`;
-- no passing G9 artifact;
-- no S10 start.
+- production commitment and `CP-ENVELOPE`: first added in `55b9315`;
+- live pre-training order evidence: first added in `7d26a98`;
+- production evidence integration test: `d7930a6`;
+- passing G9 artifact and fail-closed structural tests: `6c02449`;
+- S10 remains unimplemented and is the next step.
 
 ## Sign-Off Record
 
-Complete scientific decision record; this is not a claim that the production
-ceremony or G9 has passed.
+Complete scientific decision and closure record. The passing verdict is carried by
+`artifacts/gates/S9.json`, not by this narrative page.
 
 - Decision owner: Betim Bahtiri
 - Recorded UTC timestamp: 2026-08-29T13:00:53Z
@@ -315,7 +320,7 @@ ceremony or G9 has passed.
   weight `0.05`, its interaction and difficult-region quotas, and the qualified-load
   evidence hash `2f6cfcb9…02a0`.
 
-The production ceremony must now materialize the resulting hashes of the approved
-pilot evidence, executable envelope, private DOE plan including leakage policy and
-descriptors, role registry, reserve policy, and public case manifest without changing
-any scientific or population value above.
+The production ceremony materialized and cross-checked the resulting hashes of the
+approved pilot evidence, executable envelope, private DOE plan including leakage
+policy and descriptors, role registry, reserve policy, and public case manifest
+without changing any scientific or population value above.
