@@ -1,0 +1,280 @@
+{
+  "gate_id": "G9",
+  "step": "S9",
+  "evidence_head_commit": "d7930a67e49c0b05fb91db74bd46d304ec6df281",
+  "implementation_commits": {
+    "production_ceremony": "c83596985c6474db0c99dc1fbf822d62c5bc9083",
+    "sealed_campaign": "55b931594a02922a09dcaac12d32c339bbea6b85",
+    "commitment_order": "7d26a9813c743a8e842ef03732ffb37a03eb4902",
+    "production_evidence_test": "d7930a67e49c0b05fb91db74bd46d304ec6df281"
+  },
+  "timestamp_utc": "2026-08-31T20:21:20Z",
+  "execution_profile": {
+    "operating_system": "Windows",
+    "python_version": "3.13.11",
+    "test_scope": "local S9 gate evidence",
+    "ci_matrix_claimed": false
+  },
+  "campaign_hash": "8f58fe30803e2bd147f863ac000e1e89a19092c8b347df6b4d74f38487d96d46",
+  "campaign_binding": {
+    "checkpoint_id": "CP-ENVELOPE",
+    "checkpoint_schema_version": "1.1",
+    "compiled_family_hash": "a8143a75e62c614d40f52049cfc88c1cda74d38c9bd488cc3bed4c5678d973a4",
+    "executable_envelope_hash": "be25dabbc501dfc52dec6335254c07ae0d0355d533364de9dcc6c21907522690",
+    "private_doe_plan_hash": "cbf954c65c652c28ed36d3af82b2f69b9a3e2f12258866a792d0fbfb26311156",
+    "public_case_manifest_hash": "ce95c03f5b22308a7aa9bf627966a6b21300a4e7b0272d3affa7dd503af564a9",
+    "replacement_policy_hash": "d2a65a4306b44450b1bd98c86a1d017117661de3235e930162a238940a4bf1b8",
+    "role_ledger_hash": "95b237a4159661ee9f585aa7ece418d400b453ee32f1f1d79b0124a6009638e9",
+    "holdout_scheme": "blake2b-256",
+    "holdout_count": 64,
+    "secret_generator_id": "python-secrets-token-bytes-32-v1"
+  },
+  "public_artifact_consistency": {
+    "checkpoint_strict_parse": true,
+    "executable_envelope_hash_recomputed": true,
+    "public_manifest_hash_recomputed": true,
+    "replacement_policy_hash_recomputed": true,
+    "private_doe_plan_hash_recomputed_in_memory": true,
+    "role_ledger_hash_recomputed_in_memory": true,
+    "public_secret_scan_passed": true,
+    "status": "PASS"
+  },
+  "private_custody": {
+    "primary_present": true,
+    "backup_present": true,
+    "copies_byte_identical": true,
+    "primary_operator_only_acl": true,
+    "backup_operator_only_acl": true,
+    "external_path_disclosed": false,
+    "status": "PASS"
+  },
+  "production_design_policy": {
+    "source": "sealed production DOE regenerated in memory from the restricted reveal and matched to the public private_doe_plan_hash",
+    "plan_hash_verified": true,
+    "population": {
+      "selected_cases": 408,
+      "reserve_cases": 32,
+      "validation_points": 512
+    },
+    "measured": {
+      "empirical_fill_distance": 0.09423190587886651,
+      "minimum_stratum_count": 10,
+      "stratum_coverage": 1.0,
+      "boundary_coverage": 1.0,
+      "interaction_coverage": 1.0,
+      "difficult_region_coverage": 1.0,
+      "uncovered_region_ids": [],
+      "unresolved_region_ids": []
+    },
+    "thresholds": {
+      "maximum_empirical_fill_distance": 0.1,
+      "minimum_stratum_count": 8,
+      "minimum_coverage_fraction": 1.0,
+      "maximum_uncovered_regions": 0,
+      "maximum_unresolved_regions": 0
+    },
+    "checks": {
+      "empirical_fill_distance": true,
+      "minimum_stratum_count": true,
+      "stratum_coverage": true,
+      "boundary_coverage": true,
+      "interaction_coverage": true,
+      "difficult_region_coverage": true,
+      "uncovered_region_ids": true,
+      "unresolved_region_ids": true
+    },
+    "status": "PASS"
+  },
+  "checks": [
+    {
+      "id": "G9.immutable",
+      "status": "PASS",
+      "measured": true,
+      "threshold": true,
+      "comparison": "eq",
+      "evidence": {
+        "rewrite_attempts": 2,
+        "exceptions": 2,
+        "exception_type": "ImmutableRoleAssignmentError",
+        "test_id": "test_role_rewrite_raises_even_when_the_requested_role_is_unchanged",
+        "command": "python -m pytest tests/doe/test_roles.py tests/doe/test_publication.py tests/doe/test_replacement.py tests/campaigns/test_dogbone_g9_evidence.py -q",
+        "command_result": "117 passed"
+      }
+    },
+    {
+      "id": "G9.one-role",
+      "status": "PASS",
+      "measured": {
+        "trials": 1000,
+        "violations": 0
+      },
+      "threshold": {
+        "minimum_trials": 1000,
+        "violations": 0
+      },
+      "comparison": "gte trials and eq violations",
+      "evidence": {
+        "rng": "python-random-mt19937",
+        "public_test_seed": "0xC0FFEE",
+        "roles_tested": 5,
+        "test_id": "test_one_role_per_case_holds_for_1000_random_assignments",
+        "command": "python -m pytest tests/doe/test_roles.py tests/doe/test_publication.py tests/doe/test_replacement.py tests/campaigns/test_dogbone_g9_evidence.py -q",
+        "command_result": "117 passed"
+      }
+    },
+    {
+      "id": "G9.leakage",
+      "status": "PASS",
+      "measured": {
+        "trials": 1000,
+        "violations": 0
+      },
+      "threshold": {
+        "minimum_trials": 1000,
+        "violations": 0
+      },
+      "comparison": "gte trials and eq violations",
+      "evidence": {
+        "rng": "python-random-mt19937",
+        "public_test_seed": "0x5EED",
+        "correlation_basis": "shared leakage_group_id",
+        "synthetic_group_size": 2,
+        "split_attempts": 1000,
+        "production_closure_replay": true,
+        "test_id": "test_leakage_groups_never_split_across_roles_for_1000_random_trials",
+        "command": "python -m pytest tests/doe/test_roles.py tests/doe/test_publication.py tests/doe/test_replacement.py tests/campaigns/test_dogbone_g9_evidence.py -q",
+        "command_result": "117 passed"
+      }
+    },
+    {
+      "id": "G9.visibility",
+      "status": "PASS",
+      "measured": 0,
+      "threshold": 0,
+      "comparison": "eq",
+      "evidence": {
+        "case_id_overlaps": 0,
+        "claim_scope": "S9 public collocation-eligible population; the S10 sampler is not implemented",
+        "exact_coordinate_overlaps": 0,
+        "holdout_cases_checked": 64,
+        "leakage_group_overlaps": 0,
+        "public_ledger_mismatches": 0,
+        "public_manifest_holdout_entries": 0,
+        "public_points_checked": 376,
+        "sealed_leakage_groups_checked": 64
+      }
+    },
+    {
+      "id": "G9.no-node-split",
+      "status": "PASS",
+      "measured": true,
+      "threshold": true,
+      "comparison": "eq",
+      "evidence": {
+        "mutant_id": "RANDOM_NODE_SPLIT",
+        "observations": 2,
+        "exception_type": "RandomNodeSplitError",
+        "test_id": "test_node_validator_fires_on_random_node_split_mutant",
+        "command": "python -m pytest tests/doe/test_roles.py tests/doe/test_publication.py tests/doe/test_replacement.py tests/campaigns/test_dogbone_g9_evidence.py -q",
+        "command_result": "117 passed"
+      }
+    },
+    {
+      "id": "G9.commitment-order",
+      "status": "PASS",
+      "measured": {
+        "file_mtime_precedes": true,
+        "git_commit_precedes": true,
+        "reveal_verifies": true
+      },
+      "threshold": {
+        "file_mtime_precedes": true,
+        "git_commit_precedes": true,
+        "reveal_verifies": true
+      },
+      "comparison": "all true",
+      "evidence": {
+        "commitment_path": "artifacts/campaigns/dogbone-v1/CP-ENVELOPE.json",
+        "commitment_first_add_commit": "55b931594a02922a09dcaac12d32c339bbea6b85",
+        "commitment_history_count": 1,
+        "live_evidence_path": "artifacts/campaigns/dogbone-v1/live-commitment-order.json",
+        "live_evidence_first_add_commit": "7d26a9813c743a8e842ef03732ffb37a03eb4902",
+        "live_evidence_history_count": 1,
+        "strict_ancestor": true,
+        "pre_training_snapshot": true,
+        "witnessed_nonlegacy_artifact_count": 0,
+        "reveal_holdout_count": 64,
+        "scheme": "blake2b-256"
+      }
+    },
+    {
+      "id": "G9.replacement",
+      "status": "PASS",
+      "measured": {
+        "failures_injected": 3,
+        "failures_recorded": 3,
+        "deterministic_rule_matches": true
+      },
+      "threshold": {
+        "failures_injected": ">= 1",
+        "failures_recorded": "equals injected",
+        "deterministic_rule_matches": true
+      },
+      "comparison": "all",
+      "evidence": {
+        "rule_id": "role-local-design-order-v1",
+        "production_policy_hash": "d2a65a4306b44450b1bd98c86a1d017117661de3235e930162a238940a4bf1b8",
+        "roles_exercised": [
+          "PILOT",
+          "TRAIN",
+          "DEVELOPMENT"
+        ],
+        "event_count": 3,
+        "dropped_failures": 0,
+        "reserve_ranks": [
+          1,
+          1,
+          1
+        ],
+        "test_id": "test_sealed_campaign_excludes_holdout_and_exercises_each_replacement_role",
+        "command": "python -m pytest tests/campaigns/test_dogbone_g9_evidence.py -q",
+        "command_result": "1 passed"
+      }
+    },
+    {
+      "id": "G9.coverage",
+      "status": "PASS",
+      "measured": 93.59,
+      "threshold": 90.0,
+      "comparison": "gte",
+      "evidence": {
+        "scope": "src/piginot/doe",
+        "branch_coverage": true,
+        "tests_passed": 497,
+        "evidence_head_commit": "d7930a67e49c0b05fb91db74bd46d304ec6df281",
+        "command": "python -m pytest tests/doe tests/test_s9_anti_scope.py tests/campaigns/test_dogbone_g9_evidence.py --cov=src/piginot/doe --cov-branch --cov-report=term --cov-fail-under=90 -q",
+        "command_result": "497 passed; total coverage 93.59%"
+      }
+    }
+  ],
+  "security_review": {
+    "artifact_constructed_from_allowlisted_aggregate_fields": true,
+    "persisted_reveal_verified_fresh_against_checkpoint": true,
+    "private_hex_and_base64_encodings_absent": true,
+    "private_holdout_case_and_group_identifiers_absent": true,
+    "private_coordinate_values_absent": true,
+    "forbidden_reveal_field_names_absent": true,
+    "external_backup_path_absent": true,
+    "status": "PASS"
+  },
+  "limitations": [
+    "The persisted order record witnesses zero non-legacy artifacts because this is the pre-training S9 snapshot. Every future training artifact batch must separately prove CP-ENVELOPE ancestry and earlier file time before use.",
+    "G9.visibility covers the 376 S9 public collocation-eligible cases against the sealed HOLDOUT population. It does not claim an implemented S10 sampler; S10 must enforce the boundary independently.",
+    "The separately access-controlled backup is on the same local storage failure domain and is not an off-site disaster-recovery copy.",
+    "CSPRNG origin is a code-path guarantee against accidental caller-selected secrets, not cryptographic attestation of process integrity.",
+    "Finite production DOE diagnostics and validation probes are evidence over their declared streams, not a proof of continuous-domain coverage.",
+    "This G9 verdict does not alter the status of any earlier gate, including G2."
+  ],
+  "verdict": "PASS",
+  "verdict_reason": "all eight required G9 checks passed, the sealed production DOE met every ratified non-aggregated coverage threshold, the persisted reveal verified against CP-ENVELOPE, and the public gate artifact passed the private-material exclusion scan"
+}
