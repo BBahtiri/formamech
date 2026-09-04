@@ -24,9 +24,13 @@ These files contain no campaign secret, role allocation, or holdout coordinate.
   rule with 32 continuation steps after the first screen exposed
   continuation-sensitive failures.
 - `fem-strain-envelope-qualified.json` is the final uniform 64-step qualification
-  of the same 10%/20% population. It is a proposal input, not owner ratification.
+  of the same 10%/20% population. Its exact policy and evidence hash were later
+  owner-ratified for the first production campaign.
 - `s9-strain-load-proposal-dry-run.json` is the canonical, secret-free replay of the
   load-aware DOE proposal. It is not a production design or commitment.
+- The S10 request materializer builds active public FEM requests from the committed
+  `CP-ENVELOPE.json` and `public-case-manifest.json`; no request-plan artifact is
+  committed yet because its identity also binds the selected execution profile.
 
 Pinned identities:
 
@@ -67,11 +71,12 @@ That final uniform sweep succeeded in all 24 attempts. All 12 paired geometries
 showed right-reaction scaling 5.46% to 5.70% below the linear 2:1 reference; the
 minimum recorded deformation Jacobian was 0.9909092600273233. Median solve time was
 108.960118 s and p95 was 133.426422 s on the recorded host. These results support
-recommending, but do not themselves approve, a 10% to 20% nominal-strain envelope
-with the 64-step solver recipe.
+the separately recorded owner ratification of the 10% to 20% nominal-strain envelope
+with the 64-step solver recipe; the finite sweep is evidence, not self-approval.
 
 The JSON artifacts are generated mechanically from typed contracts and verified by
 `tests/campaigns/test_dogbone_v1_family.py` and
 `tests/campaigns/test_dogbone_fem_pilot.py` plus
 `tests/campaigns/test_dogbone_strain_pilot.py` and
-`tests/campaigns/test_dogbone_campaign_proposal.py`.
+`tests/campaigns/test_dogbone_campaign_proposal.py`. The S10 public request boundary
+is verified by `tests/campaigns/test_dogbone_s10_public_boundary.py`.

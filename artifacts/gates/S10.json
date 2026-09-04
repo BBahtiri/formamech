@@ -1,0 +1,188 @@
+{
+  "schema_version": "1.0",
+  "step": "S10",
+  "gate_id": "G10",
+  "timestamp_utc": "2026-09-04T17:25:58Z",
+  "implementation_commit": "59f0defacea8311a8a1c9710ff3f17a1171d9a79",
+  "base_commit": "9b7b87585f5ba227601d602acc14c437a0972a35",
+  "branch": "codex/s10-datasets",
+  "execution_profile": {
+    "operating_system": "Windows",
+    "python_version": "3.13.11",
+    "test_scope": "local S10 implementation evidence; production FEM not run",
+    "ci_matrix_claimed": false
+  },
+  "campaign": {
+    "name": "dogbone-v1",
+    "campaign_hash": "8f58fe30803e2bd147f863ac000e1e89a19092c8b347df6b4d74f38487d96d46",
+    "public_case_manifest_hash": "ce95c03f5b22308a7aa9bf627966a6b21300a4e7b0272d3affa7dd503af564a9",
+    "compiled_family_hash": "a8143a75e62c614d40f52049cfc88c1cda74d38c9bd488cc3bed4c5678d973a4",
+    "reference_mesh_id": "3bfc1043f5aa9e989469adacb0ee1d0b483825ffabcd5dfac4bf9caca580d82c",
+    "validity_policy_hash": "b3c2df59eed939f1aa14a69d05a6fd2dc57be571ffba33c6355982713cc6931d",
+    "ratified_load_evidence_hash": "2f6cfcb9ed56e072a25ed3b09ade2de9666ade5c7be15fcd33489eb67e4502a0",
+    "load_policy": "nominal-axial-strain-times-half-length-v1",
+    "nominal_axial_strain_range": [0.1, 0.2],
+    "active_public_request_count": 344,
+    "reserve_public_count": 32,
+    "holdout_public_count": 0
+  },
+  "scope": {
+    "claim": "S10 implementation contracts are present and tested; the production dataset is not materialized.",
+    "production_fem_batch_run": false,
+    "private_reveal_used": false,
+    "holdout_excluded_from_public_contracts": true,
+    "reserves_excluded_from_active_request_plan": true,
+    "s11_blocked": true
+  },
+  "implementation_evidence": {
+    "scoped_tests": {
+      "command": "$env:PYTHONPATH='src'; python -m coverage run --branch -m pytest tests/datasets tests/test_s10_anti_scope.py -q",
+      "result": "170 passed",
+      "duration_seconds": 3.90
+    },
+    "coverage": {
+      "command": "python -m coverage report --include='src/piginot/datasets/*' --precision=2",
+      "measured_percent": 85.42,
+      "threshold_percent": 85.0,
+      "status": "PASS"
+    },
+    "full_regression": {
+      "command": "$env:PYTHONPATH='src'; python -m pytest -q",
+      "result": "1536 passed, 2 skipped",
+      "duration_seconds": 538.81
+    },
+    "quality_checks": {
+      "ruff": "PASS",
+      "mypy_strict": "PASS",
+      "dependency_audit": "No known vulnerabilities found",
+      "documentation_strict_build": "PASS",
+      "private_material_anti_scope": "PASS"
+    },
+    "verified_capabilities": [
+      "CP-ENVELOPE and public-manifest-bound FEM request plans",
+      "exact request recipe, complete request content, mesh identity, mesh content and execution-profile binding",
+      "ObjectStore-resolved successful FEM result bytes before snapshot or extraction trust",
+      "sanitized failed FEM visibility without result payload material",
+      "snapshot-bound, plan-bound and store-bound extraction lineage",
+      "deterministic public collocation seeds with byte-identical replay",
+      "collocation mesh content binding and request content binding",
+      "semantic QoI collocation quotas independent of physical measure",
+      "exact-request-bound collocation persistence",
+      "source-recomputed projection and cross-mesh artifacts",
+      "physical-domain stress-integral comparison instead of raw node pairing or generic pullback",
+      "TRAIN-snapshot-bound normalization statistics with HOLDOUT and reserve exclusion"
+    ]
+  },
+  "checks": [
+    {
+      "id": "G10.traceability",
+      "status": "NOT_RUN",
+      "measured": {
+        "production_samples": 0,
+        "fem_result_hash_traces": 0,
+        "sampler_stream_traces": 0,
+        "ambiguous_traces": 0,
+        "cp_manifest_binding_verified_on_production": null,
+        "request_plan_binding_verified_on_production": null,
+        "fem_result_store_resolution_verified_on_production": null
+      },
+      "threshold": {
+        "production_samples": ">= 1",
+        "exactly_one_trace_per_sample": true,
+        "ambiguous_traces": 0,
+        "cp_manifest_binding_verified_on_production": true,
+        "request_plan_binding_verified_on_production": true,
+        "fem_result_store_resolution_verified_on_production": true
+      },
+      "reason": "No production FEM result population or S10 snapshots have been materialized."
+    },
+    {
+      "id": "G10.projection-error",
+      "status": "NOT_RUN",
+      "measured": {
+        "production_projected_fields": 0,
+        "production_error_artifacts": 0,
+        "production_source_verified_fields": 0,
+        "drop_projection_error_mutant_fired": null
+      },
+      "threshold": {
+        "production_projected_fields": ">= 1",
+        "one_error_artifact_per_field": true,
+        "source_verified_fields": "equals projected_fields",
+        "drop_projection_error_mutant_fired": true
+      },
+      "reason": "Projection implementation is fixture-tested, but no production projection population exists."
+    },
+    {
+      "id": "G10.cross-mesh",
+      "status": "NOT_RUN",
+      "measured": {
+        "production_physical_integral_comparisons": 0,
+        "production_source_verified_comparisons": 0,
+        "stress_node_pairing_mutant_fired": null
+      },
+      "threshold": {
+        "production_physical_integral_comparisons": ">= 1",
+        "source_verified_comparisons": "equals physical_integral_comparisons",
+        "stress_node_pairing_mutant_fired": true
+      },
+      "reason": "Cross-mesh implementation permits only physical-domain integrals, but no production comparisons exist."
+    },
+    {
+      "id": "G10.normalization",
+      "status": "NOT_RUN",
+      "measured": {
+        "production_statistics": 0,
+        "non_train_sources": 0,
+        "non_active_sources": 0,
+        "training_snapshot_binding_verified": null,
+        "normalize_on_all_splits_mutant_fired": null
+      },
+      "threshold": {
+        "production_statistics": ">= 1",
+        "non_train_sources": 0,
+        "non_active_sources": 0,
+        "training_snapshot_binding_verified": true,
+        "normalize_on_all_splits_mutant_fired": true
+      },
+      "reason": "Normalization implementation is fixture-tested, but no production TRAIN artifact population exists."
+    },
+    {
+      "id": "G10.failed-visible",
+      "status": "NOT_RUN",
+      "measured": {
+        "production_failed_fem_cases": 0,
+        "represented_failed_fem_cases": 0
+      },
+      "threshold": {
+        "production_failed_fem_cases": ">= 1",
+        "represented_failed_fem_cases": "equals failed_fem_cases"
+      },
+      "reason": "No production FEM batch has run, so failure visibility has not been exercised on production cases."
+    },
+    {
+      "id": "G10.reproducible",
+      "status": "NOT_RUN",
+      "measured": {
+        "production_collocation_replays": 0,
+        "byte_identical_replays": 0,
+        "request_binding_verified": null
+      },
+      "threshold": {
+        "production_collocation_replays": ">= 1",
+        "byte_identical_replays": "equals replays",
+        "request_binding_verified": true
+      },
+      "reason": "Collocation replay is fixture-tested, but no production collocation streams exist."
+    },
+    {
+      "id": "G10.coverage",
+      "status": "PASS",
+      "measured": 85.42,
+      "threshold": 85.0,
+      "comparison": ">="
+    }
+  ],
+  "verdict": "FAIL",
+  "verdict_reason": "G10 remains FAIL because all production dataset checks are NOT_RUN; only implementation coverage currently passes."
+}
