@@ -80,3 +80,33 @@ The JSON artifacts are generated mechanically from typed contracts and verified 
 `tests/campaigns/test_dogbone_strain_pilot.py` and
 `tests/campaigns/test_dogbone_campaign_proposal.py`. The S10 public request boundary
 is verified by `tests/campaigns/test_dogbone_s10_public_boundary.py`.
+
+## Local S10 production execution
+
+`campaigns.dogbone_v1.s10_production` runs only the 344 active public cases. It
+persists each visible outcome atomically, stores every successful canonical FEM
+result in `ObjectStore`, recovers a success written immediately before an
+interruption, and refuses resume after a request-plan, execution-profile, backend,
+or source-revision change. The large local state lives under the ignored
+`.piginot-runs/` directory; only later compact evidence belongs in this tracked
+artifact directory.
+
+Launches must bind this worktree explicitly and pin numerical thread counts to the
+single thread declared by the execution profile. Run `--dry-run` first, then one
+new production attempt as a smoke check, and finally resume without the limit:
+
+```powershell
+$env:PYTHONPATH = "src"
+$env:OMP_NUM_THREADS = "1"
+$env:OPENBLAS_NUM_THREADS = "1"
+$env:MKL_NUM_THREADS = "1"
+$env:NUMEXPR_NUM_THREADS = "1"
+python -m campaigns.dogbone_v1.s10_production --dry-run
+python -m campaigns.dogbone_v1.s10_production --max-new-attempts 1
+python -m campaigns.dogbone_v1.s10_production
+```
+
+The command requires a clean committed worktree. A complete FEM ledger is still
+only input evidence for G10: role snapshots, extraction, projection-error,
+cross-mesh, normalization, failed-case visibility, and collocation replay evidence
+must be materialized and evaluated before G10 can pass.

@@ -4,6 +4,7 @@ __pycache__/
 .coverage
 .coverage.*
 .piginot-private/
+.piginot-runs/
 .mypy_cache/
 .pytest_cache/
 .ruff_cache/
