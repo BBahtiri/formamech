@@ -11,6 +11,7 @@ import subprocess
 import sys
 import uuid
 from collections.abc import Callable, Iterator, Mapping
+from contextlib import contextmanager
 from dataclasses import dataclass, replace
 from enum import StrEnum
 from importlib.metadata import version
@@ -48,6 +49,7 @@ SCHEMA_VERSION = "1.0"
 _LEDGER_NAME = "ledger.json"
 _PLAN_NAME = "request-plan.json"
 _STORE_NAME = "object-store"
+_LOCK_NAME = "run.lock"
 _LEDGER_TYPE = "piginot.campaigns.ProductionFemRunLedger"
 _RECORD_TYPE = "piginot.campaigns.ProductionFemRunRecord"
 _RESULT_TYPE = "piginot.contracts.FemResult"
@@ -275,33 +277,38 @@ def run_dogbone_s10_production(
         else execution_profile
     )
     root = default_s10_run_root() if run_root is None else Path(run_root)
-    object_store = ObjectStore.create(root / _STORE_NAME) if store is None else store
-    solver = ScikitFemBackend(store=object_store) if backend is None else backend
-    checkpoint, manifest = _load_public_sources()
-    requests = build_dogbone_s10_public_requests(execution_profile=profile)
-    request_plan = build_dogbone_s10_request_plan(execution_profile=profile)
-    if (
-        checkpoint.campaign_hash != request_plan.campaign_hash
-        or manifest.content_hash != request_plan.public_case_manifest_hash
-    ):
-        raise ProductionFemRunError(
-            "DogBone public sources do not match the production request plan"
+    with _exclusive_run_lock(root / _LOCK_NAME):
+        object_store = (
+            ObjectStore.create(root / _STORE_NAME) if store is None else store
         )
-    persist_request_plan(request_plan, root / _PLAN_NAME)
-    revision = _git_source_revision() if source_revision is None else source_revision
-    if dry_run:
-        return _new_ledger(request_plan, solver.backend_name, revision)
-    return run_public_fem_requests(
-        request_plan=request_plan,
-        requests={request.request_id: request for request in requests},
-        backend=solver,
-        store=object_store,
-        ledger_path=root / _LEDGER_NAME,
-        source_revision=revision,
-        clock=clock,
-        max_new_attempts=max_new_attempts,
-        on_record=on_record,
-    )
+        solver = ScikitFemBackend(store=object_store) if backend is None else backend
+        checkpoint, manifest = _load_public_sources()
+        requests = build_dogbone_s10_public_requests(execution_profile=profile)
+        request_plan = build_dogbone_s10_request_plan(execution_profile=profile)
+        if (
+            checkpoint.campaign_hash != request_plan.campaign_hash
+            or manifest.content_hash != request_plan.public_case_manifest_hash
+        ):
+            raise ProductionFemRunError(
+                "DogBone public sources do not match the production request plan"
+            )
+        persist_request_plan(request_plan, root / _PLAN_NAME)
+        revision = (
+            _git_source_revision() if source_revision is None else source_revision
+        )
+        if dry_run:
+            return _new_ledger(request_plan, solver.backend_name, revision)
+        return run_public_fem_requests(
+            request_plan=request_plan,
+            requests={request.request_id: request for request in requests},
+            backend=solver,
+            store=object_store,
+            ledger_path=root / _LEDGER_NAME,
+            source_revision=revision,
+            clock=clock,
+            max_new_attempts=max_new_attempts,
+            on_record=on_record,
+        )
 
 
 def run_public_fem_requests(
@@ -920,6 +927,46 @@ def persist_request_plan(plan: PublicFemRequestPlan, path: Path) -> None:
             raise ProductionFemRunError("refusing to replace a different request plan")
         return
     _atomic_write(target, plan.to_bytes())
+
+
+@contextmanager
+def _exclusive_run_lock(path: Path) -> Iterator[None]:
+    """Hold one non-blocking process lock for a campaign run root."""
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a+b") as handle:
+        handle.seek(0, os.SEEK_END)
+        if handle.tell() == 0:
+            handle.write(b"\0")
+            handle.flush()
+        handle.seek(0)
+        try:
+            if os.name == "nt":
+                import msvcrt
+
+                msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+            else:
+                import fcntl
+
+                fcntl.flock(  # type: ignore[attr-defined]
+                    handle.fileno(),
+                    fcntl.LOCK_EX | fcntl.LOCK_NB,  # type: ignore[attr-defined]
+                )
+        except OSError as exc:
+            raise ProductionFemRunError(
+                "another process already owns this production run root"
+            ) from exc
+        try:
+            yield
+        finally:
+            handle.seek(0)
+            if os.name == "nt":
+                msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+            else:
+                fcntl.flock(  # type: ignore[attr-defined]
+                    handle.fileno(),
+                    fcntl.LOCK_UN,  # type: ignore[attr-defined]
+                )
 
 
 def _atomic_write(path: Path, payload: bytes) -> None:

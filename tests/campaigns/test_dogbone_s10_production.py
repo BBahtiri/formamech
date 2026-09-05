@@ -698,6 +698,18 @@ def test_campaign_wrapper_submits_and_checkpoints_a_bounded_smoke_attempt(
     assert ledger.completed_case_count == 1
 
 
+def test_campaign_run_root_has_one_process_owner(tmp_path: Path) -> None:
+    lock_path = tmp_path / "run.lock"
+
+    with production._exclusive_run_lock(lock_path):
+        with pytest.raises(ProductionFemRunError, match="another process"):
+            with production._exclusive_run_lock(lock_path):
+                pytest.fail("the second owner must never enter the run")
+
+    with production._exclusive_run_lock(lock_path):
+        assert lock_path.exists()
+
+
 def test_runtime_guards_reject_wrong_checkout_threads_and_dirty_source(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
