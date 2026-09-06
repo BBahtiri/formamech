@@ -18,6 +18,7 @@ from campaigns.dogbone_v1.s10_production import (
     ProductionFemRunLedger,
     ProductionFemRunRecord,
     load_production_attempts,
+    persist_execution_profile,
     persist_request_plan,
     run_dogbone_s10_production,
     run_public_fem_requests,
@@ -536,6 +537,19 @@ def test_persist_request_plan_is_create_once_and_exact(tmp_path: Path) -> None:
         persist_request_plan(plan, target)
 
 
+def test_persist_execution_profile_is_create_once_and_exact(tmp_path: Path) -> None:
+    profile = _profile()
+    target = tmp_path / "execution-profile.json"
+
+    persist_execution_profile(profile, target)
+    persist_execution_profile(profile, target)
+
+    assert target.read_bytes() == canonical_json_bytes(profile)
+    target.write_bytes(canonical_json_bytes(production.default_s10_execution_profile()))
+    with pytest.raises(ProductionFemRunError, match="different execution profile"):
+        persist_execution_profile(profile, target)
+
+
 def test_atomic_production_write_fsyncs_parent_directory_when_supported(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -640,6 +654,9 @@ def test_campaign_wrapper_materializes_the_exact_plan_before_dry_run(
 
     assert ledger.completed_case_count == 0
     assert (tmp_path / "run" / "request-plan.json").read_bytes() == plan.to_bytes()
+    assert (tmp_path / "run" / "execution-profile.json").read_bytes() == (
+        canonical_json_bytes(_profile())
+    )
     assert backend.calls == []
 
 

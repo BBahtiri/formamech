@@ -34,6 +34,8 @@ def _passing_measurements(**overrides: object) -> S10GateMeasurements:
         "normalize_on_all_splits_mutant_fired": True,
         "failed_fem_case_count": 2,
         "represented_failed_fem_case_count": 2,
+        "failure_visibility_canary_count": 0,
+        "represented_failure_visibility_canary_count": 0,
         "collocation_replay_count": 3,
         "byte_identical_replay_count": 3,
         "collocation_request_binding_verified": True,
@@ -145,7 +147,12 @@ def test_all_seven_required_checks_pass_with_complete_evidence() -> None:
             GateStatus.FAIL,
         ),
         (
-            {"failed_fem_case_count": 0, "represented_failed_fem_case_count": 0},
+            {
+                "failed_fem_case_count": 0,
+                "represented_failed_fem_case_count": 0,
+                "failure_visibility_canary_count": 0,
+                "represented_failure_visibility_canary_count": 0,
+            },
             "G10.failed-visible",
             GateStatus.NOT_RUN,
         ),
@@ -181,6 +188,65 @@ def test_coverage_threshold_is_inclusive() -> None:
     assert evaluation.by_id("G10.coverage").status is GateStatus.PASS
 
 
+def test_failed_visible_passes_zero_failure_run_with_represented_canary() -> None:
+    evaluation = evaluate_s10_gate(
+        _passing_measurements(
+            failed_fem_case_count=0,
+            represented_failed_fem_case_count=0,
+            failure_visibility_canary_count=1,
+            represented_failure_visibility_canary_count=1,
+        )
+    )
+
+    check = evaluation.by_id("G10.failed-visible")
+    assert check.status is GateStatus.PASS
+    assert check.measured == {
+        "failed_fem_cases": 0,
+        "represented_failed_fem_cases": 0,
+        "failure_visibility_canaries": 1,
+        "represented_failure_visibility_canaries": 1,
+    }
+
+
+def test_failed_visible_fails_zero_failure_run_when_canary_is_not_represented() -> None:
+    evaluation = evaluate_s10_gate(
+        _passing_measurements(
+            failed_fem_case_count=0,
+            represented_failed_fem_case_count=0,
+            failure_visibility_canary_count=1,
+            represented_failure_visibility_canary_count=0,
+        )
+    )
+
+    assert evaluation.by_id("G10.failed-visible").status is GateStatus.FAIL
+
+
+def test_failed_visible_fails_natural_failure_count_mismatch_despite_canary() -> None:
+    evaluation = evaluate_s10_gate(
+        _passing_measurements(
+            failed_fem_case_count=2,
+            represented_failed_fem_case_count=1,
+            failure_visibility_canary_count=1,
+            represented_failure_visibility_canary_count=1,
+        )
+    )
+
+    assert evaluation.by_id("G10.failed-visible").status is GateStatus.FAIL
+
+
+def test_failed_visible_fails_any_supplied_canary_mismatch() -> None:
+    evaluation = evaluate_s10_gate(
+        _passing_measurements(
+            failed_fem_case_count=2,
+            represented_failed_fem_case_count=2,
+            failure_visibility_canary_count=1,
+            represented_failure_visibility_canary_count=0,
+        )
+    )
+
+    assert evaluation.by_id("G10.failed-visible").status is GateStatus.FAIL
+
+
 def test_gate_requires_normalization_snapshot_and_collocation_request_bindings() -> (
     None
 ):
@@ -200,6 +266,11 @@ def test_gate_requires_normalization_snapshot_and_collocation_request_bindings()
     (
         ({"sample_count": -1}, "non-negative integer"),
         ({"sample_count": True}, "non-negative integer"),
+        ({"failure_visibility_canary_count": -1}, "non-negative integer"),
+        (
+            {"represented_failure_visibility_canary_count": True},
+            "non-negative integer",
+        ),
         ({"code_coverage_percent": float("nan")}, "finite number"),
         ({"code_coverage_percent": 100.01}, r"\[0, 100\]"),
         ({"cp_manifest_binding_verified": "yes"}, "boolean or None"),

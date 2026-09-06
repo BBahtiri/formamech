@@ -68,6 +68,8 @@ class S10GateMeasurements:
     normalize_on_all_splits_mutant_fired: bool | None
     failed_fem_case_count: int
     represented_failed_fem_case_count: int
+    failure_visibility_canary_count: int
+    represented_failure_visibility_canary_count: int
     collocation_replay_count: int
     byte_identical_replay_count: int
     collocation_request_binding_verified: bool | None
@@ -89,6 +91,8 @@ class S10GateMeasurements:
             "normalization_non_active_source_count",
             "failed_fem_case_count",
             "represented_failed_fem_case_count",
+            "failure_visibility_canary_count",
+            "represented_failure_visibility_canary_count",
             "collocation_replay_count",
             "byte_identical_replay_count",
         )
@@ -367,31 +371,72 @@ def _failed_visible_check(measurements: S10GateMeasurements) -> S10GateCheck:
         "represented_failed_fem_cases": (
             measurements.represented_failed_fem_case_count
         ),
+        "failure_visibility_canaries": (measurements.failure_visibility_canary_count),
+        "represented_failure_visibility_canaries": (
+            measurements.represented_failure_visibility_canary_count
+        ),
     }
     threshold = {
-        "failed_fem_cases": ">= 1",
         "represented_failed_fem_cases": "equals failed_fem_cases",
+        "failure_visibility_canaries_when_no_failures": ">= 1",
+        "represented_failure_visibility_canaries": (
+            "equals failure_visibility_canaries"
+        ),
     }
-    if measurements.failed_fem_case_count == 0:
+    natural_failures_match = (
+        measurements.represented_failed_fem_case_count
+        == measurements.failed_fem_case_count
+    )
+    if not natural_failures_match:
+        return S10GateCheck(
+            "G10.failed-visible",
+            GateStatus.FAIL,
+            measured,
+            threshold,
+            "all",
+            "represented natural failures do not equal actual natural failures",
+        )
+    canaries_match = (
+        measurements.represented_failure_visibility_canary_count
+        == measurements.failure_visibility_canary_count
+    )
+    if not canaries_match:
+        return S10GateCheck(
+            "G10.failed-visible",
+            GateStatus.FAIL,
+            measured,
+            threshold,
+            "all",
+            "controlled failure-visibility canary failed",
+        )
+    if measurements.failed_fem_case_count > 0:
+        return S10GateCheck(
+            "G10.failed-visible",
+            GateStatus.PASS,
+            measured,
+            threshold,
+            "all",
+        )
+    if (
+        measurements.failure_visibility_canary_count == 0
+        and measurements.represented_failure_visibility_canary_count == 0
+    ):
         return S10GateCheck(
             "G10.failed-visible",
             GateStatus.NOT_RUN,
             measured,
             threshold,
             "all",
-            "no failed FEM case exercised manifest visibility",
+            "no natural failure or controlled canary exercised manifest visibility",
         )
+    has_required_canary = measurements.failure_visibility_canary_count > 0
     return S10GateCheck(
         "G10.failed-visible",
-        (
-            GateStatus.PASS
-            if measurements.represented_failed_fem_case_count
-            == measurements.failed_fem_case_count
-            else GateStatus.FAIL
-        ),
+        GateStatus.PASS if has_required_canary else GateStatus.FAIL,
         measured,
         threshold,
-        "eq",
+        "all",
+        None if has_required_canary else "controlled failure-visibility canary failed",
     )
 
 

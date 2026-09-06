@@ -48,6 +48,7 @@ RUN_ID = "dogbone-s10-public-production-v1"
 SCHEMA_VERSION = "1.0"
 _LEDGER_NAME = "ledger.json"
 _PLAN_NAME = "request-plan.json"
+_PROFILE_NAME = "execution-profile.json"
 _STORE_NAME = "object-store"
 _LOCK_NAME = "run.lock"
 _LEDGER_TYPE = "piginot.campaigns.ProductionFemRunLedger"
@@ -293,6 +294,7 @@ def run_dogbone_s10_production(
                 "DogBone public sources do not match the production request plan"
             )
         persist_request_plan(request_plan, root / _PLAN_NAME)
+        persist_execution_profile(profile, root / _PROFILE_NAME)
         revision = (
             _git_source_revision() if source_revision is None else source_revision
         )
@@ -929,6 +931,22 @@ def persist_request_plan(plan: PublicFemRequestPlan, path: Path) -> None:
     _atomic_write(target, plan.to_bytes())
 
 
+def persist_execution_profile(profile: ExecutionProfile, path: Path) -> None:
+    """Create the exact numerical execution profile once and refuse drift."""
+
+    if type(profile) is not ExecutionProfile:
+        raise ProductionFemRunError("profile must be an exact ExecutionProfile")
+    payload = canonical_json_bytes(profile)
+    target = Path(path)
+    if target.exists():
+        if target.is_symlink() or target.read_bytes() != payload:
+            raise ProductionFemRunError(
+                "refusing to replace a different execution profile"
+            )
+        return
+    _atomic_write(target, payload)
+
+
 @contextmanager
 def _exclusive_run_lock(path: Path) -> Iterator[None]:
     """Hold one non-blocking process lock for a campaign run root."""
@@ -1268,6 +1286,7 @@ __all__ = (
     "default_s10_run_root",
     "load_s10_production_attempts",
     "load_production_attempts",
+    "persist_execution_profile",
     "persist_request_plan",
     "run_dogbone_s10_production",
     "run_public_fem_requests",
