@@ -1,1 +1,1 @@
-{"artifacts":[],"commitment_mtime_ns":"1","commitment_path":"holdout.json","schema":"piginot.s9.live-commitment-order-v1"}
+{"artifacts":[{"mtime_ns":"2","path":"train/model.pt","role":"TRAIN"}],"commitment_mtime_ns":"1","commitment_path":"holdout.json","schema":"piginot.s9.live-commitment-order-v1"}
