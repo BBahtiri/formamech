@@ -87,6 +87,7 @@ def test_s11_gate_payload_preserves_anti_scope_and_contingency_boundaries() -> N
         "P": {"shape": "(batch, query_points, 2, 2)"},
     }
     assert upstream["repository"] == "https://github.com/BBahtiri/PI-GINOT-DogBone"
+    assert upstream["revision"] == "9f6794141beca9d3e66433465c3b07039a7e41d2"
 
 
 def test_s11_gate_writer_is_canonical_and_refuses_divergent_rewrites(

@@ -11,6 +11,10 @@ from typing import Any, cast
 
 import rfc8785
 
+from campaigns.dogbone_v1.family import (
+    REFERENCE_REPOSITORY_COMMIT,
+    REFERENCE_REPOSITORY_URL,
+)
 from campaigns.dogbone_v1.s11_evidence import (
     DogboneS11Evidence,
     evidence_payload,
@@ -18,7 +22,6 @@ from campaigns.dogbone_v1.s11_evidence import (
 )
 
 _REVISION_PATTERN = re.compile(r"[0-9a-f]{40}")
-_UPSTREAM_REPOSITORY = "https://github.com/BBahtiri/PI-GINOT-DogBone"
 _UPSTREAM_MODEL_FILES = (
     "models/pi_ginot.py",
     "models/geometry_encoder.py",
@@ -63,7 +66,8 @@ def s11_gate_payload(
         "branch": branch,
         "implementation_source_revision": implementation_source_revision,
         "upstream_reference": {
-            "repository": _UPSTREAM_REPOSITORY,
+            "repository": REFERENCE_REPOSITORY_URL,
+            "revision": REFERENCE_REPOSITORY_COMMIT,
             "files": list(_UPSTREAM_MODEL_FILES),
             "adaptation": (
                 "Contract-hardened S11 adaptation of the DogBone PI-GINOT "
