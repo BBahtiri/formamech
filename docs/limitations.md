@@ -124,6 +124,18 @@ participate in the projection. They are not continuum error bounds. S10 cross-me
 comparison deliberately uses physical-domain integrals and does not treat a generic
 RBF or FFD S6 morph as a verified inverse pullback.
 
+S11 fixes a contract-hardened PI-GINOT architecture but does not train it. Its G11
+evidence uses the ratified DogBone reference mesh, one normalized parameter vector,
+100 random boundary permutations and one 320-versus-480 resampling comparison.
+Those finite checks establish the named structural invariants, not full-envelope
+robustness or displacement, stress and peak-stress accuracy. The independent
+`P_predicted` head is the sole served-stress path; its constitutive, angular and
+traction-free consistency remains an S12 responsibility. Hard distance lifting is
+unavailable without separate full-range refinement evidence. The safetensors loader
+rejects pickle and validates metadata, schema and exact byte layout before
+materialization, but it does not authenticate learned tensor values. ADR 0001's
+mandatory architecture iteration remains between S11 and S12, so S12 has not begun.
+
 The S10 production run recorded zero natural FEM failures. Failed-case visibility is
 therefore exercised by one explicitly non-production canary through the same role
 snapshot path; that proves the path represents the controlled failure but is not an

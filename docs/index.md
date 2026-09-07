@@ -10,8 +10,11 @@ displacement, independent FEM verification, preregistered DOE, evidence-role,
 leakage, replacement, and holdout-commitment contracts, and
 [fail-closed S10 dataset contracts](adr/0011-s10-dataset-trust-boundaries.md) for
 public request plans, snapshots, extraction, collocation, projection and
-normalization. The first public production DogBone dataset is now materialized for
-344 successful FEM cases and 88,064 deterministic collocation points. All seven G10
-checks pass, so S11 may begin from that exact committed dataset report.
+normalization, and the
+[fixed S11 PI-GINOT operator architecture](adr/0012-s11-operator-architecture.md).
+The first public production DogBone dataset contains 344 successful FEM cases and
+88,064 deterministic collocation points. All nine structural G11 checks pass. No
+model has been trained, and ADR 0001's mandatory architecture iteration must run
+before S12 begins.
 
 Read the [limitations](limitations.md) before relying on future numerical results.
