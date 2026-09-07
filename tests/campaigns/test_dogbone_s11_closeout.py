@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any, cast
 
 import pytest
 import rfc8785
@@ -32,7 +33,7 @@ def _payload() -> dict[str, object]:
 def _measurements(payload: dict[str, object]) -> S11GateMeasurements:
     measurements = payload["measurements"]
     assert isinstance(measurements, dict)
-    return S11GateMeasurements(**measurements)  # type: ignore[arg-type]
+    return S11GateMeasurements(**measurements)
 
 
 def test_s11_gate_payload_reduces_all_nine_checks_to_pass() -> None:
@@ -97,7 +98,7 @@ def test_s11_gate_writer_is_canonical_and_refuses_divergent_rewrites(
     write_s11_gate_artifact(payload, target)
     write_s11_gate_artifact(payload, target)
 
-    assert target.read_bytes() == rfc8785.dumps(payload)
+    assert target.read_bytes() == rfc8785.dumps(cast(Any, payload))
     changed = dict(payload)
     changed["verdict"] = "FAIL"
     with pytest.raises(ValueError, match="refusing to replace"):

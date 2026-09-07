@@ -115,8 +115,8 @@ def s11_gate_payload(
             "scoped_coverage_percent": measurements["code_coverage_percent"],
             "scoped_coverage_threshold_percent": 80.0,
             "safe_loader": (
-                "Only .safetensors files are accepted; header key, shape, dtype, "
-                "architecture_id, and module_digest are checked before tensor "
+                "Only .safetensors files are accepted; header metadata, key, "
+                "shape, dtype, and exact byte layout are checked before tensor "
                 "materialization; pickle formats are rejected before deserialization."
             ),
         },
@@ -125,6 +125,7 @@ def s11_gate_payload(
         "verdict_reason": "all nine required G11 checks passed",
         "limitations": [
             "S11 proves architecture invariants only; no model training or accuracy is claimed.",
+            "The structural evidence uses the ratified reference mesh and one normalized parameter probe; it is not a full-envelope robustness claim.",
             "Soft Dirichlet enforcement is the only default path. Hard lifting remains unavailable without separate full-range verification evidence.",
             "The S1 peak-stress underprediction contingency is not resolved by S11 and must carry into S12 objective and traction-free checks.",
         ],
@@ -207,9 +208,10 @@ def main(argv: tuple[str, ...] | None = None) -> int:
         evidence,
         implementation_source_revision=_clean_source_revision(),
         branch=_current_branch(),
-        timestamp_utc=datetime.now(UTC).replace(microsecond=0).isoformat().replace(
-            "+00:00", "Z"
-        ),
+        timestamp_utc=datetime.now(UTC)
+        .replace(microsecond=0)
+        .isoformat()
+        .replace("+00:00", "Z"),
         focused_test_result=args.focused_test_result,
     )
     write_s11_gate_artifact(payload, args.output)

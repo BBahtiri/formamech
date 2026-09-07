@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from collections.abc import Mapping
 from dataclasses import dataclass
+from math import prod
 from pathlib import Path
 
 import torch
@@ -29,6 +30,18 @@ _SAFETENSORS_DTYPES: dict[torch.dtype, str] = {
     torch.bfloat16: "BF16",
     torch.float32: "F32",
     torch.float64: "F64",
+}
+_SAFETENSORS_DTYPE_BYTES: dict[torch.dtype, int] = {
+    torch.bool: 1,
+    torch.uint8: 1,
+    torch.int8: 1,
+    torch.int16: 2,
+    torch.int32: 4,
+    torch.int64: 8,
+    torch.float16: 2,
+    torch.bfloat16: 2,
+    torch.float32: 4,
+    torch.float64: 8,
 }
 
 
@@ -146,8 +159,12 @@ def _preflight_header(
             "safetensors keys do not match the module schema; "
             f"missing={missing}, unexpected={unexpected}"
         )
-    for name, spec in schema.items():
+    ranges = [
         _validate_tensor_header(name, tensor_headers[name], spec)
+        for name, spec in schema.items()
+    ]
+    data_size = file_size - _HEADER_PREFIX_BYTES - header_size
+    _validate_data_layout(ranges, data_size)
     return header
 
 
@@ -179,7 +196,9 @@ def _validate_metadata(
             raise ValueError(f"safetensors {name} does not match the module")
 
 
-def _validate_tensor_header(name: str, value: object, spec: TensorSpec) -> None:
+def _validate_tensor_header(
+    name: str, value: object, spec: TensorSpec
+) -> tuple[str, int, int]:
     if type(value) is not dict:
         raise ValueError(f"{name} tensor header must be a JSON object")
     dtype = value.get("dtype")
@@ -207,6 +226,36 @@ def _validate_tensor_header(name: str, value: object, spec: TensorSpec) -> None:
         or offsets[0] > offsets[1]
     ):
         raise ValueError(f"{name} has invalid data_offsets")
+    start, end = offsets
+    expected_bytes = prod(spec.shape) * _SAFETENSORS_DTYPE_BYTES[spec.dtype]
+    if end - start != expected_bytes:
+        raise ValueError(
+            f"{name} data_offsets byte length is {end - start}; "
+            f"expected {expected_bytes}"
+        )
+    return name, start, end
+
+
+def _validate_data_layout(ranges: list[tuple[str, int, int]], data_size: int) -> None:
+    for name, _start, end in ranges:
+        if end > data_size:
+            raise ValueError(
+                f"{name} data_offsets exceed the {data_size}-byte data buffer"
+            )
+
+    cursor = 0
+    for name, start, end in sorted(ranges, key=lambda item: (item[1], item[2])):
+        if start == end:
+            continue
+        if start < cursor:
+            raise ValueError(f"{name} data_offsets overlap another tensor")
+        if start > cursor:
+            raise ValueError(f"{name} data_offsets leave a gap in the data buffer")
+        cursor = end
+    if cursor != data_size:
+        raise ValueError(
+            "safetensors data_offsets do not cover the complete data buffer"
+        )
 
 
 def _validate_materialized(

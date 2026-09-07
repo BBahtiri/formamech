@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import replace
+from math import prod
 from pathlib import Path
 from typing import Any
 
@@ -117,6 +118,18 @@ def test_soft_mode_rejects_misaligned_dirichlet_data() -> None:
 def test_dirichlet_and_output_contracts_reject_invalid_tensors() -> None:
     with pytest.raises(ValueError, match="boolean"):
         DirichletData(torch.ones(1, 2, 2), torch.zeros(1, 2, 2), torch.zeros(1, 2, 2))
+    with pytest.raises(ValueError, match="dense"):
+        DirichletData(
+            torch.ones(1, 2, 2, dtype=torch.bool).to_sparse(),
+            torch.zeros(1, 2, 2),
+            torch.zeros(1, 2, 2),
+        )
+    with pytest.raises(ValueError, match="device"):
+        DirichletData(
+            torch.ones(1, 2, 2, dtype=torch.bool, device="meta"),
+            torch.zeros(1, 2, 2),
+            torch.zeros(1, 2, 2),
+        )
     with pytest.raises(ValueError, match="same shape"):
         DirichletData(
             torch.ones(1, 1, 2, dtype=torch.bool),
@@ -167,6 +180,8 @@ def test_input_validation_checks_shape_dtype_device_and_coordinate_span() -> Non
         model(**{**inputs, "parameters": torch.zeros(2, 3)})
     with pytest.raises(ValueError, match="boolean"):
         model(**inputs, boundary_mask=torch.ones(1, 4))
+    with pytest.raises(ValueError, match="dense"):
+        model(**inputs, boundary_mask=torch.ones(1, 4, dtype=torch.bool).to_sparse())
     with pytest.raises(ValueError, match="align"):
         model(**inputs, boundary_weights=torch.ones(1, 3))
 
@@ -183,9 +198,9 @@ def test_dirichlet_residual_refuses_empty_component_selection() -> None:
         model.dirichlet_residual(output, data)
 
 
-def _write_header(path: Path, header: object) -> None:
+def _write_header(path: Path, header: object, data: bytes = b"") -> None:
     encoded = json.dumps(header, separators=(",", ":")).encode("utf-8")
-    path.write_bytes(len(encoded).to_bytes(8, "little") + encoded)
+    path.write_bytes(len(encoded).to_bytes(8, "little") + encoded + data)
 
 
 def _valid_header(model: PiGinotOperator) -> dict[str, Any]:
@@ -203,6 +218,18 @@ def _valid_header(model: PiGinotOperator) -> dict[str, Any]:
             "data_offsets": [0, 0],
         }
     return header
+
+
+def _packed_header(model: PiGinotOperator) -> tuple[dict[str, Any], int]:
+    header = _valid_header(model)
+    cursor = 0
+    for name, spec in state_dict_schema(model).items():
+        byte_length = (
+            prod(spec.shape) * torch.empty((), dtype=spec.dtype).element_size()
+        )
+        header[name]["data_offsets"] = [cursor, cursor + byte_length]
+        cursor += byte_length
+    return header, cursor
 
 
 @pytest.mark.parametrize(
@@ -273,6 +300,73 @@ def test_loader_rejects_duplicate_header_keys_before_materialization(
     )
 
     with pytest.raises(ValueError, match="duplicate"):
+        load_operator_state_dict(path, model=model)
+
+
+def test_loader_rejects_inconsistent_byte_layout_before_materialization(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    model = _model()
+    path = tmp_path / "invalid-layout.safetensors"
+    _write_header(path, _valid_header(model))
+    import safetensors.torch
+
+    monkeypatch.setattr(
+        safetensors.torch,
+        "load_file",
+        lambda *_args, **_kwargs: pytest.fail("tensor data was materialized"),
+    )
+
+    with pytest.raises(ValueError, match="byte length"):
+        load_operator_state_dict(path, model=model)
+
+
+@pytest.mark.parametrize(
+    ("mutation", "message"),
+    (
+        ("gap", "gap"),
+        ("overlap", "overlap"),
+        ("out-of-bounds", "exceed"),
+        ("trailing-data", "complete"),
+    ),
+)
+def test_loader_rejects_invalid_data_ranges_before_materialization(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    mutation: str,
+    message: str,
+) -> None:
+    model = _model()
+    header, data_size = _packed_header(model)
+    payload_size = data_size
+    if mutation == "gap":
+        for name in state_dict_schema(model):
+            start, end = header[name]["data_offsets"]
+            header[name]["data_offsets"] = [start + 1, end + 1]
+        payload_size += 1
+    elif mutation == "overlap":
+        nonempty = [
+            name
+            for name in state_dict_schema(model)
+            if header[name]["data_offsets"][0] < header[name]["data_offsets"][1]
+        ]
+        start, end = header[nonempty[1]]["data_offsets"]
+        header[nonempty[1]]["data_offsets"] = [start - 1, end - 1]
+    elif mutation == "out-of-bounds":
+        payload_size -= 1
+    else:
+        payload_size += 1
+    path = tmp_path / f"{mutation}.safetensors"
+    _write_header(path, header, bytes(payload_size))
+    import safetensors.torch
+
+    monkeypatch.setattr(
+        safetensors.torch,
+        "load_file",
+        lambda *_args, **_kwargs: pytest.fail("tensor data was materialized"),
+    )
+
+    with pytest.raises(ValueError, match=message):
         load_operator_state_dict(path, model=model)
 
 

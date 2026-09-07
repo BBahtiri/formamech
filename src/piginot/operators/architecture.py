@@ -129,10 +129,14 @@ class DirichletData:
             raise TypeError("component_mask must be a torch.Tensor")
         if self.component_mask.dtype is not torch.bool:
             raise ValueError("component_mask must be boolean")
+        if self.component_mask.layout is not torch.strided:
+            raise ValueError("component_mask must be dense and strided")
         _validate_field(self.prescribed_u, "prescribed_u", trailing=2)
         _validate_field(self.approximate_distance, "approximate_distance", trailing=2)
         if self.component_mask.shape != self.prescribed_u.shape:
             raise ValueError("component_mask and prescribed_u must have the same shape")
+        if self.component_mask.device != self.prescribed_u.device:
+            raise ValueError("component_mask and prescribed_u must share a device")
         _require_same_tensor_context(
             self.prescribed_u,
             self.approximate_distance,
@@ -621,6 +625,8 @@ def _boundary_mask(
         raise TypeError("boundary_mask must be a torch.Tensor")
     if value.dtype is not torch.bool:
         raise ValueError("boundary_mask must be boolean")
+    if value.layout is not torch.strided:
+        raise ValueError("boundary_mask must be dense and strided")
     if value.shape != boundary_xy.shape[:2]:
         raise ValueError("boundary_mask must have shape (batch, boundary_points)")
     if value.device != boundary_xy.device:
