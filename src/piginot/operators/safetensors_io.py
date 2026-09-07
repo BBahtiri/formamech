@@ -120,9 +120,17 @@ def _preflight_header(
         raw_header = stream.read(header_size)
     try:
         decoded = raw_header.decode("utf-8")
-        header = json.loads(decoded, parse_constant=_reject_json_constant)
-    except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
-        raise ValueError("invalid safetensors header JSON") from exc
+        header = json.loads(
+            decoded,
+            object_pairs_hook=_reject_duplicate_json_keys,
+            parse_constant=_reject_json_constant,
+        )
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError(f"invalid safetensors header JSON: {exc}") from exc
+    except ValueError as exc:
+        if "duplicate safetensors header key" in str(exc):
+            raise
+        raise ValueError(f"invalid safetensors header JSON: {exc}") from exc
     if type(header) is not dict:
         raise ValueError("safetensors header must be a JSON object")
     _validate_metadata(header.get("__metadata__"), expected_metadata)
@@ -145,6 +153,15 @@ def _preflight_header(
 
 def _reject_json_constant(value: str) -> object:
     raise ValueError(f"non-finite JSON constant is forbidden: {value}")
+
+
+def _reject_duplicate_json_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate safetensors header key: {key}")
+        result[key] = value
+    return result
 
 
 def _validate_metadata(

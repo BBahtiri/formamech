@@ -256,6 +256,26 @@ def test_loader_rejects_header_contract_mutations(
         load_operator_state_dict(path, model=model)
 
 
+def test_loader_rejects_duplicate_header_keys_before_materialization(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    model = _model()
+    header = json.dumps(_valid_header(model), separators=(",", ":"))
+    duplicated = b'{"__metadata__":{},' + header[1:].encode("utf-8")
+    path = tmp_path / "duplicate.safetensors"
+    path.write_bytes(len(duplicated).to_bytes(8, "little") + duplicated)
+    import safetensors.torch
+
+    monkeypatch.setattr(
+        safetensors.torch,
+        "load_file",
+        lambda *_args, **_kwargs: pytest.fail("tensor data was materialized"),
+    )
+
+    with pytest.raises(ValueError, match="duplicate"):
+        load_operator_state_dict(path, model=model)
+
+
 def test_loader_rechecks_materialized_tensor_schema(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
