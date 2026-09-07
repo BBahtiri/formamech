@@ -89,18 +89,19 @@ Its 16-step screen
 recorded 21/24 successes, its 32-step follow-up recorded 23/24, and its final uniform
 64-step qualification recorded 24/24. Those finite sentinels support the ratified
 10%–20% envelope with the 64-step recipe; they are not a domain-wide solvability
-proof. G9 is PASS, but its live order record deliberately witnesses zero downstream
-artifacts at the pre-training boundary. S10 now implements fail-closed public request
+proof. G9 is PASS, and its live order record deliberately witnesses zero downstream
+artifacts at the pre-training boundary. S10 implements fail-closed public request
 plans, role snapshots, store-verified FEM extraction, deterministic replayable
 collocation, sample-scoped projection error artifacts, physical-domain cross-mesh
-stress-integral comparison, and TRAIN-only normalization contracts. Those are
-implementation contracts; normalization statistics also retain the exact TRAIN
+stress-integral comparison, and TRAIN-only normalization contracts. The first
+production dataset is now materialized: 344 successful FEM cases, 88,064
+collocation points, 344 projected fields, 343 physical-integral comparisons and
+256 TRAIN-normalized samples. Normalization statistics retain the exact TRAIN
 snapshot identity and require every input record to resolve to its successful FEM
-result. They are not a materialized production dataset. G10 remains FAIL
-until the active public FEM result population and derived S10 artifacts are actually
-produced and recorded, so S11 must not begin. Every later artifact batch must prove
-CP-ENVELOPE ancestry and live file ordering. The absence of family-specific words and
-branches in `src/`
+result. G10 is PASS and S11 may begin from the exact committed report, but no S11
+training or accuracy evidence exists yet. Every later artifact batch must prove
+CP-ENVELOPE ancestry and live file ordering. The absence of family-specific words
+and branches in `src/`
 addresses only `G17.fixture-names`; `G17.non-dogbone` remains `NOT_RUN` because the
 circular-transition provider currently has one campaign consumer and no
 distinct-topology example has reached a verified bundle through the same API.
@@ -123,9 +124,17 @@ participate in the projection. They are not continuum error bounds. S10 cross-me
 comparison deliberately uses physical-domain integrals and does not treat a generic
 RBF or FFD S6 morph as a verified inverse pullback.
 
+The S10 production run recorded zero natural FEM failures. Failed-case visibility is
+therefore exercised by one explicitly non-production canary through the same role
+snapshot path; that proves the path represents the controlled failure but is not an
+observed production failure. The execution-profile file was reconstructed after the
+FEM run from its unique full-hash preimage and persisted before S10 closeout. Its hash
+matches the request plan, ledger and report, but the file was not present during the
+original solves.
+
 The public commitment proves only that a later reveal matches the committed
 coordinates. It cannot prove that the local holder never saw the
 ignored private reveal. Git also does not preserve historical file mtimes, so live
 ordering must be captured and committed with each artifact batch, while Git first-add
-ancestry is verified separately. The project does not yet implement a materialized
-production dataset, neural-operator training, certification, or inference.
+ancestry is verified separately. The project does not yet implement neural-operator
+training, certification, or inference.

@@ -1,6 +1,8 @@
 # DogBone v1 public family artifacts
 
-These files contain no campaign secret, role allocation, or holdout coordinate.
+These files contain no campaign secret, private role-allocation preimage, or holdout
+coordinate. Public PILOT, TRAIN and DEVELOPMENT labels are intentionally present in
+the S10 closeout report.
 
 - `compiled-family.json` is the canonical JSON preimage returned by
   `campaigns.dogbone_v1.family.compiled_family()`. Its runtime reference mesh is
@@ -29,8 +31,14 @@ These files contain no campaign secret, role allocation, or holdout coordinate.
 - `s9-strain-load-proposal-dry-run.json` is the canonical, secret-free replay of the
   load-aware DOE proposal. It is not a production design or commitment.
 - The S10 request materializer builds active public FEM requests from the committed
-  `CP-ENVELOPE.json` and `public-case-manifest.json`; no request-plan artifact is
-  committed yet because its identity also binds the selected execution profile.
+  `CP-ENVELOPE.json` and `public-case-manifest.json`. The large request plan remains
+  in the ignored production run root; the committed closeout report binds its exact
+  content hash and execution-profile hash.
+- `s10-production-dataset.json` is the canonical public closeout report for all 344
+  active requests. It records role snapshots, source-verified extraction and
+  projection evidence, deterministic collocation replay, physical-integral
+  cross-mesh comparisons, TRAIN-only normalization and the controlled
+  failure-visibility canary. It contains no private reveal material.
 
 Pinned identities:
 
@@ -45,6 +53,7 @@ Pinned identities:
 - FEM strain-load 32-step evidence: `fa5f031b761101987d8af642b86e2b893babf4d0e6e9289b27846bd12479f325`
 - FEM strain-load 64-step evidence: `2f6cfcb9ed56e072a25ed3b09ade2de9666ade5c7be15fcd33489eb67e4502a0`
 - S9 strain-load proposal dry run: `42cb8f7ee8a16f89663289ecf39cc959d656f3fbba152c9826c469f0a920be34`
+- S10 production dataset: `ed9a7758a87ce9fddab1ec365fc3529372b49c181406a09723573a91a96c9ef2`
 
 The FEM pilot fixes the pinned source values `E = 760 MPa`, `nu = 0.23`, and
 prescribed grip displacement `1 mm`, then uses P2 displacement, eight load steps, and
@@ -79,7 +88,9 @@ The JSON artifacts are generated mechanically from typed contracts and verified 
 `tests/campaigns/test_dogbone_fem_pilot.py` plus
 `tests/campaigns/test_dogbone_strain_pilot.py` and
 `tests/campaigns/test_dogbone_campaign_proposal.py`. The S10 public request boundary
-is verified by `tests/campaigns/test_dogbone_s10_public_boundary.py`.
+is verified by `tests/campaigns/test_dogbone_s10_public_boundary.py`, and the closed
+production gate is checked by
+`tests/campaigns/test_dogbone_s10_gate_artifact.py`.
 
 ## Local S10 production execution
 
@@ -106,7 +117,15 @@ python -m campaigns.dogbone_v1.s10_production --max-new-attempts 1
 python -m campaigns.dogbone_v1.s10_production
 ```
 
-The command requires a clean committed worktree. A complete FEM ledger is still
-only input evidence for G10: role snapshots, extraction, projection-error,
-cross-mesh, normalization, failed-case visibility, and collocation replay evidence
-must be materialized and evaluated before G10 can pass.
+The command requires a clean committed worktree. The recorded production run
+completed all 344 requests successfully. Closeout materialized 88,064 collocation
+points, 344 projection/error records, 343 physical-integral comparisons and 256
+TRAIN-normalized samples. The canonical report above and `artifacts/gates/S10.json`
+record the resulting G10 PASS evidence.
+
+The exact execution profile was recovered after FEM completion from the unique full
+256-bit request/ledger hash preimage and persisted before closeout. Its canonical
+hash is
+`d3ede9186f3365dab5b53f510c5c973ed368c1decd08e56461bf4fc41caf675f`.
+This recovery closes the report binding but does not claim that the profile file was
+present during the original solves.

@@ -294,8 +294,10 @@ Scientific approval and the one-shot ceremony are complete:
 - live pre-training order evidence: first added in `7d26a98`;
 - production evidence integration test: `d7930a6`;
 - passing G9 artifact and fail-closed structural tests: `6c02449`;
-- S10's fail-closed contracts are now implemented, but its production FEM and
-  derived dataset population remain unmaterialized and G10 remains FAIL.
+- At S9 closure, S10's fail-closed contracts were implemented but its production
+  FEM and derived dataset population were still unmaterialized, so G10 remained
+  FAIL. The later S10 production closure and G10 PASS are recorded in ADR 0011 and
+  `artifacts/gates/S10.json`.
 
 ## Sign-Off Record
 

@@ -2,6 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-09-04
+- Production closure: 2026-09-07
 - Step: S10
 
 ## Context
@@ -60,24 +61,24 @@ S10 normalization contract, and non-active reserves are not normalization source
 
 ## Consequences
 
-The S10 implementation can construct and verify the dataset trust boundary before
-the expensive production FEM batch is run. That prevents later code from accepting
-self-consistent but unplanned requests, path-only result claims, forged collocation
-points, forged projections, raw-node cross-mesh comparisons, or normalization
-statistics fitted on DEVELOPMENT, PILOT, HOLDOUT or reserve material.
+The S10 implementation constructs and verifies the dataset trust boundary around
+the production FEM batch. That prevents later code from accepting self-consistent
+but unplanned requests, path-only result claims, forged collocation points, forged
+projections, raw-node cross-mesh comparisons, or normalization statistics fitted on
+DEVELOPMENT, PILOT, HOLDOUT or reserve material.
 
 The cost is stricter ceremony: a dataset artifact is not trusted merely because its
 local dataclass is shape-valid. The source-aware constructors and verifiers are the
 trusted persistence boundary.
 
-G10 remains FAIL until the production public FEM result population, snapshots,
-derived artifacts, replay evidence and normalization statistics are actually
-materialized. The S10 code tests are implementation evidence, not production
-dataset evidence, and S11 must not begin from fixture-only checks.
+The complete public population, snapshots, derived artifacts, replay evidence and
+normalization statistics are now materialized. G10 is PASS, so S11 may begin from
+this exact dataset. This decision does not provide S11 training, accuracy,
+certification or inference evidence.
 
 ## Verification
 
-S10 implementation evidence is local and fixture-scoped:
+The implementation checks remain local and fixture-scoped:
 
 - request-plan tests reject HOLDOUT cases, reserve cases, altered request content,
   altered meshes and execution-profile divergence;
@@ -93,10 +94,41 @@ S10 implementation evidence is local and fixture-scoped:
   whose FEM source hash, role, status, case, or leakage group does not resolve there;
 - the scoped S10 package coverage threshold is 85%.
 
-Implementation commit `59f0defacea8311a8a1c9710ff3f17a1171d9a79` passed 170
-scoped tests at 85.42% branch coverage and the full local suite at 1,536 passed with
-2 skipped. This is local implementation evidence; no cross-platform CI or production
-FEM population is claimed.
+Materializer commit `745bf90653b8071239b2f0f03f0191d3dc7ade73` passed 176
+scoped tests at 85.50% branch coverage. The final repository-wide regression passed
+1,605 tests with 2 skipped. The separately materialized production evidence is
+recorded in
+`artifacts/campaigns/dogbone-v1/s10-production-dataset.json`, whose canonical
+content hash is
+`ed9a7758a87ce9fddab1ec365fc3529372b49c181406a09723573a91a96c9ef2`.
 
-The production G10 gate must separately record non-fixture evidence for every
-active public production case before the verdict can change from FAIL to PASS.
+That report binds FEM source revision
+`b29c4af7f464ccd9df61392205209e19fc797c9c`, the exact CP-ENVELOPE,
+public manifest, 344-entry request plan and execution-profile hashes, and records:
+
+- 344 successful FEM outcomes and zero natural failures, partitioned as 24 PILOT,
+  256 TRAIN and 64 DEVELOPMENT cases;
+- 88,064 deterministic collocation points: 128 interior, 64 generic boundary and
+  64 `right_arc` semantic-quota points per case;
+- 344 source-verified projected stress fields and transfer-error artifacts;
+- 343 source-verified cross-mesh comparisons using physical-domain integrals;
+- 135 TRAIN-only normalization statistics, 256 normalized TRAIN samples and 256
+  verified round trips;
+- 344 byte-identical collocation replays bound to the exact requests; and
+- one explicitly non-production failure-visibility canary because no natural FEM
+  failure occurred.
+
+An independent post-closeout check cryptographically read all 2,324 unique
+ObjectStore references through `ObjectStore.has_object`; that API calls `get`, which
+reads the bytes, recomputes their domain-separated content hash and verifies their
+committed size. Every reference resolved.
+The execution-profile file was absent during the original FEM solves. It was
+recovered afterward from the unique full 256-bit hash match over the constrained
+recorded runtime versions, persisted canonically, and verified against the request
+plan and ledger before closeout. The report and gate disclose that timing rather
+than claiming pre-run persistence.
+
+`artifacts/gates/S10.json` reduces this production evidence plus the three mutation
+checks and scoped coverage through the executable seven-check G10 reducer. All seven
+checks pass. This remains host-local evidence; no new cross-platform CI claim is
+made here.
