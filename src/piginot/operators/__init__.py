@@ -2,6 +2,7 @@
 
 from piginot.operators.architecture import (
     ARCHITECTURE_ID,
+    LOCAL_STRESS_ARCHITECTURE_ID,
     BoundaryConditionMode,
     DirichletData,
     GeometryEncoding,
@@ -26,6 +27,7 @@ from piginot.operators.safetensors_io import (
 
 __all__ = (
     "ARCHITECTURE_ID",
+    "LOCAL_STRESS_ARCHITECTURE_ID",
     "BoundaryConditionMode",
     "DirichletData",
     "GeometryEncoding",

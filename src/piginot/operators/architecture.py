@@ -15,6 +15,7 @@ from torch import nn
 from piginot.contracts.canonical import canonical_json_bytes
 
 ARCHITECTURE_ID: Final = "pi-ginot-s11-boundary-cross-attention-v1"
+LOCAL_STRESS_ARCHITECTURE_ID: Final = "pi-ginot-s11c-multiscale-local-stress-v1"
 _HASH_PATTERN = re.compile(r"[0-9a-f]{64}")
 
 
@@ -78,6 +79,8 @@ class OperatorConfig:
     num_fourier_frequencies: int = 6
     encoder_self_attention_layers: int = 3
     decoder_cross_attention_layers: int = 6
+    local_boundary_kernel_scales: tuple[float, ...] = ()
+    stress_enrichment_layers: int = 0
     boundary_condition_mode: BoundaryConditionMode = BoundaryConditionMode.SOFT
     soft_dirichlet_residual_tolerance: float = 1.0e-6
 
@@ -96,6 +99,29 @@ class OperatorConfig:
                 raise ValueError(f"{name} must be a positive integer")
         if self.hidden_dim % self.num_attention_heads != 0:
             raise ValueError("hidden_dim must be divisible by num_attention_heads")
+        scales = self.local_boundary_kernel_scales
+        if (
+            type(scales) is not tuple
+            or any(
+                isinstance(scale, bool)
+                or not isinstance(scale, (int, float))
+                or not math.isfinite(float(scale))
+                or float(scale) <= 0.0
+                for scale in scales
+            )
+            or tuple(sorted(set(float(scale) for scale in scales)))
+            != tuple(float(scale) for scale in scales)
+        ):
+            raise ValueError(
+                "local_boundary_kernel_scales must be unique increasing positive "
+                "finite values"
+            )
+        if (
+            isinstance(self.stress_enrichment_layers, bool)
+            or not isinstance(self.stress_enrichment_layers, int)
+            or self.stress_enrichment_layers < 0
+        ):
+            raise ValueError("stress_enrichment_layers must be a non-negative integer")
         if type(self.boundary_condition_mode) is not BoundaryConditionMode:
             raise TypeError("boundary_condition_mode must be a BoundaryConditionMode")
         tolerance = self.soft_dirichlet_residual_tolerance
@@ -156,6 +182,10 @@ class GeometryEncoding:
     tokens: torch.Tensor
     coordinate_min: torch.Tensor
     coordinate_span: torch.Tensor
+    normalized_boundary_xy: torch.Tensor | None = None
+    boundary_features: torch.Tensor | None = None
+    boundary_weights: torch.Tensor | None = None
+    boundary_mask: torch.Tensor | None = None
 
     def __post_init__(self) -> None:
         _validate_field(self.tokens, "tokens")
@@ -171,6 +201,73 @@ class GeometryEncoding:
         _require_same_tensor_context(
             self.tokens, self.coordinate_span, "tokens", "coordinate_span"
         )
+        local = (
+            self.normalized_boundary_xy,
+            self.boundary_features,
+            self.boundary_weights,
+            self.boundary_mask,
+        )
+        if any(value is not None for value in local):
+            if any(value is None for value in local):
+                raise ValueError(
+                    "local boundary encoding fields must be supplied together"
+                )
+            normalized_boundary_xy = cast(torch.Tensor, self.normalized_boundary_xy)
+            boundary_features = cast(torch.Tensor, self.boundary_features)
+            boundary_weights = cast(torch.Tensor, self.boundary_weights)
+            boundary_mask = cast(torch.Tensor, self.boundary_mask)
+            _validate_field(
+                normalized_boundary_xy,
+                "normalized_boundary_xy",
+                trailing=2,
+            )
+            _validate_field(boundary_features, "boundary_features")
+            if normalized_boundary_xy.shape[:2] != boundary_features.shape[:2]:
+                raise ValueError(
+                    "boundary features must align with boundary coordinates"
+                )
+            if boundary_features.shape[-1] != self.tokens.shape[-1]:
+                raise ValueError("boundary feature width must match token width")
+            _require_same_tensor_context(
+                self.tokens,
+                normalized_boundary_xy,
+                "tokens",
+                "normalized_boundary_xy",
+            )
+            _require_same_tensor_context(
+                self.tokens,
+                boundary_features,
+                "tokens",
+                "boundary_features",
+            )
+            if boundary_weights.shape != normalized_boundary_xy.shape[:2]:
+                raise ValueError(
+                    "boundary_weights must align with boundary coordinates"
+                )
+            if boundary_weights.layout is not torch.strided:
+                raise ValueError("boundary_weights must be dense and strided")
+            _require_same_tensor_context(
+                self.tokens,
+                boundary_weights,
+                "tokens",
+                "boundary_weights",
+            )
+            if not bool(torch.isfinite(boundary_weights).all().item()):
+                raise ValueError("boundary_weights must be finite")
+            if bool((boundary_weights < 0.0).any().item()):
+                raise ValueError("boundary_weights must be non-negative")
+            if boundary_mask.dtype is not torch.bool:
+                raise ValueError("boundary_mask must be boolean")
+            if boundary_mask.layout is not torch.strided:
+                raise ValueError("boundary_mask must be dense and strided")
+            if boundary_mask.shape != normalized_boundary_xy.shape[:2]:
+                raise ValueError("boundary_mask must align with boundary coordinates")
+            if boundary_mask.device != self.tokens.device:
+                raise ValueError("boundary_mask and tokens must share a device")
+            if not bool(
+                ((boundary_weights > 0.0) & boundary_mask).any(dim=1).all().item()
+            ):
+                raise ValueError("each sample needs positive visible boundary weight")
         if bool((self.coordinate_span <= 0.0).any().item()):
             raise ValueError("coordinate_span must be positive on each axis")
 
@@ -321,8 +418,6 @@ class _DecoderBlock(nn.Module):
 class PiGinotOperator(nn.Module):
     """Faithful, contract-hardened adaptation of the PI-GINOT operator."""
 
-    architecture_id: Final[str] = ARCHITECTURE_ID
-
     def __init__(
         self,
         config: OperatorConfig,
@@ -380,6 +475,10 @@ class PiGinotOperator(nn.Module):
             nn.GELU(),
             nn.Linear(config.hidden_dim, config.hidden_dim),
         )
+        self.local_boundary_projections = nn.ModuleList(
+            nn.Linear(config.hidden_dim, config.hidden_dim)
+            for _ in config.local_boundary_kernel_scales
+        )
         self.parameter_encoder = nn.Sequential(
             nn.Linear(config.parameter_dim, config.hidden_dim),
             nn.GELU(),
@@ -389,8 +488,28 @@ class PiGinotOperator(nn.Module):
             _DecoderBlock(config.hidden_dim, config.num_attention_heads)
             for _ in range(config.decoder_cross_attention_layers)
         )
+        self.stress_enrichment_blocks = nn.ModuleList(
+            nn.Sequential(
+                nn.LayerNorm(config.hidden_dim),
+                nn.Linear(config.hidden_dim, 2 * config.hidden_dim),
+                nn.GELU(),
+                nn.Linear(2 * config.hidden_dim, config.hidden_dim),
+            )
+            for _ in range(config.stress_enrichment_layers)
+        )
         self.u_head = nn.Linear(config.hidden_dim, 2)
         self.p_head = nn.Linear(config.hidden_dim, 4)
+
+    @property
+    def architecture_id(self) -> str:
+        """Return the semantic identity of the configured decoder path."""
+
+        if (
+            self.config.local_boundary_kernel_scales
+            or self.config.stress_enrichment_layers
+        ):
+            return LOCAL_STRESS_ARCHITECTURE_ID
+        return ARCHITECTURE_ID
 
     def encode_boundary(
         self,
@@ -436,7 +555,15 @@ class PiGinotOperator(nn.Module):
         latents = self.boundary_norm(latents + attended)
         for block in self.encoder_blocks:
             latents = block(latents)
-        return GeometryEncoding(latents, coordinate_min, coordinate_span)
+        return GeometryEncoding(
+            latents,
+            coordinate_min,
+            coordinate_span,
+            normalized_xy,
+            source,
+            weights,
+            mask,
+        )
 
     def decode_queries(
         self,
@@ -478,7 +605,28 @@ class PiGinotOperator(nn.Module):
                 dirichlet.prescribed_u + dirichlet.approximate_distance * raw_u,
                 raw_u,
             )
-        output_p = self.p_head(query).reshape(*query.shape[:2], 2, 2)
+        stress_query = query
+        if self.config.local_boundary_kernel_scales:
+            local_fields = _local_boundary_fields(encoding)
+            local_context = torch.zeros_like(stress_query)
+            for scale, projection in zip(
+                self.config.local_boundary_kernel_scales,
+                self.local_boundary_projections,
+                strict=True,
+            ):
+                local_context = local_context + projection(
+                    _local_boundary_context(
+                        normalized_query,
+                        *local_fields,
+                        kernel_scale=float(scale),
+                    )
+                )
+            stress_query = stress_query + local_context / math.sqrt(
+                len(self.config.local_boundary_kernel_scales)
+            )
+        for block in self.stress_enrichment_blocks:
+            stress_query = stress_query + block(stress_query)
+        output_p = self.p_head(stress_query).reshape(*query.shape[:2], 2, 2)
         return OperatorOutput(raw_u, output_p)
 
     def forward(
@@ -530,7 +678,7 @@ def module_digest(module: PiGinotOperator) -> str:
     if type(module) is not PiGinotOperator:
         raise TypeError("module must be an exact PiGinotOperator")
     payload: dict[str, object] = {
-        "architecture_id": ARCHITECTURE_ID,
+        "architecture_id": module.architecture_id,
         "config": _config_payload(module.config),
         "lifting_verification": (
             None
@@ -554,6 +702,14 @@ def _config_payload(config: OperatorConfig) -> dict[str, object]:
     payload = asdict(config)
     payload["parameter_names"] = list(config.parameter_names)
     payload["boundary_tag_names"] = list(config.boundary_tag_names)
+    if config.local_boundary_kernel_scales:
+        payload["local_boundary_kernel_scales"] = list(
+            config.local_boundary_kernel_scales
+        )
+    else:
+        del payload["local_boundary_kernel_scales"]
+    if config.stress_enrichment_layers == 0:
+        del payload["stress_enrichment_layers"]
     payload["boundary_condition_mode"] = config.boundary_condition_mode.value
     return payload
 
@@ -695,6 +851,51 @@ def _normalize_coordinates(
     return 2.0 * (coordinates - minimum.unsqueeze(1)) / span.unsqueeze(1) - 1.0
 
 
+def _local_boundary_fields(
+    encoding: GeometryEncoding,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    fields = (
+        encoding.normalized_boundary_xy,
+        encoding.boundary_features,
+        encoding.boundary_weights,
+        encoding.boundary_mask,
+    )
+    if any(value is None for value in fields):
+        raise ValueError("local stress enrichment requires boundary encoding fields")
+    return cast(
+        tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor],
+        fields,
+    )
+
+
+def _local_boundary_context(
+    query_xy: torch.Tensor,
+    boundary_xy: torch.Tensor,
+    boundary_features: torch.Tensor,
+    boundary_weights: torch.Tensor,
+    boundary_mask: torch.Tensor,
+    *,
+    kernel_scale: float,
+) -> torch.Tensor:
+    squared_distance = torch.sum(
+        (query_xy.unsqueeze(2) - boundary_xy.unsqueeze(1)).square(), dim=-1
+    )
+    usable = boundary_mask & (boundary_weights > 0.0)
+    log_measure = torch.where(
+        usable,
+        torch.log(
+            torch.clamp(
+                boundary_weights,
+                min=torch.finfo(boundary_weights.dtype).tiny,
+            )
+        ),
+        torch.full_like(boundary_weights, -torch.inf),
+    )
+    logits = -(squared_distance / (kernel_scale * kernel_scale))
+    attention = torch.softmax(logits + log_measure.unsqueeze(1), dim=-1)
+    return torch.einsum("bqs,bsh->bqh", attention, boundary_features)
+
+
 def _validate_dirichlet_for_output(data: DirichletData, output_u: torch.Tensor) -> None:
     if type(data) is not DirichletData:
         raise TypeError("dirichlet must be DirichletData")
@@ -705,6 +906,7 @@ def _validate_dirichlet_for_output(data: DirichletData, output_u: torch.Tensor) 
 
 __all__ = (
     "ARCHITECTURE_ID",
+    "LOCAL_STRESS_ARCHITECTURE_ID",
     "BoundaryConditionMode",
     "DirichletData",
     "GeometryEncoding",
