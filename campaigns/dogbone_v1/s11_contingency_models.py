@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from typing import TypeAlias
 
 import torch
@@ -68,6 +69,24 @@ def build_candidate_models(
     return tuple(models)
 
 
+def model_state_hash(model: PiGinotOperator) -> str:
+    """Hash every parameter and buffer value with names, dtypes, and shapes."""
+
+    if type(model) is not PiGinotOperator:
+        raise TypeError("model must be an exact PiGinotOperator")
+    digest = hashlib.blake2b(digest_size=32)
+    for name, tensor in sorted(model.state_dict().items()):
+        for value in (
+            name.encode("utf-8"),
+            str(tensor.dtype).encode("ascii"),
+            str(tuple(tensor.shape)).encode("ascii"),
+            tensor.detach().cpu().contiguous().numpy().tobytes(),
+        ):
+            digest.update(len(value).to_bytes(8, "big"))
+            digest.update(value)
+    return digest.hexdigest()
+
+
 def _build_model(
     candidate: ArchitectureCandidate,
     boundary_tag_names: tuple[str, ...],
@@ -123,4 +142,4 @@ def _validate_boundary_tags(boundary_tag_names: tuple[str, ...]) -> None:
         raise ValueError("boundary_tag_names must be unique")
 
 
-__all__ = ("build_candidate_models",)
+__all__ = ("build_candidate_models", "model_state_hash")

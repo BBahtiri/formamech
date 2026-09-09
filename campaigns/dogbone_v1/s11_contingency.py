@@ -6,7 +6,7 @@ import hashlib
 import math
 import re
 from dataclasses import dataclass
-from typing import ClassVar
+from typing import ClassVar, cast
 
 from piginot.contracts import canonical_json_bytes, hash_spec
 from piginot.doe import EvidenceRole, PublishedCase, PublishedCaseManifest
@@ -392,11 +392,11 @@ class ArchitectureScreenProtocol:
         object.__setattr__(self, "candidates", tuple(self.candidates))
 
     def to_bytes(self) -> bytes:
-        return canonical_json_bytes(self)
+        return cast(bytes, canonical_json_bytes(self))
 
     @property
     def content_hash(self) -> str:
-        return hash_spec(self, "content")
+        return cast(str, hash_spec(self, "content"))
 
 
 @dataclass(frozen=True, slots=True)
