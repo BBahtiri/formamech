@@ -83,9 +83,51 @@ def test_protocol_binds_sources_roles_candidates_and_fixed_compute() -> None:
     assert protocol.query_points_per_case == 256
     assert protocol.qoi_fraction == 0.25
     assert protocol.peak_supervised_p_weight == 1.0
+    assert protocol.objective_policy_id == (
+        "s11c-supervised-architecture-isolation-v1"
+    )
+    assert protocol.supervised_objective_terms == (
+        "normalized_u_mse",
+        "normalized_in_plane_P_mse",
+        "root_qoi_peak_P_mse",
+    )
+    assert protocol.physics_objectives_deferred_to_step == "S12"
+    assert protocol.deferred_physics_objective_terms == (
+        "strong_equilibrium",
+        "weak_equilibrium",
+        "constitutive_in_plane",
+        "angular_momentum",
+        "traction_free",
+    )
+    assert protocol.data_preparation_policy_id == (
+        "s11c-s10-p2-vertices-boundary-arclength-v1"
+    )
+    assert protocol.normalization_policy_id == (
+        "s11c-fit-zscore-u-by-prescribed-displacement-p-by-760mpa-v1"
+    )
+    assert protocol.qoi_policy_id == "s11c-right-arc-minus-right-grip-root-peak-v1"
+    assert protocol.metric_policy_id == (
+        "s11c-relative-l2-root-frobenius-linear-quantile-v1"
+    )
+    assert protocol.optimizer_policy_id == "s11c-torch-adam-no-foreach-no-fused-v1"
+    assert protocol.source_access_policy_id == (
+        "s11c-verified-fit-screen-durable-development-v1"
+    )
+    assert protocol.development_confirmation_policy_id == (
+        "s11c-baseline-vs-train-winner-same-guardrails-v1"
+    )
+    assert protocol.boundary_point_count == 320
+    assert protocol.boundary_tag_names == (
+        "bottom",
+        "gauge_top",
+        "left_symmetry",
+        "right_arc",
+        "right_grip",
+    )
+    assert protocol.stress_reference_mpa == 760.0
     assert protocol.operator_tensor_dtype == "torch.float64"
     assert protocol.initialization_policy_id == (
-        "s11c-shared-state-template-by-key-shape-v1"
+        "s11c-fresh-shared-state-template-state-hash-v2"
     )
     assert protocol.common_state_template_candidate_id == BASELINE_CANDIDATE_ID
     assert protocol.candidate_specific_initialization_seed == 11123
@@ -132,7 +174,7 @@ def test_committed_protocol_is_the_exact_preregistered_document() -> None:
 
     assert artifact.read_bytes() == protocol.to_bytes() + b"\n"
     assert protocol.content_hash == (
-        "74d53edd7789f5c832ce8ff96f6f6ac48a8a29714245e57cb515cb24749e8e00"
+        "f16a4f63c3a8cfc3ee321bc4e15162802cbc6f106ed807f5aa4bc59eceac81df"
     )
 
 
@@ -182,6 +224,18 @@ def test_protocol_validation_refuses_overlap_and_hidden_roles() -> None:
         replace(protocol, initialization_policy_id="independent-default-v1")
     with pytest.raises(ValueError, match="sampling_schedule_policy_id"):
         replace(protocol, sampling_schedule_policy_id="candidate-specific-v1")
+    with pytest.raises(ValueError, match="objective_policy_id"):
+        replace(protocol, objective_policy_id="full-S1-hybrid")
+    with pytest.raises(ValueError, match="deferred_physics_objective_terms"):
+        replace(protocol, deferred_physics_objective_terms=("traction_free",))
+    with pytest.raises(ValueError, match="normalization_policy_id"):
+        replace(protocol, normalization_policy_id="fit-on-all-splits")
+    with pytest.raises(ValueError, match="boundary_point_count"):
+        replace(protocol, boundary_point_count=319)
+    with pytest.raises(ValueError, match="source_access_policy_id"):
+        replace(protocol, source_access_policy_id="unverified-all-roles")
+    with pytest.raises(ValueError, match="development_confirmation_policy_id"):
+        replace(protocol, development_confirmation_policy_id="best-development-model")
 
 
 def test_selection_uses_bias_and_field_guardrails_then_declared_ties() -> None:

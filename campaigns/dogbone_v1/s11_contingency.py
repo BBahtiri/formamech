@@ -41,9 +41,42 @@ DERIVED_PARAMETER_NAMES = (
     "length_to_gauge_ratio",
 )
 OPERATOR_TENSOR_DTYPE = "torch.float64"
-INITIALIZATION_POLICY_ID = "s11c-shared-state-template-by-key-shape-v1"
+INITIALIZATION_POLICY_ID = "s11c-fresh-shared-state-template-state-hash-v2"
 CANDIDATE_SPECIFIC_INITIALIZATION_SEED = 11123
 SAMPLING_SCHEDULE_POLICY_ID = "s11c-shared-case-and-query-schedule-v1"
+OBJECTIVE_POLICY_ID = "s11c-supervised-architecture-isolation-v1"
+SUPERVISED_OBJECTIVE_TERMS = (
+    "normalized_u_mse",
+    "normalized_in_plane_P_mse",
+    "root_qoi_peak_P_mse",
+)
+DEFERRED_PHYSICS_OBJECTIVE_TERMS = (
+    "strong_equilibrium",
+    "weak_equilibrium",
+    "constitutive_in_plane",
+    "angular_momentum",
+    "traction_free",
+)
+DATA_PREPARATION_POLICY_ID = "s11c-s10-p2-vertices-boundary-arclength-v1"
+NORMALIZATION_POLICY_ID = (
+    "s11c-fit-zscore-u-by-prescribed-displacement-p-by-760mpa-v1"
+)
+QOI_POLICY_ID = "s11c-right-arc-minus-right-grip-root-peak-v1"
+METRIC_POLICY_ID = "s11c-relative-l2-root-frobenius-linear-quantile-v1"
+OPTIMIZER_POLICY_ID = "s11c-torch-adam-no-foreach-no-fused-v1"
+SOURCE_ACCESS_POLICY_ID = "s11c-verified-fit-screen-durable-development-v1"
+DEVELOPMENT_CONFIRMATION_POLICY_ID = (
+    "s11c-baseline-vs-train-winner-same-guardrails-v1"
+)
+BOUNDARY_POINT_COUNT = 320
+BOUNDARY_TAG_NAMES = (
+    "bottom",
+    "gauge_top",
+    "left_symmetry",
+    "right_arc",
+    "right_grip",
+)
+STRESS_REFERENCE_MPA = 760.0
 
 
 def _finite(value: object, label: str) -> float:
@@ -195,6 +228,20 @@ class ArchitectureScreenProtocol:
     common_state_template_candidate_id: str
     candidate_specific_initialization_seed: int
     sampling_schedule_policy_id: str
+    objective_policy_id: str
+    supervised_objective_terms: tuple[str, ...]
+    physics_objectives_deferred_to_step: str
+    deferred_physics_objective_terms: tuple[str, ...]
+    data_preparation_policy_id: str
+    normalization_policy_id: str
+    qoi_policy_id: str
+    metric_policy_id: str
+    optimizer_policy_id: str
+    source_access_policy_id: str
+    development_confirmation_policy_id: str
+    boundary_point_count: int
+    boundary_tag_names: tuple[str, ...]
+    stress_reference_mpa: float
     qoi_fraction: float
     peak_supervised_p_weight: float
     model_seed: int
@@ -246,6 +293,54 @@ class ArchitectureScreenProtocol:
             raise ValueError("common_state_template_candidate_id changed")
         if self.sampling_schedule_policy_id != SAMPLING_SCHEDULE_POLICY_ID:
             raise ValueError("sampling_schedule_policy_id changed")
+        if self.objective_policy_id != OBJECTIVE_POLICY_ID:
+            raise ValueError("objective_policy_id changed")
+        if tuple(self.supervised_objective_terms) != SUPERVISED_OBJECTIVE_TERMS:
+            raise ValueError("supervised_objective_terms changed")
+        if self.physics_objectives_deferred_to_step != "S12":
+            raise ValueError("physics_objectives_deferred_to_step must remain S12")
+        if (
+            tuple(self.deferred_physics_objective_terms)
+            != DEFERRED_PHYSICS_OBJECTIVE_TERMS
+        ):
+            raise ValueError("deferred_physics_objective_terms changed")
+        for value, expected, label in (
+            (
+                self.data_preparation_policy_id,
+                DATA_PREPARATION_POLICY_ID,
+                "data_preparation_policy_id",
+            ),
+            (
+                self.normalization_policy_id,
+                NORMALIZATION_POLICY_ID,
+                "normalization_policy_id",
+            ),
+            (self.qoi_policy_id, QOI_POLICY_ID, "qoi_policy_id"),
+            (self.metric_policy_id, METRIC_POLICY_ID, "metric_policy_id"),
+            (
+                self.optimizer_policy_id,
+                OPTIMIZER_POLICY_ID,
+                "optimizer_policy_id",
+            ),
+            (
+                self.source_access_policy_id,
+                SOURCE_ACCESS_POLICY_ID,
+                "source_access_policy_id",
+            ),
+            (
+                self.development_confirmation_policy_id,
+                DEVELOPMENT_CONFIRMATION_POLICY_ID,
+                "development_confirmation_policy_id",
+            ),
+        ):
+            if value != expected:
+                raise ValueError(f"{label} changed")
+        if self.boundary_point_count != BOUNDARY_POINT_COUNT:
+            raise ValueError("boundary_point_count changed")
+        if tuple(self.boundary_tag_names) != BOUNDARY_TAG_NAMES:
+            raise ValueError("boundary_tag_names changed")
+        if self.stress_reference_mpa != STRESS_REFERENCE_MPA:
+            raise ValueError("stress_reference_mpa changed")
         for integer, expected_integer, integer_label in (
             (self.optimizer_steps, 1_500, "optimizer_steps"),
             (self.case_batch_size, 4, "case_batch_size"),
@@ -465,6 +560,20 @@ def build_architecture_screen_protocol(
         common_state_template_candidate_id=BASELINE_CANDIDATE_ID,
         candidate_specific_initialization_seed=CANDIDATE_SPECIFIC_INITIALIZATION_SEED,
         sampling_schedule_policy_id=SAMPLING_SCHEDULE_POLICY_ID,
+        objective_policy_id=OBJECTIVE_POLICY_ID,
+        supervised_objective_terms=SUPERVISED_OBJECTIVE_TERMS,
+        physics_objectives_deferred_to_step="S12",
+        deferred_physics_objective_terms=DEFERRED_PHYSICS_OBJECTIVE_TERMS,
+        data_preparation_policy_id=DATA_PREPARATION_POLICY_ID,
+        normalization_policy_id=NORMALIZATION_POLICY_ID,
+        qoi_policy_id=QOI_POLICY_ID,
+        metric_policy_id=METRIC_POLICY_ID,
+        optimizer_policy_id=OPTIMIZER_POLICY_ID,
+        source_access_policy_id=SOURCE_ACCESS_POLICY_ID,
+        development_confirmation_policy_id=DEVELOPMENT_CONFIRMATION_POLICY_ID,
+        boundary_point_count=BOUNDARY_POINT_COUNT,
+        boundary_tag_names=BOUNDARY_TAG_NAMES,
+        stress_reference_mpa=STRESS_REFERENCE_MPA,
         qoi_fraction=0.25,
         peak_supervised_p_weight=1.0,
         model_seed=11121,
@@ -544,13 +653,26 @@ __all__ = (
     "ArchitectureScreenProtocol",
     "ArchitectureSelection",
     "BASELINE_CANDIDATE_ID",
+    "BOUNDARY_POINT_COUNT",
+    "BOUNDARY_TAG_NAMES",
     "CANDIDATE_SPECIFIC_INITIALIZATION_SEED",
     "CONTINGENCY_PROTOCOL_ID",
+    "DATA_PREPARATION_POLICY_ID",
+    "DEVELOPMENT_CONFIRMATION_POLICY_ID",
+    "DEFERRED_PHYSICS_OBJECTIVE_TERMS",
     "DERIVED_PARAMETER_NAMES",
     "INITIALIZATION_POLICY_ID",
+    "METRIC_POLICY_ID",
+    "NORMALIZATION_POLICY_ID",
+    "OBJECTIVE_POLICY_ID",
     "OPERATOR_TENSOR_DTYPE",
+    "OPTIMIZER_POLICY_ID",
+    "QOI_POLICY_ID",
     "RAW_PARAMETER_NAMES",
     "SAMPLING_SCHEDULE_POLICY_ID",
+    "SOURCE_ACCESS_POLICY_ID",
+    "SUPERVISED_OBJECTIVE_TERMS",
+    "STRESS_REFERENCE_MPA",
     "build_architecture_screen_protocol",
     "select_architecture_candidate",
 )
