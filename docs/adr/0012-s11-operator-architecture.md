@@ -115,3 +115,21 @@ The gate-artifact test re-executes the deterministic evidence, reproduces the
 generator payload byte-for-byte, checks canonical JSON and binds the expected
 content hash. The final repository-wide regression passed 1,704 tests with 2
 skipped. S11-scoped Ruff and mypy checks passed.
+
+## Contingency outcome
+
+The ADR 0001 pre-S12 contingency protocol was committed before any training label
+was opened. Implementation revision
+`22fea865a74bf69a28dc845e874a008ba31ef650` then trained candidates A through D for
+the same 1,500-step budget and evaluated them once on the fixed 64-case TRAIN screen.
+Canonical result evidence has content hash
+`aae56fcb3ab6b6b2c693c5b3dbdbce89a1716fd90086dd1786217b189957ec18`.
+
+Candidate C reduced median absolute peak error by 49.88%, absolute signed peak bias
+by 69.55%, p90 peak error by 38.83%, and median stress-field error by 7.37% relative
+to candidate A. Its median displacement-field error regressed by 3.48%, exceeding
+the preregistered 2% maximum. Candidate C therefore failed exactly that guardrail;
+no candidate was eligible, the formal outcome fell back to A, and DEVELOPMENT was
+not opened. The result discharges the scheduled architecture iteration without
+changing the S11 architecture selected for S12. It does not justify a post-hoc
+threshold change or a DEVELOPMENT accuracy claim.

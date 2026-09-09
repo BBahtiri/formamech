@@ -13,8 +13,10 @@ public request plans, snapshots, extraction, collocation, projection and
 normalization, and the
 [fixed S11 PI-GINOT operator architecture](adr/0012-s11-operator-architecture.md).
 The first public production DogBone dataset contains 344 successful FEM cases and
-88,064 deterministic collocation points. All nine structural G11 checks pass. No
-model has been trained, and ADR 0001's mandatory architecture iteration must run
-before S12 begins.
+88,064 deterministic collocation points. All nine structural G11 checks pass. The
+mandatory pre-S12 architecture contingency trained four diagnostic candidates and
+then fell back to the S11 baseline under its preregistered guardrails; DEVELOPMENT
+remained unopened. That contingency is now discharged, so S12 objective and
+gradient verification is the next step. No production checkpoint is claimed.
 
 Read the [limitations](limitations.md) before relying on future numerical results.

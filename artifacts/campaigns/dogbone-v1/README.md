@@ -39,6 +39,15 @@ the S10 closeout report.
   projection evidence, deterministic collocation replay, physical-integral
   cross-mesh comparisons, TRAIN-only normalization and the controlled
   failure-visibility canary. It contains no private reveal material.
+- `S11-CONTINGENCY-PROTOCOL.json` is the pre-label four-candidate architecture
+  screen protocol. It fixes the TRAIN fit/screen split, one-shot DEVELOPMENT
+  policy, optimizer budget, model initialization, metrics and selection guardrails.
+- `S11-CONTINGENCY-EVIDENCE.json` is the exact canonical aggregate evidence from
+  the completed screen. It binds the source, normalization, shared sample schedule,
+  trained model states and safe model-file hashes without embedding field tensors.
+  No DEVELOPMENT metric appears because the TRAIN decision fell back to baseline.
+- `S11-CONTINGENCY-SCREEN.svg` visualizes the four frozen TRAIN-screen metric sets
+  and the single guardrail that prevented candidate C from being selected.
 
 Pinned identities:
 
@@ -54,6 +63,12 @@ Pinned identities:
 - FEM strain-load 64-step evidence: `2f6cfcb9ed56e072a25ed3b09ade2de9666ade5c7be15fcd33489eb67e4502a0`
 - S9 strain-load proposal dry run: `42cb8f7ee8a16f89663289ecf39cc959d656f3fbba152c9826c469f0a920be34`
 - S10 production dataset: `ed9a7758a87ce9fddab1ec365fc3529372b49c181406a09723573a91a96c9ef2`
+- S11 contingency protocol: `f16a4f63c3a8cfc3ee321bc4e15162802cbc6f106ed807f5aa4bc59eceac81df`
+- S11 contingency evidence: `aae56fcb3ab6b6b2c693c5b3dbdbce89a1716fd90086dd1786217b189957ec18`
+- S11 contingency evidence-file BLAKE2b-256:
+  `260eca6c345ee1edea17b9098859baaa6de4a35e27de65c6ccdead0cad831f36`
+- S11 contingency screen SVG SHA-256:
+  `d92255515dbfaaa1d646eaf74253364211d028c5590727d712e36f90a5eaefae`
 
 The FEM pilot fixes the pinned source values `E = 760 MPa`, `nu = 0.23`, and
 prescribed grip displacement `1 mm`, then uses P2 displacement, eight load steps, and
@@ -129,3 +144,21 @@ hash is
 `d3ede9186f3365dab5b53f510c5c973ed368c1decd08e56461bf4fc41caf675f`.
 This recovery closes the report binding but does not claim that the profile file was
 present during the original solves.
+
+## S11 architecture contingency outcome
+
+Implementation revision `22fea865a74bf69a28dc845e874a008ba31ef650` trained the
+four preregistered candidates for 1,500 Adam steps each on the same 192-case TRAIN
+fit population and the same case/query schedule. The first frozen comparison used
+the disjoint 64-case TRAIN screen. Candidate C, the multiscale local-boundary and
+residual stress-trunk design, reduced median absolute peak error from 8.09% to
+4.05%, absolute median signed bias from 7.76% to 2.36%, p90 peak error from 13.63%
+to 8.34%, and median stress-field error from 19.20% to 17.79%.
+
+Candidate C nevertheless increased median displacement-field error from 3.73% to
+3.86%, a 3.48% relative regression against the preregistered maximum of 2%. It
+therefore failed exactly one guardrail. The deterministic decision fell back to
+candidate A, and the DEVELOPMENT population remained unopened. This is not a
+license to relax the threshold after observing the screen: S12 inherits the
+baseline architecture, while C remains diagnostic evidence that local stress
+capacity addresses the known stress bias.

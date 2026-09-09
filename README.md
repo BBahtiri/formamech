@@ -2,13 +2,13 @@
 
 PI-GINOT is an early-stage open-source project for verified, problem-specific
 physics-informed neural operators in 2D finite-strain elasticity. The repository
-currently implements the S2 contract layer, S3 local content store, S4 constitutive
-physics kernel, S5 tagged 2D triangle geometry ingestion, S6 reference-mesh morphing,
-S7 finite-element solves, S8 independent FEM verification, and S9 preregistered DOE,
-evidence-role, leakage, replacement, and holdout-commitment contracts. It does not
-yet generate verified training datasets, train, certify, or serve neural operators.
-Read the [project limitations](docs/limitations.md) before using or evaluating future
-results.
+currently implements the S2 contract layer through the verified S10 DogBone dataset
+and S11 PI-GINOT operator architecture. The mandatory pre-S12 architecture screen
+trained four diagnostic candidates under a fixed TRAIN-only protocol and formally
+fell back to the S11 baseline; it did not open DEVELOPMENT or create a production
+checkpoint. S12 objective and gradient verification is next. The project does not
+yet certify or serve a trained neural operator. Read the
+[project limitations](docs/limitations.md) before using its numerical results.
 
 ## Requirements
 
@@ -19,7 +19,7 @@ results.
 
 ```text
 python -m venv .venv
-python -m pip install -e ".[dev,geometry,physics,fem]"
+python -m pip install -e ".[dev,geometry,physics,fem,ml]"
 ```
 
 Activate the virtual environment using the command appropriate for your shell before
