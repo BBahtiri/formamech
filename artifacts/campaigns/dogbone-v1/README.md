@@ -67,7 +67,7 @@ Pinned identities:
 - S11 contingency evidence: `aae56fcb3ab6b6b2c693c5b3dbdbce89a1716fd90086dd1786217b189957ec18`
 - S11 contingency evidence-file BLAKE2b-256:
   `260eca6c345ee1edea17b9098859baaa6de4a35e27de65c6ccdead0cad831f36`
-- S11 contingency screen SVG SHA-256:
+- S11 contingency screen canonical-LF SVG SHA-256:
   `d92255515dbfaaa1d646eaf74253364211d028c5590727d712e36f90a5eaefae`
 
 The FEM pilot fixes the pinned source values `E = 760 MPa`, `nu = 0.23`, and

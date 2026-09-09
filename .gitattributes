@@ -1,2 +1,3 @@
 # Canonical public evidence is hashed byte-for-byte and must survive Windows checkout.
 artifacts/**/*.json text eol=lf
+artifacts/**/*.svg text eol=lf

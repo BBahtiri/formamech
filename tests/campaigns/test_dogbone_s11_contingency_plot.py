@@ -37,7 +37,8 @@ def test_screen_plot_is_deterministic_and_records_the_fallback_reason() -> None:
     assert b"D: combined" in first
     assert b"Formal outcome: fallback to A" in first
     assert b"C failed only the +2% displacement guardrail" in first
-    assert _SCREEN.read_bytes() == first
+    tracked = _SCREEN.read_bytes().replace(b"\r\n", b"\n")
+    assert tracked == first
     assert hashlib.sha256(first).hexdigest() == _SCREEN_SHA256
 
 
