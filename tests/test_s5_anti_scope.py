@@ -19,8 +19,9 @@ FORBIDDEN_S6_PLUS_MODULES = {
     "objectives",
     "operator",
     "training",
-    "verification",
 }
+# S12 deliberately owns piginot.objectives.verification; the S5-owned package
+# isolation checks below continue to prevent later physics/FEM/ML dependencies.
 
 FORBIDDEN_PHYSICS_IMPORTS = {
     "piginot.fem",
@@ -64,7 +65,7 @@ FORBIDDEN_GEOMETRY_OPERATION_FRAGMENTS = {
 }
 
 
-def test_no_s6_or_later_module_exists() -> None:
+def test_no_forbidden_s6_plus_module_shortcut_exists() -> None:
     discovered = {
         path.stem for path in SOURCE_PACKAGE.rglob("*.py") if path.name != "__init__.py"
     }
