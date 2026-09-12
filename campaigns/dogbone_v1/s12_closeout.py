@@ -45,11 +45,12 @@ _CONTINGENCY_PROTOCOL_HASH = (
 )
 _BASELINE_CANDIDATE_ID = "A-s11-baseline"
 _COVERAGE_COMMAND = (
-    "$env:PYTHONPATH=(Resolve-Path src).Path; python -m pytest -q "
+    "uv run --frozen --all-extras python -m pytest -q "
     "tests/objectives tests/test_s12_anti_scope.py "
     "--cov=src/piginot/objectives --cov-branch --cov-report=term-missing "
     "--cov-fail-under=85"
 )
+_FULL_TEST_COMMAND = "uv run --frozen --all-extras python -m pytest -q"
 
 
 def s12_gate_payload(
@@ -136,6 +137,7 @@ def s12_gate_payload(
             "focused_coverage_command": _COVERAGE_COMMAND,
             "focused_test_result": focused_test_result,
             "focused_test_pass_count": focused_pass_count,
+            "full_test_command": _FULL_TEST_COMMAND,
             "full_test_result": full_test_result,
             "full_test_pass_count": full_pass_count,
             "full_test_skipped_count": full_skipped_count,

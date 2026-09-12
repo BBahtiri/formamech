@@ -195,6 +195,12 @@ def test_s12_gate_payload_preserves_scope_and_fixture_caveats() -> None:
     assert evidence["focused_test_pass_count"] == 77
     assert evidence["full_test_pass_count"] == 1903
     assert evidence["full_test_skipped_count"] == 2
+    assert evidence["focused_coverage_command"].startswith(
+        "uv run --frozen --all-extras python -m pytest"
+    )
+    assert evidence["full_test_command"] == (
+        "uv run --frozen --all-extras python -m pytest -q"
+    )
     assert evidence["weak_strong_fixture"]["element_order"] == 2
     assert evidence["weak_strong_fixture"]["comparison"] == (
         "weak residual versus strong residual projected onto the same test function"
