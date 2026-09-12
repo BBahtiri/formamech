@@ -17,14 +17,25 @@ def _passing(**overrides: object) -> S12GateMeasurements:
     values: dict[str, object] = {
         "exact_max_residuals": report.exact_max_residuals,
         "perturbation_fired_terms": report.perturbation_fired_terms,
+        "perturbation_recomputed_term_counts": (
+            report.perturbation_recomputed_term_counts
+        ),
         "finite_difference_relative_errors": report.finite_difference_relative_errors,
         "detached_terms": report.detached_terms,
         "reachable_parameter_names": report.reachable_parameter_names,
         "required_parameter_names": report.required_parameter_names,
+        "reachability_loss_paths": report.reachability_loss_paths,
         "anisotropy_relative_change": report.anisotropy_relative_change,
         "coordinate_anisotropy_mutant_fired": report.coordinate_anisotropy_mutant_fired,
         "fem_solve_success": report.fem_solve_success,
         "weak_strong_difference": report.weak_strong_difference,
+        "weak_residual_max": report.weak_residual_max,
+        "projected_strong_residual_max": report.projected_strong_residual_max,
+        "reconstructed_stress_variation": report.reconstructed_stress_variation,
+        "weak_strong_fem_request_id": report.weak_strong_fem_request_id,
+        "weak_strong_quadrature_point_count": (
+            report.weak_strong_quadrature_point_count
+        ),
         "s8_discretization_error_bound": report.s8_discretization_error_bound,
         "constitutive_residual_shape": report.constitutive_residual_shape,
         "constitutive_rejects_out_of_plane": report.constitutive_rejects_out_of_plane,
@@ -68,6 +79,28 @@ def test_complete_measurements_pass_exactly_the_nine_g12_checks() -> None:
             GateStatus.FAIL,
         ),
         (
+            {"perturbation_recomputed_term_counts": {"constitutive": 6}},
+            "G12.perturbed",
+            GateStatus.FAIL,
+        ),
+        (
+            {
+                "perturbation_recomputed_term_counts": {
+                    term: 5
+                    for term in (
+                        "equilibrium_strong",
+                        "equilibrium_weak",
+                        "constitutive",
+                        "angular",
+                        "dirichlet",
+                        "traction_free",
+                    )
+                }
+            },
+            "G12.perturbed",
+            GateStatus.FAIL,
+        ),
+        (
             {"finite_difference_relative_errors": {"data_u": 1.0e-5}},
             "G12.fd",
             GateStatus.FAIL,
@@ -75,6 +108,21 @@ def test_complete_measurements_pass_exactly_the_nine_g12_checks() -> None:
         ({"detached_terms": ("data_u",)}, "G12.fd", GateStatus.FAIL),
         (
             {"reachable_parameter_names": ("L_total",)},
+            "G12.reachability",
+            GateStatus.FAIL,
+        ),
+        (
+            {"reachability_loss_paths": {"geometry_axial_extent": "physics_total"}},
+            "G12.reachability",
+            GateStatus.FAIL,
+        ),
+        (
+            {
+                "reachability_loss_paths": {
+                    **dict(run_s12_verification().reachability_loss_paths),
+                    "geometry_axial_extent": "bogus_path",
+                }
+            },
             "G12.reachability",
             GateStatus.FAIL,
         ),
@@ -95,6 +143,26 @@ def test_complete_measurements_pass_exactly_the_nine_g12_checks() -> None:
         ),
         (
             {"weak_strong_difference": 1.1e-12},
+            "G12.weak-strong",
+            GateStatus.FAIL,
+        ),
+        (
+            {"weak_residual_max": 0.0},
+            "G12.weak-strong",
+            GateStatus.FAIL,
+        ),
+        (
+            {"projected_strong_residual_max": 0.0},
+            "G12.weak-strong",
+            GateStatus.FAIL,
+        ),
+        (
+            {"reconstructed_stress_variation": 0.0},
+            "G12.weak-strong",
+            GateStatus.FAIL,
+        ),
+        (
+            {"weak_strong_fem_request_id": "different-fem-fixture"},
             "G12.weak-strong",
             GateStatus.FAIL,
         ),
@@ -144,12 +212,18 @@ def test_gate_is_fail_closed_on_incomplete_populations() -> None:
     (
         {"anisotropy_relative_change": float("nan")},
         {"weak_strong_difference": -1.0},
+        {"perturbation_recomputed_term_counts": {"constitutive": 0}},
+        {"reachability_loss_paths": {"constitutive": ""}},
+        {"weak_strong_fem_request_id": ""},
+        {"weak_strong_quadrature_point_count": -1},
         {"s8_discretization_error_bound": 0.0},
         {"constitutive_residual_shape": (2, True)},
         {"holdout_refused": 1},
         {"code_coverage_percent": 101.0},
     ),
 )
-def test_measurement_contract_rejects_malformed_values(changes: dict[str, object]) -> None:
+def test_measurement_contract_rejects_malformed_values(
+    changes: dict[str, object],
+) -> None:
     with pytest.raises((TypeError, ValueError)):
         _passing(**changes)

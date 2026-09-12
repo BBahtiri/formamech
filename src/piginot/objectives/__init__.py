@@ -37,6 +37,7 @@ from piginot.objectives.terms import (
 from piginot.objectives.verification import (
     PHYSICS_TERM_IDS,
     VERIFIED_GRADIENT_TERM_IDS,
+    VERIFIED_REACHABILITY_LOSS_PATHS,
     S12VerificationReport,
     run_s12_verification,
 )
@@ -57,6 +58,7 @@ __all__ = (
     "S12GateMeasurements",
     "S12VerificationReport",
     "VERIFIED_GRADIENT_TERM_IDS",
+    "VERIFIED_REACHABILITY_LOSS_PATHS",
     "angular_momentum_residual",
     "constitutive_residual",
     "default_objective_registry",

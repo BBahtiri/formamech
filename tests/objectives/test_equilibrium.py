@@ -47,9 +47,9 @@ def test_displacement_gradient_uses_the_same_per_axis_coordinate_conversion() ->
 
     gradient = displacement_gradient(displacement, coordinates, conversion)
 
-    expected = torch.tensor(
-        [[2.0, 3.0], [-1.0, 4.0]], dtype=torch.float64
-    ).expand(1, 2, 2, 2)
+    expected = torch.tensor([[2.0, 3.0], [-1.0, 4.0]], dtype=torch.float64).expand(
+        1, 2, 2, 2
+    )
     assert torch.equal(gradient, expected)
 
 

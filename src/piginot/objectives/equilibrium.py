@@ -94,15 +94,23 @@ def weak_equilibrium_residual(
     boundary_values = (traction, boundary_test_values, boundary_weights)
     if any(value is not None for value in boundary_values):
         if any(value is None for value in boundary_values):
-            raise ValueError("traction, boundary test values and weights are all required")
+            raise ValueError(
+                "traction, boundary test values and weights are all required"
+            )
         assert traction is not None
         assert boundary_test_values is not None
         assert boundary_weights is not None
         _field(traction, "traction", trailing=(2,))
         _field(boundary_test_values, "boundary_test_values", trailing=())
         _field(boundary_weights, "boundary_weights", trailing=())
-        if traction.ndim != 3 or boundary_test_values.ndim != 3 or boundary_weights.ndim != 2:
-            raise ValueError("boundary fields must have batch, point and test dimensions")
+        if (
+            traction.ndim != 3
+            or boundary_test_values.ndim != 3
+            or boundary_weights.ndim != 2
+        ):
+            raise ValueError(
+                "boundary fields must have batch, point and test dimensions"
+            )
         if traction.shape[:2] != boundary_test_values.shape[:2]:
             raise ValueError("boundary traction and test values must align")
         if boundary_test_values.shape[0] != stress.shape[0]:
@@ -126,15 +134,22 @@ def weak_equilibrium_residual(
 def _field(value: torch.Tensor, label: str, *, trailing: tuple[int, ...]) -> None:
     if not isinstance(value, torch.Tensor):
         raise TypeError(f"{label} must be a torch.Tensor")
-    if value.layout is not torch.strided or value.dtype not in (torch.float32, torch.float64):
+    if value.layout is not torch.strided or value.dtype not in (
+        torch.float32,
+        torch.float64,
+    ):
         raise ValueError(f"{label} must be a dense floating tensor")
-    if trailing and (value.ndim < len(trailing) or tuple(value.shape[-len(trailing) :]) != trailing):
+    if trailing and (
+        value.ndim < len(trailing) or tuple(value.shape[-len(trailing) :]) != trailing
+    ):
         raise ValueError(f"{label} must end in shape {trailing}")
     if value.numel() == 0 or not bool(torch.isfinite(value).all().item()):
         raise ValueError(f"{label} must be finite and non-empty")
 
 
-def _same_context(left: torch.Tensor, right: torch.Tensor, left_name: str, right_name: str) -> None:
+def _same_context(
+    left: torch.Tensor, right: torch.Tensor, left_name: str, right_name: str
+) -> None:
     if left.dtype != right.dtype or left.device != right.device:
         raise ValueError(f"{left_name} and {right_name} must share dtype and device")
 

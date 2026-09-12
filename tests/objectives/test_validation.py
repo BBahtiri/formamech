@@ -115,7 +115,9 @@ def test_local_term_boundaries_reject_shape_mask_normal_and_context_errors() -> 
     with pytest.raises(TypeError, match="component_mask"):
         dirichlet_residual(displacement, displacement, object(), SCALES)  # type: ignore[arg-type]
     with pytest.raises(ValueError, match="boolean"):
-        dirichlet_residual(displacement, displacement, torch.ones_like(displacement), SCALES)
+        dirichlet_residual(
+            displacement, displacement, torch.ones_like(displacement), SCALES
+        )
     with pytest.raises(ValueError, match="align"):
         dirichlet_residual(
             displacement,
@@ -125,7 +127,10 @@ def test_local_term_boundaries_reject_shape_mask_normal_and_context_errors() -> 
         )
     with pytest.raises(ValueError, match="select"):
         dirichlet_residual(
-            displacement, displacement, torch.zeros_like(displacement, dtype=torch.bool), SCALES
+            displacement,
+            displacement,
+            torch.zeros_like(displacement, dtype=torch.bool),
+            SCALES,
         )
 
     stress = torch.zeros((1, 1, 2, 2), dtype=torch.float64)
@@ -196,9 +201,7 @@ def test_strong_and_kinematic_derivatives_fail_closed_on_detach_and_mismatch() -
             CONVERSION,
         )
     with pytest.raises(ValueError, match="identical shapes"):
-        displacement_gradient(
-            coordinates[:, :1], coordinates, CONVERSION
-        )
+        displacement_gradient(coordinates[:, :1], coordinates, CONVERSION)
     with pytest.raises(ValueError, match="connected"):
         displacement_gradient(torch.ones_like(coordinates), coordinates, CONVERSION)
     with pytest.raises(ValueError, match="vector field"):
@@ -240,9 +243,17 @@ def _call_weak(
     ("field", "replacement", "message"),
     (
         ("test_values", torch.ones((1, 2), dtype=torch.float64), "test_values"),
-        ("volume_weights", torch.ones((1, 2, 1), dtype=torch.float64), "volume_weights"),
+        (
+            "volume_weights",
+            torch.ones((1, 2, 1), dtype=torch.float64),
+            "volume_weights",
+        ),
         ("body_force", torch.zeros((1, 1, 2), dtype=torch.float64), "volume fields"),
-        ("test_gradients", torch.ones((1, 1, 1, 2), dtype=torch.float64), "test_gradients"),
+        (
+            "test_gradients",
+            torch.ones((1, 1, 1, 2), dtype=torch.float64),
+            "test_gradients",
+        ),
         ("volume_weights", torch.ones((1, 1), dtype=torch.float64), "volume_weights"),
     ),
 )
@@ -285,16 +296,27 @@ def test_gate_measurement_mapping_order_is_not_semantic() -> None:
         perturbation_fired_terms=dict(
             reversed(tuple(report.perturbation_fired_terms.items()))
         ),
+        perturbation_recomputed_term_counts=dict(
+            reversed(tuple(report.perturbation_recomputed_term_counts.items()))
+        ),
         finite_difference_relative_errors=dict(
             reversed(tuple(report.finite_difference_relative_errors.items()))
         ),
         detached_terms=(),
         reachable_parameter_names=report.reachable_parameter_names,
         required_parameter_names=report.required_parameter_names,
+        reachability_loss_paths=dict(
+            reversed(tuple(report.reachability_loss_paths.items()))
+        ),
         anisotropy_relative_change=report.anisotropy_relative_change,
         coordinate_anisotropy_mutant_fired=True,
         fem_solve_success=True,
         weak_strong_difference=report.weak_strong_difference,
+        weak_residual_max=report.weak_residual_max,
+        projected_strong_residual_max=report.projected_strong_residual_max,
+        reconstructed_stress_variation=report.reconstructed_stress_variation,
+        weak_strong_fem_request_id=report.weak_strong_fem_request_id,
+        weak_strong_quadrature_point_count=(report.weak_strong_quadrature_point_count),
         s8_discretization_error_bound=report.s8_discretization_error_bound,
         constitutive_residual_shape=(2, 2),
         constitutive_rejects_out_of_plane=True,

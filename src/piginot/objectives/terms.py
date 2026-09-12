@@ -36,9 +36,15 @@ def dirichlet_residual(
     _matching_fields(predicted, prescribed, "Dirichlet displacement", trailing=(2,))
     if not isinstance(component_mask, torch.Tensor):
         raise TypeError("component_mask must be a torch.Tensor")
-    if component_mask.dtype is not torch.bool or component_mask.layout is not torch.strided:
+    if (
+        component_mask.dtype is not torch.bool
+        or component_mask.layout is not torch.strided
+    ):
         raise ValueError("component_mask must be a dense boolean tensor")
-    if component_mask.shape != predicted.shape or component_mask.device != predicted.device:
+    if (
+        component_mask.shape != predicted.shape
+        or component_mask.device != predicted.device
+    ):
         raise ValueError("component_mask must align with predicted displacement")
     if not bool(component_mask.any().item()):
         raise ValueError("component_mask must select at least one Dirichlet component")
@@ -56,7 +62,11 @@ def traction_free_residual(
         raise ValueError("outward_normals must align with served stress points")
     _same_context(served_stress, outward_normals, "served_stress", "outward_normals")
     normal_length = torch.linalg.vector_norm(outward_normals, dim=-1)
-    if not bool(torch.allclose(normal_length, torch.ones_like(normal_length), atol=1e-10, rtol=1e-10)):
+    if not bool(
+        torch.allclose(
+            normal_length, torch.ones_like(normal_length), atol=1e-10, rtol=1e-10
+        )
+    ):
         raise ValueError("outward_normals must be unit vectors")
     traction = torch.einsum("...ij,...j->...i", served_stress, outward_normals)
     return traction / scales.stress_mpa
@@ -68,13 +78,18 @@ def constitutive_residual(
     material: MaterialSpec,
     scales: NondimensionalScales,
 ) -> torch.Tensor:
-    if not isinstance(served_stress, torch.Tensor) or served_stress.shape[-2:] != (2, 2):
+    if not isinstance(served_stress, torch.Tensor) or served_stress.shape[-2:] != (
+        2,
+        2,
+    ):
         raise ValueError("served stress must contain in-plane (2, 2) components only")
     _field(served_stress, "served in-plane stress", trailing=(2, 2))
     _field(displacement_gradient, "displacement_gradient", trailing=(2, 2))
     if served_stress.shape != displacement_gradient.shape:
         raise ValueError("served stress and displacement gradient must align")
-    _same_context(served_stress, displacement_gradient, "served_stress", "displacement_gradient")
+    _same_context(
+        served_stress, displacement_gradient, "served_stress", "displacement_gradient"
+    )
     identity = torch.eye(2, dtype=served_stress.dtype, device=served_stress.device)
     deformation_2d = identity + displacement_gradient
     thickness_stretch = plane_stress_closure(deformation_2d, material)
@@ -98,7 +113,12 @@ def angular_momentum_residual(
     _field(deformation_gradient_2d, "deformation_gradient_2d", trailing=(2, 2))
     if served_stress.shape != deformation_gradient_2d.shape:
         raise ValueError("served stress and deformation gradient must align")
-    _same_context(served_stress, deformation_gradient_2d, "served_stress", "deformation_gradient_2d")
+    _same_context(
+        served_stress,
+        deformation_gradient_2d,
+        "served_stress",
+        "deformation_gradient_2d",
+    )
     moment = served_stress @ deformation_gradient_2d.transpose(-2, -1)
     independent_skew = 0.5 * (moment[..., 0, 1] - moment[..., 1, 0])
     return independent_skew.unsqueeze(-1) / scales.stress_mpa
@@ -121,7 +141,10 @@ def _matching_fields(
 def _field(value: torch.Tensor, label: str, *, trailing: tuple[int, ...]) -> None:
     if not isinstance(value, torch.Tensor):
         raise TypeError(f"{label} must be a torch.Tensor")
-    if value.layout is not torch.strided or value.dtype not in (torch.float32, torch.float64):
+    if value.layout is not torch.strided or value.dtype not in (
+        torch.float32,
+        torch.float64,
+    ):
         raise ValueError(f"{label} must be a dense floating tensor")
     if value.ndim < len(trailing) or tuple(value.shape[-len(trailing) :]) != trailing:
         raise ValueError(f"{label} must end in shape {trailing}")
@@ -129,7 +152,9 @@ def _field(value: torch.Tensor, label: str, *, trailing: tuple[int, ...]) -> Non
         raise ValueError(f"{label} must be finite and non-empty")
 
 
-def _same_context(left: torch.Tensor, right: torch.Tensor, left_name: str, right_name: str) -> None:
+def _same_context(
+    left: torch.Tensor, right: torch.Tensor, left_name: str, right_name: str
+) -> None:
     if left.dtype != right.dtype or left.device != right.device:
         raise ValueError(f"{left_name} and {right_name} must share dtype and device")
 

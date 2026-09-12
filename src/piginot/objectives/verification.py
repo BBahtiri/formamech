@@ -8,19 +8,16 @@ from dataclasses import dataclass
 from functools import lru_cache
 from types import MappingProxyType
 
-import numpy as np
 import torch
 
 from piginot.contracts import (
-    BoundaryConditionSpec,
     CanonicalQuantity,
     MaterialSpec,
     Unit,
 )
 from piginot.doe import EvidenceRole
-from piginot.fem import FemRequest, FemSolverConfig, ScikitFemBackend
-from piginot.fem.mms_runner import verification_execution_profile, verification_material
-from piginot.fem.verification_meshes import unit_square_verification_mesh
+from piginot.fem.mms_runner import verification_material
+from piginot.objectives._weak_strong import run_weak_strong_fem_check
 from piginot.objectives.equilibrium import (
     strong_equilibrium_residual,
     weak_equilibrium_residual,
@@ -30,6 +27,7 @@ from piginot.objectives.models import (
     CoordinateConversion,
     NondimensionalScales,
     ObjectiveMode,
+    ObjectiveRegistry,
     ObjectiveResiduals,
     ObjectiveTerm,
 )
@@ -55,14 +53,20 @@ PHYSICS_TERM_IDS = (
 )
 VERIFIED_GRADIENT_TERM_IDS = ("data_u", "data_P", *PHYSICS_TERM_IDS)
 _REQUIRED_PARAMETER_NAMES = (
-    "geometry_length",
-    "geometry_width",
+    "geometry_axial_extent",
+    "geometry_outer_width",
+    "geometry_inner_width",
     "geometry_transition_radius",
-    "geometry_shape",
     "elastic_modulus",
     "poisson_ratio",
     "load_amplitude",
     "prescribed_displacement",
+)
+VERIFIED_REACHABILITY_LOSS_PATHS = MappingProxyType(
+    {
+        **{name: "physics_objective_total" for name in _REQUIRED_PARAMETER_NAMES[:-1]},
+        _REQUIRED_PARAMETER_NAMES[-1]: "dirichlet",
+    }
 )
 _EXACT_LIMIT = 1.0e-8
 _S8_PATCH_DISCRETIZATION_BOUND = 1.0e-12
@@ -76,14 +80,21 @@ class S12VerificationReport:
 
     exact_max_residuals: Mapping[str, float]
     perturbation_fired_terms: Mapping[str, tuple[str, ...]]
+    perturbation_recomputed_term_counts: Mapping[str, int]
     finite_difference_relative_errors: Mapping[str, float]
     detached_terms: tuple[str, ...]
     reachable_parameter_names: tuple[str, ...]
     required_parameter_names: tuple[str, ...]
+    reachability_loss_paths: Mapping[str, str]
     anisotropy_relative_change: float
     coordinate_anisotropy_mutant_fired: bool
     fem_solve_success: bool
     weak_strong_difference: float
+    weak_residual_max: float
+    projected_strong_residual_max: float
+    reconstructed_stress_variation: float
+    weak_strong_fem_request_id: str
+    weak_strong_quadrature_point_count: int
     s8_discretization_error_bound: float
     constitutive_residual_shape: tuple[int, int]
     constitutive_rejects_out_of_plane: bool
@@ -103,8 +114,18 @@ class S12VerificationReport:
         )
         object.__setattr__(
             self,
+            "perturbation_recomputed_term_counts",
+            MappingProxyType(dict(self.perturbation_recomputed_term_counts)),
+        )
+        object.__setattr__(
+            self,
             "finite_difference_relative_errors",
             MappingProxyType(dict(self.finite_difference_relative_errors)),
+        )
+        object.__setattr__(
+            self,
+            "reachability_loss_paths",
+            MappingProxyType(dict(self.reachability_loss_paths)),
         )
 
 
@@ -113,11 +134,11 @@ def run_s12_verification() -> S12VerificationReport:
     """Run deterministic S12 evidence without training or campaign-role access."""
 
     exact, fixtures = _exact_residuals()
-    perturbed = _perturbation_isolation(exact, fixtures)
+    perturbed, recomputed_counts = _perturbation_isolation(fixtures)
     finite_difference, detached = _finite_difference_checks(fixtures)
-    reachable = _parameter_reachability()
+    reachable, reachability_paths = _parameter_reachability()
     anisotropy, anisotropy_mutant = _anisotropy_check()
-    fem_success, weak_strong = _weak_strong_fem_check()
+    weak_strong = run_weak_strong_fem_check()
     shape, rejects_out_of_plane = _constitutive_shape_check(fixtures)
     holdout_refused, holdout_mutant = _role_isolation_check()
     return S12VerificationReport(
@@ -125,14 +146,21 @@ def run_s12_verification() -> S12VerificationReport:
             name: float(residual.abs().max().item()) for name, residual in exact.items()
         },
         perturbation_fired_terms=perturbed,
+        perturbation_recomputed_term_counts=recomputed_counts,
         finite_difference_relative_errors=finite_difference,
         detached_terms=detached,
         reachable_parameter_names=reachable,
         required_parameter_names=_REQUIRED_PARAMETER_NAMES,
+        reachability_loss_paths=reachability_paths,
         anisotropy_relative_change=anisotropy,
         coordinate_anisotropy_mutant_fired=anisotropy_mutant,
-        fem_solve_success=fem_success,
-        weak_strong_difference=weak_strong,
+        fem_solve_success=weak_strong.fem_solve_success,
+        weak_strong_difference=weak_strong.difference,
+        weak_residual_max=weak_strong.weak_residual_max,
+        projected_strong_residual_max=weak_strong.projected_strong_residual_max,
+        reconstructed_stress_variation=weak_strong.reconstructed_stress_variation,
+        weak_strong_fem_request_id=weak_strong.request_id,
+        weak_strong_quadrature_point_count=weak_strong.quadrature_point_count,
         s8_discretization_error_bound=_S8_PATCH_DISCRETIZATION_BOUND,
         constitutive_residual_shape=shape,
         constitutive_rejects_out_of_plane=rejects_out_of_plane,
@@ -147,67 +175,39 @@ def _exact_residuals() -> tuple[dict[str, torch.Tensor], dict[str, object]]:
     )
     stress = _analytic_stress(coordinates, _CANONICAL_COORDINATES)
     body_force = torch.tensor([[[-5.0, -3.0], [-5.0, -3.0]]], dtype=torch.float64)
-    strong = strong_equilibrium_residual(
-        stress, coordinates, body_force, _SCALES, _CANONICAL_COORDINATES
-    )
-
     weak_arguments = _weak_fixture()
-    weak = _weak_residual(weak_arguments)
     deformation_2d, material_stress = _material_state(verification_material())
     gradient = deformation_2d - torch.eye(2, dtype=torch.float64)
-    constitutive = constitutive_residual(
-        material_stress, gradient, verification_material(), _SCALES
-    )
-    angular = angular_momentum_residual(material_stress, deformation_2d, _SCALES)
     displacement = torch.tensor([[[0.2, -0.1]]], dtype=torch.float64)
     mask = torch.tensor([[[True, True]]])
-    dirichlet = dirichlet_residual(displacement, displacement, mask, _SCALES)
-    free_stress = torch.tensor(
-        [[[[0.0, 0.0], [0.0, 4.0]]]], dtype=torch.float64
-    )
+    free_stress = torch.tensor([[[[0.0, 0.0], [0.0, 4.0]]]], dtype=torch.float64)
     free_normals = torch.tensor([[[1.0, 0.0]]], dtype=torch.float64)
-    traction_free = traction_free_residual(free_stress, free_normals, _SCALES)
-    residuals = {
-        "equilibrium_strong": strong,
-        "equilibrium_weak": weak,
-        "constitutive": constitutive,
-        "angular": angular,
-        "dirichlet": dirichlet,
-        "traction_free": traction_free,
-    }
     fixtures: dict[str, object] = {
-        "coordinates": coordinates,
-        "stress": stress,
-        "body_force": body_force,
-        "weak_arguments": weak_arguments,
-        "deformation_2d": deformation_2d,
-        "material_stress": material_stress,
-        "gradient": gradient,
-        "displacement": displacement,
-        "mask": mask,
-        "free_stress": free_stress,
-        "free_normals": free_normals,
+        "equilibrium_strong": {
+            "coordinates": coordinates,
+            "stress": stress,
+            "body_force": body_force,
+        },
+        "equilibrium_weak": weak_arguments,
+        "constitutive": {
+            "stress": material_stress,
+            "gradient": gradient,
+            "material": verification_material(),
+        },
+        "angular": {"stress": material_stress, "deformation": deformation_2d},
+        "dirichlet": {
+            "predicted": displacement,
+            "prescribed": displacement,
+            "mask": mask,
+        },
+        "traction_free": {"stress": free_stress, "normals": free_normals},
     }
-    return residuals, fixtures
+    return _evaluate_physics_residuals(fixtures), fixtures
 
 
 def _perturbation_isolation(
-    exact: Mapping[str, torch.Tensor], fixtures: Mapping[str, object]
-) -> dict[str, tuple[str, ...]]:
-    perturbed: dict[str, torch.Tensor] = {}
-    coordinates = _tensor(fixtures, "coordinates")
-    stress = _tensor(fixtures, "stress")
-    body_force = _tensor(fixtures, "body_force")
-    perturbed["equilibrium_strong"] = strong_equilibrium_residual(
-        stress,
-        coordinates,
-        body_force + 1.0,
-        _SCALES,
-        _CANONICAL_COORDINATES,
-    )
-    weak_arguments = dict(_mapping(fixtures, "weak_arguments"))
-    weak_arguments["traction"] = -_tensor_from(weak_arguments, "traction")
-    perturbed["equilibrium_weak"] = _weak_residual(weak_arguments)
+    fixtures: Mapping[str, object],
+) -> tuple[dict[str, tuple[str, ...]], dict[str, int]]:
     changed_material = MaterialSpec(
         "s12_perturbed_material",
         "compressible_neo_hookean",
@@ -216,44 +216,86 @@ def _perturbation_isolation(
             "poisson_ratio": CanonicalQuantity(0.3, Unit.ONE),
         },
     )
-    perturbed["constitutive"] = constitutive_residual(
-        _tensor(fixtures, "material_stress"),
-        _tensor(fixtures, "gradient"),
-        changed_material,
-        _SCALES,
-    )
-    angular_stress = _tensor(fixtures, "material_stress").clone()
-    angular_stress[..., 0, 1] += 10.0
-    perturbed["angular"] = angular_momentum_residual(
-        angular_stress, _tensor(fixtures, "deformation_2d"), _SCALES
-    )
-    perturbed["dirichlet"] = dirichlet_residual(
-        _tensor(fixtures, "displacement"),
-        _tensor(fixtures, "displacement") + 0.2,
-        _tensor(fixtures, "mask"),
-        _SCALES,
-    )
-    free_stress = _tensor(fixtures, "free_stress").clone()
-    free_stress[..., 0, 0] += 10.0
-    perturbed["traction_free"] = traction_free_residual(
-        free_stress, _tensor(fixtures, "free_normals"), _SCALES
-    )
-
     fired_by_fixture: dict[str, tuple[str, ...]] = {}
+    recomputed_counts: dict[str, int] = {}
     for expected in PHYSICS_TERM_IDS:
-        candidate = dict(exact)
-        candidate[expected] = perturbed[expected]
+        candidate = {term: dict(_mapping(fixtures, term)) for term in PHYSICS_TERM_IDS}
+        channel = candidate[expected]
+        if expected == "equilibrium_strong":
+            channel["body_force"] = _tensor_from(channel, "body_force") + 1.0
+        elif expected == "equilibrium_weak":
+            channel["traction"] = -_tensor_from(channel, "traction")
+        elif expected == "constitutive":
+            channel["material"] = changed_material
+        elif expected == "angular":
+            channel["stress"] = (
+                _tensor_from(channel, "stress") + 10.0 * _off_diagonal_pattern()
+            )
+        elif expected == "dirichlet":
+            channel["prescribed"] = _tensor_from(channel, "prescribed") + 0.2
+        else:
+            channel["stress"] = _tensor_from(channel, "stress") + torch.tensor(
+                [[[[10.0, 0.0], [0.0, 0.0]]]], dtype=torch.float64
+            )
+        residuals = _evaluate_physics_residuals(candidate)
+        recomputed_counts[expected] = len(residuals)
         fired_by_fixture[expected] = tuple(
             term
             for term in PHYSICS_TERM_IDS
-            if float(candidate[term].abs().max().item()) >= _EXACT_LIMIT
+            if float(residuals[term].abs().max().item()) >= _EXACT_LIMIT
         )
-    return fired_by_fixture
+    return fired_by_fixture, recomputed_counts
+
+
+def _evaluate_physics_residuals(
+    fixtures: Mapping[str, object],
+) -> dict[str, torch.Tensor]:
+    strong = _mapping(fixtures, "equilibrium_strong")
+    constitutive = _mapping(fixtures, "constitutive")
+    material = constitutive["material"]
+    if not isinstance(material, MaterialSpec):
+        raise RuntimeError("constitutive fixture material is invalid")
+    angular = _mapping(fixtures, "angular")
+    dirichlet = _mapping(fixtures, "dirichlet")
+    traction_free = _mapping(fixtures, "traction_free")
+    return {
+        "equilibrium_strong": strong_equilibrium_residual(
+            _tensor_from(strong, "stress"),
+            _tensor_from(strong, "coordinates"),
+            _tensor_from(strong, "body_force"),
+            _SCALES,
+            _CANONICAL_COORDINATES,
+        ),
+        "equilibrium_weak": _weak_residual(_mapping(fixtures, "equilibrium_weak")),
+        "constitutive": constitutive_residual(
+            _tensor_from(constitutive, "stress"),
+            _tensor_from(constitutive, "gradient"),
+            material,
+            _SCALES,
+        ),
+        "angular": angular_momentum_residual(
+            _tensor_from(angular, "stress"),
+            _tensor_from(angular, "deformation"),
+            _SCALES,
+        ),
+        "dirichlet": dirichlet_residual(
+            _tensor_from(dirichlet, "predicted"),
+            _tensor_from(dirichlet, "prescribed"),
+            _tensor_from(dirichlet, "mask"),
+            _SCALES,
+        ),
+        "traction_free": traction_free_residual(
+            _tensor_from(traction_free, "stress"),
+            _tensor_from(traction_free, "normals"),
+            _SCALES,
+        ),
+    }
 
 
 def _finite_difference_checks(
     fixtures: Mapping[str, object],
 ) -> tuple[dict[str, float], tuple[str, ...]]:
+    angular_fixture = _mapping(fixtures, "angular")
     functions: dict[str, Callable[[torch.Tensor], torch.Tensor]] = {
         "data_u": lambda value: supervised_displacement_residual(
             value.expand(1, 1, 2), torch.zeros((1, 1, 2), dtype=torch.float64), _SCALES
@@ -267,9 +309,8 @@ def _finite_difference_checks(
         "equilibrium_weak": _weak_fd_residual,
         "constitutive": _constitutive_fd_residual,
         "angular": lambda value: angular_momentum_residual(
-            _tensor(fixtures, "material_stress")
-            + value * _off_diagonal_pattern(),
-            _tensor(fixtures, "deformation_2d"),
+            _tensor_from(angular_fixture, "stress") + value * _off_diagonal_pattern(),
+            _tensor_from(angular_fixture, "deformation"),
             _SCALES,
         ),
         "dirichlet": lambda value: dirichlet_residual(
@@ -308,7 +349,9 @@ def _finite_difference_error(
     above = residual_function(torch.tensor(0.37 + step, dtype=torch.float64))
     below = residual_function(torch.tensor(0.37 - step, dtype=torch.float64))
     numerical = (above.square().mean() - below.square().mean()) / (2.0 * step)
-    denominator = max(abs(float(gradient.item())), abs(float(numerical.item())), 1.0e-12)
+    denominator = max(
+        abs(float(gradient.item())), abs(float(numerical.item())), 1.0e-12
+    )
     return abs(float(gradient.item() - numerical.item())) / denominator, True
 
 
@@ -352,9 +395,7 @@ def _constitutive_fd_residual(value: torch.Tensor) -> torch.Tensor:
         ),
         dim=-1,
     )
-    gradient = displacement_gradient(
-        displacement, coordinates, _CANONICAL_COORDINATES
-    )
+    gradient = displacement_gradient(displacement, coordinates, _CANONICAL_COORDINATES)
     return constitutive_residual(
         torch.zeros_like(gradient),
         gradient,
@@ -363,7 +404,7 @@ def _constitutive_fd_residual(value: torch.Tensor) -> torch.Tensor:
     )
 
 
-def _parameter_reachability() -> tuple[str, ...]:
+def _parameter_reachability() -> tuple[tuple[str, ...], dict[str, str]]:
     parameter_names = _REQUIRED_PARAMETER_NAMES[:-1]
     with torch.random.fork_rng():
         torch.manual_seed(12001)
@@ -389,7 +430,8 @@ def _parameter_reachability() -> tuple[str, ...]:
         dtype=torch.float64,
     )
     query_xy = torch.tensor(
-        [[[0.2, 0.3], [0.7, 0.4], [0.5, 0.8]]], dtype=torch.float64
+        [[[0.2, 0.3], [0.7, 0.4], [0.5, 0.8]]],
+        dtype=torch.float64,
     )
     parameters = torch.tensor(
         [[0.2, -0.3, 0.4, -0.5, 0.1, -0.2, 0.3]],
@@ -404,28 +446,60 @@ def _parameter_reachability() -> tuple[str, ...]:
         query_xy=query_xy,
         parameters=parameters,
     )
+    displacement_gradient_2d = torch.tensor(
+        [[[[0.03, 0.01], [-0.02, -0.01]]]], dtype=torch.float64
+    ).expand(1, query_xy.shape[1], 2, 2)
+    deformation_2d = displacement_gradient_2d + torch.eye(2, dtype=torch.float64)
+    point_count = query_xy.shape[1]
     residuals = ObjectiveResiduals(
         {
-            ObjectiveTerm.DATA_U: supervised_displacement_residual(
-                output.u,
-                output.u.detach() + 0.13,
+            ObjectiveTerm.EQUILIBRIUM_WEAK: weak_equilibrium_residual(
+                stress=output.P,
+                body_force=torch.zeros_like(output.u),
+                test_values=torch.ones((1, point_count, 1), dtype=torch.float64),
+                test_gradients=torch.tensor(
+                    [[[[1.0, -0.5]], [[-0.2, 0.7]], [[0.4, 0.3]]]],
+                    dtype=torch.float64,
+                ),
+                volume_weights=torch.ones((1, point_count), dtype=torch.float64),
+                scales=_SCALES,
+            ),
+            ObjectiveTerm.CONSTITUTIVE: constitutive_residual(
+                output.P,
+                displacement_gradient_2d,
+                verification_material(),
                 _SCALES,
             ),
-            ObjectiveTerm.DATA_P: supervised_stress_residual(
+            ObjectiveTerm.ANGULAR: angular_momentum_residual(
+                output.P, deformation_2d, _SCALES
+            ),
+            ObjectiveTerm.DIRICHLET: dirichlet_residual(
+                output.u,
+                torch.zeros_like(output.u),
+                torch.ones_like(output.u, dtype=torch.bool),
+                _SCALES,
+            ),
+            ObjectiveTerm.TRACTION_FREE: traction_free_residual(
                 output.P,
-                output.P.detach() - 7.0,
+                torch.tensor(
+                    [[[1.0, 0.0], [0.0, 1.0], [-1.0, 0.0]]],
+                    dtype=torch.float64,
+                ),
                 _SCALES,
             ),
         }
     )
-    loss = default_objective_registry(mode=ObjectiveMode.DATA_ONLY).evaluate(
-        residuals, role=EvidenceRole.PILOT
-    ).total
+    loss = (
+        default_objective_registry(mode=ObjectiveMode.PHYSICS_ONLY)
+        .evaluate(residuals, role=EvidenceRole.PILOT)
+        .total
+    )
     gradient = torch.autograd.grad(loss, parameters)[0][0]
     reachable = [
         name
         for name, derivative in zip(parameter_names, gradient, strict=True)
-        if math.isfinite(float(derivative.item())) and abs(float(derivative.item())) > 1.0e-14
+        if math.isfinite(float(derivative.item()))
+        and abs(float(derivative.item())) > 1.0e-14
     ]
     prescribed = torch.tensor(0.2, dtype=torch.float64, requires_grad=True)
     bc_residual = dirichlet_residual(
@@ -437,7 +511,8 @@ def _parameter_reachability() -> tuple[str, ...]:
     bc_gradient = torch.autograd.grad(bc_residual.square().mean(), prescribed)[0]
     if abs(float(bc_gradient.item())) > 1.0e-14:
         reachable.append(_REQUIRED_PARAMETER_NAMES[-1])
-    return tuple(reachable)
+    paths = dict(VERIFIED_REACHABILITY_LOSS_PATHS)
+    return tuple(reachable), paths
 
 
 def _anisotropy_check() -> tuple[float, bool]:
@@ -494,105 +569,18 @@ def _coordinate_anisotropy_mutant(
             )[0]
             divergence = divergence + gradient[..., column] / conversion.to_mm[0]
         rows.append(divergence)
-    return (torch.stack(tuple(rows), dim=-1) + body_force) / scales.body_force_mpa_per_mm
-
-
-def _weak_strong_fem_check() -> tuple[bool, float]:
-    zero = CanonicalQuantity(0.0, Unit.MM)
-    request = FemRequest(
-        request_id="s12-weak-strong-affine-p2",
-        mesh=unit_square_verification_mesh(2),
-        material=verification_material(),
-        boundary_conditions=(
-            BoundaryConditionSpec("left_x", "left", "dirichlet", ("x",), (zero,)),
-            BoundaryConditionSpec(
-                "right_x",
-                "right",
-                "dirichlet",
-                ("x",),
-                (CanonicalQuantity(0.08, Unit.MM),),
-            ),
-            BoundaryConditionSpec("bottom_y", "bottom", "dirichlet", ("y",), (zero,)),
-            BoundaryConditionSpec(
-                "top_y",
-                "top",
-                "dirichlet",
-                ("y",),
-                (CanonicalQuantity(-0.03, Unit.MM),),
-            ),
-        ),
-        loads=(),
-        qois=(),
-        config=FemSolverConfig(
-            element_order=2,
-            solver_tolerance=1.0e-11,
-            max_newton_iterations=24,
-            plane_stress_max_iterations=32,
-            load_steps=4,
-        ),
-        execution_profile=verification_execution_profile(),
-    )
-    attempt = ScikitFemBackend().solve_many((request,))[0]
-    if not attempt.success or attempt.result is None:
-        return False, math.inf
-    result = attempt.result
-    points = torch.tensor(
-        np.asarray(result.quadrature_points).reshape(1, -1, 2), dtype=torch.float64
-    )
-    weights = torch.tensor(
-        np.asarray(result.quadrature_weights).reshape(1, -1), dtype=torch.float64
-    )
-    stress = torch.tensor(
-        np.asarray(result.first_piola_stress)[..., :2, :2].reshape(1, -1, 2, 2),
-        dtype=torch.float64,
-    )
-    x_coordinate = points[..., 0]
-    y_coordinate = points[..., 1]
-    test_values = (
-        x_coordinate
-        * (1.0 - x_coordinate)
-        * y_coordinate
-        * (1.0 - y_coordinate)
-    ).unsqueeze(-1)
-    gradients = torch.stack(
-        (
-            (1.0 - 2.0 * x_coordinate) * y_coordinate * (1.0 - y_coordinate),
-            x_coordinate * (1.0 - x_coordinate) * (1.0 - 2.0 * y_coordinate),
-        ),
-        dim=-1,
-    ).unsqueeze(-2)
-    fem_scales = NondimensionalScales(1.0, 0.08, 100.0)
-    weak = weak_equilibrium_residual(
-        stress=stress,
-        body_force=torch.zeros_like(points),
-        test_values=test_values,
-        test_gradients=gradients,
-        volume_weights=weights,
-        scales=fem_scales,
-    )
-    strong_coordinates = points.detach().clone().requires_grad_(True)
-    constant_stress = stress.mean(dim=1, keepdim=True).expand_as(stress)
-    connected_stress = constant_stress + strong_coordinates[..., 0, None, None] * 0.0
-    strong = strong_equilibrium_residual(
-        connected_stress,
-        strong_coordinates,
-        torch.zeros_like(strong_coordinates),
-        fem_scales,
-        _CANONICAL_COORDINATES,
-    )
-    projected_strong = torch.einsum(
-        "bqi,bqa,bq->bai", strong, test_values, weights
-    ) / fem_scales.length_mm**2
-    difference = float((weak + projected_strong).abs().max().item())
-    return True, difference
+    return (
+        torch.stack(tuple(rows), dim=-1) + body_force
+    ) / scales.body_force_mpa_per_mm
 
 
 def _constitutive_shape_check(
     fixtures: Mapping[str, object],
 ) -> tuple[tuple[int, int], bool]:
+    constitutive_fixture = _mapping(fixtures, "constitutive")
     residual = constitutive_residual(
-        _tensor(fixtures, "material_stress"),
-        _tensor(fixtures, "gradient"),
+        _tensor_from(constitutive_fixture, "stress"),
+        _tensor_from(constitutive_fixture, "gradient"),
         verification_material(),
         _SCALES,
     )
@@ -600,7 +588,7 @@ def _constitutive_shape_check(
     try:
         constitutive_residual(
             torch.zeros((1, 1, 3, 3), dtype=torch.float64),
-            _tensor(fixtures, "gradient"),
+            _tensor_from(constitutive_fixture, "gradient"),
             verification_material(),
             _SCALES,
         )
@@ -622,18 +610,39 @@ def _role_isolation_check() -> tuple[bool, bool]:
         registry.evaluate(residuals, role=EvidenceRole.HOLDOUT)
     except PermissionError:
         refused = True
-    mutant_total = sum(
-        float(residuals.values[term].square().mean().item())
-        for term in registry.required_terms
+    authorized = registry.evaluate(residuals, role=EvidenceRole.PILOT)
+    mutant_total = _holdout_access_mutant(
+        registry, residuals, role=EvidenceRole.HOLDOUT
     )
-    return refused, refused and mutant_total > 0.0
+    mutant_matches_reducer = torch.equal(mutant_total, authorized.total)
+    return refused, refused and mutant_matches_reducer
+
+
+def _holdout_access_mutant(
+    registry: ObjectiveRegistry,
+    residuals: ObjectiveResiduals,
+    *,
+    role: EvidenceRole,
+) -> torch.Tensor:
+    """Negative control identical to reduction except for the deleted role guard."""
+
+    if type(registry) is not ObjectiveRegistry:
+        raise TypeError("mutant registry must be an exact ObjectiveRegistry")
+    if type(residuals) is not ObjectiveResiduals:
+        raise TypeError("mutant residuals must be exact ObjectiveResiduals")
+    if role is not EvidenceRole.HOLDOUT:
+        raise ValueError("mutant must exercise the HOLDOUT role")
+    return torch.stack(
+        tuple(
+            residuals.values[term].square().mean() * registry.term_weights[term]
+            for term in registry.required_terms
+        )
+    ).sum()
 
 
 def _weak_fixture() -> dict[str, torch.Tensor]:
     return {
-        "stress": torch.tensor(
-            [[[[2.0, 1.0], [3.0, 4.0]]]], dtype=torch.float64
-        ),
+        "stress": torch.tensor([[[[2.0, 1.0], [3.0, 4.0]]]], dtype=torch.float64),
         "body_force": torch.zeros((1, 1, 2), dtype=torch.float64),
         "test_values": torch.ones((1, 1, 1), dtype=torch.float64),
         "test_gradients": torch.tensor([[[[1.0, 0.0]]]], dtype=torch.float64),
@@ -687,9 +696,7 @@ def _analytic_stress(
 
 
 def _off_diagonal_pattern() -> torch.Tensor:
-    return torch.tensor(
-        [[[[0.0, 1.0], [0.0, 0.0]]]], dtype=torch.float64
-    )
+    return torch.tensor([[[[0.0, 1.0], [0.0, 0.0]]]], dtype=torch.float64)
 
 
 def _relative_change(reference: torch.Tensor, candidate: torch.Tensor) -> float:
@@ -717,6 +724,7 @@ def _tensor_from(values: Mapping[str, object], name: str) -> torch.Tensor:
 
 __all__ = (
     "PHYSICS_TERM_IDS",
+    "VERIFIED_REACHABILITY_LOSS_PATHS",
     "VERIFIED_GRADIENT_TERM_IDS",
     "S12VerificationReport",
     "run_s12_verification",

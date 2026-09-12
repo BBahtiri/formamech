@@ -23,10 +23,15 @@ def displacement_gradient(
     _vector_field(coordinates, "coordinates")
     if displacement.shape != coordinates.shape:
         raise ValueError("displacement and coordinates must have identical shapes")
-    if displacement.dtype != coordinates.dtype or displacement.device != coordinates.device:
+    if (
+        displacement.dtype != coordinates.dtype
+        or displacement.device != coordinates.device
+    ):
         raise ValueError("displacement and coordinates must share dtype and device")
     if not coordinates.requires_grad:
-        raise ValueError("coordinates must require gradients for displacement kinematics")
+        raise ValueError(
+            "coordinates must require gradients for displacement kinematics"
+        )
     rows: list[torch.Tensor] = []
     for component in range(2):
         value = displacement[..., component]
@@ -40,9 +45,7 @@ def displacement_gradient(
             retain_graph=True,
             allow_unused=False,
         )[0]
-        rows.append(
-            gradient / coordinates.new_tensor(conversion.to_mm)
-        )
+        rows.append(gradient / coordinates.new_tensor(conversion.to_mm))
     return torch.stack(tuple(rows), dim=-2)
 
 

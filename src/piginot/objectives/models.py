@@ -87,7 +87,9 @@ class CoordinateConversion:
             or float(value) <= 0.0
             for value in self.to_mm
         ):
-            raise ValueError("coordinate conversion factors must be positive and finite")
+            raise ValueError(
+                "coordinate conversion factors must be positive and finite"
+            )
         object.__setattr__(self, "to_mm", converted)
 
 

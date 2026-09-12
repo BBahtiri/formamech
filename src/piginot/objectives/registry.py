@@ -44,7 +44,9 @@ def evaluate_objective(
         raise PermissionError(f"{role.value} evidence cannot enter an objective")
     if type(residuals) is not ObjectiveResiduals:
         raise TypeError("residuals must be exact ObjectiveResiduals")
-    missing = tuple(term for term in registry.required_terms if term not in residuals.values)
+    missing = tuple(
+        term for term in registry.required_terms if term not in residuals.values
+    )
     if missing:
         raise ValueError(
             "missing required objective residual: "
