@@ -133,10 +133,24 @@ TRAIN-screen cases, not HOLDOUT, and its registered fallback kept DEVELOPMENT
 unopened. Candidate C materially improved all stress metrics but exceeded the 2%
 displacement-regression guardrail, so the baseline remains authoritative for S12.
 The independent `P_predicted` head is the sole served-stress path; its constitutive,
-angular and traction-free consistency remains an S12 responsibility. Hard distance
-lifting is unavailable without separate full-range refinement evidence. The
-safetensors loader rejects pickle and validates metadata, schema and exact byte
-layout before materialization, but it does not authenticate learned tensor values.
+angular and traction-free terms are now registered by S12, subject to the finite
+verification scope below. Hard distance lifting is unavailable without separate
+full-range refinement evidence. The safetensors loader rejects pickle and validates
+metadata, schema and exact byte layout before materialization, but it does not
+authenticate learned tensor values.
+
+[S12](adr/0013-s12-objective-registry.md) fixes the nondimensional objective
+registry, and G12 is PASS on finite fixtures. Its perturbation checks use
+channel-isolated analytic residual fixtures rather than one coupled physical state,
+and its parameter reachability evidence is a single deterministic probe, not a
+guarantee of useful sensitivity after training. Constant spatial fields in
+derivative-based checks must remain graph-connected as `0 * X + c`; detached
+constants are outside the verified contract. The weak/strong check establishes
+same-field integration-by-parts consistency on one recovered P2
+manufactured-solution (MMS) field with one interior bubble test function. It proves
+neither equilibrium of the recovered stress nor `1e-12` FEM discretization error.
+S12 opened neither DEVELOPMENT nor HOLDOUT, ran no production training, and created
+no checkpoint.
 
 The S10 production run recorded zero natural FEM failures. Failed-case visibility is
 therefore exercised by one explicitly non-production canary through the same role

@@ -2,12 +2,15 @@
 
 PI-GINOT is an early-stage open-source project for verified, problem-specific
 physics-informed neural operators in 2D finite-strain elasticity. The repository
-currently implements the S2 contract layer through the verified S10 DogBone dataset
-and S11 PI-GINOT operator architecture. The mandatory pre-S12 architecture screen
-trained four diagnostic candidates under a fixed TRAIN-only protocol and formally
-fell back to the S11 baseline; it did not open DEVELOPMENT or create a production
-checkpoint. S12 objective and gradient verification is next. The project does not
-yet certify or serve a trained neural operator. Read the
+currently implements the S2 contract layer through the verified S10 DogBone dataset,
+S11 PI-GINOT operator architecture, and
+[S12 nondimensional objective registry](docs/adr/0013-s12-objective-registry.md).
+The mandatory pre-S12 architecture screen trained four diagnostic candidates under
+a fixed TRAIN-only protocol and formally fell back to the S11 baseline. S12 is now
+complete and G12 is PASS: 89 focused tests pass with 92.99% branch coverage, while
+the full suite records 1,928 passed and 2 skipped. S13 deterministic production
+training is next. The project does not yet certify or serve a trained neural
+operator. Read the
 [project limitations](docs/limitations.md) before using its numerical results.
 
 ## Requirements

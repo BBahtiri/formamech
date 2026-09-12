@@ -11,12 +11,18 @@ leakage, replacement, and holdout-commitment contracts, and
 [fail-closed S10 dataset contracts](adr/0011-s10-dataset-trust-boundaries.md) for
 public request plans, snapshots, extraction, collocation, projection and
 normalization, and the
-[fixed S11 PI-GINOT operator architecture](adr/0012-s11-operator-architecture.md).
+[fixed S11 PI-GINOT operator architecture](adr/0012-s11-operator-architecture.md),
+followed by the
+[S12 nondimensional objective registry](adr/0013-s12-objective-registry.md).
 The first public production DogBone dataset contains 344 successful FEM cases and
 88,064 deterministic collocation points. All nine structural G11 checks pass. The
 mandatory pre-S12 architecture contingency trained four diagnostic candidates and
 then fell back to the S11 baseline under its preregistered guardrails; DEVELOPMENT
-remained unopened. That contingency is now discharged, so S12 objective and
-gradient verification is the next step. No production checkpoint is claimed.
+remained unopened. That contingency is now discharged, S12 is complete, and all
+nine G12 objective and gradient-verification checks pass. The focused S12 suite
+records 89 passed with 92.99% branch coverage; the full suite records 1,928 passed
+and 2 skipped. S13 deterministic production training on the public S10 dataset with
+the S11 baseline architecture is next. S12 opened neither DEVELOPMENT nor HOLDOUT
+and created no training run or production checkpoint.
 
 Read the [limitations](limitations.md) before relying on future numerical results.

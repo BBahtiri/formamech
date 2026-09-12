@@ -37,7 +37,7 @@ def _payload() -> dict[str, object]:
     return s12_gate_payload(run_s12_verification(), **_payload_kwargs())
 
 
-def _payload_kwargs() -> dict[str, object]:
+def _payload_kwargs() -> dict[str, Any]:
     return {
         "code_coverage_percent": 93.83,
         "implementation_source_revision": _REVISION,
@@ -53,7 +53,7 @@ def _measurements(payload: dict[str, object]) -> S12GateMeasurements:
     values = payload["measurements"]
     assert isinstance(values, dict)
     return S12GateMeasurements(
-        exact_max_residuals=values["exact_max_residuals"],  # type: ignore[arg-type]
+        exact_max_residuals=values["exact_max_residuals"],
         perturbation_fired_terms={
             name: tuple(fired)
             for name, fired in cast(
@@ -62,8 +62,8 @@ def _measurements(payload: dict[str, object]) -> S12GateMeasurements:
         },
         perturbation_recomputed_term_counts=values[
             "perturbation_recomputed_term_counts"
-        ],  # type: ignore[arg-type]
-        finite_difference_relative_errors=values["finite_difference_relative_errors"],  # type: ignore[arg-type]
+        ],
+        finite_difference_relative_errors=values["finite_difference_relative_errors"],
         detached_terms=tuple(cast(list[str], values["detached_terms"])),
         reachable_parameter_names=tuple(
             cast(list[str], values["reachable_parameter_names"])
@@ -71,7 +71,7 @@ def _measurements(payload: dict[str, object]) -> S12GateMeasurements:
         required_parameter_names=tuple(
             cast(list[str], values["required_parameter_names"])
         ),
-        reachability_loss_paths=values["reachability_loss_paths"],  # type: ignore[arg-type]
+        reachability_loss_paths=values["reachability_loss_paths"],
         anisotropy_relative_change=cast(float, values["anisotropy_relative_change"]),
         coordinate_anisotropy_mutant_fired=cast(
             bool, values["coordinate_anisotropy_mutant_fired"]
@@ -249,19 +249,19 @@ def test_s12_gate_payload_rejects_malformed_closeout_inputs(
     kwargs.update(changes)
 
     with pytest.raises(ValueError, match=match):
-        s12_gate_payload(run_s12_verification(), **kwargs)  # type: ignore[arg-type]
+        s12_gate_payload(run_s12_verification(), **kwargs)
 
 
 def test_s12_closeout_refuses_to_publish_a_nonpassing_gate() -> None:
     failing = replace(run_s12_verification(), weak_residual_max=0.0)
 
     with pytest.raises(RuntimeError, match="G12 gate is not PASS"):
-        s12_gate_payload(failing, **_payload_kwargs())  # type: ignore[arg-type]
+        s12_gate_payload(failing, **_payload_kwargs())
 
 
 def _json_value(value: object) -> object:
     if isinstance(value, dict) or hasattr(value, "items"):
-        return {str(key): _json_value(item) for key, item in value.items()}  # type: ignore[union-attr]
+        return {str(key): _json_value(item) for key, item in value.items()}
     if isinstance(value, tuple):
         return [_json_value(item) for item in value]
     return value
