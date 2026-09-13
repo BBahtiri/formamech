@@ -31,6 +31,7 @@ from campaigns.dogbone_v1.ceremony import (
 from piginot.contracts import canonical_json_bytes, hash_spec
 from piginot.doe import EvidenceRole
 from piginot.doe.design import generate_coupled_design
+from tests.git_helpers import run_git
 
 _CREATED_UTC = "2026-08-31T00:00:00Z"
 _TEST_SECRET_DRAWS = (
@@ -52,14 +53,7 @@ def ceremony() -> S9Ceremony:
 def _initialize_ignored_repo(repo_root: Path) -> None:
     repo_root.mkdir(parents=True)
     (repo_root / ".gitignore").write_text(".piginot-private/\n", encoding="ascii")
-    import subprocess
-
-    subprocess.run(
-        ["git", "init", "--quiet", str(repo_root)],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
+    run_git(repo_root, "init", "--quiet")
 
 
 def _backup_path(tmp_path: Path) -> Path:
@@ -395,17 +389,16 @@ def test_private_writer_restricts_empty_files_before_writing_secret_bytes(
 def test_private_writer_refuses_when_primary_is_not_git_ignored(
     ceremony: S9Ceremony,
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    hook_repo = tmp_path / "hook-repository"
+    hook_repo.mkdir()
+    run_git(hook_repo, "init", "--quiet")
+    monkeypatch.setenv("GIT_DIR", str((hook_repo / ".git").resolve()))
+    monkeypatch.setenv("GIT_WORK_TREE", str(hook_repo.resolve()))
     repo_root = tmp_path / "repo"
     repo_root.mkdir()
-    import subprocess
-
-    subprocess.run(
-        ["git", "init", "--quiet", str(repo_root)],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
+    run_git(repo_root, "init", "--quiet")
 
     with pytest.raises(ValueError, match="must be ignored by Git"):
         write_private_reveal(

@@ -70,6 +70,7 @@ from piginot.datasets import (
 from piginot.doe import CPEnvelope, EvidenceRole, PublishedCaseManifest
 from piginot.doe.publication import PublishedCaseStatus
 from piginot.fem import FemAttempt, FemFailureCode
+from piginot.git_environment import isolated_git_environment
 from piginot.store import ObjectStore
 
 _RUN_LEDGER_NAME = "ledger.json"
@@ -703,6 +704,7 @@ def _clean_source_revision() -> str:
     status = subprocess.run(
         ("git", "status", "--porcelain"),
         cwd=repository_root,
+        env=isolated_git_environment(),
         check=True,
         capture_output=True,
         text=True,
@@ -712,6 +714,7 @@ def _clean_source_revision() -> str:
     revision = subprocess.run(
         ("git", "rev-parse", "HEAD"),
         cwd=repository_root,
+        env=isolated_git_environment(),
         check=True,
         capture_output=True,
         text=True,

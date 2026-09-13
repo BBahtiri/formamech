@@ -42,6 +42,7 @@ from piginot.fem import (
     FemResult,
     ScikitFemBackend,
 )
+from piginot.git_environment import isolated_git_environment
 from piginot.store import ObjectStore
 
 RUN_ID = "dogbone-s10-public-production-v1"
@@ -1029,6 +1030,7 @@ def _git_source_revision() -> str:
         completed = subprocess.run(
             ("git", "rev-parse", "HEAD"),
             cwd=repository_root,
+            env=isolated_git_environment(),
             check=True,
             capture_output=True,
             text=True,
@@ -1190,6 +1192,7 @@ def _assert_clean_source_revision() -> str:
         completed = subprocess.run(
             ("git", "status", "--porcelain", "--untracked-files=all"),
             cwd=repository_root,
+            env=isolated_git_environment(),
             check=True,
             capture_output=True,
             text=True,

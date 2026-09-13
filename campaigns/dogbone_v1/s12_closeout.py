@@ -15,6 +15,7 @@ from typing import Any, cast
 import rfc8785
 
 from piginot.contracts import strict_json_loads
+from piginot.git_environment import isolated_git_environment
 from piginot.objectives import (
     GateStatus,
     S12GateMeasurements,
@@ -534,6 +535,7 @@ def _clean_source_revision() -> str:
     status = subprocess.run(
         ("git", "status", "--porcelain"),
         cwd=repository_root,
+        env=isolated_git_environment(),
         check=True,
         capture_output=True,
         text=True,
@@ -543,6 +545,7 @@ def _clean_source_revision() -> str:
     revision = subprocess.run(
         ("git", "rev-parse", "HEAD"),
         cwd=repository_root,
+        env=isolated_git_environment(),
         check=True,
         capture_output=True,
         text=True,
@@ -555,6 +558,7 @@ def _current_branch() -> str:
     branch = subprocess.run(
         ("git", "rev-parse", "--abbrev-ref", "HEAD"),
         cwd=repository_root,
+        env=isolated_git_environment(),
         check=True,
         capture_output=True,
         text=True,

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-import subprocess
 from pathlib import Path
 
 import pytest
@@ -18,17 +17,7 @@ from piginot.doe.provenance import (
     verify_live_pre_artifact_order,
 )
 from piginot.doe.roles import EvidenceRole
-
-
-def _git(repo: Path, *args: str) -> str:
-    completed = subprocess.run(
-        ["git", *args],
-        cwd=repo,
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    return completed.stdout.strip()
+from tests.git_helpers import run_git as _git
 
 
 def _write(path: Path, text: str) -> None:
@@ -51,6 +40,25 @@ def _commit(repo: Path, path: str, text: str, message: str) -> str:
     _git(repo, "add", "--", path)
     _git(repo, "commit", "-m", message)
     return _git(repo, "rev-parse", "HEAD")
+
+
+def test_git_probe_ignores_inherited_repository_bindings(
+    git_repo: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _commit(git_repo, "tracked.txt", "target", "target fixture")
+    hook_repo = tmp_path / "hook-repository"
+    hook_repo.mkdir()
+    _git(hook_repo, "init", "--quiet")
+    monkeypatch.setenv("GIT_DIR", str((hook_repo / ".git").resolve()))
+    monkeypatch.setenv("GIT_WORK_TREE", str(hook_repo.resolve()))
+
+    evidence = GitProbe(git_repo).inspect("tracked.txt")
+
+    assert evidence.exists is True
+    assert evidence.tracked is True
+    assert evidence.clean is True
 
 
 def _set_mtime(path: Path, nanoseconds: int) -> None:

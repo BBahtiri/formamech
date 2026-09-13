@@ -11,6 +11,7 @@ from typing import ClassVar
 
 from piginot.contracts import canonical_json_bytes, strict_json_loads
 from piginot.doe.roles import EvidenceRole
+from piginot.git_environment import isolated_git_environment
 
 _LIVE_EVIDENCE_SCHEMA = "piginot.s9.live-commitment-order-v1"
 _DECIMAL_INTEGER = re.compile(r"^(?:0|[1-9][0-9]*)$")
@@ -290,6 +291,7 @@ class GitProbe:
         completed = subprocess.run(
             ["git", *arguments],
             cwd=self._root,
+            env=isolated_git_environment(),
             check=False,
             capture_output=True,
             text=True,

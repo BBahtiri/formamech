@@ -20,6 +20,7 @@ from campaigns.dogbone_v1.s11_contingency_execute import (
 )
 from campaigns.dogbone_v1.s11_contingency_run import load_committed_protocol
 from campaigns.dogbone_v1.s11_contingency_source import open_selective_s10_source
+from piginot.git_environment import isolated_git_environment
 
 _REVISION_PATTERN = re.compile(r"[0-9a-f]{40}")
 Progress = Callable[[str], None]
@@ -137,6 +138,7 @@ def _git(root: Path, *arguments: str) -> str:
     completed = subprocess.run(
         ("git", *arguments),
         cwd=root,
+        env=isolated_git_environment(),
         check=False,
         capture_output=True,
         text=True,

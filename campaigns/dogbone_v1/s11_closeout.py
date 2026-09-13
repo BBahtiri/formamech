@@ -20,6 +20,7 @@ from campaigns.dogbone_v1.s11_evidence import (
     evidence_payload,
     run_dogbone_s11_evidence,
 )
+from piginot.git_environment import isolated_git_environment
 
 _REVISION_PATTERN = re.compile(r"[0-9a-f]{40}")
 _UPSTREAM_MODEL_FILES = (
@@ -169,6 +170,7 @@ def _clean_source_revision() -> str:
     status = subprocess.run(
         ("git", "status", "--porcelain"),
         cwd=repository_root,
+        env=isolated_git_environment(),
         check=True,
         capture_output=True,
         text=True,
@@ -178,6 +180,7 @@ def _clean_source_revision() -> str:
     revision = subprocess.run(
         ("git", "rev-parse", "HEAD"),
         cwd=repository_root,
+        env=isolated_git_environment(),
         check=True,
         capture_output=True,
         text=True,
@@ -190,6 +193,7 @@ def _current_branch() -> str:
     branch = subprocess.run(
         ("git", "rev-parse", "--abbrev-ref", "HEAD"),
         cwd=repository_root,
+        env=isolated_git_environment(),
         check=True,
         capture_output=True,
         text=True,

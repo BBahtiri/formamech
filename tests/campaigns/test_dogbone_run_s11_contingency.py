@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import subprocess
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -9,20 +8,9 @@ import pytest
 import campaigns.dogbone_v1.run_s11_contingency as runner
 from campaigns.dogbone_v1.s11_contingency_artifacts import RUN_RESERVATION_NAME
 from campaigns.dogbone_v1.s11_contingency_run import load_committed_protocol
+from tests.git_helpers import run_git as _git
 
 _REVISION = "1" * 40
-
-
-def _git(repo: Path, *arguments: str) -> str:
-    completed = subprocess.run(
-        ("git", *arguments),
-        cwd=repo,
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    return completed.stdout.strip()
-
 
 def _repository(tmp_path: Path) -> tuple[Path, str]:
     repo = tmp_path / "repo"
@@ -38,7 +26,13 @@ def _repository(tmp_path: Path) -> tuple[Path, str]:
 
 def test_verified_clean_head_accepts_only_the_exact_clean_revision(
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    hook_repo = tmp_path / "hook-repository"
+    hook_repo.mkdir()
+    _git(hook_repo, "init", "--quiet")
+    monkeypatch.setenv("GIT_DIR", str((hook_repo / ".git").resolve()))
+    monkeypatch.setenv("GIT_WORK_TREE", str(hook_repo.resolve()))
     repo, revision = _repository(tmp_path)
 
     assert runner.verified_clean_head(repo, revision) == revision

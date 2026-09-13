@@ -42,6 +42,7 @@ from piginot.doe.secret_material import (
     CampaignSecrets,
     generate_campaign_secrets,
 )
+from piginot.git_environment import isolated_git_environment
 
 PUBLIC_ARTIFACT_ROOT = Path("artifacts/campaigns/dogbone-v1")
 CP_ENVELOPE_PATH = PUBLIC_ARTIFACT_ROOT / "CP-ENVELOPE.json"
@@ -343,6 +344,7 @@ def _resolved_private_paths(
             "--",
             PRIVATE_REVEAL_PATH.as_posix(),
         ],
+        env=isolated_git_environment(),
         check=False,
         capture_output=True,
         text=True,
