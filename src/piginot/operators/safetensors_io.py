@@ -99,12 +99,12 @@ def load_operator_state_dict(
     }
     header = _preflight_header(path, schema, expected_metadata)
     try:
-        safetensors_torch = import_module("safetensors.torch")
+        safetensors_module = import_module("safetensors.torch")
     except ModuleNotFoundError as exc:
         raise RuntimeError("install piginot[ml] to load operator weights") from exc
     load_file = cast(
         Callable[..., dict[str, torch.Tensor]],
-        safetensors_torch.load_file,
+        safetensors_module.load_file,
     )
     loaded = load_file(str(Path(path)), device="cpu")
     _validate_materialized(loaded, schema)
