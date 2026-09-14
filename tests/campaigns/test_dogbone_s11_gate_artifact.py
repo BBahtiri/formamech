@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import copy
 import hashlib
+import math
 from pathlib import Path
 from typing import Any, cast
 
@@ -42,6 +44,18 @@ _FORBIDDEN_SCOPE_TERMS = (
     b"torch.load",
     b"pickle.load",
 )
+_KERNEL_ZERO_TOLERANCE = 1.0e-12
+_KERNEL_RELATIVE_TOLERANCE = 1.0e-6
+_KERNEL_ZERO_METRICS = (
+    "permutation_max_relative_change",
+    "node_order_relative_change",
+    "query_batch_relative_change",
+    "mask_control_relative_change",
+)
+_KERNEL_NONZERO_METRICS = (
+    "resampling_relative_change",
+    "mask_mutant_relative_change",
+)
 
 
 def _document(path: Path) -> dict[str, object]:
@@ -59,6 +73,74 @@ def _measurements(gate: dict[str, object]) -> S11GateMeasurements:
     measurements = gate["measurements"]
     assert isinstance(measurements, dict)
     return S11GateMeasurements(**measurements)
+
+
+def _kernel_metrics(payload: dict[str, object]) -> dict[str, float]:
+    measurements = cast(dict[str, object], payload["measurements"])
+    diagnostics = cast(dict[str, object], payload["diagnostics"])
+    return {
+        "permutation_max_relative_change": float(
+            measurements["permutation_max_relative_change"]
+        ),
+        "resampling_relative_change": float(measurements["resampling_relative_change"]),
+        "node_order_relative_change": float(measurements["node_order_relative_change"]),
+        "query_batch_relative_change": float(
+            measurements["query_batch_relative_change"]
+        ),
+        "mask_control_relative_change": float(
+            diagnostics["mask_control_relative_change"]
+        ),
+        "mask_mutant_relative_change": float(
+            diagnostics["mask_mutant_relative_change"]
+        ),
+    }
+
+
+def _assert_check_metrics_match_measurements(payload: dict[str, object]) -> None:
+    measurements = cast(dict[str, object], payload["measurements"])
+    checks = cast(list[dict[str, object]], payload["checks"])
+    by_id = {str(check["id"]): check for check in checks}
+    permutation = cast(dict[str, object], by_id["G11.permutation"]["measured"])
+    resampling = cast(dict[str, object], by_id["G11.resampling"]["measured"])
+
+    assert (
+        permutation["max_relative_change"]
+        == measurements["permutation_max_relative_change"]
+    )
+    assert resampling["relative_change"] == measurements["resampling_relative_change"]
+    assert (
+        by_id["G11.node-order"]["measured"]
+        == measurements["node_order_relative_change"]
+    )
+    assert (
+        by_id["G11.query-batch"]["measured"]
+        == measurements["query_batch_relative_change"]
+    )
+
+
+def _without_kernel_metrics(payload: dict[str, object]) -> dict[str, object]:
+    normalized = copy.deepcopy(payload)
+    measurements = cast(dict[str, object], normalized["measurements"])
+    diagnostics = cast(dict[str, object], normalized["diagnostics"])
+    for key in (
+        "permutation_max_relative_change",
+        "resampling_relative_change",
+        "node_order_relative_change",
+        "query_batch_relative_change",
+    ):
+        measurements[key] = 0.0
+    diagnostics["mask_control_relative_change"] = 0.0
+    diagnostics["mask_mutant_relative_change"] = 0.0
+
+    checks = cast(list[dict[str, object]], normalized["checks"])
+    by_id = {str(check["id"]): check for check in checks}
+    permutation = cast(dict[str, object], by_id["G11.permutation"]["measured"])
+    permutation["max_relative_change"] = 0.0
+    resampling = cast(dict[str, object], by_id["G11.resampling"]["measured"])
+    resampling["relative_change"] = 0.0
+    by_id["G11.node-order"]["measured"] = 0.0
+    by_id["G11.query-batch"]["measured"] = 0.0
+    return normalized
 
 
 def test_s11_gate_artifact_reduces_all_required_checks_to_pass() -> None:
@@ -136,7 +218,7 @@ def test_s11_gate_artifact_binds_the_architecture_and_upstream_scope() -> None:
     assert any("one normalized parameter probe" in item for item in limitations)
 
 
-def test_s11_gate_artifact_exactly_matches_the_committed_generator() -> None:
+def test_s11_gate_artifact_matches_the_generator_across_numeric_kernels() -> None:
     gate = _document(_GATE_PATH)
     implementation_evidence = gate["implementation_evidence"]
     assert isinstance(implementation_evidence, dict)
@@ -148,7 +230,24 @@ def test_s11_gate_artifact_exactly_matches_the_committed_generator() -> None:
         focused_test_result=str(implementation_evidence["focused_test_result"]),
     )
 
-    assert rfc8785.dumps(cast(Any, expected)) == _GATE_PATH.read_bytes()
+    recorded_metrics = _kernel_metrics(gate)
+    generated_metrics = _kernel_metrics(expected)
+    _assert_check_metrics_match_measurements(gate)
+    _assert_check_metrics_match_measurements(expected)
+    for metric in _KERNEL_ZERO_METRICS:
+        assert abs(recorded_metrics[metric]) <= _KERNEL_ZERO_TOLERANCE
+        assert abs(generated_metrics[metric]) <= _KERNEL_ZERO_TOLERANCE
+    for metric in _KERNEL_NONZERO_METRICS:
+        assert math.isclose(
+            recorded_metrics[metric],
+            generated_metrics[metric],
+            rel_tol=_KERNEL_RELATIVE_TOLERANCE,
+            abs_tol=_KERNEL_ZERO_TOLERANCE,
+        )
+
+    assert rfc8785.dumps(cast(Any, _without_kernel_metrics(expected))) == rfc8785.dumps(
+        cast(Any, _without_kernel_metrics(gate))
+    )
 
 
 def test_s11_gate_artifact_contains_no_private_or_training_payloads() -> None:
