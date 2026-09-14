@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
+from importlib import import_module
 from math import prod
 from pathlib import Path
+from typing import cast
 
 import torch
 from torch import nn
@@ -97,9 +99,13 @@ def load_operator_state_dict(
     }
     header = _preflight_header(path, schema, expected_metadata)
     try:
-        from safetensors.torch import load_file
+        safetensors_torch = import_module("safetensors.torch")
     except ModuleNotFoundError as exc:
         raise RuntimeError("install piginot[ml] to load operator weights") from exc
+    load_file = cast(
+        Callable[..., dict[str, torch.Tensor]],
+        safetensors_torch.load_file,
+    )
     loaded = load_file(str(Path(path)), device="cpu")
     _validate_materialized(loaded, schema)
     metadata = header.get("__metadata__", {})

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Callable
 from typing import Any
 
 import torch
@@ -205,7 +206,8 @@ def plane_stress_closure(
         _initial_log_guess(initial_f33, determinant_2d)
         return deformation_2d[..., 0, 0] * 0.0 + 1.0
 
-    closure: torch.Tensor = _PlaneStressClosure.apply(  # type: ignore[no-untyped-call]
+    apply_closure: Callable[..., torch.Tensor] = _PlaneStressClosure.apply
+    closure = apply_closure(
         deformation_2d,
         parameters.mu,
         parameters.lam,
