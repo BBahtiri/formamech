@@ -343,22 +343,19 @@ class BoundCircularTransitionDeformation:
         target_x, target_y = self._target_point(point)
         if target_x <= self.target.transition_start_x_mm:
             slope = (
-                self.reference.transition_start_x_mm
-                / self.target.transition_start_x_mm
+                self.reference.transition_start_x_mm / self.target.transition_start_x_mm
             )
             reference_x = target_x * slope
         else:
-            target_span = (
-                self.target.half_length_mm - self.target.transition_start_x_mm
-            )
+            target_span = self.target.half_length_mm - self.target.transition_start_x_mm
             reference_span = (
-                self.reference.half_length_mm
-                - self.reference.transition_start_x_mm
+                self.reference.half_length_mm - self.reference.transition_start_x_mm
             )
             slope = reference_span / target_span
-            reference_x = self.reference.transition_start_x_mm + (
-                target_x - self.target.transition_start_x_mm
-            ) * slope
+            reference_x = (
+                self.reference.transition_start_x_mm
+                + (target_x - self.target.transition_start_x_mm) * slope
+            )
             if target_x == self.target.half_length_mm:
                 reference_x = self.reference.half_length_mm
         scale = self.reference.profile_height_mm(

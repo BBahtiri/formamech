@@ -410,9 +410,7 @@ def _train_candidate(
             optimizer.step()
             completed = step + 1
             if progress is not None and (
-                completed == 1
-                or completed % 50 == 0
-                or completed == optimizer_steps
+                completed == 1 or completed % 50 == 0 or completed == optimizer_steps
             ):
                 progress(completed, float(final_loss.total.detach()))
     finally:

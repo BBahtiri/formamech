@@ -203,7 +203,9 @@ def load_s10_report_index(path: Path | None = None) -> S10ReportIndex:
         EvidenceRole.DEVELOPMENT,
         EvidenceRole.PILOT,
     }:
-        raise ValueError("S10 report must contain exact TRAIN/DEVELOPMENT/PILOT snapshots")
+        raise ValueError(
+            "S10 report must contain exact TRAIN/DEVELOPMENT/PILOT snapshots"
+        )
     cases = tuple(_case_index(value) for value in _list(root["cases"]))
     failed_cases = _list(root["failed_cases"])
     normalization = _mapping(root["normalization"], "normalization")

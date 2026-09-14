@@ -74,7 +74,9 @@ class DevelopmentConfirmation:
         if self.baseline_metrics.candidate_id != BASELINE_CANDIDATE_ID:
             raise ValueError("baseline_metrics must identify the baseline candidate")
         if self.selected_metrics.candidate_id == BASELINE_CANDIDATE_ID:
-            raise ValueError("selected_metrics must identify the non-baseline TRAIN winner")
+            raise ValueError(
+                "selected_metrics must identify the non-baseline TRAIN winner"
+            )
         if type(self.fallback_to_baseline) is not bool:
             raise TypeError("fallback_to_baseline must be boolean")
         expected_final = (
@@ -118,9 +120,10 @@ class ContingencyExecutionResult:
             type(model) is not PiGinotOperator for model in self.trained_models
         ):
             raise TypeError("trained_models must contain exact PiGinotOperator values")
-        if self.development_confirmation is not None and type(
-            self.development_confirmation
-        ) is not DevelopmentConfirmation:
+        if (
+            self.development_confirmation is not None
+            and type(self.development_confirmation) is not DevelopmentConfirmation
+        ):
             raise TypeError(
                 "development_confirmation must be exact DevelopmentConfirmation or None"
             )
@@ -128,7 +131,10 @@ class ContingencyExecutionResult:
             evidence.candidate_id
             for evidence in self.train_screen_decision.model_states
         )
-        if tuple(item.candidate_id for item in self.training_summaries) != candidate_ids:
+        if (
+            tuple(item.candidate_id for item in self.training_summaries)
+            != candidate_ids
+        ):
             raise ValueError("training summaries and decision candidate order differ")
         if len(self.trained_models) != len(candidate_ids):
             raise ValueError("trained model population differs from the decision")
@@ -188,7 +194,9 @@ def execute_architecture_contingency(
         expected_role=EvidenceRole.TRAIN,
         label="fit",
     )
-    _emit_progress(progress, f"phase=TRAIN_FIT event=load_complete cases={len(fit_raw)}")
+    _emit_progress(
+        progress, f"phase=TRAIN_FIT event=load_complete cases={len(fit_raw)}"
+    )
     normalization = fit_case_normalization(
         fit_raw,
         fit_case_ids=protocol.fit_case_ids,
@@ -444,7 +452,9 @@ def _materialize_source_cases(
         prepare_operator_case(item.case, item.request, item.result) for item in stream
     )
     if len(prepared) != len(expected_case_ids):
-        raise ValueError(f"{label} source must contain exactly {len(expected_case_ids)} cases")
+        raise ValueError(
+            f"{label} source must contain exactly {len(expected_case_ids)} cases"
+        )
     if tuple(item.case_id for item in prepared) != expected_case_ids:
         raise ValueError(f"{label} source case order or identity changed")
     if any(item.role is not expected_role for item in prepared):

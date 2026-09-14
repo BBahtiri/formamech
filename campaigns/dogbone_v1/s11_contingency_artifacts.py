@@ -118,10 +118,9 @@ class ModelFileEvidence:
         if type(self.byte_count) is not int or self.byte_count <= 0:
             raise ValueError("byte_count must be a positive integer")
         _digest(self.file_blake2b256, "file_blake2b256")
-        if (
-            type(self.operator_module_digest) is not str
-            or not self.operator_module_digest.startswith("blake2b256:")
-        ):
+        if type(
+            self.operator_module_digest
+        ) is not str or not self.operator_module_digest.startswith("blake2b256:"):
             raise ValueError("operator_module_digest must use blake2b256")
         _digest(self.initial_state_hash, "initial_state_hash")
         _digest(self.model_state_hash, "model_state_hash")
@@ -154,14 +153,16 @@ class ContingencyEvidence:
         if type(self.normalization) is not CaseNormalizationStatistics:
             raise TypeError("normalization must be exact CaseNormalizationStatistics")
         if type(self.training_summaries) is not tuple or any(
-            type(item) is not CandidateTrainingSummary for item in self.training_summaries
+            type(item) is not CandidateTrainingSummary
+            for item in self.training_summaries
         ):
             raise TypeError("training_summaries must contain exact summaries")
         if type(self.train_screen_decision) is not TrainScreenDecision:
             raise TypeError("train_screen_decision must be exact TrainScreenDecision")
-        if self.development_confirmation is not None and type(
-            self.development_confirmation
-        ) is not DevelopmentConfirmation:
+        if (
+            self.development_confirmation is not None
+            and type(self.development_confirmation) is not DevelopmentConfirmation
+        ):
             raise TypeError("development_confirmation has the wrong type")
         if type(self.final_candidate_id) is not str or not self.final_candidate_id:
             raise ValueError("final_candidate_id must be non-empty text")
@@ -172,7 +173,10 @@ class ContingencyEvidence:
         _revision(self.implementation_revision)
         if self.schema_version != "1.0":
             raise ValueError("unsupported contingency evidence schema")
-        if self.train_screen_decision.protocol_content_hash != self.protocol_content_hash:
+        if (
+            self.train_screen_decision.protocol_content_hash
+            != self.protocol_content_hash
+        ):
             raise ValueError("evidence protocol does not match TRAIN decision")
         if (
             self.train_screen_decision.source_bindings_hash
@@ -184,9 +188,15 @@ class ContingencyEvidence:
             != self.train_screen_decision.training_schedule_hash
         ):
             raise ValueError("evidence schedule does not match TRAIN decision")
-        if self.normalization.content_hash != self.train_screen_decision.normalization_hash:
+        if (
+            self.normalization.content_hash
+            != self.train_screen_decision.normalization_hash
+        ):
             raise ValueError("evidence normalization does not match TRAIN decision")
-        if self.implementation_revision != self.train_screen_decision.implementation_revision:
+        if (
+            self.implementation_revision
+            != self.train_screen_decision.implementation_revision
+        ):
             raise ValueError("evidence revision does not match TRAIN decision")
         candidate_ids = tuple(
             item.candidate_id for item in self.train_screen_decision.model_states
@@ -198,7 +208,10 @@ class ContingencyEvidence:
             != candidate_ids
         ):
             raise ValueError("TRAIN metrics do not match decision candidate order")
-        if tuple(item.candidate_id for item in self.training_summaries) != candidate_ids:
+        if (
+            tuple(item.candidate_id for item in self.training_summaries)
+            != candidate_ids
+        ):
             raise ValueError("training summaries do not match decision candidates")
         if any(
             item.schedule_hash != self.training_schedule.schedule_hash
@@ -226,7 +239,9 @@ class ContingencyEvidence:
         else:
             confirmation = self.development_confirmation
             if confirmation is None:
-                raise ValueError("nonfallback TRAIN selection requires DEVELOPMENT evidence")
+                raise ValueError(
+                    "nonfallback TRAIN selection requires DEVELOPMENT evidence"
+                )
             if (
                 confirmation.train_screen_decision_hash
                 != self.train_screen_decision.content_hash
@@ -300,8 +315,12 @@ def reserve_output_root(
     root = _absolute_path(output_root, "output_root")
     record = _ReservationRecord(protocol_content_hash, implementation_revision)
     if root.exists():
-        state = "non-empty" if root.is_dir() and any(root.iterdir()) else "already existing"
-        raise FileExistsError(f"output_root must be new and empty; found {state}: {root}")
+        state = (
+            "non-empty" if root.is_dir() and any(root.iterdir()) else "already existing"
+        )
+        raise FileExistsError(
+            f"output_root must be new and empty; found {state}: {root}"
+        )
     parent = root.parent.resolve(strict=True)
     if not parent.is_dir() or parent.is_symlink():
         raise ValueError("output_root parent must be a real directory")
@@ -352,7 +371,10 @@ def _validate_persistence_inputs(
     source_bindings: S10SourceBindings,
     result: ContingencyExecutionResult,
 ) -> None:
-    if type(reservation) is not OutputReservation or reservation._token is not _RESERVATION_TOKEN:
+    if (
+        type(reservation) is not OutputReservation
+        or reservation._token is not _RESERVATION_TOKEN
+    ):
         raise TypeError("reservation must be an authentic OutputReservation")
     if type(protocol) is not ArchitectureScreenProtocol:
         raise TypeError("protocol must be exact ArchitectureScreenProtocol")
@@ -389,7 +411,9 @@ def _validate_persistence_inputs(
     if tuple(item.candidate_id for item in decision.metrics) != candidate_ids:
         raise ValueError("TRAIN metrics do not cover the registered candidates")
     if tuple(item.candidate_id for item in decision.model_states) != candidate_ids:
-        raise ValueError("model-state evidence does not cover the registered candidates")
+        raise ValueError(
+            "model-state evidence does not cover the registered candidates"
+        )
     if len(result.trained_models) != len(candidate_ids):
         raise ValueError("trained model population changed")
 
@@ -415,7 +439,9 @@ def _validate_output_contents(
         allowed.add(development_marker.name)
     found = {path.name for path in root.iterdir()}
     if found != allowed:
-        raise FileExistsError("output reservation was already used or contains foreign files")
+        raise FileExistsError(
+            "output reservation was already used or contains foreign files"
+        )
 
 
 def _prepare_models(
@@ -456,7 +482,9 @@ def _prepare_models(
                     candidate_id=candidate.candidate_id,
                     file_name=file_name,
                     byte_count=len(payload),
-                    file_blake2b256=hashlib.blake2b(payload, digest_size=32).hexdigest(),
+                    file_blake2b256=hashlib.blake2b(
+                        payload, digest_size=32
+                    ).hexdigest(),
                     operator_module_digest=candidate.operator_module_digest,
                     initial_state_hash=state.initial_state_hash,
                     model_state_hash=current_state,

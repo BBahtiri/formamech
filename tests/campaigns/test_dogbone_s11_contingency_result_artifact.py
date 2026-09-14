@@ -52,7 +52,9 @@ def test_contingency_result_is_the_exact_canonical_run_evidence() -> None:
     )
 
 
-def test_contingency_result_records_the_registered_fallback_without_development() -> None:
+def test_contingency_result_records_the_registered_fallback_without_development() -> (
+    None
+):
     document = _document()
     decision = document["train_screen_decision"]
     selection = decision["selection"]
@@ -73,7 +75,9 @@ def test_contingency_result_records_the_registered_fallback_without_development(
     assert tuple(item["candidate_id"] for item in document["model_files"]) == (
         _CANDIDATE_IDS
     )
-    assert all(item["optimizer_steps"] == 1_500 for item in document["training_summaries"])
+    assert all(
+        item["optimizer_steps"] == 1_500 for item in document["training_summaries"]
+    )
 
 
 def test_local_stress_candidate_improves_stress_but_fails_only_u_guardrail() -> None:
@@ -111,7 +115,9 @@ def test_local_stress_candidate_improves_stress_but_fails_only_u_guardrail() -> 
     assert candidate["median_p_relative_l2"] < baseline["median_p_relative_l2"]
 
 
-def test_tracked_result_contains_aggregates_and_model_hashes_not_field_payloads() -> None:
+def test_tracked_result_contains_aggregates_and_model_hashes_not_field_payloads() -> (
+    None
+):
     document = _document()
     serialized = _ARTIFACT.read_text(encoding="utf-8")
 

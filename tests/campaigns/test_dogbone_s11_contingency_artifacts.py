@@ -62,7 +62,10 @@ def execution(
         boundary_tag_names=protocol.boundary_tag_names,
     )
     normalization = CaseNormalizationStatistics(
-        parameter_names=(*protocol.raw_parameter_names, *protocol.derived_parameter_names),
+        parameter_names=(
+            *protocol.raw_parameter_names,
+            *protocol.derived_parameter_names,
+        ),
         mean=(0.0,) * 11,
         standard_deviation=(1.0,) * 11,
         fit_case_ids=protocol.fit_case_ids,
@@ -188,18 +191,24 @@ def test_persistence_writes_only_safetensors_and_canonical_bound_evidence(
     assert evidence.implementation_revision == _REVISION
     assert len(evidence.model_files) == len(protocol.candidates)
 
-    for model_file, model in zip(evidence.model_files, result.trained_models, strict=True):
+    for model_file, model in zip(
+        evidence.model_files, result.trained_models, strict=True
+    ):
         path = output_root / model_file.file_name
         assert path.suffix == ".safetensors"
         assert path.read_bytes()[:2] != b"\x80\x04"
         assert model_file.byte_count == path.stat().st_size
-        assert model_file.file_blake2b256 == hashlib.blake2b(
-            path.read_bytes(), digest_size=32
-        ).hexdigest()
+        assert (
+            model_file.file_blake2b256
+            == hashlib.blake2b(path.read_bytes(), digest_size=32).hexdigest()
+        )
         assert model_file.model_state_hash == model_state_hash(model)
         loaded = safetensors.load_file(str(path), device="cpu")
         assert set(loaded) == set(model.state_dict())
-        assert all(torch.equal(loaded[name], value) for name, value in model.state_dict().items())
+        assert all(
+            torch.equal(loaded[name], value)
+            for name, value in model.state_dict().items()
+        )
 
     assert set(path.name for path in output_root.iterdir()) == {
         RUN_RESERVATION_NAME,

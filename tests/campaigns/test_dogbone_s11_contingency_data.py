@@ -517,7 +517,9 @@ def test_normalization_rejects_role_leakage_or_fit_population_drift() -> None:
         )
 
 
-def test_frozen_train_statistics_normalize_development_without_role_relabeling() -> None:
+def test_frozen_train_statistics_normalize_development_without_role_relabeling() -> (
+    None
+):
     first = _prepared("train-a", offset=0.0)
     second = _prepared("train-b", offset=2.0)
     development = _prepared(

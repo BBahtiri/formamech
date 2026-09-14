@@ -139,14 +139,16 @@ def test_case_contract_is_frozen_owned_float64_and_public_evaluation_only() -> N
     assert owned.target_P.shape == (6, 2, 2)
     assert owned.qoi_indices.tolist() == [4, 5]
     assert owned.parameters_for(RAW_PARAMETER_NAMES).shape == (7,)
-    assert owned.parameters_for((*RAW_PARAMETER_NAMES, *DERIVED_PARAMETER_NAMES)).shape == (
-        11,
-    )
+    assert owned.parameters_for(
+        (*RAW_PARAMETER_NAMES, *DERIVED_PARAMETER_NAMES)
+    ).shape == (11,)
     with pytest.raises(ValueError, match="not registered"):
         owned.parameters_for(tuple(reversed(RAW_PARAMETER_NAMES)))
     with pytest.raises(FrozenInstanceError):
         owned.case_id = "changed"  # type: ignore[misc]
-    assert replace(owned, role=EvidenceRole.DEVELOPMENT).role is EvidenceRole.DEVELOPMENT
+    assert (
+        replace(owned, role=EvidenceRole.DEVELOPMENT).role is EvidenceRole.DEVELOPMENT
+    )
     with pytest.raises(ValueError, match="TRAIN or DEVELOPMENT"):
         replace(owned, role=EvidenceRole.PILOT)
     with pytest.raises(ValueError, match="ACTIVE"):
@@ -641,7 +643,9 @@ def test_production_training_requires_registered_fresh_full_state(
         final_peak_P_mse=0.5,
     )
 
-    def fake_train_candidate(*args: object, **kwargs: object) -> CandidateTrainingSummary:
+    def fake_train_candidate(
+        *args: object, **kwargs: object
+    ) -> CandidateTrainingSummary:
         return expected
 
     monkeypatch.setattr(training_module, "_train_candidate", fake_train_candidate)

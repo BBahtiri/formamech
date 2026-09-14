@@ -83,9 +83,7 @@ def test_protocol_binds_sources_roles_candidates_and_fixed_compute() -> None:
     assert protocol.query_points_per_case == 256
     assert protocol.qoi_fraction == 0.25
     assert protocol.peak_supervised_p_weight == 1.0
-    assert protocol.objective_policy_id == (
-        "s11c-supervised-architecture-isolation-v1"
-    )
+    assert protocol.objective_policy_id == ("s11c-supervised-architecture-isolation-v1")
     assert protocol.supervised_objective_terms == (
         "normalized_u_mse",
         "normalized_in_plane_P_mse",

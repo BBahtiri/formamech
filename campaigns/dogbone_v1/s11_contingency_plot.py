@@ -89,16 +89,16 @@ def render_screen_svg(metrics: tuple[ScreenMetric, ...]) -> bytes:
         'aria-labelledby="title description">',
         '<title id="title">S11 contingency: frozen TRAIN-screen errors</title>',
         '<desc id="description">Four architecture candidates compared on 64 '
-        'held-aside TRAIN cases. Lower bars are better. Candidate C improves every '
-        'stress metric but exceeds the displacement regression guardrail, so the '
-        'formal result falls back to candidate A.</desc>',
+        "held-aside TRAIN cases. Lower bars are better. Candidate C improves every "
+        "stress metric but exceeds the displacement regression guardrail, so the "
+        "formal result falls back to candidate A.</desc>",
         '<rect width="1280" height="760" fill="#ffffff"/>',
         '<text x="70" y="52" font-family="sans-serif" font-size="28" '
         'font-weight="700" fill="#0f172a">S11 contingency: frozen TRAIN-screen '
-        'errors</text>',
+        "errors</text>",
         '<text x="70" y="82" font-family="sans-serif" font-size="15" '
         'fill="#475569">64 cases; lower is better; all candidates trained for '
-        '1,500 Adam steps on the same schedule</text>',
+        "1,500 Adam steps on the same schedule</text>",
     ]
     for tick in range(0, 26, 5):
         y = plot_y + plot_h - tick / max_percent * plot_h
@@ -148,12 +148,12 @@ def render_screen_svg(metrics: tuple[ScreenMetric, ...]) -> bytes:
             'stroke="#334155" stroke-width="1.5"/>',
             '<text x="18" y="390" transform="rotate(-90 18 390)" '
             'font-family="sans-serif" font-size="13" fill="#334155">Relative '
-            'error</text>',
+            "error</text>",
         )
     )
     _append_legend(lines)
     _append_outcome(lines, baseline, local)
-    lines.append('</svg>')
+    lines.append("</svg>")
     return ("\n".join(lines) + "\n").encode("utf-8")
 
 
@@ -193,7 +193,7 @@ def _append_legend(lines: list[str]) -> None:
                 f'height="16" rx="3" fill="{color}"/>',
                 f'<text x="{x + 26:.1f}" y="{row_y:.1f}" '
                 'font-family="sans-serif" font-size="14" fill="#334155">'
-                f'{html.escape(label)}</text>',
+                f"{html.escape(label)}</text>",
             )
         )
 
@@ -218,8 +218,7 @@ def _append_outcome(
             100.0
             * (
                 1.0
-                - local.median_absolute_peak_error
-                / baseline.median_absolute_peak_error
+                - local.median_absolute_peak_error / baseline.median_absolute_peak_error
             ),
             True,
         ),
@@ -251,7 +250,7 @@ def _append_outcome(
         lines.append(
             f'<text x="{x:.1f}" y="{row_y:.1f}" font-family="sans-serif" '
             f'font-size="14" fill="{color}">{html.escape(label)}: '
-            f'{value:.1f}% {suffix}</text>'
+            f"{value:.1f}% {suffix}</text>"
         )
     lines.extend(
         (
@@ -259,10 +258,10 @@ def _append_outcome(
             'rx="8" fill="#fff7ed" stroke="#fdba74"/>',
             f'<text x="{x + 16:.1f}" y="{y + 210:.1f}" font-family="sans-serif" '
             'font-size="15" font-weight="700" fill="#9a3412">Formal outcome: '
-            'fallback to A</text>',
+            "fallback to A</text>",
             f'<text x="{x + 16:.1f}" y="{y + 238:.1f}" font-family="sans-serif" '
             'font-size="13" fill="#9a3412">C failed only the +2% displacement '
-            'guardrail</text>',
+            "guardrail</text>",
             f'<text x="{x + 16:.1f}" y="{y + 262:.1f}" font-family="sans-serif" '
             'font-size="13" fill="#9a3412">Observed u regression: +3.48%</text>',
         )

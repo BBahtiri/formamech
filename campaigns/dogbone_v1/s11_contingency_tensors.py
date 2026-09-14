@@ -63,7 +63,9 @@ class ArchitectureCaseTensors:
             raise ValueError("architecture-screen tensors must have status ACTIVE")
         names = _canonical_names(self.parameter_names, "parameter_names")
         if names != _ALL_PARAMETER_NAMES:
-            raise ValueError("parameter_names must use the fixed raw-plus-derived order")
+            raise ValueError(
+                "parameter_names must use the fixed raw-plus-derived order"
+            )
         tag_names = _canonical_names(self.boundary_tag_names, "boundary_tag_names")
         digest = _canonical_text(self.normalization_hash, "normalization_hash")
         if _HASH_PATTERN.fullmatch(digest) is None:

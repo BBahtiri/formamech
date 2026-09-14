@@ -76,7 +76,9 @@ class TrainScreenDecision:
 
     def __post_init__(self) -> None:
         if self._token is not _DECISION_TOKEN:
-            raise TypeError("TrainScreenDecision must be created by complete_train_screen")
+            raise TypeError(
+                "TrainScreenDecision must be created by complete_train_screen"
+            )
         for value, label in (
             (self.protocol_content_hash, "protocol_content_hash"),
             (self.source_bindings_hash, "source_bindings_hash"),
@@ -125,11 +127,17 @@ def complete_train_screen(
     expected_ids = tuple(candidate.candidate_id for candidate in protocol.candidates)
     if tuple(metric.candidate_id for metric in metrics) != expected_ids:
         raise ValueError("metrics must follow the exact registered candidate order")
-    if type(model_states) is not tuple or tuple(
-        item.candidate_id if type(item) is CandidateModelStateEvidence else None
-        for item in model_states
-    ) != expected_ids:
-        raise ValueError("model_states must follow the exact registered candidate order")
+    if (
+        type(model_states) is not tuple
+        or tuple(
+            item.candidate_id if type(item) is CandidateModelStateEvidence else None
+            for item in model_states
+        )
+        != expected_ids
+    ):
+        raise ValueError(
+            "model_states must follow the exact registered candidate order"
+        )
     selection = select_architecture_candidate(protocol, metrics)
     return TrainScreenDecision(
         protocol.content_hash,
@@ -367,12 +375,18 @@ def boundary_cloud_tensors(
         type(tag_names) is not tuple
         or not tag_names
         or len(set(tag_names)) != len(tag_names)
-        or any(type(name) is not str or name not in mesh.semantic_tags for name in tag_names)
+        or any(
+            type(name) is not str or name not in mesh.semantic_tags
+            for name in tag_names
+        )
     ):
         raise ValueError("tag_names must be unique semantic tags on the mesh")
     if type(sample_count) is not int or sample_count <= 0:
         raise ValueError("sample_count must be a positive integer")
-    facets = tuple(_facet_geometry(mesh, index, tag_names) for index in range(len(mesh.boundary_facets)))
+    facets = tuple(
+        _facet_geometry(mesh, index, tag_names)
+        for index in range(len(mesh.boundary_facets))
+    )
     total_length = sum(facet.length for facet in facets)
     if not math.isfinite(total_length) or total_length <= 0.0:
         raise ValueError("boundary cloud requires positive total boundary measure")
@@ -435,7 +449,9 @@ def _facet_geometry(
     if not math.isfinite(length) or length <= 0.0:
         raise ValueError("boundary facet has non-positive length")
     normal = _outward_unit_normal(mesh, facet_index, dx, dy)
-    one_hot = tuple(1.0 if facet_index in mesh.semantic_tags[tag] else 0.0 for tag in tag_names)
+    one_hot = tuple(
+        1.0 if facet_index in mesh.semantic_tags[tag] else 0.0 for tag in tag_names
+    )
     if sum(one_hot) != 1.0:
         raise ValueError("each boundary facet must carry exactly one selected tag")
     return _FacetGeometry(left, right, length, normal, one_hot)

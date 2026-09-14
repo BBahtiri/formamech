@@ -12,6 +12,7 @@ from tests.git_helpers import run_git as _git
 
 _REVISION = "1" * 40
 
+
 def _repository(tmp_path: Path) -> tuple[Path, str]:
     repo = tmp_path / "repo"
     repo.mkdir()
@@ -105,9 +106,7 @@ def test_empty_output_is_reserved_before_source_and_full_run_is_persisted(
     ) -> object:
         assert (output_root / RUN_RESERVATION_NAME).is_file()
         assert run_root == s10_root
-        assert development_access_record == (
-            output_root / "DEVELOPMENT-ACCESS.json"
-        )
+        assert development_access_record == (output_root / "DEVELOPMENT-ACCESS.json")
         events.append("source")
         return fake_source
 
@@ -231,18 +230,21 @@ def test_cli_requires_explicit_paths_and_streams_progress(
 
     monkeypatch.setattr(runner, "run_architecture_contingency", fake_run)
 
-    assert runner.main(
-        [
-            "--repo-root",
-            str(repo_root),
-            "--s10-run-root",
-            str(s10_root),
-            "--output-root",
-            str(output_root),
-            "--implementation-revision",
-            _REVISION,
-        ]
-    ) == 0
+    assert (
+        runner.main(
+            [
+                "--repo-root",
+                str(repo_root),
+                "--s10-run-root",
+                str(s10_root),
+                "--output-root",
+                str(output_root),
+                "--implementation-revision",
+                _REVISION,
+            ]
+        )
+        == 0
+    )
 
     output = capsys.readouterr().out
     assert "phase:TRAIN_FIT" in output
@@ -254,9 +256,7 @@ def test_cli_requires_explicit_paths_and_streams_progress(
 def test_cli_exposes_no_budget_or_role_override() -> None:
     parser = runner.build_parser()
     option_strings = {
-        option
-        for action in parser._actions
-        for option in action.option_strings
+        option for action in parser._actions for option in action.option_strings
     }
     assert "--optimizer-steps" not in option_strings
     assert "--case-ids" not in option_strings

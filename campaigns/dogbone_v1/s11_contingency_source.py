@@ -155,7 +155,9 @@ class _SelectiveS10SourceCore:
             development_access_record.parent.is_symlink()
             or not development_access_record.parent.is_dir()
         ):
-            raise ValueError("development access record parent must be a real directory")
+            raise ValueError(
+                "development access record parent must be a real directory"
+            )
         self._bindings = bindings
         self._protocol = protocol
         self._profile = execution_profile
@@ -477,7 +479,9 @@ def _verify_s10_source_bindings_core(
     if snapshots[EvidenceRole.TRAIN].snapshot_content_hash != (
         protocol.training_snapshot_hash
     ):
-        raise ValueError("S10 TRAIN role snapshot differs from the contingency protocol")
+        raise ValueError(
+            "S10 TRAIN role snapshot differs from the contingency protocol"
+        )
     if snapshots[EvidenceRole.DEVELOPMENT].snapshot_content_hash != (
         protocol.development_snapshot_hash
     ):
@@ -530,10 +534,13 @@ def open_selective_s10_source(
         raise TypeError("development_access_record must be a pathlib.Path")
     resolved_run_root = run_root.resolve(strict=True)
     resolved_record_parent = development_access_record.parent.resolve(strict=True)
-    if resolved_record_parent == resolved_run_root or resolved_record_parent.is_relative_to(
-        resolved_run_root
+    if (
+        resolved_record_parent == resolved_run_root
+        or resolved_record_parent.is_relative_to(resolved_run_root)
     ):
-        raise ValueError("development access record must remain outside the S10 run root")
+        raise ValueError(
+            "development access record must remain outside the S10 run root"
+        )
     protocol = load_committed_protocol()
     _, manifest = _load_public_sources()
     profile = _load_run_execution_profile(run_root)

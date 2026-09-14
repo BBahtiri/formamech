@@ -58,16 +58,12 @@ DEFERRED_PHYSICS_OBJECTIVE_TERMS = (
     "traction_free",
 )
 DATA_PREPARATION_POLICY_ID = "s11c-s10-p2-vertices-boundary-arclength-v1"
-NORMALIZATION_POLICY_ID = (
-    "s11c-fit-zscore-u-by-prescribed-displacement-p-by-760mpa-v1"
-)
+NORMALIZATION_POLICY_ID = "s11c-fit-zscore-u-by-prescribed-displacement-p-by-760mpa-v1"
 QOI_POLICY_ID = "s11c-right-arc-minus-right-grip-root-peak-v1"
 METRIC_POLICY_ID = "s11c-relative-l2-root-frobenius-linear-quantile-v1"
 OPTIMIZER_POLICY_ID = "s11c-torch-adam-no-foreach-no-fused-v1"
 SOURCE_ACCESS_POLICY_ID = "s11c-verified-fit-screen-durable-development-v1"
-DEVELOPMENT_CONFIRMATION_POLICY_ID = (
-    "s11c-baseline-vs-train-winner-same-guardrails-v1"
-)
+DEVELOPMENT_CONFIRMATION_POLICY_ID = "s11c-baseline-vs-train-winner-same-guardrails-v1"
 BOUNDARY_POINT_COUNT = 320
 BOUNDARY_TAG_NAMES = (
     "bottom",

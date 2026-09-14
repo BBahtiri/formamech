@@ -107,6 +107,8 @@ def _decision(
         implementation_revision=_REVISION,
         model_states=states,
     )
+
+
 def _plan_and_ledger(
     *,
     corrupt_role_for: str | None = None,
@@ -189,7 +191,9 @@ def test_phase_case_ids_keep_development_closed_until_train_selection() -> None:
     protocol = _protocol()
 
     assert case_ids_for_phase(protocol, TRAIN_FIT_PHASE_ID) == protocol.fit_case_ids
-    assert case_ids_for_phase(protocol, TRAIN_SCREEN_PHASE_ID) == protocol.screen_case_ids
+    assert (
+        case_ids_for_phase(protocol, TRAIN_SCREEN_PHASE_ID) == protocol.screen_case_ids
+    )
     with pytest.raises(ValueError, match="decision"):
         case_ids_for_phase(protocol, DEVELOPMENT_PHASE_ID)
     with pytest.raises(ValueError, match="TRAIN fallback"):
@@ -198,7 +202,11 @@ def test_phase_case_ids_keep_development_closed_until_train_selection() -> None:
             DEVELOPMENT_PHASE_ID,
             decision=_decision(
                 metrics=tuple(
-                    replace(metric, median_absolute_peak_error=0.30, p90_absolute_peak_error=0.50)
+                    replace(
+                        metric,
+                        median_absolute_peak_error=0.30,
+                        p90_absolute_peak_error=0.50,
+                    )
                     if metric.candidate_id != BASELINE_CANDIDATE_ID
                     else metric
                     for metric in _metrics()
@@ -301,7 +309,9 @@ def test_qoi_vertices_are_right_arc_without_mixed_endpoint_vertices() -> None:
     assert tuple(sorted(indices)) == indices
 
 
-def test_boundary_cloud_tensors_are_tag_ordered_measure_weighted_and_deterministic() -> None:
+def test_boundary_cloud_tensors_are_tag_ordered_measure_weighted_and_deterministic() -> (
+    None
+):
     mesh = compiled_family().reference_mesh
     tag_names = tuple(mesh.semantic_tags)
 

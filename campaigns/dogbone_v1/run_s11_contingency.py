@@ -36,7 +36,9 @@ def verified_clean_head(repo_root: Path, expected_revision: str) -> str:
         raise ValueError("repo_root must be the Git worktree top level")
     head = _git(root, "rev-parse", "HEAD")
     if head != revision:
-        raise ValueError(f"Git HEAD {head} differs from implementation revision {revision}")
+        raise ValueError(
+            f"Git HEAD {head} differs from implementation revision {revision}"
+        )
     status = _git(root, "status", "--porcelain=v1", "--untracked-files=all")
     if status:
         raise RuntimeError("Git worktree must be clean before opening the S10 source")
