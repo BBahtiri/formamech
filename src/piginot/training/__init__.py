@@ -11,14 +11,11 @@ from piginot.training.adaptive import (
     update_adaptive_weights,
 )
 from piginot.training.checkpoint import (
-    DeterministicSamplerState,
     LoadedTrainingCheckpoint,
     TrainingCheckpointManifest,
-    TrainingSchedulerState,
     WrittenTrainingCheckpoint,
     export_model_safetensors,
     load_training_checkpoint,
-    next_sampler_batch,
     write_training_checkpoint,
 )
 from piginot.training.identity import TrainingRunBinding
@@ -42,6 +39,14 @@ from piginot.training.selection import (
     select_checkpoint,
     select_training_trial,
 )
+from piginot.training.state import (
+    AdamOptimizerState,
+    DeterministicSamplerPlan,
+    DeterministicSamplerState,
+    TrainingSchedulerState,
+    capture_adam_optimizer_state,
+    next_sampler_batch,
+)
 
 __all__ = (
     "ADAPTIVE_PHYSICS_TERMS",
@@ -51,7 +56,9 @@ __all__ = (
     "AdaptiveWeightConfig",
     "AdaptiveWeightState",
     "AdaptiveWeightUpdate",
+    "AdamOptimizerState",
     "CheckpointLineage",
+    "DeterministicSamplerPlan",
     "DeterministicSamplerState",
     "GradientStatistic",
     "GridSearchSpace",
@@ -68,6 +75,7 @@ __all__ = (
     "TrialConfig",
     "TrialResult",
     "WrittenTrainingCheckpoint",
+    "capture_adam_optimizer_state",
     "enumerate_trials",
     "export_model_safetensors",
     "load_training_checkpoint",

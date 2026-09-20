@@ -4,6 +4,11 @@ from __future__ import annotations
 
 from typing import Any
 
+from piginot.objectives.equilibrium import (
+    strong_equilibrium_residual,
+    weak_equilibrium_residual,
+)
+from piginot.objectives.kinematics import displacement_gradient
 from piginot.objectives.models import (
     CoordinateConversion,
     EquilibriumForm,
@@ -13,6 +18,18 @@ from piginot.objectives.models import (
     ObjectiveRegistry,
     ObjectiveResiduals,
     ObjectiveTerm,
+)
+from piginot.objectives.registry import (
+    default_objective_registry,
+    evaluate_objective,
+)
+from piginot.objectives.terms import (
+    angular_momentum_residual,
+    constitutive_residual,
+    dirichlet_residual,
+    supervised_displacement_residual,
+    supervised_stress_residual,
+    traction_free_residual,
 )
 
 _LAZY_EXPORTS = {
@@ -38,46 +55,11 @@ _LAZY_EXPORTS = {
         "piginot.objectives.verification",
         "run_s12_verification",
     ),
-    "angular_momentum_residual": (
-        "piginot.objectives.terms",
-        "angular_momentum_residual",
-    ),
-    "constitutive_residual": ("piginot.objectives.terms", "constitutive_residual"),
-    "default_objective_registry": (
-        "piginot.objectives.registry",
-        "default_objective_registry",
-    ),
-    "dirichlet_residual": ("piginot.objectives.terms", "dirichlet_residual"),
-    "displacement_gradient": (
-        "piginot.objectives.kinematics",
-        "displacement_gradient",
-    ),
-    "evaluate_objective": ("piginot.objectives.registry", "evaluate_objective"),
-    "strong_equilibrium_residual": (
-        "piginot.objectives.equilibrium",
-        "strong_equilibrium_residual",
-    ),
-    "supervised_displacement_residual": (
-        "piginot.objectives.terms",
-        "supervised_displacement_residual",
-    ),
-    "supervised_stress_residual": (
-        "piginot.objectives.terms",
-        "supervised_stress_residual",
-    ),
-    "traction_free_residual": (
-        "piginot.objectives.terms",
-        "traction_free_residual",
-    ),
-    "weak_equilibrium_residual": (
-        "piginot.objectives.equilibrium",
-        "weak_equilibrium_residual",
-    ),
 }
 
 
 def __getattr__(name: str) -> Any:
-    """Lazily load FEM-heavy objective helpers only when they are requested."""
+    """Lazily load verification exports that require optional FEM packages."""
 
     if name not in _LAZY_EXPORTS:
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
