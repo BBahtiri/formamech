@@ -11,7 +11,10 @@ from typing import Any, cast
 
 import rfc8785
 
-from campaigns.dogbone_v1.s11_contingency import ArchitectureScreenProtocol
+from campaigns.dogbone_v1.s11_contingency import (
+    ArchitectureScreenMetrics,
+    ArchitectureScreenProtocol,
+)
 from campaigns.dogbone_v1.s11_contingency_data import CaseNormalizationStatistics
 from campaigns.dogbone_v1.s11_contingency_models import (
     build_candidate_models,
@@ -54,6 +57,7 @@ class SelectedS11CheckpointEvidence:
     initial_state_hash: str
     final_state_hash: str
     normalization: CaseNormalizationStatistics
+    baseline_metrics: ArchitectureScreenMetrics
 
     def __post_init__(self) -> None:
         for name in (
@@ -81,6 +85,10 @@ class SelectedS11CheckpointEvidence:
         )
         if type(self.normalization) is not CaseNormalizationStatistics:
             raise TypeError("normalization must be exact CaseNormalizationStatistics")
+        if type(self.baseline_metrics) is not ArchitectureScreenMetrics:
+            raise TypeError("baseline_metrics must be exact ArchitectureScreenMetrics")
+        if self.baseline_metrics.candidate_id != self.candidate_id:
+            raise ValueError("baseline metrics must describe the selected candidate")
 
     @property
     def expected_metadata(self) -> dict[str, str]:
@@ -188,6 +196,14 @@ def load_selected_s11_checkpoint_evidence() -> SelectedS11CheckpointEvidence:
         or normalization.training_snapshot_hash != protocol.training_snapshot_hash
     ):
         raise ValueError("S11 normalization population differs from the protocol")
+    baseline_metrics = _architecture_metrics(
+        _unique_candidate_record(
+            decision.get("metrics"),
+            candidate_id,
+            "piginot.campaigns.ArchitectureScreenMetrics",
+            "TRAIN-screen metric",
+        )
+    )
 
     return SelectedS11CheckpointEvidence(
         evidence_file_blake2b256=file_digest,
@@ -203,6 +219,7 @@ def load_selected_s11_checkpoint_evidence() -> SelectedS11CheckpointEvidence:
         initial_state_hash=initial_state_hash,
         final_state_hash=final_state_hash,
         normalization=normalization,
+        baseline_metrics=baseline_metrics,
     )
 
 
@@ -334,6 +351,37 @@ def _normalization(value: object) -> CaseNormalizationStatistics:
             record.get("stress_reference_mpa"), "stress_reference_mpa"
         ),
         schema_version=_text(record.get("schema_version"), "schema_version"),
+    )
+
+
+def _architecture_metrics(value: dict[str, object]) -> ArchitectureScreenMetrics:
+    return ArchitectureScreenMetrics(
+        candidate_id=_text(value.get("candidate_id"), "metric candidate_id"),
+        median_signed_peak_error=_number(
+            value.get("median_signed_peak_error"),
+            "median_signed_peak_error",
+        ),
+        median_absolute_peak_error=_number(
+            value.get("median_absolute_peak_error"),
+            "median_absolute_peak_error",
+        ),
+        p90_absolute_peak_error=_number(
+            value.get("p90_absolute_peak_error"),
+            "p90_absolute_peak_error",
+        ),
+        median_u_relative_l2=_number(
+            value.get("median_u_relative_l2"),
+            "median_u_relative_l2",
+        ),
+        median_p_relative_l2=_number(
+            value.get("median_p_relative_l2"),
+            "median_p_relative_l2",
+        ),
+        trainable_parameter_count=_positive_int(
+            value.get("trainable_parameter_count"),
+            "trainable_parameter_count",
+        ),
+        elapsed_seconds=_number(value.get("elapsed_seconds"), "elapsed_seconds"),
     )
 
 
