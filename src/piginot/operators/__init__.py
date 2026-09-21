@@ -22,6 +22,7 @@ from piginot.operators.gate import (
 from piginot.operators.safetensors_io import (
     TensorSpec,
     load_operator_state_dict,
+    load_operator_state_dict_with_metadata,
     state_dict_schema,
 )
 
@@ -41,6 +42,7 @@ __all__ = (
     "S11GateMeasurements",
     "TensorSpec",
     "load_operator_state_dict",
+    "load_operator_state_dict_with_metadata",
     "evaluate_s11_gate",
     "module_digest",
     "state_dict_schema",

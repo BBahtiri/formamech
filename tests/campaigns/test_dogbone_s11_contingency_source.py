@@ -8,6 +8,7 @@ import rfc8785
 
 from campaigns.dogbone_v1.family import compiled_family
 from campaigns.dogbone_v1.s10_closeout import _load_run_execution_profile
+from campaigns.dogbone_v1.s10_evidence import DOGBONE_S10_DATASET_POLICY
 from campaigns.dogbone_v1.s10_production import (
     RUN_ID,
     AttemptOrigin,
@@ -28,6 +29,8 @@ from campaigns.dogbone_v1.s11_contingency_source import (
     S10_PRODUCTION_REPORT_CONTENT_HASH,
     S10ReportIndex,
     SelectiveS10Source,
+    VerifiedS10Case,
+    _build_train_snapshot_from_public_metadata,
     _FixtureSelectiveS10Source,
     _rebuild_request,
     _verify_s10_source_bindings_core,
@@ -41,11 +44,12 @@ from piginot.contracts import (
     hash_spec,
     strict_json_loads,
 )
+from piginot.datasets import sample_request_collocation
 from piginot.datasets.request_plan import (
     PublicFemRequestPlan,
     PublicFemRequestPlanEntry,
 )
-from piginot.doe import PublishedCaseManifest
+from piginot.doe import EvidenceRole, PublishedCaseManifest
 from piginot.doe.publication import PublishedCaseStatus
 from piginot.fem import FemAttempt, FemResult
 from piginot.store import ObjectStore
@@ -206,6 +210,72 @@ def _decision(
     )
 
 
+def _empty_result(request) -> FemResult:  # type: ignore[no-untyped-def]
+    return FemResult(
+        request_id=request.request_id,
+        mesh_id=request.mesh.mesh_id,
+        element_order=2,
+        displacement_dof_coordinates=(),
+        displacement=(),
+        quadrature_points=(),
+        quadrature_weights=(),
+        first_piola_stress=(),
+        deformation_gradient=(),
+        recovered_first_piola_stress=(),
+        reactions={},
+        rigid_mode_multipliers=(),
+        total_strain_energy=0.0,
+        external_work=0.0,
+        total_potential_energy=0.0,
+        convergence_history=(),
+        qois={},
+    )
+
+
+def _replace_report_case(
+    report: S10ReportIndex,
+    case_id: str,
+    **changes: object,
+) -> S10ReportIndex:
+    return replace(
+        report,
+        cases=tuple(
+            replace(item, **changes) if item.case_id == case_id else item
+            for item in report.cases
+        ),
+    )
+
+
+def _bind_fixture_train_snapshot(
+    protocol,  # type: ignore[no-untyped-def]
+    manifest: PublishedCaseManifest,
+    plan: PublicFemRequestPlan,
+    ledger: ProductionFemRunLedger,
+    report: S10ReportIndex,
+):  # type: ignore[no-untyped-def]
+    snapshot = _build_train_snapshot_from_public_metadata(
+        manifest=manifest,
+        request_plan=plan,
+        ledger=ledger,
+        report=report,
+    )
+    snapshots = tuple(
+        replace(item, snapshot_content_hash=snapshot.content_hash)
+        if item.role is EvidenceRole.TRAIN
+        else item
+        for item in report.role_snapshots
+    )
+    return (
+        replace(protocol, training_snapshot_hash=snapshot.content_hash),
+        replace(
+            report,
+            training_snapshot_hash=snapshot.content_hash,
+            role_snapshots=snapshots,
+        ),
+        snapshot,
+    )
+
+
 def test_tracked_s10_report_index_is_canonical_and_exactly_pinned() -> None:
     report = load_s10_report_index()
 
@@ -218,6 +288,209 @@ def test_tracked_s10_report_index_is_canonical_and_exactly_pinned() -> None:
     assert report.development_snapshot_hash == (
         "5c6c59c621341d35797bcef3bca8f44510fcbfa90b329858d2e9a3e407824a77"
     )
+    first = report.cases[0]
+    assert first.collocation_stream_hash == (
+        "4a925d22d391a96ab409a4408b8c6eb0ad74e85df6224b1ef25bbdc9eee66759"
+    )
+    assert first.collocation_batch_content_hash == (
+        "4339ecdcb3c4bdf02d4d622378089a25c123ddf5e7031260b318fa843b4185bb"
+    )
+    assert first.collocation_store_content_hash == (
+        "4543187e273cd59cacd5aa3b58d6d819e4fe254bf07a282c6997ee932bfc9d10"
+    )
+    assert first.collocation_point_count == 256
+    assert first.collocation_replay_verified is True
+
+
+def test_train_snapshot_is_rehydrated_from_public_metadata_without_store_reads(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import campaigns.dogbone_v1.s11_contingency_source as source_module
+
+    report = load_s10_report_index()
+    manifest = _manifest()
+    protocol = build_architecture_screen_protocol(manifest)
+    profile = _profile()
+    plan, ledger, report = _plan_and_ledger(report, profile=profile)
+    protocol, report, expected = _bind_fixture_train_snapshot(
+        protocol,
+        manifest,
+        plan,
+        ledger,
+        report,
+    )
+    source = _FixtureSelectiveS10Source.from_components(
+        protocol=protocol,
+        manifest=manifest,
+        execution_profile=profile,
+        request_plan=plan,
+        ledger=ledger,
+        report=report,
+        store=ObjectStore.create(tmp_path / "store"),
+        development_access_record=tmp_path / "development-access.json",
+    )
+
+    def forbidden(*args, **kwargs):  # type: ignore[no-untyped-def]
+        raise AssertionError("FEM result bytes must remain closed")
+
+    monkeypatch.setattr(source_module, "_attempt_from_record", forbidden)
+
+    actual = source.train_snapshot
+
+    assert actual == expected
+    assert actual.role is EvidenceRole.TRAIN
+    assert len(actual.cases) == 256
+    assert actual.content_hash == report.training_snapshot_hash
+    assert source.development_opened is False
+
+
+def test_train_snapshot_rejects_retained_public_identity_drift(tmp_path: Path) -> None:
+    report = load_s10_report_index()
+    manifest = _manifest()
+    protocol = build_architecture_screen_protocol(manifest)
+    profile = _profile()
+    plan, ledger, report = _plan_and_ledger(report, profile=profile)
+    protocol, report, _ = _bind_fixture_train_snapshot(
+        protocol,
+        manifest,
+        plan,
+        ledger,
+        report,
+    )
+    source = _FixtureSelectiveS10Source.from_components(
+        protocol=protocol,
+        manifest=manifest,
+        execution_profile=profile,
+        request_plan=plan,
+        ledger=ledger,
+        report=report,
+        store=ObjectStore.create(tmp_path / "store"),
+        development_access_record=tmp_path / "development-access.json",
+    )
+    source._request_plan = replace(plan, campaign_hash="f" * 64)
+
+    with pytest.raises(ValueError, match="retained request plan"):
+        _ = source.train_snapshot
+
+
+def test_train_collocation_replay_checks_report_and_store_identities(
+    tmp_path: Path,
+) -> None:
+    report = load_s10_report_index()
+    manifest = _manifest()
+    protocol = build_architecture_screen_protocol(manifest)
+    profile = _profile()
+    case_id = protocol.fit_case_ids[0]
+    plan, ledger, report = _plan_and_ledger(
+        report,
+        profile=profile,
+        exact_case_id=case_id,
+    )
+    family = compiled_family()
+    case = next(item for item in manifest.cases if item.case_id == case_id)
+    request = _rebuild_request(case, profile, family)
+    result = _empty_result(request)
+    result_hash = hash_spec(result, "content")
+    ledger = replace(
+        ledger,
+        records=tuple(
+            replace(item, result_hash=result_hash) if item.case_id == case_id else item
+            for item in ledger.records
+        ),
+    )
+    report = _replace_report_case(
+        report,
+        case_id,
+        fem_result_hash=result_hash,
+    )
+    protocol, report, snapshot = _bind_fixture_train_snapshot(
+        protocol,
+        manifest,
+        plan,
+        ledger,
+        report,
+    )
+    batch = sample_request_collocation(
+        snapshot,
+        case_id,
+        request,
+        stream_index=DOGBONE_S10_DATASET_POLICY.stream_index,
+        interior_count=DOGBONE_S10_DATASET_POLICY.interior_count,
+        boundary_count=DOGBONE_S10_DATASET_POLICY.boundary_count,
+        interface_count=DOGBONE_S10_DATASET_POLICY.interface_count,
+        qoi_quotas=DOGBONE_S10_DATASET_POLICY.qoi_quotas,
+    )
+    store = ObjectStore.create(tmp_path / "store")
+    store_hash = store.put(batch.to_bytes())
+    report = _replace_report_case(
+        report,
+        case_id,
+        collocation_stream_hash=batch.sampler_stream_hash,
+        collocation_batch_content_hash=batch.content_hash,
+        collocation_store_content_hash=store_hash,
+        collocation_point_count=len(batch.points),
+        collocation_replay_verified=True,
+    )
+    source = _FixtureSelectiveS10Source.from_components(
+        protocol=protocol,
+        manifest=manifest,
+        execution_profile=profile,
+        request_plan=plan,
+        ledger=ledger,
+        report=report,
+        store=store,
+        development_access_record=tmp_path / "development-access.json",
+    )
+    verified_case = VerifiedS10Case(case, request, result)
+
+    assert source.replay_train_collocation(verified_case) == batch
+
+    wrong_role = VerifiedS10Case(
+        replace(case, role=EvidenceRole.DEVELOPMENT),
+        request,
+        result,
+    )
+    with pytest.raises(ValueError, match="TRAIN case"):
+        source.replay_train_collocation(wrong_role)
+    with pytest.raises(TypeError, match="VerifiedS10Case"):
+        source.replay_train_collocation(object())  # type: ignore[arg-type]
+
+    bad_report = _replace_report_case(
+        report,
+        case_id,
+        collocation_batch_content_hash="f" * 64,
+    )
+    bad_source = _FixtureSelectiveS10Source.from_components(
+        protocol=protocol,
+        manifest=manifest,
+        execution_profile=profile,
+        request_plan=plan,
+        ledger=ledger,
+        report=bad_report,
+        store=store,
+        development_access_record=tmp_path / "development-access-2.json",
+    )
+    with pytest.raises(ValueError, match="collocation identities"):
+        bad_source.replay_train_collocation(verified_case)
+
+    missing_report = _replace_report_case(
+        report,
+        case_id,
+        collocation_store_content_hash="e" * 64,
+    )
+    missing_source = _FixtureSelectiveS10Source.from_components(
+        protocol=protocol,
+        manifest=manifest,
+        execution_profile=profile,
+        request_plan=plan,
+        ledger=ledger,
+        report=missing_report,
+        store=store,
+        development_access_record=tmp_path / "development-access-3.json",
+    )
+    with pytest.raises(ValueError, match="collocation store bytes"):
+        missing_source.replay_train_collocation(verified_case)
 
 
 def test_s10_report_index_rejects_one_byte_semantic_drift(tmp_path: Path) -> None:

@@ -10,6 +10,7 @@ from typing import ClassVar, cast
 
 from campaigns.dogbone_v1.family import CompiledFamily, compiled_family, parameter_point
 from campaigns.dogbone_v1.s10_closeout import _load_run_execution_profile
+from campaigns.dogbone_v1.s10_evidence import DOGBONE_S10_DATASET_POLICY
 from campaigns.dogbone_v1.s10_production import (
     ProductionFemRunLedger,
     _attempt_from_record,
@@ -38,12 +39,19 @@ from campaigns.dogbone_v1.s11_contingency_run import (
     verify_s10_screen_run_index,
 )
 from piginot.contracts import ExecutionProfile, hash_spec
+from piginot.datasets import (
+    CollocationBatch,
+    DatasetCaseRecord,
+    RoleDatasetSnapshot,
+    SampleTrace,
+    sample_request_collocation,
+)
 from piginot.datasets.request_plan import PublicFemRequestPlan
 from piginot.doe import EvidenceRole, PublishedCase, PublishedCaseManifest
 from piginot.doe.publication import PublishedCaseStatus
 from piginot.fem import FemRequest, FemResult
 from piginot.morphing import apply_morph
-from piginot.store import ObjectStore
+from piginot.store import ObjectStore, StoreError
 
 _S10_COMPILED_FAMILY_HASH = (
     "a8143a75e62c614d40f52049cfc88c1cda74d38c9bd488cc3bed4c5678d973a4"
@@ -125,9 +133,13 @@ class _SelectiveS10SourceCore:
         "_entries",
         "_family",
         "_ledger_records",
+        "_ledger",
+        "_manifest",
         "_profile",
         "_protocol",
+        "_report",
         "_report_cases",
+        "_request_plan",
         "_store",
     )
 
@@ -163,6 +175,10 @@ class _SelectiveS10SourceCore:
         self._profile = execution_profile
         self._store = store
         self._family = family
+        self._manifest = manifest
+        self._request_plan = request_plan
+        self._ledger = ledger
+        self._report = report
         self._cases = {case.case_id: case for case in manifest.cases}
         self._entries = {entry.case_id: entry for entry in request_plan.entries}
         self._ledger_records = {record.case_id: record for record in ledger.records}
@@ -176,7 +192,7 @@ class _SelectiveS10SourceCore:
 
     @property
     def development_opened(self) -> bool:
-        return self._development_opened
+        return self._development_opened or self._development_access_record.exists()
 
     @property
     def fit_case_ids(self) -> tuple[str, ...]:
@@ -186,8 +202,119 @@ class _SelectiveS10SourceCore:
     def train_screen_case_ids(self) -> tuple[str, ...]:
         return self._protocol.screen_case_ids
 
+    @property
+    def train_snapshot(self) -> RoleDatasetSnapshot:
+        """Rebuild the exact TRAIN snapshot without resolving FEM result bytes."""
+
+        if self._manifest.content_hash != self._bindings.public_case_manifest_hash:
+            raise ValueError("retained manifest differs from verified bindings")
+        if self._request_plan.content_hash != self._bindings.request_plan_hash:
+            raise ValueError("retained request plan differs from verified bindings")
+        if hash_spec(self._ledger, "content") != self._bindings.ledger_content_hash:
+            raise ValueError("retained ledger differs from verified bindings")
+        if self._report.content_hash != self._bindings.report_content_hash:
+            raise ValueError("retained report differs from verified bindings")
+        snapshot = _build_train_snapshot_from_public_metadata(
+            manifest=self._manifest,
+            request_plan=self._request_plan,
+            ledger=self._ledger,
+            report=self._report,
+        )
+        indices = tuple(
+            item
+            for item in self._report.role_snapshots
+            if item.role is EvidenceRole.TRAIN
+        )
+        if len(indices) != 1:
+            raise ValueError("retained report lacks exactly one TRAIN snapshot index")
+        index = indices[0]
+        if (
+            index.case_count != len(snapshot.cases)
+            or index.successful_case_count != len(snapshot.cases)
+            or index.failed_case_count != 0
+            or index.snapshot_content_hash != snapshot.content_hash
+            or self._report.training_snapshot_hash != snapshot.content_hash
+            or self._protocol.training_snapshot_hash != snapshot.content_hash
+        ):
+            raise ValueError("retained TRAIN snapshot differs from verified evidence")
+        return snapshot
+
+    def replay_train_collocation(
+        self,
+        verified_case: VerifiedS10Case,
+    ) -> CollocationBatch:
+        """Recreate and verify one persisted TRAIN collocation batch exactly."""
+
+        return self._replay_train_collocation(verified_case, self.train_snapshot)
+
+    def _replay_train_collocation(
+        self,
+        verified_case: VerifiedS10Case,
+        snapshot: RoleDatasetSnapshot,
+    ) -> CollocationBatch:
+        if type(verified_case) is not VerifiedS10Case:
+            raise TypeError("verified_case must be an exact VerifiedS10Case")
+        if type(snapshot) is not RoleDatasetSnapshot:
+            raise TypeError("snapshot must be an exact RoleDatasetSnapshot")
+        if snapshot.role is not EvidenceRole.TRAIN:
+            raise ValueError("collocation replay requires the TRAIN snapshot")
+        case = verified_case.case
+        if (
+            case.role is not EvidenceRole.TRAIN
+            or case.status is not PublishedCaseStatus.ACTIVE
+            or self._cases.get(case.case_id) != case
+        ):
+            raise ValueError("collocation replay requires an active TRAIN case")
+        evidence = self._report_cases.get(case.case_id)
+        if evidence is None or evidence.role is not EvidenceRole.TRAIN:
+            raise ValueError("TRAIN case is absent from the S10 report")
+
+        policy = DOGBONE_S10_DATASET_POLICY
+        batch = sample_request_collocation(
+            snapshot,
+            case.case_id,
+            verified_case.request,
+            stream_index=policy.stream_index,
+            interior_count=policy.interior_count,
+            boundary_count=policy.boundary_count,
+            interface_count=policy.interface_count,
+            qoi_quotas=policy.qoi_quotas,
+        )
+        if (
+            not evidence.collocation_replay_verified
+            or evidence.collocation_point_count != len(batch.points)
+            or evidence.collocation_point_count != policy.collocation_points_per_case
+            or evidence.collocation_stream_hash != batch.sampler_stream_hash
+            or evidence.collocation_batch_content_hash != batch.content_hash
+        ):
+            raise ValueError(
+                "S10 collocation identities differ from deterministic replay"
+            )
+        try:
+            persisted = self._store.get(evidence.collocation_store_content_hash)
+        except StoreError as exc:
+            raise ValueError("S10 collocation store bytes are not resolvable") from exc
+        if persisted != batch.to_bytes():
+            raise ValueError("S10 collocation store bytes differ from replay")
+        return batch
+
     def iter_fit(self) -> Iterator[VerifiedS10Case]:
         return self._iter_cases(self._protocol.fit_case_ids, EvidenceRole.TRAIN)
+
+    def iter_fit_with_collocation(
+        self,
+    ) -> Iterator[tuple[VerifiedS10Case, CollocationBatch]]:
+        """Resolve each fit case with one shared verified TRAIN snapshot."""
+
+        snapshot = self.train_snapshot
+        for verified_case in self.iter_fit():
+            yield (
+                verified_case,
+                self._replay_train_collocation(
+                    verified_case,
+                    snapshot,
+                ),
+            )
 
     def iter_train_screen(self) -> Iterator[VerifiedS10Case]:
         return self._iter_cases(self._protocol.screen_case_ids, EvidenceRole.TRAIN)
@@ -348,6 +475,111 @@ class _FixtureSelectiveS10Source(_SelectiveS10SourceCore):
             family=_verified_runtime_family(),
             development_access_record=development_access_record,
         )
+
+
+def _build_train_snapshot_from_public_metadata(
+    *,
+    manifest: PublishedCaseManifest,
+    request_plan: PublicFemRequestPlan,
+    ledger: ProductionFemRunLedger,
+    report: S10ReportIndex,
+) -> RoleDatasetSnapshot:
+    """Rehydrate S10's TRAIN snapshot from public identities, without result I/O."""
+
+    if type(manifest) is not PublishedCaseManifest:
+        raise TypeError("manifest must be an exact PublishedCaseManifest")
+    if type(request_plan) is not PublicFemRequestPlan:
+        raise TypeError("request_plan must be an exact PublicFemRequestPlan")
+    if type(ledger) is not ProductionFemRunLedger:
+        raise TypeError("ledger must be an exact ProductionFemRunLedger")
+    if type(report) is not S10ReportIndex:
+        raise TypeError("report must be an exact S10ReportIndex")
+    if (
+        request_plan.public_case_manifest_hash != manifest.content_hash
+        or ledger.public_case_manifest_hash != manifest.content_hash
+        or report.public_case_manifest_hash != manifest.content_hash
+    ):
+        raise ValueError("TRAIN snapshot sources disagree on the public manifest")
+    if (
+        ledger.campaign_hash != request_plan.campaign_hash
+        or report.campaign_hash != request_plan.campaign_hash
+        or ledger.request_plan_hash != request_plan.content_hash
+        or report.request_plan_hash != request_plan.content_hash
+    ):
+        raise ValueError("TRAIN snapshot sources disagree on the request plan")
+
+    train_cases = {
+        case.case_id: case
+        for case in manifest.cases
+        if case.status is PublishedCaseStatus.ACTIVE and case.role is EvidenceRole.TRAIN
+    }
+    train_ids = tuple(sorted(train_cases))
+    if train_ids != report.training_case_ids:
+        raise ValueError("TRAIN snapshot population differs from the S10 report")
+    entries = {entry.case_id: entry for entry in request_plan.entries}
+    records = {record.case_id: record for record in ledger.records}
+    evidence = {item.case_id: item for item in report.cases}
+
+    case_records: list[DatasetCaseRecord] = []
+    for case_id in train_ids:
+        case = train_cases[case_id]
+        try:
+            entry = entries[case_id]
+            record = records[case_id]
+            item = evidence[case_id]
+        except KeyError as exc:
+            raise ValueError(
+                f"TRAIN case {case_id!r} is absent from public S10 metadata"
+            ) from exc
+        if (
+            entry.role is not EvidenceRole.TRAIN
+            or item.role is not EvidenceRole.TRAIN
+            or entry.leakage_group_id != case.leakage_group_id
+        ):
+            raise ValueError(f"TRAIN case {case_id!r} provenance differs")
+        if (
+            not record.success
+            or record.result_hash is None
+            or record.store_content_hash is None
+            or record.failure_code is not None
+            or record.message != "succeeded"
+        ):
+            raise ValueError(f"TRAIN case {case_id!r} is not a successful S10 result")
+        if (
+            record.request_recipe_hash != entry.request_recipe_hash
+            or record.request_content_hash != entry.request_content_hash
+            or item.fem_result_hash != record.result_hash
+            or item.store_content_hash != record.store_content_hash
+        ):
+            raise ValueError(f"TRAIN case {case_id!r} public identities differ")
+        case_records.append(
+            DatasetCaseRecord(
+                case_id=case.case_id,
+                leakage_group_id=case.leakage_group_id,
+                role=case.role,
+                primitive_coordinates=case.primitive_coordinates,
+                derived_coordinates=case.derived_coordinates,
+                strata=case.strata,
+                request_recipe_hash=entry.request_recipe_hash,
+                request_content_hash=entry.request_content_hash,
+                mesh_id=entry.mesh_id,
+                mesh_content_hash=entry.mesh_content_hash,
+                success=True,
+                sample_trace=SampleTrace(fem_result_hash=record.result_hash),
+                store_content_hash=record.store_content_hash,
+                failure_code=None,
+                message="succeeded",
+            )
+        )
+
+    snapshot = RoleDatasetSnapshot(
+        campaign_hash=request_plan.campaign_hash,
+        public_case_manifest_hash=manifest.content_hash,
+        request_plan_hash=request_plan.content_hash,
+        role=EvidenceRole.TRAIN,
+        cases=tuple(case_records),
+    )
+    return snapshot
 
 
 def verify_s10_source_bindings(

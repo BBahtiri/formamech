@@ -85,6 +85,11 @@ class S10ReportCaseIndex:
     role: EvidenceRole
     fem_result_hash: str
     store_content_hash: str
+    collocation_stream_hash: str
+    collocation_batch_content_hash: str
+    collocation_store_content_hash: str
+    collocation_point_count: int
+    collocation_replay_verified: bool
 
     def __post_init__(self) -> None:
         _text(self.case_id, "case_id")
@@ -93,6 +98,23 @@ class S10ReportCaseIndex:
             raise ValueError("HOLDOUT cannot enter the S10 public report")
         _digest(self.fem_result_hash, "fem_result_hash")
         _digest(self.store_content_hash, "store_content_hash")
+        _digest(self.collocation_stream_hash, "collocation_stream_hash")
+        _digest(
+            self.collocation_batch_content_hash,
+            "collocation_batch_content_hash",
+        )
+        _digest(
+            self.collocation_store_content_hash,
+            "collocation_store_content_hash",
+        )
+        if (
+            isinstance(self.collocation_point_count, bool)
+            or not isinstance(self.collocation_point_count, int)
+            or self.collocation_point_count <= 0
+        ):
+            raise ValueError("collocation_point_count must be a positive integer")
+        if type(self.collocation_replay_verified) is not bool:
+            raise TypeError("collocation_replay_verified must be boolean")
         object.__setattr__(self, "role", role)
 
 
@@ -257,6 +279,23 @@ def _case_index(value: object) -> S10ReportCaseIndex:
         fem_result_hash=_text(record["fem_result_hash"], "fem_result_hash"),
         store_content_hash=_text(
             record["fem_result_store_content_hash"], "fem_result_store_content_hash"
+        ),
+        collocation_stream_hash=_text(
+            record["collocation_stream_hash"], "collocation_stream_hash"
+        ),
+        collocation_batch_content_hash=_text(
+            record["collocation_batch_content_hash"],
+            "collocation_batch_content_hash",
+        ),
+        collocation_store_content_hash=_text(
+            record["collocation_store_content_hash"],
+            "collocation_store_content_hash",
+        ),
+        collocation_point_count=_integer(
+            record["collocation_point_count"], "collocation_point_count"
+        ),
+        collocation_replay_verified=_boolean(
+            record["collocation_replay_verified"], "collocation_replay_verified"
         ),
     )
 

@@ -90,14 +90,49 @@ def load_operator_state_dict(
 ) -> dict[str, torch.Tensor]:
     """Load weights only after identity, key, shape and dtype preflight."""
 
+    return _load_operator_state_dict(
+        path,
+        model=model,
+        expected_metadata={
+            "architecture_id": ARCHITECTURE_ID,
+            "module_digest": module_digest(model),
+        },
+        exact_metadata=False,
+    )
+
+
+def load_operator_state_dict_with_metadata(
+    path: str | Path,
+    *,
+    model: PiGinotOperator,
+    expected_metadata: Mapping[str, str],
+) -> dict[str, torch.Tensor]:
+    """Load an operator only after caller-declared provenance preflight."""
+
+    return _load_operator_state_dict(
+        path,
+        model=model,
+        expected_metadata=_expected_metadata(expected_metadata),
+        exact_metadata=True,
+    )
+
+
+def _load_operator_state_dict(
+    path: str | Path,
+    *,
+    model: PiGinotOperator,
+    expected_metadata: Mapping[str, str],
+    exact_metadata: bool,
+) -> dict[str, torch.Tensor]:
     if type(model) is not PiGinotOperator:
         raise TypeError("model must be an exact PiGinotOperator")
     schema = state_dict_schema(model)
-    expected_metadata = {
-        "architecture_id": ARCHITECTURE_ID,
-        "module_digest": module_digest(model),
-    }
-    header = _preflight_header(path, schema, expected_metadata)
+    header = _preflight_header(
+        path,
+        schema,
+        expected_metadata,
+        exact_metadata=exact_metadata,
+    )
     try:
         safetensors_module = import_module("safetensors.torch")
     except ModuleNotFoundError as exc:
@@ -108,16 +143,29 @@ def load_operator_state_dict(
     )
     loaded = load_file(str(Path(path)), device="cpu")
     _validate_materialized(loaded, schema)
-    metadata = header.get("__metadata__", {})
-    if not isinstance(metadata, dict):
+    materialized_metadata = header.get("__metadata__", {})
+    if not isinstance(materialized_metadata, dict):
         raise ValueError("safetensors metadata must be a JSON object")
     return dict(loaded)
+
+
+def _expected_metadata(value: Mapping[str, str]) -> dict[str, str]:
+    if not isinstance(value, Mapping) or not value:
+        raise ValueError("expected_metadata must be a non-empty string mapping")
+    if any(
+        type(key) is not str or not key or type(item) is not str or not item
+        for key, item in value.items()
+    ):
+        raise ValueError("expected_metadata must map non-empty strings to strings")
+    return dict(value)
 
 
 def _preflight_header(
     path: str | Path,
     schema: Mapping[str, TensorSpec],
     expected_metadata: Mapping[str, str],
+    *,
+    exact_metadata: bool = False,
 ) -> dict[str, object]:
     candidate = Path(path)
     if candidate.suffix != ".safetensors":
@@ -152,7 +200,11 @@ def _preflight_header(
         raise ValueError(f"invalid safetensors header JSON: {exc}") from exc
     if type(header) is not dict:
         raise ValueError("safetensors header must be a JSON object")
-    _validate_metadata(header.get("__metadata__"), expected_metadata)
+    _validate_metadata(
+        header.get("__metadata__"),
+        expected_metadata,
+        exact=exact_metadata,
+    )
     tensor_headers = {
         name: value for name, value in header.items() if name != "__metadata__"
     }
@@ -190,6 +242,8 @@ def _reject_duplicate_json_keys(pairs: list[tuple[str, object]]) -> dict[str, ob
 def _validate_metadata(
     value: object,
     expected: Mapping[str, str],
+    *,
+    exact: bool,
 ) -> None:
     if type(value) is not dict:
         raise ValueError("safetensors metadata is required")
@@ -197,6 +251,8 @@ def _validate_metadata(
         type(key) is not str or type(item) is not str for key, item in value.items()
     ):
         raise ValueError("safetensors metadata must map strings to strings")
+    if exact and set(value) != set(expected):
+        raise ValueError("safetensors metadata keys do not match expected provenance")
     for name, expected_value in expected.items():
         if value.get(name) != expected_value:
             raise ValueError(f"safetensors {name} does not match the module")
@@ -283,5 +339,6 @@ def _validate_materialized(
 __all__ = (
     "TensorSpec",
     "load_operator_state_dict",
+    "load_operator_state_dict_with_metadata",
     "state_dict_schema",
 )
