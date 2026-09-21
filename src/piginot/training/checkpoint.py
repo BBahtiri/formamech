@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
 from typing import ClassVar
@@ -192,6 +193,12 @@ def _model_tensors(model: torch.nn.Module) -> dict[str, torch.Tensor]:
             raise ContractValidationError("model state must contain finite tensors")
         result[f"{_MODEL_PREFIX}{name}"] = tensor.detach().contiguous().cpu()
     return result
+
+
+def model_state_hash(model: torch.nn.Module) -> str:
+    """Hash the complete named model state using the checkpoint tensor framing."""
+
+    return _state_hash(_model_tensors(model))
 
 
 def _adam_state_tensors(
@@ -410,10 +417,13 @@ def write_training_checkpoint(
         scheduler_state=scheduler_state,
         adaptive_state=adaptive_state,
     )
+    staging = path.parent / f".{path.name}.staging-{manifest.manifest_hash[:16]}"
+    if staging.exists() or staging.is_symlink():
+        raise FileExistsError("checkpoint staging directory already exists")
     try:
-        path.mkdir(parents=False, exist_ok=False)
+        staging.mkdir(parents=False, exist_ok=False)
     except FileExistsError as exc:
-        raise FileExistsError("checkpoint directory already exists") from exc
+        raise FileExistsError("checkpoint staging directory already exists") from exc
     for filename in (
         _ADAPTIVE_FILENAME,
         _MODEL_EXPORT_FILENAME,
@@ -421,7 +431,16 @@ def write_training_checkpoint(
         _TENSOR_PAYLOAD_FILENAME,
         _MANIFEST_FILENAME,
     ):
-        _write_once(path / filename, payloads[filename])
+        try:
+            _write_once(staging / filename, payloads[filename])
+        except BaseException:
+            shutil.rmtree(staging, ignore_errors=True)
+            raise
+    try:
+        staging.rename(path)
+    except BaseException:
+        shutil.rmtree(staging, ignore_errors=True)
+        raise
     return WrittenTrainingCheckpoint(
         path=path,
         manifest=manifest,
@@ -733,5 +752,6 @@ __all__ = (
     "WrittenTrainingCheckpoint",
     "export_model_safetensors",
     "load_training_checkpoint",
+    "model_state_hash",
     "write_training_checkpoint",
 )

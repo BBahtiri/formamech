@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 import torch
 
+import piginot.training.checkpoint as checkpoint_module
 from piginot.contracts import ExecutionProfile, canonical_json_bytes, hash_spec
 from piginot.objectives import ObjectiveTerm
 from piginot.training.adaptive import AdaptiveWeightState
@@ -502,6 +503,41 @@ def test_checkpoint_refuses_nonfinite_model_before_creating_directory(
             scheduler_state=_scheduler(),
             adaptive_state=_adaptive(),
         )
+    assert not any(tmp_path.iterdir())
+
+
+def test_checkpoint_write_cleans_staging_after_payload_write_failure(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    model = _model()
+    optimizer = _optimizer(model)
+    calls = 0
+    original_write_once = checkpoint_module._write_once
+
+    def fail_second_payload(path: Path, payload: bytes) -> None:
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            raise OSError("simulated ENOSPC")
+        original_write_once(path, payload)
+
+    monkeypatch.setattr(checkpoint_module, "_write_once", fail_second_payload)
+
+    with pytest.raises(OSError, match="ENOSPC"):
+        write_training_checkpoint(
+            tmp_path / "step-00000000",
+            model=model,
+            optimizer=optimizer,
+            binding=_binding(),
+            step=0,
+            sampler_state=_plan().initial_state,
+            scheduler_state=_scheduler(),
+            adaptive_state=_adaptive(),
+        )
+
+    assert calls == 2
+    assert not (tmp_path / "step-00000000").exists()
     assert not any(tmp_path.iterdir())
 
 

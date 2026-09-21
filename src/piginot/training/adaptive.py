@@ -240,10 +240,10 @@ def measure_unweighted_gradient_statistics(
 ) -> Mapping[ObjectiveTerm, GradientStatistic]:
     """Measure max-reference/mean-term gradients without changing ``.grad``.
 
-    The equilibrium reference follows the DogBone implementation's maximum
-    absolute gradient. Each adapted term uses its mean absolute gradient. The
-    graph is retained so the caller can subsequently backpropagate the weighted
-    total loss.
+    The equilibrium reference follows the validated reference implementation's
+    maximum absolute gradient. Each adapted term uses its mean absolute gradient.
+    The graph is retained so the caller can subsequently backpropagate the
+    weighted total loss.
     """
 
     if not isinstance(unweighted_losses, Mapping):
