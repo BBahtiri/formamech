@@ -78,6 +78,7 @@ class SelectionMetrics:
     p_relative_l2: float
     u_relative_l2: float
     hybrid_loss: float
+    invalid_collocation_points: int
 
     def __post_init__(self) -> None:
         for name in (
@@ -93,6 +94,13 @@ class SelectionMetrics:
             "median_signed_peak_error",
             _finite(self.median_signed_peak_error, "median_signed_peak_error"),
         )
+        if (
+            type(self.invalid_collocation_points) is not int
+            or self.invalid_collocation_points < 0
+        ):
+            raise ContractValidationError(
+                "invalid_collocation_points must be a non-negative integer"
+            )
 
     @property
     def ranking_key(self) -> tuple[float, float, float, float, float, float]:
@@ -236,7 +244,8 @@ class SelectionGuardrails:
         )
         candidate_underprediction = max(0.0, -metrics.median_signed_peak_error)
         return (
-            candidate_underprediction
+            metrics.invalid_collocation_points == 0
+            and candidate_underprediction
             <= (1.0 - self.minimum_underprediction_reduction)
             * incumbent_underprediction
             and metrics.median_absolute_peak_error

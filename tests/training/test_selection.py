@@ -46,6 +46,7 @@ def _metrics(
     p_relative: float = 0.18,
     u_relative: float = 0.037,
     hybrid_loss: float = 1.0,
+    invalid_collocation_points: int = 0,
 ) -> SelectionMetrics:
     return SelectionMetrics(
         median_absolute_peak_error=median_abs,
@@ -54,6 +55,7 @@ def _metrics(
         p_relative_l2=p_relative,
         u_relative_l2=u_relative,
         hybrid_loss=hybrid_loss,
+        invalid_collocation_points=invalid_collocation_points,
     )
 
 
@@ -169,6 +171,21 @@ def test_positive_signed_bias_has_zero_underprediction_magnitude() -> None:
     selected = select_checkpoint(results, policy=_policy())
 
     assert selected.selected_result.metrics.median_signed_peak_error > 0.0
+
+
+def test_folded_collocation_points_make_a_trial_ineligible() -> None:
+    invalid = _metrics(invalid_collocation_points=1)
+    results = tuple(_result(index, metrics=invalid) for index in range(4))
+
+    with pytest.raises(NoEligibleTrialError, match="CP-FREEZE"):
+        select_checkpoint(results, policy=_policy())
+
+    with pytest.raises(ContractValidationError, match="invalid_collocation_points"):
+        _metrics(invalid_collocation_points=-1)
+    with pytest.raises(ContractValidationError, match="invalid_collocation_points"):
+        _metrics(invalid_collocation_points=True)  # type: ignore[arg-type]
+    with pytest.raises(ContractValidationError, match="invalid_collocation_points"):
+        _metrics(invalid_collocation_points=0.0)  # type: ignore[arg-type]
 
 
 @pytest.mark.parametrize(

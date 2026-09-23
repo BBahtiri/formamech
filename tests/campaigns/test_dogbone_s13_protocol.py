@@ -41,6 +41,14 @@ def test_protocol_freezes_the_bounded_train_only_search() -> None:
     assert protocol.training_seed == 13_001
     assert protocol.sampler_seed == 13_002
     assert protocol.sampler_policy_id == DOGBONE_S13_SAMPLER_POLICY_ID
+    assert protocol.orientation_penalty_policy_id == (
+        "s13-invalid-det-constitutive-row-v2"
+    )
+    assert protocol.orientation_penalty_gain == 100.0
+    assert protocol.orientation_recovery_buffer == 0.1
+    assert protocol.screen_metric_policy_id == (
+        "s13-screen-64-fixed-hybrid-all-train-orientation-v1"
+    )
     assert protocol.initial_model_state_hash == (
         "51b83fd2468d66d5556b75286feb08a13b2e9ca16d0b7f4cdcb83ff26eaba906"
     )
@@ -118,6 +126,17 @@ def test_protocol_refuses_upstream_identity_drift() -> None:
             s11_protocol,
             changed,
         )
+
+
+def test_protocol_refuses_orientation_or_screen_policy_drift() -> None:
+    protocol = build_dogbone_s13_protocol()
+
+    with pytest.raises(ValueError, match="orientation_recovery_buffer"):
+        replace(protocol, orientation_recovery_buffer=0.0)
+    with pytest.raises(ValueError, match="orientation_penalty_gain"):
+        replace(protocol, orientation_penalty_gain=1.0)
+    with pytest.raises(ValueError, match="screen_metric_policy_id"):
+        replace(protocol, screen_metric_policy_id="changed")
 
 
 def test_protocol_rejects_subclasses_at_execution_boundaries() -> None:

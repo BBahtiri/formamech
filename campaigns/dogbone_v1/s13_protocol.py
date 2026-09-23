@@ -18,6 +18,11 @@ from campaigns.dogbone_v1.s13_initialization import (
     SelectedS11CheckpointEvidence,
     load_selected_s11_checkpoint_evidence,
 )
+from campaigns.dogbone_v1.s13_objective import (
+    S13_ORIENTATION_PENALTY_GAIN,
+    S13_ORIENTATION_PENALTY_POLICY_ID,
+    S13_ORIENTATION_RECOVERY_BUFFER,
+)
 from piginot.contracts import canonical_json_bytes, hash_spec
 from piginot.objectives import EquilibriumForm, ObjectiveMode, ObjectiveRegistry
 from piginot.training import (
@@ -32,6 +37,9 @@ from piginot.training import (
 
 DOGBONE_S13_PROTOCOL_ID = "dogbone-s13-hybrid-finetune-v1"
 DOGBONE_S13_SAMPLER_POLICY_ID = "dogbone-s13-blake2b-epoch-permutation-v1"
+DOGBONE_S13_SCREEN_METRIC_POLICY_ID = (
+    "s13-screen-64-fixed-hybrid-all-train-orientation-v1"
+)
 
 _S11_PROTOCOL_HASH = "f16a4f63c3a8cfc3ee321bc4e15162802cbc6f106ed807f5aa4bc59eceac81df"
 _S11_SOURCE_BINDINGS_HASH = (
@@ -116,6 +124,10 @@ class DogboneS13Protocol:
     training_seed: int
     sampler_seed: int
     sampler_policy_id: str
+    orientation_penalty_policy_id: str
+    orientation_penalty_gain: float
+    orientation_recovery_buffer: float
+    screen_metric_policy_id: str
     selection_policy: SelectionPolicy
     s11_baseline_metrics: ArchitectureScreenMetrics
 
@@ -207,6 +219,14 @@ class DogboneS13Protocol:
             raise ValueError(f"sampler_seed must remain {_SAMPLER_SEED}")
         if self.sampler_policy_id != DOGBONE_S13_SAMPLER_POLICY_ID:
             raise ValueError("sampler_policy_id changed")
+        if self.orientation_penalty_policy_id != S13_ORIENTATION_PENALTY_POLICY_ID:
+            raise ValueError("orientation_penalty_policy_id changed")
+        if self.orientation_penalty_gain != S13_ORIENTATION_PENALTY_GAIN:
+            raise ValueError("orientation_penalty_gain changed")
+        if self.orientation_recovery_buffer != S13_ORIENTATION_RECOVERY_BUFFER:
+            raise ValueError("orientation_recovery_buffer changed")
+        if self.screen_metric_policy_id != DOGBONE_S13_SCREEN_METRIC_POLICY_ID:
+            raise ValueError("screen_metric_policy_id changed")
         if type(self.selection_policy) is not SelectionPolicy:
             raise TypeError("selection_policy must be exact SelectionPolicy")
         if self.selection_policy != SelectionPolicy(
@@ -349,6 +369,10 @@ def _build_dogbone_s13_protocol(
         training_seed=_TRAINING_SEED,
         sampler_seed=_SAMPLER_SEED,
         sampler_policy_id=DOGBONE_S13_SAMPLER_POLICY_ID,
+        orientation_penalty_policy_id=S13_ORIENTATION_PENALTY_POLICY_ID,
+        orientation_penalty_gain=S13_ORIENTATION_PENALTY_GAIN,
+        orientation_recovery_buffer=S13_ORIENTATION_RECOVERY_BUFFER,
+        screen_metric_policy_id=DOGBONE_S13_SCREEN_METRIC_POLICY_ID,
         selection_policy=selection_policy,
         s11_baseline_metrics=evidence.baseline_metrics,
     )
@@ -420,6 +444,7 @@ def build_dogbone_s13_trainer_configs(
 __all__ = (
     "DOGBONE_S13_PROTOCOL_ID",
     "DOGBONE_S13_SAMPLER_POLICY_ID",
+    "DOGBONE_S13_SCREEN_METRIC_POLICY_ID",
     "DogboneS13Protocol",
     "build_dogbone_s13_protocol",
     "build_dogbone_s13_sampler_plan",

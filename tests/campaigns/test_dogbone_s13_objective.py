@@ -16,6 +16,8 @@ from campaigns.dogbone_v1.s13_objective import (
     DOGBONE_S13_OBJECTIVE_TERMS,
     DogboneS13ObjectiveBuilder,
     DogboneS13TrainingCase,
+    _constitutive_with_orientation_penalty,
+    _physics_material,
 )
 from piginot.contracts import (
     BoundaryConditionSpec,
@@ -38,9 +40,11 @@ from piginot.doe import EvidenceRole, PublishedCaseStatus
 from piginot.fem import FemRequest, FemSolverConfig
 from piginot.objectives import (
     EquilibriumForm,
+    NondimensionalScales,
     ObjectiveMode,
     ObjectiveRegistry,
     ObjectiveTerm,
+    constitutive_residual,
 )
 from piginot.operators import OperatorConfig, PiGinotOperator
 from piginot.training.adaptive import AdaptiveWeightConfig
@@ -252,7 +256,7 @@ def test_real_operator_objective_builds_all_strong_hybrid_terms_and_backpropagat
         equilibrium_form=EquilibriumForm.STRONG,
     )
     evaluation = registry.evaluate(residuals, role=EvidenceRole.TRAIN)
-    evaluation.total.backward()
+    torch.autograd.backward(evaluation.total)
     gradients = tuple(
         parameter.grad for parameter in model.parameters() if parameter.grad is not None
     )
@@ -287,6 +291,109 @@ def test_objective_uses_physical_stress_and_displacement_scales() -> None:
     assert bool(torch.isclose(dirichlet, torch.tensor(0.5, dtype=_DTYPE)).any())
     assert bool(torch.isclose(dirichlet, torch.tensor(0.25, dtype=_DTYPE)).any())
     assert bool(torch.isclose(dirichlet, torch.tensor(-0.5, dtype=_DTYPE)).any())
+
+
+def test_orientation_penalty_preserves_exact_constitutive_residual_when_valid() -> None:
+    material = _physics_material(_request().material)
+    scales = NondimensionalScales(1.0, 0.1, 760.0)
+    stress = torch.tensor([[[[1.0, 2.0], [3.0, 4.0]]]], dtype=_DTYPE)
+    gradient = torch.tensor([[[[0.1, 0.0], [0.0, 0.2]]]], dtype=_DTYPE)
+
+    actual = _constitutive_with_orientation_penalty(
+        stress,
+        gradient,
+        material,
+        scales,
+    )
+    expected = constitutive_residual(stress, gradient, material, scales)
+
+    torch.testing.assert_close(actual, expected, rtol=0.0, atol=0.0)
+
+
+def test_orientation_penalty_counts_every_folded_point_and_backpropagates() -> None:
+    material = _physics_material(_request().material)
+    scales = NondimensionalScales(1.0, 0.1, 760.0)
+    stress = torch.zeros((1, 3, 2, 2), dtype=_DTYPE, requires_grad=True)
+    gradient = torch.tensor(
+        [
+            [
+                [[-1.5, 0.0], [0.0, 0.0]],
+                [[0.0, 0.0], [0.0, 0.0]],
+                [[-1.25, 0.0], [0.0, 0.0]],
+            ]
+        ],
+        dtype=_DTYPE,
+        requires_grad=True,
+    )
+
+    residual = _constitutive_with_orientation_penalty(
+        stress,
+        gradient,
+        material,
+        scales,
+    )
+
+    assert residual.shape == (1, 3, 2, 2)
+    assert torch.isfinite(residual).all()
+    assert torch.all(residual[0, 0] > 0.0)
+    assert torch.all(residual[0, 2] > 0.0)
+    assert torch.all(residual[0, 1] == 0.0)
+    torch.autograd.backward(residual.square().mean())
+    assert gradient.grad is not None
+    assert torch.isfinite(gradient.grad).all()
+    assert gradient.grad[0, 0, 0, 0] != 0.0
+    assert gradient.grad[0, 2, 0, 0] != 0.0
+
+
+def test_orientation_penalty_keeps_s12_result_on_valid_rows_of_mixed_batch() -> None:
+    material = _physics_material(_request().material)
+    scales = NondimensionalScales(1.0, 0.1, 760.0)
+    stress = torch.tensor(
+        [[[[1.0, 2.0], [3.0, 4.0]], [[5.0, 6.0], [7.0, 8.0]]]],
+        dtype=_DTYPE,
+    )
+    gradient = torch.tensor(
+        [[[[0.1, 0.0], [0.0, 0.2]], [[-1.5, 0.0], [0.0, 0.0]]]],
+        dtype=_DTYPE,
+    )
+
+    actual = _constitutive_with_orientation_penalty(
+        stress, gradient, material, scales
+    )
+    expected = constitutive_residual(stress[:, :1], gradient[:, :1], material, scales)
+
+    torch.testing.assert_close(actual[:, :1], expected, rtol=0.0, atol=0.0)
+    assert torch.all(actual[:, 1:] > 0.0)
+
+
+def test_orientation_penalty_is_nonzero_at_singular_and_margin_values() -> None:
+    material = _physics_material(_request().material)
+    scales = NondimensionalScales(1.0, 0.1, 760.0)
+    stress = torch.zeros((1, 3, 2, 2), dtype=_DTYPE)
+    gradient = torch.tensor(
+        [
+            [
+                [[-1.0, 0.0], [0.0, 0.0]],
+                [[-1.0 + 1.0e-13, 0.0], [0.0, 0.0]],
+                [[-1.0 + 1.0e-12, 0.0], [0.0, 0.0]],
+            ]
+        ],
+        dtype=_DTYPE,
+        requires_grad=True,
+    )
+
+    residual = _constitutive_with_orientation_penalty(
+        stress,
+        gradient,
+        material,
+        scales,
+    )
+
+    assert residual.shape == (1, 3, 2, 2)
+    assert torch.all(residual >= 10.0)
+    torch.autograd.backward(residual.square().sum())
+    assert gradient.grad is not None
+    assert torch.all(gradient.grad[0, :, 0, 0] < 0.0)
 
 
 def test_objective_refuses_non_train_cases_before_model_execution() -> None:

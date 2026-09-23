@@ -32,12 +32,16 @@ from piginot.objectives import (
     traction_free_residual,
 )
 from piginot.operators import BoundaryConditionMode, PiGinotOperator
+from piginot.physics._validation import DETERMINANT_MARGIN
 
 _FEM_MATERIAL_MODEL = "finite_strain_plane_stress_neo_hookean"
 _KERNEL_MATERIAL_MODEL = "compressible_neo_hookean"
 _COORDINATE_CONVERSION = CoordinateConversion((1.0, 1.0))
 _DIRICHLET_KINDS = frozenset(("dirichlet", "essential", "symmetry", "mixed"))
 _COMPONENT_INDEX = {"x": 0, "y": 1}
+S13_ORIENTATION_PENALTY_POLICY_ID = "s13-invalid-det-constitutive-row-v2"
+S13_ORIENTATION_PENALTY_GAIN = 100.0
+S13_ORIENTATION_RECOVERY_BUFFER = 0.1
 
 DOGBONE_S13_OBJECTIVE_TERMS = (
     ObjectiveTerm.DATA_U,
@@ -256,7 +260,7 @@ def _physics_residuals(
         )
         equilibrium.append(strong[:, interior_mask].reshape(-1, 2))
         constitutive.append(
-            constitutive_residual(
+            _constitutive_with_orientation_penalty(
                 stress[:, interior_mask],
                 gradient[:, interior_mask],
                 _physics_material(case.request.material),
@@ -293,6 +297,51 @@ def _physics_residuals(
         ObjectiveTerm.DIRICHLET: torch.cat(dirichlet, dim=0),
         ObjectiveTerm.TRACTION_FREE: torch.cat(traction_free, dim=0),
     }
+
+
+def _constitutive_with_orientation_penalty(
+    stress: torch.Tensor,
+    gradient: torch.Tensor,
+    material: MaterialSpec,
+    scales: NondimensionalScales,
+) -> torch.Tensor:
+    """Keep each folded point in the loss without extending the S4 material law."""
+
+    if stress.shape != gradient.shape or stress.shape[-2:] != (2, 2):
+        raise ValueError("stress and gradient must contain aligned 2x2 fields")
+    deformation = torch.eye(2, dtype=gradient.dtype, device=gradient.device) + gradient
+    determinant = (
+        deformation[..., 0, 0] * deformation[..., 1, 1]
+        - deformation[..., 0, 1] * deformation[..., 1, 0]
+    )
+    if not bool(torch.isfinite(determinant).all().item()):
+        raise ValueError("predicted deformation determinant must be finite")
+    admissible = determinant > DETERMINANT_MARGIN
+    if bool(admissible.all().item()):
+        return constitutive_residual(stress, gradient, material, scales)
+
+    flat_stress = stress.reshape(-1, 2, 2)
+    flat_gradient = gradient.reshape(-1, 2, 2)
+    flat_determinant = determinant.reshape(-1)
+    valid_indices = torch.nonzero(admissible.reshape(-1)).reshape(-1)
+    invalid_indices = torch.nonzero(~admissible.reshape(-1)).reshape(-1)
+    residual = torch.zeros_like(flat_stress)
+    if valid_indices.numel():
+        valid_residual = constitutive_residual(
+            flat_stress.index_select(0, valid_indices),
+            flat_gradient.index_select(0, valid_indices),
+            material,
+            scales,
+        )
+        residual = residual.index_copy(0, valid_indices, valid_residual)
+    violation = (
+        S13_ORIENTATION_RECOVERY_BUFFER
+        + DETERMINANT_MARGIN
+        - flat_determinant.index_select(0, invalid_indices)
+    ) * S13_ORIENTATION_PENALTY_GAIN
+    penalty = violation[:, None, None].expand(-1, 2, 2)
+    residual = residual.index_copy(0, invalid_indices, penalty)
+    return residual.reshape(stress.shape)
 
 
 def _validated_operator(model: torch.nn.Module) -> PiGinotOperator:
