@@ -544,7 +544,7 @@ def test_batch_refuses_development_opened_by_source_or_screen(
             s11_checkpoint_root=s11,
             checkpoint_paths=checkpoints,
         )
-    assert "screen" not in context.events
+    assert not any(event.startswith("screen") for event in context.events)
 
     context.source.development_opened = False
     monkeypatch.setattr(
