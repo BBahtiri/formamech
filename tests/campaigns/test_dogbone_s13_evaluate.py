@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -8,8 +9,16 @@ import pytest
 import torch
 
 from campaigns.dogbone_v1 import s13_evaluate
+from piginot.contracts import canonical_json_bytes
 from piginot.doe import EvidenceRole
-from piginot.training import CheckpointLineage, SelectionMetrics, TrialResult
+from piginot.training import (
+    CheckpointLineage,
+    SelectionDecision,
+    SelectionMetrics,
+    SelectionPolicy,
+    TrialResult,
+    select_checkpoint,
+)
 
 
 def _roots(tmp_path: Path) -> tuple[Path, Path, Path]:
@@ -42,6 +51,45 @@ def _batch_roots(tmp_path: Path) -> tuple[Path, Path, tuple[Path, ...]]:
         checkpoint.mkdir(parents=True)
         checkpoints.append(checkpoint)
     return s10, s11, tuple(checkpoints)
+
+
+def _registered_results(
+    metrics: tuple[SelectionMetrics, ...],
+) -> tuple[TrialResult, ...]:
+    trial_ids = s13_evaluate.build_dogbone_s13_protocol().search_space.trial_ids
+    assert len(metrics) == len(trial_ids) == 6
+    return tuple(
+        TrialResult(
+            lineage=CheckpointLineage(
+                trial_id=trial_id,
+                run_hash=f"{index + 1:064x}",
+                dataset_snapshot_hash="b" * 64,
+                execution_profile_hash="c" * 64,
+                weights_hash=f"{index + 10:064x}",
+                model_state_hash=f"{index + 20:064x}",
+                checkpoint_hash=f"{index + 30:064x}",
+            ),
+            role=EvidenceRole.TRAIN,
+            metrics=trial_metrics,
+        )
+        for index, (trial_id, trial_metrics) in enumerate(
+            zip(trial_ids, metrics, strict=True)
+        )
+    )
+
+
+def _batch_cli_arguments(
+    s10: Path, s11: Path, checkpoints: tuple[Path, ...]
+) -> list[str]:
+    arguments = [
+        "--s10-run-root",
+        str(s10),
+        "--s11-checkpoint-root",
+        str(s11),
+    ]
+    for checkpoint in checkpoints:
+        arguments.extend(("--batch-checkpoint-path", str(checkpoint)))
+    return arguments
 
 
 def _mock_batch_dependencies(
@@ -593,21 +641,111 @@ def test_batch_cli_prints_canonical_results_in_registered_order(
     monkeypatch.setattr(
         s13_evaluate, "evaluate_registered_s13_trials", lambda **kwargs: results
     )
-    arguments = [
-        "--s10-run-root",
-        str(s10),
-        "--s11-checkpoint-root",
-        str(s11),
-    ]
-    for checkpoint in checkpoints:
-        arguments.extend(("--batch-checkpoint-path", str(checkpoint)))
-    assert s13_evaluate.main(arguments) == 0
+    assert s13_evaluate.main(_batch_cli_arguments(s10, s11, checkpoints)) == 0
     printed = json.loads(capsys.readouterr().out)
     assert [record["lineage"]["trial_id"] for record in printed] == [
         f"trial-{index}" for index in range(6)
     ]
     assert all(record["role"] == "TRAIN" for record in printed)
     assert all(list(path.iterdir()) == [] for path in checkpoints)
+
+
+def test_batch_cli_selects_in_memory_results_once_after_printing_them(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    s10, s11, checkpoints = _batch_roots(tmp_path)
+    metrics = tuple(
+        replace(_metrics(), median_absolute_peak_error=0.04)
+        if index == 3
+        else _metrics()
+        for index in range(6)
+    )
+    results = _registered_results(metrics)
+    evaluations: list[object] = []
+
+    def evaluate(**kwargs: object) -> tuple[TrialResult, ...]:
+        evaluations.append(kwargs)
+        return results
+
+    monkeypatch.setattr(s13_evaluate, "evaluate_registered_s13_trials", evaluate)
+    selections: list[tuple[TrialResult, ...]] = []
+
+    def select(
+        selected_results: tuple[TrialResult, ...], *, policy: SelectionPolicy
+    ) -> SelectionDecision:
+        selections.append(selected_results)
+        return select_checkpoint(selected_results, policy=policy)
+
+    monkeypatch.setattr(s13_evaluate, "select_checkpoint", select, raising=False)
+    assert (
+        s13_evaluate.main([*_batch_cli_arguments(s10, s11, checkpoints), "--select"])
+        == 0
+    )
+    output = capsys.readouterr()
+    lines = output.out.splitlines()
+    assert len(lines) == 2
+    assert lines[0] == canonical_json_bytes(results).decode("utf-8")
+    assert json.loads(lines[1])["ranked_eligible_trial_ids"][0] == results[3].trial_id
+    assert len(evaluations) == 1
+    assert selections == [results]
+    assert output.err == ""
+
+
+def test_batch_cli_preserves_results_and_withholds_selection_when_ineligible(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    s10, s11, checkpoints = _batch_roots(tmp_path)
+    bad_metrics = replace(_metrics(), median_absolute_peak_error=0.12)
+    results = _registered_results((bad_metrics,) * 6)
+    monkeypatch.setattr(
+        s13_evaluate, "evaluate_registered_s13_trials", lambda **kwargs: results
+    )
+    assert (
+        s13_evaluate.main([*_batch_cli_arguments(s10, s11, checkpoints), "--select"])
+        == 1
+    )
+    output = capsys.readouterr()
+    assert output.out.splitlines() == [canonical_json_bytes(results).decode("utf-8")]
+    assert "CP-FREEZE must be withheld" in output.err
+    assert "Traceback" not in output.err
+
+
+def test_cli_select_requires_exactly_six_batch_paths(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    s10, s11, checkpoints = _batch_roots(tmp_path)
+    monkeypatch.setattr(
+        s13_evaluate,
+        "evaluate_registered_s13_trial",
+        lambda **kwargs: pytest.fail("single-trial evaluation must not start"),
+    )
+    monkeypatch.setattr(
+        s13_evaluate,
+        "evaluate_registered_s13_trials",
+        lambda **kwargs: pytest.fail("batch evaluation must not start"),
+    )
+    shared = ("--s10-run-root", str(s10), "--s11-checkpoint-root", str(s11))
+    with pytest.raises(SystemExit) as single:
+        s13_evaluate.main(
+            (
+                *shared,
+                "--checkpoint-path",
+                str(checkpoints[0]),
+                "--trial-index",
+                "0",
+                "--select",
+            )
+        )
+    assert single.value.code == 2
+    with pytest.raises(SystemExit) as short_batch:
+        s13_evaluate.main(
+            [*_batch_cli_arguments(s10, s11, checkpoints[:5]), "--select"]
+        )
+    assert short_batch.value.code == 2
 
 
 def test_cli_rejects_mixed_and_incomplete_modes(tmp_path: Path) -> None:

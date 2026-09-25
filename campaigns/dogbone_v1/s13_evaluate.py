@@ -1,8 +1,9 @@
-"""Read-only TRAIN-screen evaluation of one completed registered S13 trial."""
+"""Read-only TRAIN-screen evaluation and optional S13 trial selection."""
 
 from __future__ import annotations
 
 import argparse
+import sys
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -32,10 +33,12 @@ from piginot.training import (
     CheckpointLineage,
     DeterministicSamplerPlan,
     DeterministicTrainerConfig,
+    NoEligibleTrialError,
     SelectionMetrics,
     TrainingCheckpointManifest,
     TrialResult,
     load_training_checkpoint,
+    select_checkpoint,
 )
 
 # TrainingRunBinding includes the clean implementation revision used at launch.
@@ -228,7 +231,7 @@ def evaluate_registered_s13_trials(
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Evaluate one completed S13 trial on TRAIN-screen only."
+        description="Evaluate completed S13 trials on TRAIN-screen only."
     )
     parser.add_argument("--s10-run-root", required=True, type=Path)
     parser.add_argument("--s11-checkpoint-root", required=True, type=Path)
@@ -240,30 +243,49 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         help="Repeat six times in registered trial order for shared TRAIN screening.",
     )
+    parser.add_argument(
+        "--select",
+        action="store_true",
+        help="Apply the frozen TRAIN-only selection rule to all six batch results.",
+    )
     return parser
 
 
 def main(arguments: Sequence[str] | None = None) -> int:
     parser = build_parser()
     options = parser.parse_args(arguments)
-    result: TrialResult | tuple[TrialResult, ...]
     if options.batch_checkpoint_path is not None:
         if options.checkpoint_path is not None or options.trial_index is not None:
             parser.error("batch mode cannot include single-trial options")
-        result = evaluate_registered_s13_trials(
+        if options.select and len(options.batch_checkpoint_path) != 6:
+            parser.error("selection requires exactly six batch checkpoints")
+        results = evaluate_registered_s13_trials(
             s10_run_root=options.s10_run_root,
             s11_checkpoint_root=options.s11_checkpoint_root,
             checkpoint_paths=tuple(options.batch_checkpoint_path),
         )
-    else:
-        if options.checkpoint_path is None or options.trial_index is None:
-            parser.error("single-trial mode requires checkpoint path and trial index")
-        result = evaluate_registered_s13_trial(
-            s10_run_root=options.s10_run_root,
-            s11_checkpoint_root=options.s11_checkpoint_root,
-            checkpoint_path=options.checkpoint_path,
-            trial_index=options.trial_index,
-        )
+        print(canonical_json_bytes(results).decode("utf-8"), flush=True)
+        if options.select:
+            try:
+                decision = select_checkpoint(
+                    results,
+                    policy=build_dogbone_s13_protocol().selection_policy,
+                )
+            except NoEligibleTrialError as exc:
+                print(f"NoEligibleTrialError: {exc}", file=sys.stderr, flush=True)
+                return 1
+            print(canonical_json_bytes(decision).decode("utf-8"), flush=True)
+        return 0
+    if options.select:
+        parser.error("selection requires six batch checkpoints")
+    if options.checkpoint_path is None or options.trial_index is None:
+        parser.error("single-trial mode requires checkpoint path and trial index")
+    result = evaluate_registered_s13_trial(
+        s10_run_root=options.s10_run_root,
+        s11_checkpoint_root=options.s11_checkpoint_root,
+        checkpoint_path=options.checkpoint_path,
+        trial_index=options.trial_index,
+    )
     print(canonical_json_bytes(result).decode("utf-8"), flush=True)
     return 0
 
