@@ -49,7 +49,9 @@ from piginot.training.state import (
 )
 
 _DIGEST_LENGTH = 64
-_DATA_TERMS = frozenset((ObjectiveTerm.DATA_U, ObjectiveTerm.DATA_P))
+_DATA_TERMS = frozenset(
+    (ObjectiveTerm.DATA_U, ObjectiveTerm.DATA_P, ObjectiveTerm.DATA_PEAK)
+)
 
 
 class ObjectiveBuilder(Protocol):

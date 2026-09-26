@@ -33,6 +33,7 @@ class ObjectiveTerm(StrEnum):
 
     DATA_U = "data_u"
     DATA_P = "data_P"
+    DATA_PEAK = "data_peak"
     EQUILIBRIUM_STRONG = "equilibrium_strong"
     EQUILIBRIUM_WEAK = "equilibrium_weak"
     CONSTITUTIVE = "constitutive"
@@ -147,10 +148,18 @@ class ObjectiveRegistry:
             raise TypeError("equilibrium_form must be an EquilibriumForm")
         if not isinstance(self.term_weights, Mapping):
             raise TypeError("term_weights must be a mapping")
-        weights = {term: 1.0 for term in ObjectiveTerm}
+        # Keep the S12/S13 default recipe identical; peak supervision is opt-in.
+        weights: dict[ObjectiveTerm, float] = {
+            term: 1.0 for term in ObjectiveTerm if term is not ObjectiveTerm.DATA_PEAK
+        }
         for term, weight in self.term_weights.items():
             if type(term) is not ObjectiveTerm:
                 raise TypeError("term weight keys must be ObjectiveTerm values")
+            if (
+                term is ObjectiveTerm.DATA_PEAK
+                and self.mode is ObjectiveMode.PHYSICS_ONLY
+            ):
+                raise ValueError("data_peak requires a mode with DATA terms")
             if (
                 isinstance(weight, bool)
                 or not isinstance(weight, (int, float))
@@ -169,7 +178,12 @@ class ObjectiveRegistry:
 
     @property
     def required_terms(self) -> tuple[ObjectiveTerm, ...]:
-        data = (ObjectiveTerm.DATA_U, ObjectiveTerm.DATA_P)
+        data: tuple[ObjectiveTerm, ...] = (
+            ObjectiveTerm.DATA_U,
+            ObjectiveTerm.DATA_P,
+        )
+        if ObjectiveTerm.DATA_PEAK in self.term_weights:
+            data += (ObjectiveTerm.DATA_PEAK,)
         physics = (
             self.reported_equilibrium_term,
             ObjectiveTerm.CONSTITUTIVE,

@@ -96,15 +96,22 @@ class DogboneS13TrainingCase:
 
 
 class DogboneS13ObjectiveBuilder:
-    """Build all seven graph-connected strong-HYBRID residuals."""
+    """Build strong-HYBRID residuals, optionally supervising the root peak."""
 
-    __slots__ = ("_cases", "_sample_ids")
+    __slots__ = ("_cases", "_include_peak_loss", "_sample_ids")
 
-    def __init__(self, cases: tuple[DogboneS13TrainingCase, ...]) -> None:
+    def __init__(
+        self,
+        cases: tuple[DogboneS13TrainingCase, ...],
+        *,
+        include_peak_loss: bool = False,
+    ) -> None:
         if type(cases) is not tuple or not cases:
             raise ValueError("cases must be a non-empty tuple")
         if any(type(case) is not DogboneS13TrainingCase for case in cases):
             raise TypeError("cases must contain exact DogboneS13TrainingCase values")
+        if type(include_peak_loss) is not bool:
+            raise TypeError("include_peak_loss must be a bool")
         sample_ids = tuple(case.tensors.case_id for case in cases)
         if sample_ids != tuple(sorted(set(sample_ids))):
             raise ValueError("training case IDs must be sorted and unique")
@@ -134,6 +141,7 @@ class DogboneS13ObjectiveBuilder:
         self._cases: Mapping[str, DogboneS13TrainingCase] = MappingProxyType(
             {case.tensors.case_id: case for case in cases}
         )
+        self._include_peak_loss = include_peak_loss
         self._sample_ids = sample_ids
 
     @property
@@ -206,14 +214,33 @@ class DogboneS13ObjectiveBuilder:
                 physics_output.P,
             )
 
-        values = {
+        values: dict[ObjectiveTerm, torch.Tensor] = {
             ObjectiveTerm.DATA_U: data_output.u
             - torch.stack([case.target_u for case in tensors]),
             ObjectiveTerm.DATA_P: data_output.P
             - torch.stack([case.target_P for case in tensors]),
-            **physics,
         }
-        if tuple(values) != DOGBONE_S13_OBJECTIVE_TERMS:
+        if self._include_peak_loss:
+            values[ObjectiveTerm.DATA_PEAK] = torch.stack(
+                [
+                    torch.linalg.vector_norm(
+                        data_output.P[index, case.qoi_indices], dim=(-2, -1)
+                    ).amax()
+                    - torch.linalg.vector_norm(
+                        case.target_P[case.qoi_indices], dim=(-2, -1)
+                    ).amax()
+                    for index, case in enumerate(tensors)
+                ]
+            )
+        values.update(physics)
+        expected_terms: tuple[ObjectiveTerm, ...] = DOGBONE_S13_OBJECTIVE_TERMS
+        if self._include_peak_loss:
+            expected_terms = (
+                *DOGBONE_S13_OBJECTIVE_TERMS[:2],
+                ObjectiveTerm.DATA_PEAK,
+                *DOGBONE_S13_OBJECTIVE_TERMS[2:],
+            )
+        if tuple(values) != expected_terms:
             raise RuntimeError("DogBone S13 objective term order changed")
         return ObjectiveResiduals(values)
 

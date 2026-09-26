@@ -1,6 +1,6 @@
 # ADR 0015: Diagnose and pilot S13 peak-stress preservation
 
-- Status: Proposed
+- Status: Accepted — bounded TRAIN-only pilot ratified 2026-09-26
 - Date: 2026-09-25
 - Step: S13 recovery, after the failed six-trial TRAIN screen
 - Gate: `G13` remains open; `CP-FREEZE` is withheld
@@ -46,7 +46,7 @@ the maximum Frobenius norm of P on `qoi_indices` from the full mesh: `right_arc`
 excluding `right_grip`. Any S13 recovery term should target those registered
 indices, not assume a 64-query suffix.
 
-## Proposed bounded experiment; not yet authorized as G13 evidence
+## Ratified bounded experiment; not authorized as G13 evidence
 
 Create a separate, preregistered S13b TRAIN-only pilot. Keep the S11 initial
 weights, 192 TRAIN-fit cases, 64 TRAIN-screen cases, normalization, sampler
@@ -63,6 +63,19 @@ S12's objective-registry or the legacy S13 hashes. Test the exact QoI indices,
 gradient path, role isolation, deterministic replay, and checkpoint binding
 before the pilot run.
 
+The prepared implementation makes `DATA_PEAK` an opt-in objective term. Its
+residual is the signed difference between predicted and FEM root-QoI peak
+stress; the registry squares and averages it at weight 1.0. The default
+strong-HYBRID registry remains byte-identical to the legacy recipe hash
+`b6bb39d2b12b08c81ebc5fb81fa78782c6ea6f4abe3ced8325483b9ead08d887`;
+the opt-in peak registry has distinct hash
+`c32436ec8646dc5eea647f003453672a4605b4229498d5d5e2eaf0b3b363c36b`.
+The ratified one-arm pilot plan hash is
+`9c58e3ea932ad03dfe298a2759e06a0dd017d09a8face21513e2c2e66dfae89e`.
+Its control is the original S13 trial-0 step-0800 checkpoint, whose manifest
+hash is `dedb463a0a8eb490c4b413a911c0d02b9ac84625a506acd2054cdca9d493fcbd`;
+it was loaded read-only with the original binding, not relabelled as S13b.
+
 Screen both arms on the same 64 TRAIN-screen cases at step 800 and count invalid
 collocation points across all 256 TRAIN cases. A useful signal requires the new
 arm to reduce median absolute and p90 absolute peak errors and improve median
@@ -73,9 +86,10 @@ guardrails. Even a successful pilot cannot create `CP-FREEZE` or close `G13`;
 those require a newly ratified full-budget protocol and its own complete gate
 evidence.
 
-## Decision needed
+## Ratification and boundary
 
-Before implementing the new objective or running this pilot, ratify its
-coefficient, 800-step matched-control design, and separate S13b identity. If
-the pilot fails, inspect the optimizer/physics trade-off instead of widening
-the frozen selection thresholds. S14 remains blocked throughout.
+The user approved continuing with this exact coefficient, 800-step
+matched-control design, and separate S13b identity on 2026-09-26. That
+authorizes this TRAIN-only pilot, not a full six-trial search or a gate claim.
+If the pilot fails, inspect the optimizer/physics trade-off instead of
+widening the frozen selection thresholds. S14 remains blocked throughout.
