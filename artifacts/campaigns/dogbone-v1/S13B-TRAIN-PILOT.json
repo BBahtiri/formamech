@@ -1,0 +1,71 @@
+{
+  "schema_version": "1.0",
+  "step": "S13b",
+  "evidence_role": "TRAIN",
+  "pilot_id": "dogbone-s13b-peak-preservation-pilot-v1",
+  "pilot_plan_hash": "9c58e3ea932ad03dfe298a2759e06a0dd017d09a8face21513e2c2e66dfae89e",
+  "objective_registry_hash": "c32436ec8646dc5eea647f003453672a4605b4229498d5d5e2eaf0b3b363c36b",
+  "dataset_snapshot_hash": "af04a059e0efb647a1ba768f722d2fde7500d06d11695d1132a0b26dded24845",
+  "source_bindings_hash": "e32148e4efde6c54fe02ca25b86124d1a43a620eecddb235122919f1649461e3",
+  "training_revision": "65b091f136d72697698c1209427e96e0668a43e6",
+  "evaluator_revision": "f917d4f752d5ba6474b20167d0a607e6e01d9f55",
+  "screen_case_count": 64,
+  "invalid_collocation_case_count": 256,
+  "control": {
+    "training_revision": "5473cdeebd06597d4ec0bdd50df7d230d00306cd",
+    "trial_id": "trial-53da9b573cc4663086764e2f39c010c3c3a15666442058390b193c3398ee13d3",
+    "checkpoint_step": 800,
+    "checkpoint_manifest_hash": "dedb463a0a8eb490c4b413a911c0d02b9ac84625a506acd2054cdca9d493fcbd",
+    "run_hash": "8be4870d6323bb2880953d98195c6076d65c71760203faab0c59fd86c1f476e8",
+    "execution_profile_hash": "2cdc3aecff8f59505840f0e72ecca11b2a4268d647b6001eb8ad8776e98a3e5e",
+    "model_state_hash": "e6a0d5b0ce89f8b3e202a8a67d4746f6ba9de83b267b5d505748f74f48c6255c",
+    "weights_hash": "b10bd1c9869913d603dac6f19ad648680700890b8b3bf3f0b83673e3a0008684",
+    "metrics": {
+      "median_absolute_peak_error": 0.11434243459482657,
+      "p90_absolute_peak_error": 0.1608024523574511,
+      "median_signed_peak_error": -0.11434243459482657,
+      "p_relative_l2": 0.15280707452111275,
+      "u_relative_l2": 0.03710060056036764,
+      "hybrid_loss_legacy_diagnostic": 0.0005750638495140623,
+      "invalid_collocation_points": 0
+    }
+  },
+  "peak_arm": {
+    "trial_id": "trial-3784dac14e2162decea7aabe6cf87934039d3b34466890de4cd304bd62796ead",
+    "checkpoint_step": 800,
+    "checkpoint_manifest_hash": "0e2cf32373767784a1ce928e1bd957d305c2901c1fc83d15ee014c2bb8cf7322",
+    "run_hash": "7266ade09974960c5c936a688940036ab1391f666136b67a73e51b8aaaefd764",
+    "execution_profile_hash": "2cdc3aecff8f59505840f0e72ecca11b2a4268d647b6001eb8ad8776e98a3e5e",
+    "model_state_hash": "e323cefec06e09c0d26fc2082133f31cd1f3daf3593e6ccbf88e0be432bbc912",
+    "weights_hash": "bc02ba19216cbce20ad1b10df55f423bed546dcb93b22d9cb99fd1918f40dc56",
+    "metrics": {
+      "median_absolute_peak_error": 0.04312717246626491,
+      "p90_absolute_peak_error": 0.0764694613009652,
+      "median_signed_peak_error": -0.041109291783627606,
+      "p_relative_l2": 0.16615034385916377,
+      "u_relative_l2": 0.03673333488337166,
+      "hybrid_loss_legacy_diagnostic": 0.0008003935069785638,
+      "invalid_collocation_points": 1
+    }
+  },
+  "criteria": {
+    "median_absolute_peak_improved": true,
+    "p90_absolute_peak_improved": true,
+    "underprediction_reduced_10_percent": true,
+    "u_field_nonregression": true,
+    "p_field_nonregression": false,
+    "zero_invalid_collocation": false
+  },
+  "pilot_signal": false,
+  "frozen_s11_guardrails_diagnostic_at_step_800": {
+    "admitted": false,
+    "failed_fields": ["invalid_collocation_points"],
+    "not_g13_gate_evidence": true
+  },
+  "development_opened": false,
+  "holdout_opened": false,
+  "non_train_evidence_used": false,
+  "g13_status": "NOT_PASSED",
+  "cp_freeze_status": "WITHHELD",
+  "s14_status": "BLOCKED"
+}
