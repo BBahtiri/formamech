@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "step": "S13b",
+  "non_gate": true,
+  "evidence_role": "TRAIN",
+  "locator_module": "campaigns.dogbone_v1.s13b_invalid_diagnostic",
+  "pilot_artifact_sha256": "6523895342ad68edf624991b65a4c1a6ad30bc295d5e944afb3c69d31077037b",
+  "peak_checkpoint_manifest_hash": "0e2cf32373767784a1ce928e1bd957d305c2901c1fc83d15ee014c2bb8cf7322",
+  "determinant_margin": 1e-12,
+  "interior_points_per_case": 128,
+  "checked_case_count": 256,
+  "checked_interior_point_count": 32768,
+  "invalid_case_count": 1,
+  "invalid_point_count": 1,
+  "invalid_case": {
+    "case_id": "candidate-002485",
+    "population": "TRAIN_FIT",
+    "point_index": 25,
+    "coordinates": [24.720325328268974, 2.341752661726852],
+    "determinant": -0.001147183246821691,
+    "min_determinant": -0.001147183246821691
+  },
+  "scope_note": "Sampled TRAIN collocation validity only; not a global deformation certificate.",
+  "development_opened": false,
+  "holdout_opened": false,
+  "g13_status": "NOT_PASSED"
+}

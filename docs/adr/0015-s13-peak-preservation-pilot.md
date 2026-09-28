@@ -93,3 +93,39 @@ matched-control design, and separate S13b identity on 2026-09-26. That
 authorizes this TRAIN-only pilot, not a full six-trial search or a gate claim.
 If the pilot fails, inspect the optimizer/physics trade-off instead of
 widening the frozen selection thresholds. S14 remains blocked throughout.
+
+## Completed TRAIN-only pilot outcome
+
+The matched step-800 comparison is retained in
+`artifacts/campaigns/dogbone-v1/S13B-TRAIN-PILOT.json` (commit `abb9a00`,
+SHA-256 `6523895342ad68edf624991b65a4c1a6ad30bc295d5e944afb3c69d31077037b`).
+Both checkpoints passed their pinned lineage checks. The same 64 registered
+TRAIN-screen FEM cases were evaluated for each arm, and the invalid-point count
+used all 256 TRAIN cases. DEVELOPMENT and HOLDOUT remained unopened.
+
+The peak arm reduced median absolute root-peak error from 0.114342 to 0.043127
+(62.3%) and p90 absolute peak error from 0.160802 to 0.076469 (52.4%). Its
+median P-field relative L2, however, increased from 0.152807 to 0.166150
+(8.73%), beyond the preregistered 2% non-regression allowance. U-field relative
+L2 changed from 0.037101 to 0.036733. The peak arm also had one invalid
+collocation point versus zero for the control. A separate matched per-case
+TRAIN replay found P-field error worse in 63/64 cases and absolute peak error
+better in 62/64; the field regression is not an isolated outlier.
+
+The read-only determinant locator reproduced the single invalid count and the
+same peak-checkpoint manifest. Its non-gate record is
+`artifacts/campaigns/dogbone-v1/S13B-TRAIN-INVALID-POINT.json`: TRAIN-FIT case
+`candidate-002485`, collocation index 25, coordinates
+`(24.720325328268974, 2.341752661726852)`, with
+`det(F) = -0.001147183246821691`. This is a genuine sampled orientation
+reversal, not roundoff near the `1e-12` admissibility margin. The result does
+not certify or refute global validity away from the sampled points.
+
+The preregistered pilot signal is **false**. The improved peak does not justify
+promoting this arm, relaxing the frozen thresholds, or claiming `G13` evidence.
+`G13` remains not passed, `CP-FREEZE` is withheld, and S14 remains blocked.
+The scalar maximum-peak loss plausibly overweights the QoI relative to the
+distributed P-field objective, but the replay does not establish that as the
+unique cause of either failure. A reduced peak coefficient is a bounded next
+hypothesis; its coefficient, comparison rule, and budget need a separate
+preregistration before any further training.

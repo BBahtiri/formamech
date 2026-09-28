@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
+from hashlib import sha256
 from pathlib import Path
 from typing import Any, cast
 
@@ -19,6 +20,7 @@ _ARTIFACT = (
     / "dogbone-v1"
     / "S13B-TRAIN-PILOT.json"
 )
+_DIAGNOSTIC = _ARTIFACT.with_name("S13B-TRAIN-INVALID-POINT.json")
 
 
 def _report() -> dict[str, Any]:
@@ -96,3 +98,39 @@ def test_s13b_pilot_evidence_never_claims_gate_or_non_train_access() -> None:
     assert report["g13_status"] == "NOT_PASSED"
     assert report["cp_freeze_status"] == "WITHHELD"
     assert report["s14_status"] == "BLOCKED"
+
+
+def test_s13b_invalid_point_diagnostic_matches_failed_pilot() -> None:
+    pilot = _report()
+    diagnostic = strict_json_loads(_DIAGNOSTIC.read_bytes())
+
+    assert diagnostic["schema_version"] == "1.0"
+    assert diagnostic["step"] == "S13b"
+    assert diagnostic["non_gate"] is True
+    assert diagnostic["evidence_role"] == "TRAIN"
+    assert diagnostic["pilot_artifact_sha256"] == (
+        "6523895342ad68edf624991b65a4c1a6ad30bc295d5e944afb3c69d31077037b"
+    )
+    assert sha256(_ARTIFACT.read_bytes()).hexdigest() == (
+        diagnostic["pilot_artifact_sha256"]
+    )
+    assert diagnostic["peak_checkpoint_manifest_hash"] == (
+        pilot["peak_arm"]["checkpoint_manifest_hash"]
+    )
+    assert diagnostic["checked_case_count"] == pilot["invalid_collocation_case_count"]
+    assert diagnostic["checked_interior_point_count"] == (
+        diagnostic["checked_case_count"] * diagnostic["interior_points_per_case"]
+    )
+    assert diagnostic["invalid_case_count"] == 1
+    assert diagnostic["invalid_point_count"] == (
+        pilot["peak_arm"]["metrics"]["invalid_collocation_points"]
+    )
+    point = diagnostic["invalid_case"]
+    assert point["case_id"] == "candidate-002485"
+    assert point["population"] == "TRAIN_FIT"
+    assert point["point_index"] == 25
+    assert point["determinant"] == point["min_determinant"]
+    assert point["determinant"] < 0 < diagnostic["determinant_margin"]
+    assert diagnostic["development_opened"] is False
+    assert diagnostic["holdout_opened"] is False
+    assert diagnostic["g13_status"] == "NOT_PASSED"
