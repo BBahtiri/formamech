@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import math
 import os
 from collections.abc import Sequence
@@ -29,9 +30,14 @@ from piginot.doe import EvidenceRole
 from piginot.objectives import displacement_gradient
 from piginot.operators import OperatorOutput, PiGinotOperator
 from piginot.physics._validation import DETERMINANT_MARGIN
+from piginot.training import DeterministicSamplerPlan
 
 _CASE_ID = "candidate-002485"
 _MAXIMUM_OPTIMIZER_STEPS = 800
+_EXPECTED_VERTEX_COUNT = 3_729
+_VERTEX_BATCH_SIZE = 113
+_VERTEX_SAMPLER_POLICY_ID = "dogbone-s13-overfit-blake2b-epoch-permutation-v1"
+_VERTEX_SAMPLER_PERSON = b"piginot-vtx-v1"
 
 
 @dataclass(frozen=True, slots=True)
@@ -48,6 +54,9 @@ class S13OverfitPlan:
     learning_rate: float
     optimizer_steps: int
     maximum_optimizer_steps: int
+    expected_vertex_count: int
+    vertex_batch_size: int
+    vertex_sampler_policy_id: str
     minimum_data_mse_drop_fraction: float
     maximum_final_u_relative_l2: float
     maximum_final_p_relative_l2: float
@@ -55,7 +64,7 @@ class S13OverfitPlan:
     maximum_final_invalid_collocation_count: int
 
     def __post_init__(self) -> None:
-        if self.diagnostic_id != "dogbone-s13-one-case-overfit-v1":
+        if self.diagnostic_id != "dogbone-s13-one-case-overfit-v2":
             raise ValueError("diagnostic_id must identify the frozen diagnostic")
         if self.role is not EvidenceRole.TRAIN:
             raise PermissionError("overfit diagnostic is restricted to TRAIN evidence")
@@ -63,10 +72,12 @@ class S13OverfitPlan:
             raise ValueError("overfit diagnostic must remain non-gate")
         if self.case_id != _CASE_ID:
             raise ValueError(f"case_id must be {_CASE_ID}")
-        if type(self.seed) is not int or self.seed < 0:
-            raise ValueError("seed must be a non-negative integer")
+        if type(self.seed) is not int or self.seed != 13_001:
+            raise ValueError("seed must remain 13001")
         if not math.isfinite(self.learning_rate) or self.learning_rate <= 0.0:
             raise ValueError("learning_rate must be positive and finite")
+        if self.learning_rate != 5.0e-6:
+            raise ValueError("learning_rate must remain 5e-6")
         if self.maximum_optimizer_steps != _MAXIMUM_OPTIMIZER_STEPS:
             raise ValueError("maximum_optimizer_steps must remain 800")
         if (
@@ -75,6 +86,16 @@ class S13OverfitPlan:
             or self.optimizer_steps > self.maximum_optimizer_steps
         ):
             raise ValueError("optimizer_steps must be within the maximum budget")
+        if self.expected_vertex_count != _EXPECTED_VERTEX_COUNT:
+            raise ValueError(
+                f"expected_vertex_count must remain {_EXPECTED_VERTEX_COUNT}"
+            )
+        if self.vertex_batch_size != _VERTEX_BATCH_SIZE:
+            raise ValueError(f"vertex_batch_size must remain {_VERTEX_BATCH_SIZE}")
+        if self.expected_vertex_count % self.vertex_batch_size != 0:
+            raise ValueError("vertex_batch_size must divide expected_vertex_count")
+        if self.vertex_sampler_policy_id != _VERTEX_SAMPLER_POLICY_ID:
+            raise ValueError("vertex_sampler_policy_id differs from the frozen policy")
         for name in (
             "minimum_data_mse_drop_fraction",
             "maximum_final_u_relative_l2",
@@ -86,6 +107,13 @@ class S13OverfitPlan:
                 raise ValueError(f"{name} must be non-negative and finite")
         if not 0.0 <= self.minimum_data_mse_drop_fraction <= 1.0:
             raise ValueError("minimum_data_mse_drop_fraction must lie in [0, 1]")
+        if (
+            self.minimum_data_mse_drop_fraction != 0.80
+            or self.maximum_final_u_relative_l2 != 0.02
+            or self.maximum_final_p_relative_l2 != 0.05
+            or self.maximum_final_absolute_peak_error != 0.05
+        ):
+            raise ValueError("overfit success thresholds differ from the frozen policy")
         if type(self.maximum_final_invalid_collocation_count) is not int or (
             self.maximum_final_invalid_collocation_count != 0
         ):
@@ -93,7 +121,7 @@ class S13OverfitPlan:
 
     @property
     def content_hash(self) -> str:
-        return hash_spec(self, "content")
+        return cast(str, hash_spec(self, "content"))
 
 
 @dataclass(frozen=True, slots=True)
@@ -185,6 +213,8 @@ class S13OverfitDiagnosticReport:
     initial_checkpoint_file_hash: str
     initial_model_state_hash: str
     final_model_state_hash: str
+    vertex_count: int
+    vertex_sampler_plan_hash: str
     before: OverfitCaseMetrics
     after: OverfitCaseMetrics
     classification: OverfitClassification
@@ -205,8 +235,16 @@ class S13OverfitDiagnosticReport:
             "initial_checkpoint_file_hash",
             "initial_model_state_hash",
             "final_model_state_hash",
+            "vertex_sampler_plan_hash",
         ):
             _digest(getattr(self, name), name)
+        if self.vertex_count != self.plan.expected_vertex_count:
+            raise ValueError("vertex_count differs from the frozen plan")
+        if (
+            self.vertex_sampler_plan_hash
+            != _build_vertex_sampler_plan(self.plan, self.vertex_count).plan_hash
+        ):
+            raise ValueError("vertex sampler hash differs from the frozen schedule")
         if (
             type(self.before) is not OverfitCaseMetrics
             or type(self.after) is not OverfitCaseMetrics
@@ -214,6 +252,10 @@ class S13OverfitDiagnosticReport:
             raise TypeError("before and after must be exact OverfitCaseMetrics")
         if type(self.classification) is not OverfitClassification:
             raise TypeError("classification must be exact OverfitClassification")
+        if self.classification != classify_s13_overfit(
+            self.plan, self.before, self.after
+        ):
+            raise ValueError("classification differs from the frozen decision rule")
         if (
             type(self.optimizer_loss_trace) is not tuple
             or len(self.optimizer_loss_trace) != self.plan.optimizer_steps
@@ -232,14 +274,17 @@ def build_s13_overfit_plan(
     """Build the frozen default plan, allowing only a strict diagnostic prefix."""
 
     return S13OverfitPlan(
-        diagnostic_id="dogbone-s13-one-case-overfit-v1",
+        diagnostic_id="dogbone-s13-one-case-overfit-v2",
         role=EvidenceRole.TRAIN,
         non_gate=True,
         case_id=_CASE_ID,
         seed=13_001,
-        learning_rate=1.0e-4,
+        learning_rate=5.0e-6,
         optimizer_steps=optimizer_steps,
         maximum_optimizer_steps=_MAXIMUM_OPTIMIZER_STEPS,
+        expected_vertex_count=_EXPECTED_VERTEX_COUNT,
+        vertex_batch_size=_VERTEX_BATCH_SIZE,
+        vertex_sampler_policy_id=_VERTEX_SAMPLER_POLICY_ID,
         minimum_data_mse_drop_fraction=0.80,
         maximum_final_u_relative_l2=0.02,
         maximum_final_p_relative_l2=0.05,
@@ -286,17 +331,52 @@ def _predict_case(
     tensors = case.tensors
     with torch.no_grad():
         with torch.nn.attention.sdpa_kernel(torch.nn.attention.SDPBackend.MATH):
-            return cast(OperatorOutput, operator(
+            return cast(
+                OperatorOutput,
+                operator(
+                    boundary_xy=tensors.boundary_xy.unsqueeze(0),
+                    boundary_tags=tensors.boundary_tags.unsqueeze(0),
+                    boundary_normals=tensors.boundary_normals.unsqueeze(0),
+                    boundary_weights=tensors.boundary_weights.unsqueeze(0),
+                    boundary_mask=tensors.boundary_mask.unsqueeze(0),
+                    query_xy=tensors.query_xy.unsqueeze(0),
+                    parameters=tensors.parameters_for(
+                        operator.config.parameter_names
+                    ).unsqueeze(0),
+                ),
+            )
+
+
+def _predict_case_vertices(
+    model: PiGinotOperator,
+    case: DogboneS13TrainingCase,
+    vertex_indices: torch.Tensor,
+) -> OperatorOutput:
+    operator = _validated_operator(model)
+    tensors = case.tensors
+    if vertex_indices.dtype is not torch.long or vertex_indices.device.type != "cpu":
+        raise ValueError("vertex_indices must be a CPU int64 tensor")
+    if vertex_indices.ndim != 1 or vertex_indices.numel() == 0:
+        raise ValueError("vertex_indices must be a non-empty vector")
+    if int(vertex_indices.min()) < 0 or int(vertex_indices.max()) >= int(
+        tensors.query_xy.shape[0]
+    ):
+        raise ValueError("vertex_indices must refer to query vertices")
+    with torch.nn.attention.sdpa_kernel(torch.nn.attention.SDPBackend.MATH):
+        return cast(
+            OperatorOutput,
+            operator(
                 boundary_xy=tensors.boundary_xy.unsqueeze(0),
                 boundary_tags=tensors.boundary_tags.unsqueeze(0),
                 boundary_normals=tensors.boundary_normals.unsqueeze(0),
                 boundary_weights=tensors.boundary_weights.unsqueeze(0),
                 boundary_mask=tensors.boundary_mask.unsqueeze(0),
-                query_xy=tensors.query_xy.unsqueeze(0),
+                query_xy=tensors.query_xy.index_select(0, vertex_indices).unsqueeze(0),
                 parameters=tensors.parameters_for(
                     operator.config.parameter_names
                 ).unsqueeze(0),
-            ))
+            ),
+        )
 
 
 def _vertex_determinants(
@@ -416,6 +496,7 @@ def _train_one_case(
     model: PiGinotOperator,
     case: DogboneS13TrainingCase,
     plan: S13OverfitPlan,
+    sampler_plan: DeterministicSamplerPlan | None = None,
 ) -> tuple[float, ...]:
     """Fit DATA_U + DATA_P at every FEM vertex with deterministic CPU Adam."""
 
@@ -434,6 +515,12 @@ def _train_one_case(
         for parameter in operator.parameters()
     ):
         raise ValueError("model parameters must be deterministic CPU float64")
+    tensors = case.tensors
+    vertex_count = int(tensors.query_xy.shape[0])
+    expected_sampler = _build_vertex_sampler_plan(plan, vertex_count)
+    sampler = expected_sampler if sampler_plan is None else sampler_plan
+    if type(sampler) is not DeterministicSamplerPlan or sampler != expected_sampler:
+        raise ValueError("sampler_plan differs from the deterministic vertex schedule")
     optimizer = torch.optim.Adam(
         operator.parameters(),
         lr=plan.learning_rate,
@@ -443,8 +530,6 @@ def _train_one_case(
         foreach=False,
         fused=False,
     )
-    tensors = case.tensors
-    parameters = tensors.parameters_for(operator.config.parameter_names).unsqueeze(0)
     was_training = operator.training
     deterministic_before = torch.are_deterministic_algorithms_enabled()
     trace: list[float] = []
@@ -453,26 +538,20 @@ def _train_one_case(
         torch.use_deterministic_algorithms(True)
         with torch.random.fork_rng(devices=[]):
             torch.manual_seed(plan.seed)
-            for _ in range(plan.optimizer_steps):
+            for batch in sampler.batches:
+                indices = torch.tensor(batch, dtype=torch.long)
                 optimizer.zero_grad(set_to_none=True)
-                with torch.nn.attention.sdpa_kernel(torch.nn.attention.SDPBackend.MATH):
-                    output = operator(
-                        boundary_xy=tensors.boundary_xy.unsqueeze(0),
-                        boundary_tags=tensors.boundary_tags.unsqueeze(0),
-                        boundary_normals=tensors.boundary_normals.unsqueeze(0),
-                        boundary_weights=tensors.boundary_weights.unsqueeze(0),
-                        boundary_mask=tensors.boundary_mask.unsqueeze(0),
-                        query_xy=tensors.query_xy.unsqueeze(0),
-                        parameters=parameters,
-                    )
-                u_mse = torch.mean((output.u[0] - tensors.target_u).square())
-                p_mse = torch.mean((output.P[0] - tensors.target_P).square())
+                output = _predict_case_vertices(operator, case, indices)
+                target_u = tensors.target_u.index_select(0, indices)
+                target_p = tensors.target_P.index_select(0, indices)
+                u_mse = torch.mean((output.u[0] - target_u).square())
+                p_mse = torch.mean((output.P[0] - target_p).square())
                 loss = u_mse + p_mse
                 if not bool(torch.isfinite(loss).item()):
                     raise FloatingPointError(
                         "supervised overfit loss became non-finite"
                     )
-                loss.backward()  # type: ignore[no-untyped-call]
+                loss.backward()
                 if any(
                     parameter.grad is not None
                     and not bool(torch.isfinite(parameter.grad).all().item())
@@ -487,6 +566,54 @@ def _train_one_case(
         torch.use_deterministic_algorithms(deterministic_before)
         operator.train(was_training)
     return tuple(trace)
+
+
+def _vertex_epoch_order(vertex_count: int, seed: int, epoch: int) -> tuple[int, ...]:
+    prefix = seed.to_bytes(8, "big") + epoch.to_bytes(8, "big")
+    return tuple(
+        sorted(
+            range(vertex_count),
+            key=lambda index: (
+                hashlib.blake2b(
+                    prefix + index.to_bytes(8, "big"),
+                    digest_size=32,
+                    person=_VERTEX_SAMPLER_PERSON,
+                ).digest(),
+                index,
+            ),
+        )
+    )
+
+
+def _build_vertex_sampler_plan(
+    plan: S13OverfitPlan,
+    vertex_count: int,
+) -> DeterministicSamplerPlan:
+    """Build the finite, cross-platform deterministic vertex schedule."""
+
+    if type(vertex_count) is not int or vertex_count <= 0:
+        raise ValueError("vertex_count must be a positive integer")
+    if type(plan) is not S13OverfitPlan:
+        raise TypeError("plan must be an exact S13OverfitPlan")
+    batch_size = min(plan.vertex_batch_size, vertex_count)
+    if vertex_count % batch_size != 0:
+        raise ValueError("vertex_count must divide exactly into vertex batches")
+    batches: list[tuple[int, ...]] = []
+    epoch = 0
+    while len(batches) < plan.optimizer_steps:
+        order = _vertex_epoch_order(vertex_count, plan.seed, epoch)
+        batches.extend(
+            order[start : start + batch_size]
+            for start in range(0, vertex_count, batch_size)
+        )
+        epoch += 1
+    return DeterministicSamplerPlan(
+        sampler_id=(
+            f"{plan.vertex_sampler_policy_id}:{plan.seed}:batch-size-{batch_size}"
+        ),
+        population_size=vertex_count,
+        batches=tuple(batches[: plan.optimizer_steps]),
+    )
 
 
 def _absolute_directory(path: Path, label: str) -> Path:
@@ -563,6 +690,9 @@ def run_s13_overfit_diagnostic(
         development_access_record,
         output_path,
     )
+    vertex_sampler = _build_vertex_sampler_plan(
+        frozen_plan, frozen_plan.expected_vertex_count
+    )
 
     # Freeze the exact selected S11 state before resolving any FEM result bytes.
     initialization = load_selected_s11_initialization(s11)
@@ -583,8 +713,16 @@ def run_s13_overfit_diagnostic(
     if len(selected) != 1:
         raise ValueError("preregistered TRAIN case must resolve exactly once")
     case = selected[0]
+    vertex_count = int(case.tensors.query_xy.shape[0])
+    if vertex_count != frozen_plan.expected_vertex_count:
+        raise ValueError("TRAIN case vertex count differs from the frozen plan")
     before = _measure_case(initialization.model, case)
-    trace = _train_one_case(initialization.model, case, frozen_plan)
+    trace = _train_one_case(
+        initialization.model,
+        case,
+        frozen_plan,
+        vertex_sampler,
+    )
     after = _measure_case(initialization.model, case)
     if source.development_opened:
         raise RuntimeError("DEVELOPMENT labels opened during TRAIN diagnostic")
@@ -600,6 +738,8 @@ def run_s13_overfit_diagnostic(
         initial_checkpoint_file_hash=initialization.checkpoint_file_blake2b256,
         initial_model_state_hash=initial_state_hash,
         final_model_state_hash=final_state_hash,
+        vertex_count=vertex_count,
+        vertex_sampler_plan_hash=vertex_sampler.plan_hash,
         before=before,
         after=after,
         classification=classify_s13_overfit(frozen_plan, before, after),

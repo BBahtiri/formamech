@@ -43,13 +43,20 @@ def _metrics(
 def test_default_plan_preregisters_bounded_one_case_success_contract() -> None:
     plan = diagnostic.build_s13_overfit_plan()
 
+    assert plan.diagnostic_id == "dogbone-s13-one-case-overfit-v2"
     assert plan.role is EvidenceRole.TRAIN
     assert plan.non_gate is True
     assert plan.case_id == "candidate-002485"
     assert plan.seed == 13_001
-    assert plan.learning_rate == pytest.approx(1.0e-4)
+    assert plan.learning_rate == pytest.approx(5.0e-6)
     assert plan.optimizer_steps == 800
     assert plan.maximum_optimizer_steps == 800
+    assert plan.expected_vertex_count == 3_729
+    assert plan.vertex_batch_size == 113
+    assert (
+        plan.vertex_sampler_policy_id
+        == "dogbone-s13-overfit-blake2b-epoch-permutation-v1"
+    )
     assert plan.minimum_data_mse_drop_fraction == pytest.approx(0.80)
     assert plan.maximum_final_u_relative_l2 == pytest.approx(0.02)
     assert plan.maximum_final_p_relative_l2 == pytest.approx(0.05)
@@ -71,11 +78,20 @@ def test_default_plan_preregisters_bounded_one_case_success_contract() -> None:
         ({"non_gate": False}, ValueError),
         ({"case_id": "other"}, ValueError),
         ({"seed": -1}, ValueError),
+        ({"seed": 13_002}, ValueError),
         ({"learning_rate": float("nan")}, ValueError),
+        ({"learning_rate": 1.0e-5}, ValueError),
         ({"maximum_optimizer_steps": 801}, ValueError),
         ({"optimizer_steps": 0}, ValueError),
+        ({"expected_vertex_count": 3_728}, ValueError),
+        ({"vertex_batch_size": 112}, ValueError),
+        ({"vertex_sampler_policy_id": "changed"}, ValueError),
         ({"minimum_data_mse_drop_fraction": 1.1}, ValueError),
+        ({"minimum_data_mse_drop_fraction": 0.79}, ValueError),
         ({"maximum_final_u_relative_l2": -0.1}, ValueError),
+        ({"maximum_final_u_relative_l2": 0.03}, ValueError),
+        ({"maximum_final_p_relative_l2": 0.06}, ValueError),
+        ({"maximum_final_absolute_peak_error": 0.06}, ValueError),
         ({"maximum_final_invalid_collocation_count": 1}, ValueError),
     ),
 )
@@ -135,21 +151,71 @@ def test_success_classification_requires_every_preregistered_condition() -> None
     )
 
 
-def test_data_only_training_uses_full_vertices_and_is_deterministic() -> None:
+def test_minibatch_schedule_is_deterministic_and_covers_complete_epochs() -> None:
+    plan = diagnostic.build_s13_overfit_plan(optimizer_steps=66)
+
+    left = diagnostic._build_vertex_sampler_plan(plan, 3_729)  # noqa: SLF001
+    right = diagnostic._build_vertex_sampler_plan(plan, 3_729)  # noqa: SLF001
+
+    assert left == right
+    assert left.population_size == 3_729
+    assert len(left.batches) == 66
+    assert all(len(batch) == 113 for batch in left.batches)
+    for epoch in range(2):
+        start = epoch * 33
+        observed = tuple(
+            sorted(
+                index for batch in left.batches[start : start + 33] for index in batch
+            )
+        )
+        assert observed == tuple(range(3_729))
+    assert len(left.plan_hash) == 64
+
+
+def test_chunked_prediction_matches_full_vertex_prediction() -> None:
+    case = _case("candidate-002485")
+    model = _model()
+
+    full = diagnostic._predict_case(model, case)  # noqa: SLF001
+    first = diagnostic._predict_case_vertices(  # noqa: SLF001
+        model,
+        case,
+        torch.tensor((0, 2), dtype=torch.long),
+    )
+    second = diagnostic._predict_case_vertices(  # noqa: SLF001
+        model,
+        case,
+        torch.tensor((1, 3), dtype=torch.long),
+    )
+
+    assert first.u.shape == (1, 2, 2)
+    assert second.P.shape == (1, 2, 2, 2)
+    torch.testing.assert_close(first.u[0, 0], full.u[0, 0])
+    torch.testing.assert_close(first.u[0, 1], full.u[0, 2])
+    torch.testing.assert_close(first.P[0, 0], full.P[0, 0])
+    torch.testing.assert_close(first.P[0, 1], full.P[0, 2])
+    torch.testing.assert_close(second.u[0, 0], full.u[0, 1])
+    torch.testing.assert_close(second.u[0, 1], full.u[0, 3])
+    torch.testing.assert_close(second.P[0, 0], full.P[0, 1])
+    torch.testing.assert_close(second.P[0, 1], full.P[0, 3])
+
+
+def test_data_only_training_uses_vertex_minibatches_and_is_deterministic() -> None:
     case = _case("candidate-002485")
     left = _model()
     right = _model()
     initial_hash = model_state_hash(left)
+    plan = diagnostic.build_s13_overfit_plan(optimizer_steps=2)
 
     left_trace = diagnostic._train_one_case(  # noqa: SLF001
         left,
         case,
-        diagnostic.build_s13_overfit_plan(optimizer_steps=2),
+        plan,
     )
     right_trace = diagnostic._train_one_case(  # noqa: SLF001
         right,
         case,
-        diagnostic.build_s13_overfit_plan(optimizer_steps=2),
+        plan,
     )
 
     assert left_trace == right_trace
@@ -233,6 +299,8 @@ def test_orchestrator_freezes_s11_lineage_before_opening_train_source(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    monkeypatch.setattr(diagnostic, "_EXPECTED_VERTEX_COUNT", 4)
+    monkeypatch.setattr(diagnostic, "_VERTEX_BATCH_SIZE", 4)
     s10 = tmp_path / "s10"
     s11 = tmp_path / "s11"
     access = tmp_path / "audit" / "development-access.json"
@@ -248,6 +316,13 @@ def test_orchestrator_freezes_s11_lineage_before_opening_train_source(
         evidence_file_blake2b256="b" * 64,
         checkpoint_file_blake2b256="c" * 64,
     )
+    real_sampler_builder = diagnostic._build_vertex_sampler_plan  # noqa: SLF001
+
+    def build_sampler(plan: diagnostic.S13OverfitPlan, vertex_count: int) -> object:
+        calls.append("sampler")
+        return real_sampler_builder(plan, vertex_count)
+
+    monkeypatch.setattr(diagnostic, "_build_vertex_sampler_plan", build_sampler)
 
     def load_initialization(path: Path) -> object:
         calls.append("initialization")
@@ -263,7 +338,7 @@ def test_orchestrator_freezes_s11_lineage_before_opening_train_source(
     )
 
     def open_source(path: Path, *, development_access_record: Path) -> object:
-        assert calls == ["initialization"]
+        assert calls == ["sampler", "initialization"]
         assert path == s10
         assert development_access_record == access
         calls.append("source")
@@ -284,10 +359,9 @@ def test_orchestrator_freezes_s11_lineage_before_opening_train_source(
     final_metrics = _metrics(data_mse=0.1)
     measurements = iter((_metrics(data_mse=1.0), final_metrics))
     monkeypatch.setattr(diagnostic, "_measure_case", lambda *args: next(measurements))
+    state_hashes = iter((initial_hash, "d" * 64))
     monkeypatch.setattr(
-        diagnostic,
-        "model_state_hash",
-        lambda current: initial_hash if len(calls) < 2 else "d" * 64,
+        diagnostic, "model_state_hash", lambda current: next(state_hashes)
     )
 
     report = diagnostic.run_s13_overfit_diagnostic(
@@ -297,13 +371,15 @@ def test_orchestrator_freezes_s11_lineage_before_opening_train_source(
         plan=diagnostic.build_s13_overfit_plan(optimizer_steps=2),
     )
 
-    assert calls == ["initialization", "source"]
+    assert calls == ["sampler", "initialization", "source", "sampler"]
     assert report.role is EvidenceRole.TRAIN
     assert report.non_gate is True
     assert report.case_id == "candidate-002485"
     assert report.initial_model_state_hash == initial_hash
     assert report.final_model_state_hash == "d" * 64
     assert report.initial_checkpoint_file_hash == "c" * 64
+    assert report.vertex_count == 4
+    assert len(report.vertex_sampler_plan_hash) == 64
     assert report.optimizer_loss_trace == (1.0, 0.1)
     assert report.classification.success is True
     assert source.development_opened is False
@@ -360,11 +436,22 @@ def test_cli_emits_canonical_json_and_exclusively_writes_output(
         initial_checkpoint_file_hash="c" * 64,
         initial_model_state_hash="d" * 64,
         final_model_state_hash="e" * 64,
+        vertex_count=plan.expected_vertex_count,
+        vertex_sampler_plan_hash=diagnostic._build_vertex_sampler_plan(  # noqa: SLF001
+            plan, plan.expected_vertex_count
+        ).plan_hash,
         before=_metrics(data_mse=1.0),
         after=_metrics(data_mse=0.1),
         classification=classification,
         optimizer_loss_trace=(1.0, 0.1),
     )
+    with pytest.raises(ValueError, match="sampler"):
+        replace(report, vertex_sampler_plan_hash="f" * 64)
+    with pytest.raises(ValueError, match="classification"):
+        replace(
+            report,
+            classification=diagnostic.OverfitClassification(0.9, False, ("forged",)),
+        )
     monkeypatch.setattr(
         diagnostic, "run_s13_overfit_diagnostic", lambda **kwargs: report
     )
