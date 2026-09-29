@@ -28,10 +28,15 @@ from campaigns.dogbone_v1.s13b_protocol import build_dogbone_s13b_pilot_plan
 from campaigns.dogbone_v1.s13b_run import _build_s13b_binding
 from piginot.contracts import canonical_json_bytes, hash_spec
 from piginot.doe import EvidenceRole
+from piginot.objectives import ObjectiveRegistry
 from piginot.training import (
+    AdaptiveWeightState,
+    DeterministicSamplerPlan,
     DeterministicTrainerConfig,
     LoadedTrainingCheckpoint,
+    ObjectiveBuilder,
     ObjectiveGradientDiagnostic,
+    TrainingPopulation,
     TrainingRunBinding,
     load_training_checkpoint,
     measure_objective_gradient_diagnostic,
@@ -41,6 +46,34 @@ _REVISION = re.compile(r"[0-9a-f]{40}\Z")
 _PEAK_MANIFEST_HASH = (
     "0e2cf32373767784a1ce928e1bd957d305c2901c1fc83d15ee014c2bb8cf7322"
 )
+_PANEL_STEPS = (
+    ("targeted-folded-case-step-753", 753),
+    ("post-update-trace-step-800", 800),
+    ("fresh-plan-step-801", 801),
+    ("fresh-plan-step-802", 802),
+)
+_FOLDED_CASE_ID = "candidate-002485"
+
+
+@dataclass(frozen=True, slots=True)
+class GradientPanelBatch:
+    """One predeclared sampler batch evaluated at the post-step-800 model."""
+
+    __canonical_namespace__: ClassVar[str] = "piginot.campaigns"
+
+    snapshot_id: str
+    plan_step: int
+    sample_ids: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class GradientSnapshotReport:
+    """One panel batch and its post-checkpoint raw-gradient measurement."""
+
+    __canonical_namespace__: ClassVar[str] = "piginot.campaigns"
+
+    panel: GradientPanelBatch
+    diagnostic: ObjectiveGradientDiagnostic
 
 
 @dataclass(frozen=True, slots=True)
@@ -52,8 +85,12 @@ class GradientArmReport:
     arm_id: str
     run_hash: str
     checkpoint_manifest_hash: str
+    checkpoint_sampler_plan_hash: str
     objective_registry_hash: str
-    diagnostic: ObjectiveGradientDiagnostic
+    scheduler_learning_rate: float
+    scheduler_state_hash: str
+    faithful_snapshots: tuple[GradientSnapshotReport, ...]
+    common_peak_snapshots: tuple[GradientSnapshotReport, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -66,10 +103,61 @@ class S13GradientDiagnosticReport:
     non_gate: bool
     pilot_id: str
     plan_hash: str
-    sampler_plan_hash: str
-    sample_ids: tuple[str, ...]
+    panel_sampler_plan_hash: str
+    panel: tuple[GradientPanelBatch, ...]
     control: GradientArmReport
     peak: GradientArmReport
+
+
+def _gradient_panel(
+    sample_ids: tuple[str, ...],
+    plan: DeterministicSamplerPlan,
+) -> tuple[GradientPanelBatch, ...]:
+    panel = tuple(
+        GradientPanelBatch(
+            snapshot_id=snapshot_id,
+            plan_step=plan_step,
+            sample_ids=tuple(
+                sample_ids[index] for index in plan.batches[plan_step - 1]
+            ),
+        )
+        for snapshot_id, plan_step in _PANEL_STEPS
+    )
+    if _FOLDED_CASE_ID not in panel[0].sample_ids:
+        raise RuntimeError("targeted gradient panel no longer contains folded case")
+    return panel
+
+
+def _measure_panel(
+    *,
+    model: torch.nn.Module,
+    panel: tuple[GradientPanelBatch, ...],
+    population: TrainingPopulation,
+    registry: ObjectiveRegistry,
+    config: DeterministicTrainerConfig,
+    adaptive_state: AdaptiveWeightState,
+    objective: ObjectiveBuilder,
+) -> tuple[GradientSnapshotReport, ...]:
+    return tuple(
+        GradientSnapshotReport(
+            panel=batch,
+            diagnostic=measure_objective_gradient_diagnostic(
+                model,
+                population=population,
+                sample_ids=batch.sample_ids,
+                step=800,
+                base_registry=registry,
+                physics_weight_scale=config.trial.physics_weight_scale,
+                adaptive_config=config.adaptive,
+                adaptive_state=adaptive_state,
+                objective=objective,
+                role=EvidenceRole.TRAIN,
+                gradient_clip_norm=config.gradient_clip_norm,
+                post_checkpoint_snapshot=True,
+            ),
+        )
+        for batch in panel
+    )
 
 
 def _load_arm_checkpoint(
@@ -143,12 +231,13 @@ def run_s13_gradient_diagnostic(
         raise ValueError("control and peak checkpoints require separate run roots")
 
     control_config = build_dogbone_s13_trainer_configs(pilot.base_protocol)[0]
+    base_plan = build_dogbone_s13_sampler_plan(pilot.base_protocol)
     control_initialization = load_selected_s11_initialization(s11)
     control_binding = _build_pilot_binding(
         pilot.base_protocol,
         model=control_initialization.model,
         config=control_config,
-        plan=build_dogbone_s13_sampler_plan(pilot.base_protocol),
+        plan=base_plan,
         implementation_revision=_TRAINING_IMPLEMENTATION_REVISION,
     )
     if control_binding.run_hash != pilot.control_run_hash:
@@ -189,8 +278,7 @@ def run_s13_gradient_diagnostic(
         raise RuntimeError("DEVELOPMENT labels opened during TRAIN materialization")
     _verify_training_data(data, pilot.base_protocol, source.bindings.content_hash)
 
-    batch_indices = pilot.sampler_plan.batches[799]
-    sample_ids = tuple(data.population.sample_ids[index] for index in batch_indices)
+    panel = _gradient_panel(data.population.sample_ids, base_plan)
     control_objective = DogboneS13ObjectiveBuilder(
         data.cases,
         include_peak_loss=False,
@@ -199,29 +287,32 @@ def run_s13_gradient_diagnostic(
         data.cases,
         include_peak_loss=True,
     )
-    control_diagnostic = measure_objective_gradient_diagnostic(
-        control_initialization.model,
+    control_faithful = _measure_panel(
+        model=control_initialization.model,
+        panel=panel,
         population=data.population,
-        sample_ids=sample_ids,
-        step=800,
-        base_registry=pilot.base_protocol.objective_registry,
-        physics_weight_scale=control_config.trial.physics_weight_scale,
-        adaptive_config=control_config.adaptive,
+        registry=pilot.base_protocol.objective_registry,
+        config=control_config,
         adaptive_state=control_loaded.adaptive_state,
         objective=control_objective,
-        role=EvidenceRole.TRAIN,
     )
-    peak_diagnostic = measure_objective_gradient_diagnostic(
-        peak_initialization.model,
+    control_common_peak = _measure_panel(
+        model=control_initialization.model,
+        panel=panel,
         population=data.population,
-        sample_ids=sample_ids,
-        step=800,
-        base_registry=pilot.objective_registry,
-        physics_weight_scale=pilot.trainer_config.trial.physics_weight_scale,
-        adaptive_config=pilot.trainer_config.adaptive,
+        registry=pilot.objective_registry,
+        config=pilot.trainer_config,
+        adaptive_state=control_loaded.adaptive_state,
+        objective=peak_objective,
+    )
+    peak_common = _measure_panel(
+        model=peak_initialization.model,
+        panel=panel,
+        population=data.population,
+        registry=pilot.objective_registry,
+        config=pilot.trainer_config,
         adaptive_state=peak_loaded.adaptive_state,
         objective=peak_objective,
-        role=EvidenceRole.TRAIN,
     )
     if source.development_opened:
         raise RuntimeError("DEVELOPMENT labels opened during gradient diagnostics")
@@ -231,23 +322,33 @@ def run_s13_gradient_diagnostic(
         non_gate=True,
         pilot_id=pilot.pilot_id,
         plan_hash=pilot.plan_hash,
-        sampler_plan_hash=pilot.sampler_plan.plan_hash,
-        sample_ids=sample_ids,
+        panel_sampler_plan_hash=base_plan.plan_hash,
+        panel=panel,
         control=GradientArmReport(
             arm_id="control",
             run_hash=control_binding.run_hash,
             checkpoint_manifest_hash=control_loaded.manifest.manifest_hash,
+            checkpoint_sampler_plan_hash=control_binding.sampler_plan_hash,
             objective_registry_hash=hash_spec(
                 pilot.base_protocol.objective_registry, "recipe"
             ),
-            diagnostic=control_diagnostic,
+            scheduler_learning_rate=control_loaded.scheduler_state.learning_rate,
+            scheduler_state_hash=hash_spec(
+                control_loaded.scheduler_state, "content"
+            ),
+            faithful_snapshots=control_faithful,
+            common_peak_snapshots=control_common_peak,
         ),
         peak=GradientArmReport(
             arm_id="peak",
             run_hash=peak_binding.run_hash,
             checkpoint_manifest_hash=peak_loaded.manifest.manifest_hash,
+            checkpoint_sampler_plan_hash=peak_binding.sampler_plan_hash,
             objective_registry_hash=hash_spec(pilot.objective_registry, "recipe"),
-            diagnostic=peak_diagnostic,
+            scheduler_learning_rate=peak_loaded.scheduler_state.learning_rate,
+            scheduler_state_hash=hash_spec(peak_loaded.scheduler_state, "content"),
+            faithful_snapshots=peak_common,
+            common_peak_snapshots=peak_common,
         ),
     )
 
@@ -283,6 +384,8 @@ if __name__ == "__main__":  # pragma: no cover - exercised through main
 
 __all__ = (
     "GradientArmReport",
+    "GradientPanelBatch",
+    "GradientSnapshotReport",
     "S13GradientDiagnosticReport",
     "build_parser",
     "main",

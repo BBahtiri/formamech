@@ -89,8 +89,8 @@ def _adaptive_state() -> AdaptiveWeightState:
             ObjectiveTerm.DIRICHLET: 4.0,
             ObjectiveTerm.TRACTION_FREE: 5.0,
         },
-        update_count=1,
-        last_update_step=100,
+        update_count=7,
+        last_update_step=800,
     )
 
 
@@ -117,6 +117,8 @@ def _measure(
         adaptive_state=_adaptive_state(),
         objective=objective,
         role=role,
+        gradient_clip_norm=1.0,
+        post_checkpoint_snapshot=True,
     )
 
 
@@ -183,14 +185,21 @@ def test_measurement_exposes_exact_adaptive_targets_and_cap_flags() -> None:
     assert constitutive.hit_minimum is False
     assert constitutive.hit_maximum is True
     assert constitutive.current_multiplier == pytest.approx(2.0)
-    assert constitutive.projected_multiplier == pytest.approx(2.0)
 
     dirichlet = _target(report, ObjectiveTerm.DIRICHLET)
     assert dirichlet.raw_target == pytest.approx(1.5)
     assert dirichlet.bounded_target == pytest.approx(1.5)
     assert dirichlet.hit_minimum is False
     assert dirichlet.hit_maximum is False
-    assert dirichlet.projected_multiplier == pytest.approx(3.75)
+    assert report.post_checkpoint_snapshot is True
+    assert report.adaptive_state_last_update_step == 800
+    assert report.gradient_space == "raw_loss_gradient_pre_adam"
+    assert report.total_weighted_gradient_l2 == pytest.approx(
+        (3.2**2 + 8.8**2) ** 0.5
+    )
+    assert report.clip_coefficient == pytest.approx(
+        1.0 / (report.total_weighted_gradient_l2 + 1.0e-6)
+    )
 
 
 def test_measurement_is_repeatable_and_restores_runtime_state() -> None:
@@ -242,6 +251,8 @@ def test_measurement_refuses_unknown_ids_before_objective_access() -> None:
             adaptive_state=_adaptive_state(),
             objective=objective,
             role=EvidenceRole.TRAIN,
+            gradient_clip_norm=1.0,
+            post_checkpoint_snapshot=True,
         )
 
     assert objective.calls == []

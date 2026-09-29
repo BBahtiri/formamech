@@ -13,7 +13,11 @@ from campaigns.dogbone_v1 import s13_gradient_diagnostic as diagnostic
 from campaigns.dogbone_v1.s13b_protocol import build_dogbone_s13b_pilot_plan
 from piginot.doe import EvidenceRole
 from piginot.objectives import ObjectiveTerm
-from piginot.training import AdaptiveWeightState, TrainingPopulation
+from piginot.training import (
+    AdaptiveWeightState,
+    TrainingPopulation,
+    TrainingSchedulerState,
+)
 from piginot.training.diagnostics import (
     ObjectiveGradientDiagnostic,
     TermGradientDiagnostic,
@@ -28,6 +32,12 @@ def _measurement(sample_ids: tuple[str, ...]) -> ObjectiveGradientDiagnostic:
         step=800,
         sample_ids=sample_ids,
         physics_weight_scale=1.0e-4,
+        gradient_clip_norm=1.0,
+        total_weighted_gradient_l2=0.5,
+        clip_coefficient=1.0,
+        gradient_space="raw_loss_gradient_pre_adam",
+        post_checkpoint_snapshot=True,
+        adaptive_state_last_update_step=800,
         terms=(
             TermGradientDiagnostic(
                 term=ObjectiveTerm.DATA_U,
@@ -80,12 +90,18 @@ def test_matched_diagnostic_validates_checkpoints_before_train_source_and_shares
     monkeypatch.setattr(
         diagnostic,
         "_build_pilot_binding",
-        lambda *args, **kwargs: SimpleNamespace(run_hash=pilot.control_run_hash),
+        lambda *args, **kwargs: SimpleNamespace(
+            run_hash=pilot.control_run_hash,
+            sampler_plan_hash="c" * 64,
+        ),
     )
     monkeypatch.setattr(
         diagnostic,
         "_build_s13b_binding",
-        lambda *args, **kwargs: SimpleNamespace(run_hash="9" * 64),
+        lambda *args, **kwargs: SimpleNamespace(
+            run_hash="9" * 64,
+            sampler_plan_hash="d" * 64,
+        ),
     )
 
     def load_arm(checkpoint: Path, **kwargs: object) -> object:
@@ -103,7 +119,19 @@ def test_matched_diagnostic_validates_checkpoints_before_train_source_and_shares
                 run_hash=run_hash,
                 manifest_hash=manifest_hash,
             ),
-            adaptive_state=AdaptiveWeightState.initial(),
+            adaptive_state=AdaptiveWeightState(
+                update_count=7,
+                last_update_step=800,
+            ),
+            scheduler_state=TrainingSchedulerState(
+                scheduler_id="test-scheduler",
+                step=800,
+                learning_rate=1.0e-5 if checkpoint == control else 5.0e-6,
+                best_metric=1.0,
+                bad_observations=0,
+                cooldown_remaining=0,
+                observation_count=800,
+            ),
         )
 
     monkeypatch.setattr(diagnostic, "_load_arm_checkpoint", load_arm)
@@ -157,22 +185,30 @@ def test_matched_diagnostic_validates_checkpoints_before_train_source_and_shares
         peak_training_revision="6" * 40,
     )
 
-    expected_ids = tuple(
-        population.sample_ids[index]
-        for index in pilot.sampler_plan.batches[799]
+    base_plan = diagnostic.build_dogbone_s13_sampler_plan(pilot.base_protocol)
+    expected_batches = tuple(
+        tuple(population.sample_ids[index] for index in base_plan.batches[step - 1])
+        for step in (753, 800, 801, 802)
     )
     assert calls == ["checkpoint:control", "checkpoint:peak", "source"]
     assert [item[0] for item in objectives] == [False, True]
-    assert len(measurements) == 2
-    assert all(item["sample_ids"] == expected_ids for item in measurements)
+    assert len(measurements) == 12
+    assert tuple(item["sample_ids"] for item in measurements[:4]) == expected_batches
+    assert tuple(item["sample_ids"] for item in measurements[4:8]) == expected_batches
+    assert tuple(item["sample_ids"] for item in measurements[8:]) == expected_batches
     assert all(item["role"] is EvidenceRole.TRAIN for item in measurements)
-    assert measurements[0]["objective"] is objectives[0][1]
-    assert measurements[1]["objective"] is objectives[1][1]
+    assert all(item["objective"] is objectives[0][1] for item in measurements[:4])
+    assert all(item["objective"] is objectives[1][1] for item in measurements[4:])
     assert report.role is EvidenceRole.TRAIN
     assert report.non_gate is True
-    assert report.sample_ids == expected_ids
+    assert tuple(batch.sample_ids for batch in report.panel) == expected_batches
     assert report.control.checkpoint_manifest_hash == "a" * 64
     assert report.peak.checkpoint_manifest_hash == "b" * 64
+    assert report.control.scheduler_learning_rate == pytest.approx(1.0e-5)
+    assert report.peak.scheduler_learning_rate == pytest.approx(5.0e-6)
+    assert len(report.control.faithful_snapshots) == 4
+    assert len(report.control.common_peak_snapshots) == 4
+    assert report.peak.faithful_snapshots == report.peak.common_peak_snapshots
     assert source.development_opened is False
 
 
@@ -262,27 +298,44 @@ def test_cli_emits_canonical_train_only_non_gate_report(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     sample_ids = ("train-001",)
+    panel = diagnostic.GradientPanelBatch(
+        snapshot_id="fresh-step-801",
+        plan_step=801,
+        sample_ids=sample_ids,
+    )
+    snapshot = diagnostic.GradientSnapshotReport(
+        panel=panel,
+        diagnostic=_measurement(sample_ids),
+    )
     arm = diagnostic.GradientArmReport(
         arm_id="control",
         run_hash="1" * 64,
         checkpoint_manifest_hash="2" * 64,
+        checkpoint_sampler_plan_hash="b" * 64,
         objective_registry_hash="3" * 64,
-        diagnostic=_measurement(sample_ids),
+        scheduler_learning_rate=1.0e-5,
+        scheduler_state_hash="9" * 64,
+        faithful_snapshots=(snapshot,),
+        common_peak_snapshots=(snapshot,),
     )
     report = diagnostic.S13GradientDiagnosticReport(
         role=EvidenceRole.TRAIN,
         non_gate=True,
         pilot_id="pilot-v1",
         plan_hash="4" * 64,
-        sampler_plan_hash="5" * 64,
-        sample_ids=sample_ids,
+        panel_sampler_plan_hash="5" * 64,
+        panel=(panel,),
         control=arm,
         peak=diagnostic.GradientArmReport(
             arm_id="peak",
             run_hash="6" * 64,
             checkpoint_manifest_hash="7" * 64,
+            checkpoint_sampler_plan_hash="c" * 64,
             objective_registry_hash="8" * 64,
-            diagnostic=_measurement(sample_ids),
+            scheduler_learning_rate=5.0e-6,
+            scheduler_state_hash="a" * 64,
+            faithful_snapshots=(snapshot,),
+            common_peak_snapshots=(snapshot,),
         ),
     )
     monkeypatch.setattr(
@@ -308,4 +361,4 @@ def test_cli_emits_canonical_train_only_non_gate_report(
     output = capsys.readouterr().out
     assert '"role":"TRAIN"' in output
     assert '"non_gate":true' in output
-    assert '"sample_ids":["train-001"]' in output
+    assert '"snapshot_id":"fresh-step-801"' in output

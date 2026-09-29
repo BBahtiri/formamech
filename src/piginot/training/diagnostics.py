@@ -54,7 +54,7 @@ class PairwiseGradientDiagnostic:
 
 @dataclass(frozen=True, slots=True)
 class AdaptiveTargetDiagnostic:
-    """One exact gradient-ratio target before and after configured bounds."""
+    """One snapshot gradient-ratio target before and after configured bounds."""
 
     term: ObjectiveTerm
     reference_statistic: float
@@ -64,7 +64,6 @@ class AdaptiveTargetDiagnostic:
     hit_minimum: bool
     hit_maximum: bool
     current_multiplier: float
-    projected_multiplier: float
 
 
 @dataclass(frozen=True, slots=True)
@@ -77,6 +76,12 @@ class ObjectiveGradientDiagnostic:
     sample_ids: tuple[str, ...]
     step: int
     physics_weight_scale: float
+    gradient_clip_norm: float
+    total_weighted_gradient_l2: float
+    clip_coefficient: float
+    gradient_space: str
+    post_checkpoint_snapshot: bool
+    adaptive_state_last_update_step: int | None
     terms: tuple[TermGradientDiagnostic, ...]
     pairs: tuple[PairwiseGradientDiagnostic, ...]
     adaptive_targets: tuple[AdaptiveTargetDiagnostic, ...]
@@ -94,6 +99,8 @@ def _validate_inputs(
     adaptive_state: AdaptiveWeightState,
     objective: Callable[[torch.nn.Module, tuple[str, ...], int], ObjectiveResiduals],
     role: EvidenceRole,
+    gradient_clip_norm: float,
+    post_checkpoint_snapshot: bool,
 ) -> tuple[torch.nn.Parameter, ...]:
     if type(role) is not EvidenceRole:
         raise TypeError("role must be an exact EvidenceRole")
@@ -136,6 +143,15 @@ def _validate_inputs(
         or float(physics_weight_scale) <= 0.0
     ):
         raise ValueError("physics_weight_scale must be finite and positive")
+    if (
+        isinstance(gradient_clip_norm, bool)
+        or not isinstance(gradient_clip_norm, (int, float))
+        or not math.isfinite(float(gradient_clip_norm))
+        or float(gradient_clip_norm) <= 0.0
+    ):
+        raise ValueError("gradient_clip_norm must be finite and positive")
+    if type(post_checkpoint_snapshot) is not bool:
+        raise TypeError("post_checkpoint_snapshot must be boolean")
     if not callable(objective):
         raise TypeError("objective must be callable")
     parameters = tuple(parameter for parameter in model.parameters() if parameter.requires_grad)
@@ -214,8 +230,15 @@ def measure_objective_gradient_diagnostic(
     adaptive_state: AdaptiveWeightState,
     objective: Callable[[torch.nn.Module, tuple[str, ...], int], ObjectiveResiduals],
     role: EvidenceRole,
+    gradient_clip_norm: float,
+    post_checkpoint_snapshot: bool,
 ) -> ObjectiveGradientDiagnostic:
-    """Replay one TRAIN batch without changing model or runtime state."""
+    """Measure raw loss gradients without changing model or runtime state.
+
+    The gradients are pre-Adam loss gradients.  ``post_checkpoint_snapshot``
+    prevents a loaded checkpoint measurement from being mistaken for the
+    historical pre-update gradient that produced that checkpoint.
+    """
 
     parameters = _validate_inputs(
         model,
@@ -228,6 +251,8 @@ def measure_objective_gradient_diagnostic(
         adaptive_state=adaptive_state,
         objective=objective,
         role=role,
+        gradient_clip_norm=gradient_clip_norm,
+        post_checkpoint_snapshot=post_checkpoint_snapshot,
     )
     checked_scale = float(physics_weight_scale)
     weights = _effective_weights(base_registry, checked_scale, adaptive_state)
@@ -273,6 +298,15 @@ def measure_objective_gradient_diagnostic(
         weighted = {
             term: gradient * weights[term] for term, gradient in gradients.items()
         }
+        total_weighted_gradient = torch.stack(tuple(weighted.values())).sum(dim=0)
+        total_weighted_gradient_l2 = float(
+            torch.linalg.vector_norm(total_weighted_gradient).item()
+        )
+        checked_clip_norm = float(gradient_clip_norm)
+        clip_coefficient = min(
+            1.0,
+            checked_clip_norm / (total_weighted_gradient_l2 + 1.0e-6),
+        )
         ordered_terms = base_registry.required_terms
         pairs: list[PairwiseGradientDiagnostic] = []
         for left_index, left_term in enumerate(ordered_terms):
@@ -298,6 +332,8 @@ def measure_objective_gradient_diagnostic(
                 )
 
         reference_statistic = adaptive_statistics[REFERENCE_PHYSICS_TERM]
+        if reference_statistic <= 0.0:
+            raise ValueError("equilibrium_strong adaptive gradient must be non-zero")
         targets: list[AdaptiveTargetDiagnostic] = []
         for term in ADAPTIVE_PHYSICS_TERMS:
             term_statistic = adaptive_statistics[term]
@@ -313,10 +349,6 @@ def measure_objective_gradient_diagnostic(
                 max(adaptive_config.minimum_multiplier, raw_target),
             )
             current = adaptive_state.multipliers[term]
-            projected = (
-                (1.0 - adaptive_config.beta) * current
-                + adaptive_config.beta * bounded_target
-            )
             targets.append(
                 AdaptiveTargetDiagnostic(
                     term=term,
@@ -327,7 +359,6 @@ def measure_objective_gradient_diagnostic(
                     hit_minimum=raw_target < adaptive_config.minimum_multiplier,
                     hit_maximum=raw_target > adaptive_config.maximum_multiplier,
                     current_multiplier=current,
-                    projected_multiplier=projected,
                 )
             )
         return ObjectiveGradientDiagnostic(
@@ -337,6 +368,12 @@ def measure_objective_gradient_diagnostic(
             sample_ids=sample_ids,
             step=step,
             physics_weight_scale=checked_scale,
+            gradient_clip_norm=checked_clip_norm,
+            total_weighted_gradient_l2=total_weighted_gradient_l2,
+            clip_coefficient=clip_coefficient,
+            gradient_space="raw_loss_gradient_pre_adam",
+            post_checkpoint_snapshot=post_checkpoint_snapshot,
+            adaptive_state_last_update_step=adaptive_state.last_update_step,
             terms=terms,
             pairs=tuple(pairs),
             adaptive_targets=tuple(targets),
