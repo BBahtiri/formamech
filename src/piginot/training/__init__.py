@@ -19,6 +19,13 @@ from piginot.training.checkpoint import (
     model_state_hash,
     write_training_checkpoint,
 )
+from piginot.training.diagnostics import (
+    AdaptiveTargetDiagnostic,
+    ObjectiveGradientDiagnostic,
+    PairwiseGradientDiagnostic,
+    TermGradientDiagnostic,
+    measure_objective_gradient_diagnostic,
+)
 from piginot.training.engine import (
     DeterministicTrainerConfig,
     ObjectiveBuilder,
@@ -69,6 +76,7 @@ __all__ = (
     "AdaptiveWeightConfig",
     "AdaptiveWeightState",
     "AdaptiveWeightUpdate",
+    "AdaptiveTargetDiagnostic",
     "AdamOptimizerState",
     "CheckpointLineage",
     "DeterministicTrainerConfig",
@@ -80,6 +88,8 @@ __all__ = (
     "NoEligibleTrialError",
     "OutOfSearchSpaceError",
     "ObjectiveBuilder",
+    "ObjectiveGradientDiagnostic",
+    "PairwiseGradientDiagnostic",
     "PlateauSchedulerConfig",
     "SelectionDecision",
     "SelectionGuardrails",
@@ -90,6 +100,7 @@ __all__ = (
     "TrainingRunBinding",
     "TrainingRunResult",
     "TrainingSchedulerState",
+    "TermGradientDiagnostic",
     "TrialConfig",
     "TrialResult",
     "WrittenTrainingCheckpoint",
@@ -99,6 +110,7 @@ __all__ = (
     "export_model_safetensors",
     "load_training_checkpoint",
     "measure_unweighted_gradient_statistics",
+    "measure_objective_gradient_diagnostic",
     "model_state_hash",
     "next_sampler_batch",
     "require_trial_in_space",
