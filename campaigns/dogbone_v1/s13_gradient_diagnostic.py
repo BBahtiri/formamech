@@ -362,11 +362,43 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--control-checkpoint-path", required=True, type=Path)
     parser.add_argument("--peak-checkpoint-path", required=True, type=Path)
     parser.add_argument("--peak-training-revision", required=True)
+    parser.add_argument("--output-path", type=Path)
     return parser
+
+
+def _preflight_report_path(
+    output_path: Path,
+    *,
+    forbidden_roots: tuple[Path, ...],
+) -> Path:
+    if not output_path.is_absolute():
+        raise ValueError("output_path must be absolute")
+    if output_path.exists() or output_path.is_symlink():
+        raise FileExistsError("output_path must not already exist")
+    parent = output_path.parent
+    if not parent.is_dir() or parent.is_symlink():
+        raise ValueError("output_path parent must be an existing non-symlink directory")
+    checked = parent.resolve(strict=True) / output_path.name
+    if any(checked.is_relative_to(root.absolute()) for root in forbidden_roots):
+        raise ValueError("output_path must remain outside source and checkpoint roots")
+    return checked
 
 
 def main(arguments: Sequence[str] | None = None) -> int:
     options = build_parser().parse_args(arguments)
+    output_path = (
+        None
+        if options.output_path is None
+        else _preflight_report_path(
+            options.output_path,
+            forbidden_roots=(
+                options.s10_run_root,
+                options.s11_checkpoint_root,
+                options.control_checkpoint_path.parent,
+                options.peak_checkpoint_path.parent,
+            ),
+        )
+    )
     report = run_s13_gradient_diagnostic(
         s10_run_root=options.s10_run_root,
         s11_checkpoint_root=options.s11_checkpoint_root,
@@ -374,7 +406,13 @@ def main(arguments: Sequence[str] | None = None) -> int:
         peak_checkpoint_path=options.peak_checkpoint_path,
         peak_training_revision=options.peak_training_revision,
     )
-    print(canonical_json_bytes(report).decode("utf-8"), flush=True)
+    payload = canonical_json_bytes(report)
+    if output_path is None:
+        print(payload.decode("utf-8"), flush=True)
+    else:
+        with output_path.open("xb") as destination:
+            destination.write(payload + b"\n")
+        print(f"report_path={output_path}", flush=True)
     return 0
 
 

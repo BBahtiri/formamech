@@ -11,6 +11,7 @@ import torch
 
 from campaigns.dogbone_v1 import s13_gradient_diagnostic as diagnostic
 from campaigns.dogbone_v1.s13b_protocol import build_dogbone_s13b_pilot_plan
+from piginot.contracts import canonical_json_bytes
 from piginot.doe import EvidenceRole
 from piginot.objectives import ObjectiveTerm
 from piginot.training import (
@@ -362,3 +363,68 @@ def test_cli_emits_canonical_train_only_non_gate_report(
     assert '"role":"TRAIN"' in output
     assert '"non_gate":true' in output
     assert '"snapshot_id":"fresh-step-801"' in output
+
+
+def test_cli_writes_canonical_report_without_overwriting(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    sample_ids = ("train-001",)
+    panel = diagnostic.GradientPanelBatch(
+        snapshot_id="fresh-step-801",
+        plan_step=801,
+        sample_ids=sample_ids,
+    )
+    snapshot = diagnostic.GradientSnapshotReport(
+        panel=panel,
+        diagnostic=_measurement(sample_ids),
+    )
+    arm = diagnostic.GradientArmReport(
+        arm_id="control",
+        run_hash="1" * 64,
+        checkpoint_manifest_hash="2" * 64,
+        checkpoint_sampler_plan_hash="3" * 64,
+        objective_registry_hash="4" * 64,
+        scheduler_learning_rate=1.0e-5,
+        scheduler_state_hash="5" * 64,
+        faithful_snapshots=(snapshot,),
+        common_peak_snapshots=(snapshot,),
+    )
+    report = diagnostic.S13GradientDiagnosticReport(
+        role=EvidenceRole.TRAIN,
+        non_gate=True,
+        pilot_id="pilot-v1",
+        plan_hash="6" * 64,
+        panel_sampler_plan_hash="7" * 64,
+        panel=(panel,),
+        control=arm,
+        peak=arm,
+    )
+    monkeypatch.setattr(
+        diagnostic, "run_s13_gradient_diagnostic", lambda **kwargs: report
+    )
+    output_parent = tmp_path / "output"
+    output_parent.mkdir()
+    output_path = output_parent / "report.json"
+    arguments = (
+        "--s10-run-root",
+        str(tmp_path / "s10"),
+        "--s11-checkpoint-root",
+        str(tmp_path / "s11"),
+        "--control-checkpoint-path",
+        str(tmp_path / "control-run" / "checkpoint-step-0800"),
+        "--peak-checkpoint-path",
+        str(tmp_path / "peak-run" / "checkpoint-step-0800"),
+        "--peak-training-revision",
+        "6" * 40,
+        "--output-path",
+        str(output_path),
+    )
+
+    assert diagnostic.main(arguments) == 0
+    assert output_path.read_bytes() == canonical_json_bytes(report) + b"\n"
+    assert f"report_path={output_path}" in capsys.readouterr().out
+
+    with pytest.raises(FileExistsError):
+        diagnostic.main(arguments)
