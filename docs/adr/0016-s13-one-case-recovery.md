@@ -113,3 +113,27 @@ Relative to v5, P error improved 10.64%, but it remains above the 5% limit.
 The preregistered secondary P-field signal fails narrowly, and the primary
 one-case classification fails both P-field and peak limits. The coefficient
 is not promoted; G13, CP-FREEZE, and S14 remain unchanged.
+
+## Predeclared frozen-state spatial/physics audit
+
+No further loss coefficient is selected from this one case. The next
+TRAIN-only, non-gate diagnostic replays the **unchanged** v5, v6, and v7 plans
+from the same pinned S11 checkpoint and selective S10 FEM result. It must
+verify each canonical report's SHA-256, plan and sampler hashes, initial and
+final model-state hashes, and exact optimizer loss trace before using a replay
+for interpretation. It must not write a model checkpoint or access
+DEVELOPMENT/HOLDOUT. A replay mismatch stops the audit rather than yielding a
+partial comparison.
+
+For each frozen final model, measure P relative L2 separately on the 20
+registered right-arc root-QoI vertices and the other 949 vertices; the root
+share of total squared P error; the predicted and FEM peak vertex IDs,
+coordinates, magnitudes, and 2×2 P components; and root/non-root RMS of the
+S13 constitutive residual evaluated at mesh vertices, with minimum
+deformation determinants. These are descriptive diagnostics with no new
+success threshold or gate claim. Vertex constitutive residual measures
+internal consistency of predicted P and the gradient of predicted u; the FEM
+stress target is a recovered vertex field, so this residual is **not** itself
+an FEM error measure. We will use the spatial pattern to choose a separately
+predeclared architecture or physics intervention, not to relabel any failed
+v5-v7 arm as passing.
