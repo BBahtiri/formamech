@@ -68,3 +68,34 @@ error fell to 0.36%, a 96.04% reduction relative to v5. P relative L2 rose
 from 5.71% to 6.19%, an 8.46% relative regression. The primary one-case
 classification fails its P threshold, and the secondary signal fails its 5%
 P non-regression condition. The coefficient is not promoted.
+
+## Predeclared v7 P-field weighting test
+
+V7 is a separate one-factor contrast against v5, not an adjustment to v6.
+Its training loss is `DATA_U + 2 * DATA_P`, with no peak term. V5 uses
+`DATA_U + DATA_P`; both use normalized targets. The initial v5 unweighted
+field components are `0.000225069` for U and `0.000251590` for P, so doubling
+P deliberately prioritizes a comparable-sized component. The reported
+`normalized_data_mse` remains **unweighted** `DATA_U + DATA_P`; v7 cannot
+improve that metric by changing its definition. The case, S11 state, S10
+result, normalization, learning rate (`2e-5`), 4,000-step budget, vertex
+sampler, and success thresholds are unchanged from v5. The only trained
+objective difference is the P-field coefficient. A versioned canonical plan
+includes that coefficient directly, without changing historical v3-v6 plan
+hashes. An uncommitted first draft bound only the diagnostic ID; this was
+corrected before any v7 training or result was produced.
+
+The frozen v7 plan hash is
+`7325533cb7bed56e881a6cfd8028963204212ddfcefa3bf368312a18107acbca`.
+Its sampler hash is
+`f894eeab7ea354a2d2ee0085ba8fef17b521df59329071e380e02749495df861`,
+identical to v5's. The primary result uses the existing conjunctive one-case
+criteria, including root-peak error at most 5%. Because v7 has no peak loss,
+we additionally predeclare a P-field signal: final P relative L2 at most 5%,
+U relative L2 at most 2%, at least 80% reduction in unweighted combined data
+MSE, and zero invalid interior-collocation points. The peak error is always
+reported, even if this secondary signal holds; it cannot be ignored for the
+primary classification. We will not select a coefficient or threshold after
+seeing v7. This sequential TRAIN-only diagnostic is mechanistic evidence,
+not an independent statistical success or a G13 trial. DEVELOPMENT and
+HOLDOUT remain closed; CP-FREEZE and S14 remain blocked.

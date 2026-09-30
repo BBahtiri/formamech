@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from dataclasses import replace
+from dataclasses import asdict, replace
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -152,7 +152,56 @@ def test_v6_adds_only_a_fixed_root_peak_term() -> None:
         ).batches
     )
     with pytest.raises(ValueError, match="version"):
-        diagnostic.build_s13_overfit_plan(version="v7")
+        diagnostic.build_s13_overfit_plan(version="v8")
+
+
+def test_v7_doubles_only_the_p_field_training_weight() -> None:
+    v5 = diagnostic.build_s13_overfit_plan(version="v5")
+    v7 = diagnostic.build_s13_overfit_plan(version="v7")
+
+    assert v7.diagnostic_id == "dogbone-s13-one-case-overfit-v7"
+    assert type(v7) is diagnostic.S13OverfitPlanV7
+    assert v7.field_p_loss_weight == pytest.approx(2.0)
+    assert v5.field_p_loss_weight == pytest.approx(1.0)
+    assert v7.peak_loss_weight == v5.peak_loss_weight == 0.0
+    assert b'"p_field_weight":2' in canonical_json_bytes(v7)
+    assert v7.content_hash == (
+        "7325533cb7bed56e881a6cfd8028963204212ddfcefa3bf368312a18107acbca"
+    )
+    assert {
+        key: value
+        for key, value in asdict(v7).items()
+        if key not in ("diagnostic_id", "p_field_weight")
+    } == {key: value for key, value in asdict(v5).items() if key != "diagnostic_id"}
+    assert (
+        diagnostic._build_vertex_sampler_plan(  # noqa: SLF001
+            v7, v7.expected_vertex_count
+        ).batches
+        == diagnostic._build_vertex_sampler_plan(  # noqa: SLF001
+            v5, v5.expected_vertex_count
+        ).batches
+    )
+    with pytest.raises(ValueError, match="p_field_weight"):
+        replace(v7, p_field_weight=999.0)
+    with pytest.raises(ValueError, match="v7"):
+        replace(v5, diagnostic_id=v7.diagnostic_id)
+
+
+@pytest.mark.parametrize(
+    ("version", "expected_hash"),
+    (
+        ("v3", "bd7cb445be0081449e72c1aeef7a4dc68ea1fadbad74be2e2976b496efb8e90e"),
+        ("v4", "edb3b7e8ee51c4fc7e6b72c1476857358be0b5eac9cf4a42e1234b83e2ab646c"),
+        ("v5", "c144f6f3b3a7025d779e6cfe564679aa57601bad97e4668c91b0c17075f38840"),
+        ("v6", "b0ef164be120e8552940c559ec10d72d6dc0072afc3910ba38e2ed2b8b1ac1d3"),
+    ),
+)
+def test_historical_overfit_plan_hashes_remain_unchanged(
+    version: str, expected_hash: str
+) -> None:
+    assert diagnostic.build_s13_overfit_plan(version=version).content_hash == (
+        expected_hash
+    )
 
 
 @pytest.mark.parametrize(
@@ -371,6 +420,33 @@ def test_v6_first_loss_matches_field_plus_weighted_exact_qoi_peak() -> None:
     assert trace[0] == pytest.approx(float(expected.detach()), rel=1.0e-12)
 
 
+def test_v7_first_loss_and_gradient_use_doubled_p_weight() -> None:
+    case = _case("candidate-002485")
+    v5_model = _model()
+    v7_model = _model()
+    v7 = diagnostic.build_s13_overfit_plan(optimizer_steps=1, version="v7")
+    v5 = diagnostic.build_s13_overfit_plan(optimizer_steps=1, version="v5")
+    sampler = diagnostic._build_vertex_sampler_plan(  # noqa: SLF001
+        v7, len(case.tensors.query_xy)
+    )
+    indices = torch.tensor(sampler.batches[0], dtype=torch.long)
+    output = diagnostic._predict_case_vertices(  # noqa: SLF001
+        v7_model, case, indices
+    )
+    target_u = case.tensors.target_u.index_select(0, indices)
+    target_p = case.tensors.target_P.index_select(0, indices)
+    expected = torch.mean((output.u[0] - target_u).square()) + 2.0 * torch.mean(
+        (output.P[0] - target_p).square()
+    )
+
+    v5_trace = diagnostic._train_one_case(v5_model, case, v5)  # noqa: SLF001
+    v7_trace = diagnostic._train_one_case(v7_model, case, v7)  # noqa: SLF001
+
+    assert v7_trace[0] == pytest.approx(float(expected.detach()), rel=1.0e-12)
+    assert v7_trace[0] != pytest.approx(v5_trace[0])
+    assert model_state_hash(v7_model) != model_state_hash(v5_model)
+
+
 def test_case_metrics_use_all_vertices_and_physical_vertex_determinants(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -441,9 +517,11 @@ def test_actual_case_measurement_runs_full_vertex_prediction_and_gradient() -> N
     assert model.training
 
 
+@pytest.mark.parametrize("version", ("v3", "v7"))
 def test_orchestrator_freezes_s11_lineage_before_opening_train_source(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
+    version: str,
 ) -> None:
     monkeypatch.setattr(diagnostic, "_EXPECTED_VERTEX_COUNT", 4)
     monkeypatch.setattr(diagnostic, "_VERTEX_BATCH_SIZE", 4)
@@ -521,7 +599,7 @@ def test_orchestrator_freezes_s11_lineage_before_opening_train_source(
         s10_run_root=s10,
         s11_checkpoint_root=s11,
         development_access_record=access,
-        plan=diagnostic.build_s13_overfit_plan(optimizer_steps=2),
+        plan=diagnostic.build_s13_overfit_plan(optimizer_steps=2, version=version),
     )
 
     assert calls == ["sampler", "initialization", "source", "case", "sampler"]
@@ -569,12 +647,14 @@ def test_preflight_rejects_unsafe_or_existing_access_and_output_paths(
         )
 
 
+@pytest.mark.parametrize("version", ("v6", "v7"))
 def test_cli_emits_canonical_json_and_exclusively_writes_output(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
+    version: str,
 ) -> None:
-    plan = diagnostic.build_s13_overfit_plan(optimizer_steps=2, version="v6")
+    plan = diagnostic.build_s13_overfit_plan(optimizer_steps=2, version=version)
     classification = diagnostic.classify_s13_overfit(
         plan, _metrics(data_mse=1.0), _metrics(data_mse=0.1)
     )
@@ -606,11 +686,11 @@ def test_cli_emits_canonical_json_and_exclusively_writes_output(
             classification=diagnostic.OverfitClassification(0.9, False, ("forged",)),
         )
 
-    def run_v6(**kwargs: object) -> diagnostic.S13OverfitDiagnosticReport:
+    def run_mock(**kwargs: object) -> diagnostic.S13OverfitDiagnosticReport:
         assert kwargs["plan"] == plan
         return report
 
-    monkeypatch.setattr(diagnostic, "run_s13_overfit_diagnostic", run_v6)
+    monkeypatch.setattr(diagnostic, "run_s13_overfit_diagnostic", run_mock)
     output = tmp_path / "report.json"
     access = tmp_path / "access.json"
 
@@ -625,7 +705,7 @@ def test_cli_emits_canonical_json_and_exclusively_writes_output(
             "--optimizer-steps",
             "2",
             "--version",
-            "v6",
+            version,
             "--output",
             str(output),
         )

@@ -9,7 +9,7 @@ import os
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import ClassVar, cast
+from typing import ClassVar, TypedDict, cast
 
 import torch
 
@@ -38,11 +38,33 @@ _EXPECTED_VERTEX_COUNT = 969
 _VERTEX_BATCH_SIZE = 57
 _VERTEX_SAMPLER_POLICY_ID = "dogbone-s13-overfit-blake2b-epoch-permutation-v1"
 _VERTEX_SAMPLER_PERSON = b"piginot-vtx-v1"
+
+
+class _PlanArguments(TypedDict):
+    diagnostic_id: str
+    role: EvidenceRole
+    non_gate: bool
+    case_id: str
+    seed: int
+    learning_rate: float
+    optimizer_steps: int
+    maximum_optimizer_steps: int
+    expected_vertex_count: int
+    vertex_batch_size: int
+    vertex_sampler_policy_id: str
+    minimum_data_mse_drop_fraction: float
+    maximum_final_u_relative_l2: float
+    maximum_final_p_relative_l2: float
+    maximum_final_absolute_peak_error: float
+    maximum_final_invalid_collocation_count: int
+
+
 _FROZEN_DIAGNOSTICS = {
     "dogbone-s13-one-case-overfit-v3": (5.0e-6, _MAXIMUM_OPTIMIZER_STEPS, 0.0),
     "dogbone-s13-one-case-overfit-v4": (2.0e-5, _MAXIMUM_OPTIMIZER_STEPS, 0.0),
     "dogbone-s13-one-case-overfit-v5": (2.0e-5, 4_000, 0.0),
     "dogbone-s13-one-case-overfit-v6": (2.0e-5, 4_000, 0.1),
+    "dogbone-s13-one-case-overfit-v7": (2.0e-5, 4_000, 0.0),
 }
 
 
@@ -72,6 +94,8 @@ class S13OverfitPlan:
     def __post_init__(self) -> None:
         if self.diagnostic_id not in _FROZEN_DIAGNOSTICS:
             raise ValueError("diagnostic_id must identify the frozen diagnostic")
+        if self.diagnostic_id.endswith("-v7") != (type(self) is S13OverfitPlanV7):
+            raise ValueError("v7 requires its exact weighted plan type")
         if self.role is not EvidenceRole.TRAIN:
             raise PermissionError("overfit diagnostic is restricted to TRAIN evidence")
         if self.non_gate is not True:
@@ -130,11 +154,35 @@ class S13OverfitPlan:
 
     @property
     def content_hash(self) -> str:
-        return cast(str, hash_spec(self, "content"))
+        return hash_spec(self, "content")
 
     @property
     def peak_loss_weight(self) -> float:
         return _FROZEN_DIAGNOSTICS[self.diagnostic_id][2]
+
+    @property
+    def field_p_loss_weight(self) -> float:
+        return 1.0
+
+
+@dataclass(frozen=True, slots=True)
+class S13OverfitPlanV7(S13OverfitPlan):
+    """Versioned plan that canonically binds the changed P-field weight."""
+
+    p_field_weight: float
+
+    def __post_init__(self) -> None:
+        S13OverfitPlan.__post_init__(self)
+        if self.p_field_weight != 2.0:
+            raise ValueError("p_field_weight must remain 2.0 in v7")
+
+    @property
+    def field_p_loss_weight(self) -> float:
+        return self.p_field_weight
+
+
+def _is_exact_overfit_plan(value: object) -> bool:
+    return type(value) in (S13OverfitPlan, S13OverfitPlanV7)
 
 
 @dataclass(frozen=True, slots=True)
@@ -236,8 +284,8 @@ class S13OverfitDiagnosticReport:
     def __post_init__(self) -> None:
         if self.role is not EvidenceRole.TRAIN or self.non_gate is not True:
             raise PermissionError("report must remain TRAIN-only and non-gate")
-        if type(self.plan) is not S13OverfitPlan:
-            raise TypeError("plan must be an exact S13OverfitPlan")
+        if not _is_exact_overfit_plan(self.plan):
+            raise TypeError("plan must be an exact frozen S13OverfitPlan")
         if self.plan_hash != self.plan.content_hash:
             raise ValueError("plan_hash differs from the frozen plan")
         if self.case_id != self.plan.case_id:
@@ -287,28 +335,33 @@ def build_s13_overfit_plan(
 ) -> S13OverfitPlan:
     """Build the frozen default plan, allowing only a strict diagnostic prefix."""
 
-    if type(version) is not str or version not in ("v3", "v4", "v5", "v6"):
-        raise ValueError("version must identify v3, v4, v5 or v6")
+    if type(version) is not str or version not in ("v3", "v4", "v5", "v6", "v7"):
+        raise ValueError("version must identify v3, v4, v5, v6 or v7")
     diagnostic_id = f"dogbone-s13-one-case-overfit-{version}"
     learning_rate, maximum_steps, _ = _FROZEN_DIAGNOSTICS[diagnostic_id]
-    return S13OverfitPlan(
-        diagnostic_id=diagnostic_id,
-        role=EvidenceRole.TRAIN,
-        non_gate=True,
-        case_id=_CASE_ID,
-        seed=13_001,
-        learning_rate=learning_rate,
-        optimizer_steps=maximum_steps if optimizer_steps is None else optimizer_steps,
-        maximum_optimizer_steps=maximum_steps,
-        expected_vertex_count=_EXPECTED_VERTEX_COUNT,
-        vertex_batch_size=_VERTEX_BATCH_SIZE,
-        vertex_sampler_policy_id=_VERTEX_SAMPLER_POLICY_ID,
-        minimum_data_mse_drop_fraction=0.80,
-        maximum_final_u_relative_l2=0.02,
-        maximum_final_p_relative_l2=0.05,
-        maximum_final_absolute_peak_error=0.05,
-        maximum_final_invalid_collocation_count=0,
-    )
+    plan_arguments: _PlanArguments = {
+        "diagnostic_id": diagnostic_id,
+        "role": EvidenceRole.TRAIN,
+        "non_gate": True,
+        "case_id": _CASE_ID,
+        "seed": 13_001,
+        "learning_rate": learning_rate,
+        "optimizer_steps": maximum_steps
+        if optimizer_steps is None
+        else optimizer_steps,
+        "maximum_optimizer_steps": maximum_steps,
+        "expected_vertex_count": _EXPECTED_VERTEX_COUNT,
+        "vertex_batch_size": _VERTEX_BATCH_SIZE,
+        "vertex_sampler_policy_id": _VERTEX_SAMPLER_POLICY_ID,
+        "minimum_data_mse_drop_fraction": 0.80,
+        "maximum_final_u_relative_l2": 0.02,
+        "maximum_final_p_relative_l2": 0.05,
+        "maximum_final_absolute_peak_error": 0.05,
+        "maximum_final_invalid_collocation_count": 0,
+    }
+    if version == "v7":
+        return S13OverfitPlanV7(**plan_arguments, p_field_weight=2.0)
+    return S13OverfitPlan(**plan_arguments)
 
 
 def classify_s13_overfit(
@@ -318,8 +371,8 @@ def classify_s13_overfit(
 ) -> OverfitClassification:
     """Apply every preregistered criterion without early exit or softening."""
 
-    if type(plan) is not S13OverfitPlan:
-        raise TypeError("plan must be an exact S13OverfitPlan")
+    if not _is_exact_overfit_plan(plan):
+        raise TypeError("plan must be an exact frozen S13OverfitPlan")
     if type(before) is not OverfitCaseMetrics or type(after) is not OverfitCaseMetrics:
         raise TypeError("before and after must be exact OverfitCaseMetrics")
     if before.normalized_data_mse <= 0.0:
@@ -521,8 +574,8 @@ def _train_one_case(
     operator = _validated_operator(model)
     if type(case) is not DogboneS13TrainingCase:
         raise TypeError("case must be an exact DogboneS13TrainingCase")
-    if type(plan) is not S13OverfitPlan:
-        raise TypeError("plan must be an exact S13OverfitPlan")
+    if not _is_exact_overfit_plan(plan):
+        raise TypeError("plan must be an exact frozen S13OverfitPlan")
     if (
         case.tensors.case_id != plan.case_id
         or case.tensors.role is not EvidenceRole.TRAIN
@@ -576,7 +629,7 @@ def _train_one_case(
                 target_p = tensors.target_P.index_select(0, indices)
                 u_mse = torch.mean((output.u[0, : len(batch)] - target_u).square())
                 p_mse = torch.mean((output.P[0, : len(batch)] - target_p).square())
-                loss = u_mse + p_mse
+                loss = u_mse + plan.field_p_loss_weight * p_mse
                 if peak_target is not None:
                     predicted_peak = torch.linalg.vector_norm(
                         output.P[0, len(batch) :], dim=(-2, -1)
@@ -632,8 +685,8 @@ def _build_vertex_sampler_plan(
 
     if type(vertex_count) is not int or vertex_count <= 0:
         raise ValueError("vertex_count must be a positive integer")
-    if type(plan) is not S13OverfitPlan:
-        raise TypeError("plan must be an exact S13OverfitPlan")
+    if not _is_exact_overfit_plan(plan):
+        raise TypeError("plan must be an exact frozen S13OverfitPlan")
     batch_size = min(plan.vertex_batch_size, vertex_count)
     if vertex_count % batch_size != 0:
         raise ValueError("vertex_count must divide exactly into vertex batches")
@@ -721,8 +774,8 @@ def run_s13_overfit_diagnostic(
     """Run the bounded diagnostic after freezing S11 lineage and before S10 access."""
 
     frozen_plan = build_s13_overfit_plan() if plan is None else plan
-    if type(frozen_plan) is not S13OverfitPlan:
-        raise TypeError("plan must be an exact S13OverfitPlan")
+    if not _is_exact_overfit_plan(frozen_plan):
+        raise TypeError("plan must be an exact frozen S13OverfitPlan")
     s10, s11, access, _ = _preflight_paths(
         s10_run_root,
         s11_checkpoint_root,
@@ -806,7 +859,9 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="positive diagnostic prefix, bounded by the selected version",
     )
-    parser.add_argument("--version", choices=("v3", "v4", "v5", "v6"), default="v3")
+    parser.add_argument(
+        "--version", choices=("v3", "v4", "v5", "v6", "v7"), default="v3"
+    )
     parser.add_argument("--output", type=Path)
     return parser
 
@@ -852,6 +907,7 @@ __all__ = (
     "OverfitClassification",
     "S13OverfitDiagnosticReport",
     "S13OverfitPlan",
+    "S13OverfitPlanV7",
     "build_parser",
     "build_s13_overfit_plan",
     "classify_s13_overfit",
