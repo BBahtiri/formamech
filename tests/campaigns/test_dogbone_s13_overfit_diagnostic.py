@@ -80,6 +80,32 @@ def test_vertex_contract_matches_the_operator_reference_mesh() -> None:
     assert plan.expected_vertex_count == vertex_count
 
 
+def test_v4_changes_only_learning_rate_at_the_same_budget() -> None:
+    control = diagnostic.build_s13_overfit_plan()
+    v4 = diagnostic.build_s13_overfit_plan(version="v4")
+
+    assert v4.diagnostic_id == "dogbone-s13-one-case-overfit-v4"
+    assert v4.learning_rate == pytest.approx(2.0e-5)
+    assert (
+        replace(v4, diagnostic_id=control.diagnostic_id, learning_rate=5.0e-6)
+        == control
+    )
+    assert (
+        diagnostic._build_vertex_sampler_plan(  # noqa: SLF001
+            v4, v4.expected_vertex_count
+        ).plan_hash
+        == diagnostic._build_vertex_sampler_plan(  # noqa: SLF001
+            control, control.expected_vertex_count
+        ).plan_hash
+    )
+    with pytest.raises(ValueError, match="learning_rate"):
+        replace(v4, learning_rate=control.learning_rate)
+    with pytest.raises(ValueError, match="learning_rate"):
+        replace(control, learning_rate=v4.learning_rate)
+    with pytest.raises(ValueError, match="version"):
+        diagnostic.build_s13_overfit_plan(version="v5")
+
+
 @pytest.mark.parametrize(
     ("change", "error"),
     (
@@ -437,7 +463,7 @@ def test_cli_emits_canonical_json_and_exclusively_writes_output(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    plan = diagnostic.build_s13_overfit_plan(optimizer_steps=2)
+    plan = diagnostic.build_s13_overfit_plan(optimizer_steps=2, version="v4")
     classification = diagnostic.classify_s13_overfit(
         plan, _metrics(data_mse=1.0), _metrics(data_mse=0.1)
     )
@@ -468,9 +494,12 @@ def test_cli_emits_canonical_json_and_exclusively_writes_output(
             report,
             classification=diagnostic.OverfitClassification(0.9, False, ("forged",)),
         )
-    monkeypatch.setattr(
-        diagnostic, "run_s13_overfit_diagnostic", lambda **kwargs: report
-    )
+
+    def run_v4(**kwargs: object) -> diagnostic.S13OverfitDiagnosticReport:
+        assert kwargs["plan"] == plan
+        return report
+
+    monkeypatch.setattr(diagnostic, "run_s13_overfit_diagnostic", run_v4)
     output = tmp_path / "report.json"
     access = tmp_path / "access.json"
 
@@ -484,6 +513,8 @@ def test_cli_emits_canonical_json_and_exclusively_writes_output(
             str(access),
             "--optimizer-steps",
             "2",
+            "--version",
+            "v4",
             "--output",
             str(output),
         )

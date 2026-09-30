@@ -38,6 +38,10 @@ _EXPECTED_VERTEX_COUNT = 969
 _VERTEX_BATCH_SIZE = 57
 _VERTEX_SAMPLER_POLICY_ID = "dogbone-s13-overfit-blake2b-epoch-permutation-v1"
 _VERTEX_SAMPLER_PERSON = b"piginot-vtx-v1"
+_FROZEN_LEARNING_RATES = {
+    "dogbone-s13-one-case-overfit-v3": 5.0e-6,
+    "dogbone-s13-one-case-overfit-v4": 2.0e-5,
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -64,7 +68,7 @@ class S13OverfitPlan:
     maximum_final_invalid_collocation_count: int
 
     def __post_init__(self) -> None:
-        if self.diagnostic_id != "dogbone-s13-one-case-overfit-v3":
+        if self.diagnostic_id not in _FROZEN_LEARNING_RATES:
             raise ValueError("diagnostic_id must identify the frozen diagnostic")
         if self.role is not EvidenceRole.TRAIN:
             raise PermissionError("overfit diagnostic is restricted to TRAIN evidence")
@@ -76,8 +80,8 @@ class S13OverfitPlan:
             raise ValueError("seed must remain 13001")
         if not math.isfinite(self.learning_rate) or self.learning_rate <= 0.0:
             raise ValueError("learning_rate must be positive and finite")
-        if self.learning_rate != 5.0e-6:
-            raise ValueError("learning_rate must remain 5e-6")
+        if self.learning_rate != _FROZEN_LEARNING_RATES[self.diagnostic_id]:
+            raise ValueError("learning_rate differs from the frozen diagnostic")
         if self.maximum_optimizer_steps != _MAXIMUM_OPTIMIZER_STEPS:
             raise ValueError("maximum_optimizer_steps must remain 800")
         if (
@@ -270,16 +274,20 @@ class S13OverfitDiagnosticReport:
 def build_s13_overfit_plan(
     *,
     optimizer_steps: int = _MAXIMUM_OPTIMIZER_STEPS,
+    version: str = "v3",
 ) -> S13OverfitPlan:
     """Build the frozen default plan, allowing only a strict diagnostic prefix."""
 
+    if type(version) is not str or version not in ("v3", "v4"):
+        raise ValueError("version must identify v3 or v4")
+    diagnostic_id = f"dogbone-s13-one-case-overfit-{version}"
     return S13OverfitPlan(
-        diagnostic_id="dogbone-s13-one-case-overfit-v3",
+        diagnostic_id=diagnostic_id,
         role=EvidenceRole.TRAIN,
         non_gate=True,
         case_id=_CASE_ID,
         seed=13_001,
-        learning_rate=5.0e-6,
+        learning_rate=_FROZEN_LEARNING_RATES[diagnostic_id],
         optimizer_steps=optimizer_steps,
         maximum_optimizer_steps=_MAXIMUM_OPTIMIZER_STEPS,
         expected_vertex_count=_EXPECTED_VERTEX_COUNT,
@@ -767,13 +775,17 @@ def build_parser() -> argparse.ArgumentParser:
         default=_MAXIMUM_OPTIMIZER_STEPS,
         help="positive diagnostic prefix, bounded above by 800",
     )
+    parser.add_argument("--version", choices=("v3", "v4"), default="v3")
     parser.add_argument("--output", type=Path)
     return parser
 
 
 def main(arguments: Sequence[str] | None = None) -> int:
     options = build_parser().parse_args(arguments)
-    plan = build_s13_overfit_plan(optimizer_steps=options.optimizer_steps)
+    plan = build_s13_overfit_plan(
+        optimizer_steps=options.optimizer_steps,
+        version=options.version,
+    )
     report = run_s13_overfit_diagnostic(
         s10_run_root=options.s10_run_root,
         s11_checkpoint_root=options.s11_checkpoint_root,
