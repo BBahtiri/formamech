@@ -102,8 +102,6 @@ def test_v4_changes_only_learning_rate_at_the_same_budget() -> None:
         replace(v4, learning_rate=control.learning_rate)
     with pytest.raises(ValueError, match="learning_rate"):
         replace(control, learning_rate=v4.learning_rate)
-    with pytest.raises(ValueError, match="version"):
-        diagnostic.build_s13_overfit_plan(version="v6")
 
 
 def test_v5_extends_the_v4_schedule_without_changing_its_first_800_steps() -> None:
@@ -135,6 +133,26 @@ def test_v5_extends_the_v4_schedule_without_changing_its_first_800_steps() -> No
         replace(v4, maximum_optimizer_steps=4_000)
     with pytest.raises(ValueError, match="maximum_optimizer_steps"):
         replace(v5, maximum_optimizer_steps=800)
+
+
+def test_v6_adds_only_a_fixed_root_peak_term() -> None:
+    v5 = diagnostic.build_s13_overfit_plan(version="v5")
+    v6 = diagnostic.build_s13_overfit_plan(version="v6")
+
+    assert v6.diagnostic_id == "dogbone-s13-one-case-overfit-v6"
+    assert v5.peak_loss_weight == 0.0
+    assert v6.peak_loss_weight == pytest.approx(0.1)
+    assert replace(v6, diagnostic_id=v5.diagnostic_id) == v5
+    assert (
+        diagnostic._build_vertex_sampler_plan(  # noqa: SLF001
+            v6, v6.expected_vertex_count
+        ).batches
+        == diagnostic._build_vertex_sampler_plan(  # noqa: SLF001
+            v5, v5.expected_vertex_count
+        ).batches
+    )
+    with pytest.raises(ValueError, match="version"):
+        diagnostic.build_s13_overfit_plan(version="v7")
 
 
 @pytest.mark.parametrize(
@@ -289,6 +307,68 @@ def test_data_only_training_uses_vertex_minibatches_and_is_deterministic() -> No
     assert all(value >= 0.0 for value in left_trace)
     assert model_state_hash(left) == model_state_hash(right)
     assert model_state_hash(left) != initial_hash
+
+
+def test_v6_training_queries_exact_root_qoi_and_uses_peak_gradient(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    case = _case("candidate-002485")
+    v5_model = _model()
+    v6_model = _model()
+    v5 = diagnostic.build_s13_overfit_plan(optimizer_steps=1, version="v5")
+    v6 = diagnostic.build_s13_overfit_plan(optimizer_steps=1, version="v6")
+    original = diagnostic._predict_case_vertices  # noqa: SLF001
+    queries: list[tuple[int, ...]] = []
+
+    def record_queries(
+        model: object,
+        selected: object,
+        indices: torch.Tensor,
+    ) -> object:
+        queries.append(tuple(int(index) for index in indices.tolist()))
+        return original(model, selected, indices)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(diagnostic, "_predict_case_vertices", record_queries)
+
+    v5_trace = diagnostic._train_one_case(v5_model, case, v5)  # noqa: SLF001
+    v6_trace = diagnostic._train_one_case(v6_model, case, v6)  # noqa: SLF001
+
+    assert len(queries[0]) == 4
+    assert queries[1][:4] == queries[0]
+    assert queries[1][4:] == tuple(case.tensors.qoi_indices.tolist())
+    assert v5_trace != v6_trace
+    assert model_state_hash(v5_model) != model_state_hash(v6_model)
+
+
+def test_v6_first_loss_matches_field_plus_weighted_exact_qoi_peak() -> None:
+    case = _case("candidate-002485")
+    model = _model()
+    plan = diagnostic.build_s13_overfit_plan(optimizer_steps=1, version="v6")
+    sampler = diagnostic._build_vertex_sampler_plan(  # noqa: SLF001
+        plan, len(case.tensors.query_xy)
+    )
+    indices = torch.tensor(sampler.batches[0], dtype=torch.long)
+    query_indices = torch.cat((indices, case.tensors.qoi_indices))
+    output = diagnostic._predict_case_vertices(  # noqa: SLF001
+        model, case, query_indices
+    )
+    target_u = case.tensors.target_u.index_select(0, indices)
+    target_p = case.tensors.target_P.index_select(0, indices)
+    predicted_peak = torch.linalg.vector_norm(
+        output.P[0, len(indices) :], dim=(-2, -1)
+    ).amax()
+    true_peak = torch.linalg.vector_norm(
+        case.tensors.target_P[case.tensors.qoi_indices], dim=(-2, -1)
+    ).amax()
+    expected = (
+        torch.mean((output.u[0, : len(indices)] - target_u).square())
+        + torch.mean((output.P[0, : len(indices)] - target_p).square())
+        + 0.1 * (predicted_peak - true_peak).square()
+    )
+
+    trace = diagnostic._train_one_case(model, case, plan)  # noqa: SLF001
+
+    assert trace[0] == pytest.approx(float(expected.detach()), rel=1.0e-12)
 
 
 def test_case_metrics_use_all_vertices_and_physical_vertex_determinants(
@@ -494,7 +574,7 @@ def test_cli_emits_canonical_json_and_exclusively_writes_output(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    plan = diagnostic.build_s13_overfit_plan(optimizer_steps=2, version="v5")
+    plan = diagnostic.build_s13_overfit_plan(optimizer_steps=2, version="v6")
     classification = diagnostic.classify_s13_overfit(
         plan, _metrics(data_mse=1.0), _metrics(data_mse=0.1)
     )
@@ -526,11 +606,11 @@ def test_cli_emits_canonical_json_and_exclusively_writes_output(
             classification=diagnostic.OverfitClassification(0.9, False, ("forged",)),
         )
 
-    def run_v5(**kwargs: object) -> diagnostic.S13OverfitDiagnosticReport:
+    def run_v6(**kwargs: object) -> diagnostic.S13OverfitDiagnosticReport:
         assert kwargs["plan"] == plan
         return report
 
-    monkeypatch.setattr(diagnostic, "run_s13_overfit_diagnostic", run_v5)
+    monkeypatch.setattr(diagnostic, "run_s13_overfit_diagnostic", run_v6)
     output = tmp_path / "report.json"
     access = tmp_path / "access.json"
 
@@ -545,7 +625,7 @@ def test_cli_emits_canonical_json_and_exclusively_writes_output(
             "--optimizer-steps",
             "2",
             "--version",
-            "v5",
+            "v6",
             "--output",
             str(output),
         )

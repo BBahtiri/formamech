@@ -39,9 +39,10 @@ _VERTEX_BATCH_SIZE = 57
 _VERTEX_SAMPLER_POLICY_ID = "dogbone-s13-overfit-blake2b-epoch-permutation-v1"
 _VERTEX_SAMPLER_PERSON = b"piginot-vtx-v1"
 _FROZEN_DIAGNOSTICS = {
-    "dogbone-s13-one-case-overfit-v3": (5.0e-6, _MAXIMUM_OPTIMIZER_STEPS),
-    "dogbone-s13-one-case-overfit-v4": (2.0e-5, _MAXIMUM_OPTIMIZER_STEPS),
-    "dogbone-s13-one-case-overfit-v5": (2.0e-5, 4_000),
+    "dogbone-s13-one-case-overfit-v3": (5.0e-6, _MAXIMUM_OPTIMIZER_STEPS, 0.0),
+    "dogbone-s13-one-case-overfit-v4": (2.0e-5, _MAXIMUM_OPTIMIZER_STEPS, 0.0),
+    "dogbone-s13-one-case-overfit-v5": (2.0e-5, 4_000, 0.0),
+    "dogbone-s13-one-case-overfit-v6": (2.0e-5, 4_000, 0.1),
 }
 
 
@@ -81,7 +82,7 @@ class S13OverfitPlan:
             raise ValueError("seed must remain 13001")
         if not math.isfinite(self.learning_rate) or self.learning_rate <= 0.0:
             raise ValueError("learning_rate must be positive and finite")
-        learning_rate, maximum_steps = _FROZEN_DIAGNOSTICS[self.diagnostic_id]
+        learning_rate, maximum_steps, _ = _FROZEN_DIAGNOSTICS[self.diagnostic_id]
         if self.learning_rate != learning_rate:
             raise ValueError("learning_rate differs from the frozen diagnostic")
         if self.maximum_optimizer_steps != maximum_steps:
@@ -130,6 +131,10 @@ class S13OverfitPlan:
     @property
     def content_hash(self) -> str:
         return cast(str, hash_spec(self, "content"))
+
+    @property
+    def peak_loss_weight(self) -> float:
+        return _FROZEN_DIAGNOSTICS[self.diagnostic_id][2]
 
 
 @dataclass(frozen=True, slots=True)
@@ -282,10 +287,10 @@ def build_s13_overfit_plan(
 ) -> S13OverfitPlan:
     """Build the frozen default plan, allowing only a strict diagnostic prefix."""
 
-    if type(version) is not str or version not in ("v3", "v4", "v5"):
-        raise ValueError("version must identify v3, v4 or v5")
+    if type(version) is not str or version not in ("v3", "v4", "v5", "v6"):
+        raise ValueError("version must identify v3, v4, v5 or v6")
     diagnostic_id = f"dogbone-s13-one-case-overfit-{version}"
-    learning_rate, maximum_steps = _FROZEN_DIAGNOSTICS[diagnostic_id]
+    learning_rate, maximum_steps, _ = _FROZEN_DIAGNOSTICS[diagnostic_id]
     return S13OverfitPlan(
         diagnostic_id=diagnostic_id,
         role=EvidenceRole.TRAIN,
@@ -511,7 +516,7 @@ def _train_one_case(
     plan: S13OverfitPlan,
     sampler_plan: DeterministicSamplerPlan | None = None,
 ) -> tuple[float, ...]:
-    """Fit DATA_U + DATA_P at every FEM vertex with deterministic CPU Adam."""
+    """Fit vertex fields and the optional root peak with deterministic CPU Adam."""
 
     operator = _validated_operator(model)
     if type(case) is not DogboneS13TrainingCase:
@@ -543,6 +548,13 @@ def _train_one_case(
         foreach=False,
         fused=False,
     )
+    peak_target = (
+        torch.linalg.vector_norm(
+            tensors.target_P[tensors.qoi_indices], dim=(-2, -1)
+        ).amax()
+        if plan.peak_loss_weight > 0.0
+        else None
+    )
     was_training = operator.training
     deterministic_before = torch.are_deterministic_algorithms_enabled()
     trace: list[float] = []
@@ -553,13 +565,27 @@ def _train_one_case(
             torch.manual_seed(plan.seed)
             for batch in sampler.batches:
                 indices = torch.tensor(batch, dtype=torch.long)
+                query_indices = (
+                    torch.cat((indices, tensors.qoi_indices))
+                    if peak_target is not None
+                    else indices
+                )
                 optimizer.zero_grad(set_to_none=True)
-                output = _predict_case_vertices(operator, case, indices)
+                output = _predict_case_vertices(operator, case, query_indices)
                 target_u = tensors.target_u.index_select(0, indices)
                 target_p = tensors.target_P.index_select(0, indices)
-                u_mse = torch.mean((output.u[0] - target_u).square())
-                p_mse = torch.mean((output.P[0] - target_p).square())
+                u_mse = torch.mean((output.u[0, : len(batch)] - target_u).square())
+                p_mse = torch.mean((output.P[0, : len(batch)] - target_p).square())
                 loss = u_mse + p_mse
+                if peak_target is not None:
+                    predicted_peak = torch.linalg.vector_norm(
+                        output.P[0, len(batch) :], dim=(-2, -1)
+                    ).amax()
+                    loss = (
+                        loss
+                        + plan.peak_loss_weight
+                        * (predicted_peak - peak_target).square()
+                    )
                 if not bool(torch.isfinite(loss).item()):
                     raise FloatingPointError(
                         "supervised overfit loss became non-finite"
@@ -780,7 +806,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="positive diagnostic prefix, bounded by the selected version",
     )
-    parser.add_argument("--version", choices=("v3", "v4", "v5"), default="v3")
+    parser.add_argument("--version", choices=("v3", "v4", "v5", "v6"), default="v3")
     parser.add_argument("--output", type=Path)
     return parser
 
