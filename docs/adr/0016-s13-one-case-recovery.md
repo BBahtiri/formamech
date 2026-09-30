@@ -137,3 +137,39 @@ stress target is a recovered vertex field, so this residual is **not** itself
 an FEM error measure. We will use the spatial pattern to choose a separately
 predeclared architecture or physics intervention, not to relabel any failed
 v5-v7 arm as passing.
+
+## Frozen-state spatial/physics audit outcome
+
+All three 4,000-step replays reproduced their complete optimizer loss traces
+and final state hashes exactly. The canonical report is
+`S13-OVERFIT-SPATIAL-PHYSICS-AUDIT.json`, SHA-256
+`6ea2b9d6bcb748c6da232675b2030d42177a978794071e56b1f5c169272524e5`.
+The DEVELOPMENT access record remained absent.
+
+| Arm | Root P relative L2 | Non-root P relative L2 | Root squared-error share | Non-root constitutive RMS | Minimum vertex det F |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| v5 | 17.08% | 5.37% | 12.60% | 0.3891 | 0.09267 |
+| v6 | 15.10% | 5.97% | 8.37% | 0.4379 | 0.07393 |
+| v7 | 15.37% | 4.80% | 12.77% | 0.8283 | 0.03428 |
+
+The 20 root vertices are only 2.06% of the 969 queries, but carry
+8.37-12.77% of squared P error. Most total error remains outside the root;
+the root is not the entire failure. V7 gets the non-root field below 5%,
+while its root tensor error keeps the full field above that threshold.
+
+V6's near-correct scalar peak is at vertex 730, whereas the FEM peak is at
+645. Its peak tensor has normalized P12/P21/P22 of
+0.04760/0.03965/0.02638, versus FEM 0.009273/0.009321/0.0005686.
+Matching a Frobenius maximum therefore did not establish accurate peak
+location or components. V5 and v7 peak at 628. These observations explain
+why the scalar peak loss is not promoted, without asserting that they
+identify the complete cause of the original multi-case S13 failure.
+
+The constitutive residual is an internal-consistency diagnostic, not a
+vertex FEM-error estimate. These arms trained on data only. V7's improved
+P values coexist with worse constitutive consistency and a lower positive
+determinant; good displacement values alone do not establish good
+displacement derivatives. Further budget may also help: the last 170-step
+mean loss falls about 22% from step 3,000 to 4,000 in all three arms. The
+next capacity test therefore needs a matched extra-budget control, not just
+a comparison with the original v5 endpoint. No gate state changes.
