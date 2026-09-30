@@ -304,7 +304,7 @@ is selected here. G13 remains failed, CP-FREEZE withheld, and S14 blocked.
 
 This descriptive audit uses only existing TRAIN-fit `candidate-002485`.
 Its fixed canonical plan hash is
-`b0db9305071876d77050d3d89cf6998a2e8d51291f6114eecc7f2dde9ab20e38`.
+`5d7832a0c9704886e606e99bb65b08e5d51de191308895f569809e51fc2637d5`.
 Before interpretation, it reproduces the pinned v5, matched control, and
 enriched states, requiring equality of every recorded optimizer loss and
 final state hash. The capacity plan, sampler, migration config/module,
@@ -313,6 +313,18 @@ six historical code fingerprints must match the prior evidence. Audit,
 FEM reconstruction, objective, and material-kernel code fingerprints are
 also captured before execution and checked afterward. No checkpoint is
 saved and no new training policy or coefficient is selected.
+
+The initial plan hash `b0db9305...ab20e38` was superseded before any
+comparison artifact was produced. Its first launch incorrectly forced one
+CPU thread and stopped at exact v5 replay validation. A discriminating
+20-loss-prefix check found a mismatch from the first loss at one thread
+(maximum absolute loss difference `1.1601e-17`), and bit-identical losses
+at the native eight-thread setting. This is execution reproducibility, not
+an accuracy-based selection. The amended plan pins PyTorch `2.13.0+cpu`,
+eight intra-op and eight inter-op threads; mismatches now stop before TRAIN
+labels are loaded. The runtime is checked again before report return.
+Full recorded traces and final states must still match exactly. No
+equality tolerance or acceptance threshold was relaxed.
 
 All 1,792 cells and their seven stored physical quadrature points are used:
 12,544 points with reference-domain area weights in mm squared. Rebuilding

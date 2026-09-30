@@ -77,6 +77,9 @@ class QuadratureAuditPlan:
         "a87d52ce180718d7709462855e90994e62080291d45fbcde68f5e854d607f33e"
     )
     query_chunk_size: int = 512
+    cpu_num_threads: int = 8
+    cpu_interop_threads: int = 8
+    torch_version: str = "2.13.0+cpu"
     expected_vertices: int = 969
     expected_cells: int = 1792
     expected_points_per_cell: int = 7
@@ -95,6 +98,17 @@ class QuadratureAuditPlan:
     @property
     def content_hash(self) -> str:
         return hash_spec(self, "content")
+
+
+def validate_replay_runtime(plan: QuadratureAuditPlan) -> None:
+    if (
+        torch.get_num_threads() != plan.cpu_num_threads
+        or torch.get_num_interop_threads() != plan.cpu_interop_threads
+        or str(torch.__version__) != plan.torch_version
+    ):
+        raise ValueError(
+            "replay runtime must match the pinned PyTorch version and CPU thread counts"
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -373,6 +387,7 @@ def run_quadrature_audit(
     output_path: Path,
 ) -> QuadratureAuditReport:
     plan, capacity_plan = QuadratureAuditPlan(), StressCapacityPlan()
+    validate_replay_runtime(plan)
     implementation = audit_implementation_hashes()
     s10, s11, access, _ = _preflight_paths(
         s10_run_root, s11_checkpoint_root, development_access_record, output_path
@@ -566,6 +581,7 @@ def run_quadrature_audit(
         raise RuntimeError(
             "immutable warmstart or diagnostic source changed during audit"
         )
+    validate_replay_runtime(plan)
     return QuadratureAuditReport(
         EvidenceRole.TRAIN,
         True,

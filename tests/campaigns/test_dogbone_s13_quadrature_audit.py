@@ -439,6 +439,7 @@ def _runner_fixture(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> SimpleNa
         "arms": records,
     }
     monkeypatch.setattr(audit, "QuadratureAuditPlan", lambda: fixture_plan)
+    monkeypatch.setattr(audit, "validate_replay_runtime", lambda plan: None)
     monkeypatch.setattr(
         audit, "load_selected_s11_initialization", lambda *args: initialization
     )
@@ -695,3 +696,26 @@ def test_pinned_report_refuses_missing_or_relative_path(tmp_path: Path) -> None:
     for path in (tmp_path / "missing.json", Path("relative.json")):
         with pytest.raises(ValueError, match="absolute nonsymlink file"):
             audit.load_pinned_report(path, "a" * 64, "type")
+
+
+@pytest.mark.parametrize("mismatch", (None, "threads", "interop", "version"))
+def test_replay_runtime_is_pinned_before_loading_training_labels(
+    monkeypatch: pytest.MonkeyPatch, mismatch: str | None
+) -> None:
+    plan = audit.QuadratureAuditPlan()
+    assert plan.cpu_num_threads == plan.cpu_interop_threads == 8
+    assert plan.torch_version == "2.13.0+cpu"
+    monkeypatch.setattr(
+        torch, "get_num_threads", lambda: 1 if mismatch == "threads" else 8
+    )
+    monkeypatch.setattr(
+        torch, "get_num_interop_threads", lambda: 1 if mismatch == "interop" else 8
+    )
+    monkeypatch.setattr(
+        torch, "__version__", "different" if mismatch == "version" else "2.13.0+cpu"
+    )
+    if mismatch is None:
+        audit.validate_replay_runtime(plan)
+    else:
+        with pytest.raises(ValueError, match="replay runtime"):
+            audit.validate_replay_runtime(plan)
