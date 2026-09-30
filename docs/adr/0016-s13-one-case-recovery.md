@@ -362,3 +362,67 @@ This audit has no success threshold and is not a gate. DEVELOPMENT and
 HOLDOUT stay closed, no FEM solve is run, G13 remains failed, CP-FREEZE is
 withheld, and S14 stays blocked. A subsequent training intervention still
 requires its own fixed, separately ratified protocol.
+
+## Physical-quadrature comparison outcome
+
+The completed canonical report `S13-QUADRATURE-GRADIENT-COMPARISON.json`
+has SHA-256
+`874303154e156d93949f1fe1b8f1d1a408ea61ed5fe5a58b0425803cabf92a57`.
+A second complete execution reproduced all 18,539 canonical report bytes
+exactly. All three DEVELOPMENT tripwires (initial attempt, runtime-prefix
+probe, and repeat) remained absent. The focused regression suite passes
+138 tests with 99% combined branch/line coverage of the two audit modules;
+Ruff and targeted strict mypy pass. Independent read-only review verified
+the artifact, pinned lineage, current code fingerprints and decomposition.
+V5, control and enriched replays match every recorded loss and final state
+exactly. Reconstructed P2 gradients match stored F-I to `2.3093e-14`;
+the FEM-gradient material stress agrees with raw FEM P to relative L2
+`2.3626e-14` globally (`4.8002e-14` on root-incident cells). Thus this check
+does not find a material-alias, unit, closure or quadrature-layout mismatch.
+
+Frozen U and grad U are exactly identical across all three arms. Their
+area-weighted kinematic errors and displacement-derived material-stress
+errors are:
+
+| Physical population | U relative L2 | grad U relative H1 seminorm | M(model grad U) versus raw FEM P relative L2 |
+| --- | ---: | ---: | ---: |
+| All 12,544 points | 1.6135% | 296.1507% | 268.2270% |
+| 287 root-incident points | 1.9238% | 395.1015% | 541.0491% |
+| 12,257 other points | 1.5927% | 292.7541% | 258.3197% |
+
+This is a gradient-fitting gap despite accurate displacement values in the
+one-case **DATA_U + DATA_P** diagnostic. It is not proof of a particular
+Fourier-feature bug, nor a full-population evaluation of the existing
+strong-HYBRID S13 objective. Global gradient component RMS is `0.28139`,
+with much smaller global signed component biases. That is consistent with
+spatial derivative fluctuations, but no frequency-specific cause is
+established here.
+
+| Arm | Served P relative L2, all points | Root-incident P relative L2 | Non-root P relative L2 |
+| --- | ---: | ---: | ---: |
+| V5 | 7.9791% | 18.5123% | 7.5547% |
+| Matched linear-head control | 7.8680% | 18.5605% | 7.4316% |
+| Existing stress enrichment | 5.4874% | 12.2207% | 5.2244% |
+
+These compare physical-area-weighted quadrature predictions with **raw**
+FEM stress. They are not the earlier vertex/recovered-stress metrics and
+must not be substituted into the one-case classification or G13 gate.
+Enrichment improves served P on this new population, but cannot repair the
+frozen displacement gradient. The enriched global A and B normalized
+component RMS values are `0.21638` and `0.21628`, while C is `1.9050e-15`.
+The signed AB cross energy is `-0.093577`: the large head/material and
+kinematic errors cancel, leaving the much smaller served-P error. The
+reported tensor identity discrepancy is at most `4.2980e-13` MPa and the
+energy identity discrepancy at most `5.9916e-17` over all arms/populations.
+
+Every quadrature point is admissible: zero invalid points, 100% area
+coverage, model det F range `[0.17282, 1.97049]`, versus FEM
+`[0.99184, 1.18991]`. Positivity at these points does not imply accurate
+kinematics or continuous-domain validity. No point was dropped or material
+law extended.
+
+The evidence supports a separately preregistered joint U/P recovery with
+explicit gradient/constitutive control, not promotion of the enriched
+data-only arm. No loss coefficient is selected from this comparison.
+DEVELOPMENT/HOLDOUT remain closed, G13 remains failed, CP-FREEZE withheld,
+and S14 blocked.

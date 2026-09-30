@@ -719,3 +719,54 @@ def test_replay_runtime_is_pinned_before_loading_training_labels(
     else:
         with pytest.raises(ValueError, match="replay runtime"):
             audit.validate_replay_runtime(plan)
+
+
+def test_published_comparison_binds_prior_states_and_keeps_populations_distinct() -> (
+    None
+):
+    root = Path(__file__).resolve().parents[2] / "artifacts/campaigns/dogbone-v1"
+    plan = audit.QuadratureAuditPlan()
+    report = audit.load_pinned_report(
+        root / "S13-QUADRATURE-GRADIENT-COMPARISON.json",
+        "874303154e156d93949f1fe1b8f1d1a408ea61ed5fe5a58b0425803cabf92a57",
+        "piginot.campaigns.QuadratureAuditReport",
+    )
+    v5 = audit.load_pinned_report(
+        root / "S13-OVERFIT-BUDGET-V5.json",
+        plan.v5_sha256,
+        "piginot.campaigns.S13OverfitDiagnosticReport",
+    )
+    capacity = audit.load_pinned_report(
+        root / "S13-STRESS-CAPACITY-CONTRAST.json",
+        plan.capacity_sha256,
+        "piginot.campaigns.StressCapacityReport",
+    )
+    audit.require_bindings(
+        report, {"plan": plan, "plan_hash": plan.content_hash}, "published plan"
+    )
+    states = {"v5": v5["final_model_state_hash"]}
+    states.update({arm["arm_id"]: arm["final_state_hash"] for arm in capacity["arms"]})
+    expected_kinematics = report["arms"][0]["metrics"]
+    for arm in report["arms"]:
+        assert arm["state_hash"] == states[arm["arm_id"]]
+        populations = arm["metrics"]
+        assert populations["all_points"]["point_count"] == 12544
+        assert populations["root_incident"]["point_count"] == 287
+        assert populations["nonroot"]["point_count"] == 12257
+        for name in ("all_points", "root_incident", "nonroot"):
+            value = populations[name]
+            assert (
+                value["invalid_count"] == 0 and value["admissible_area_fraction"] == 1
+            )
+            assert (
+                value["gradient_relative_h1"]
+                == expected_kinematics[name]["gradient_relative_h1"]
+            )
+            assert value["u_relative_l2"] == expected_kinematics[name]["u_relative_l2"]
+            decomposition = value["decomposition"]
+            assert decomposition["admissible_count"] == value["point_count"]
+            assert decomposition["total_normalized_mean_squared"] == pytest.approx(
+                decomposition["reconstructed_normalized_mean_squared"],
+                rel=1e-11,
+                abs=1e-16,
+            )
