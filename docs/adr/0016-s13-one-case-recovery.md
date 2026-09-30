@@ -253,3 +253,49 @@ TRAIN case, non-gate mechanistic evidence, with no saved model checkpoint,
 new FEM solve, DEVELOPMENT/HOLDOUT access, or production promotion. G13
 remains failed, CP-FREEZE withheld, and S14 blocked; a production recovery
 still requires a separately ratified full-population protocol.
+
+## Matched stress-capacity outcome
+
+The completed report `S13-STRESS-CAPACITY-CONTRAST.json` has SHA-256
+`a87d52ce180718d7709462855e90994e62080291d45fbcde68f5e854d607f33e`.
+A complete second execution reproduced the entire canonical report
+byte-for-byte, including both 4,000-loss traces and final state hashes. Both
+executions first reproduced v5 exactly. All six code fingerprints remained
+unchanged; DEVELOPMENT access records remained absent.
+
+| Arm | Global P relative L2 | Root P relative L2 | Non-root P relative L2 | Absolute peak error |
+| --- | ---: | ---: | ---: | ---: |
+| v5 warmstart | 5.7065% | 17.0820% | 5.3729% | 9.1445% |
+| Matched linear-head control | 5.6526% | 17.1463% | 5.3119% | 8.9428% |
+| Existing stress enrichment | 3.9391% | 11.8003% | 3.7085% | 5.4355% |
+
+The control trains 260 parameters; the enriched arm trains 41,988. Both
+preserve every frozen state tensor and the full displacement/Jacobian/
+determinant arrays. U relative L2 remains 1.4089%, with zero invalid vertex
+or interior-collocation points. Combined MSE falls 87.48% from original S11
+in the control and 90.37% in the enriched arm. Additional reduction from
+v5 is 0.85% versus 23.75%, respectively.
+
+The enriched arm reduces root tensor error by 31.18% and non-root error by
+30.19% versus the matched control, meeting both slice-comparison conditions.
+It passes the original one-case global P limit, but misses the peak limit:
+5.4355% is greater than 5%. Its conjunctive classification and the capacity
+contrast both remain **false**. Both arms still peak at vertex 628 rather
+than FEM vertex 645. The capacity hypothesis gains mechanistic support, but
+the arm is not promoted and no threshold is relaxed.
+
+Non-root constitutive RMS is 0.38915 in the control and 0.38938 with
+enrichment; root RMS is 0.29972 versus 0.30045. The supervised P improvement
+has not repaired displacement-derived material consistency. Frozen U makes
+this expected scope limitation, not evidence of a material-kernel defect.
+
+The next descriptive check should use the stored physical FEM quadrature,
+not a vertex-gradient average: compare model grad u with stored F-I, served
+P with raw FEM P, and material stress recomputed from FEM gradients with
+raw FEM P. The latter is a pipeline-consistency check, not independent
+physics verification. Report every inadmissible quadrature point and its
+area weight; conditional material metrics must state their admissible
+coverage rather than drop those points silently. This can distinguish
+kinematic fitting from a material/layout/scaling mismatch before selecting
+a separately preregistered training intervention. No new loss coefficient
+is selected here. G13 remains failed, CP-FREEZE withheld, and S14 blocked.
