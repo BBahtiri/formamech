@@ -196,3 +196,60 @@ populations in the spatial audit; their percentages are not directly
 interchangeable. The small recovered/raw discrepancy does not explain the
 large model root error by itself, nor does it verify an exact continuum
 stress. TRAIN-only access was confirmed; DEVELOPMENT remained closed.
+
+## Predeclared matched stress-capacity contrast
+
+The next bounded diagnostic uses the existing S11c local-stress options,
+not a replacement PI-GINOT implementation. ADR 0012's candidate C improved
+stress and peak fitting but failed its displacement guardrail. Here shared
+parameters and the displacement head remain frozen in both arms, so the
+test isolates stress-path capacity while retaining the exact v5 deformation.
+This does not overturn the S11 selection or establish physics consistency.
+
+The runner first replays v5 from the pinned S11 checkpoint and checks every
+optimizer loss and the final state against the pinned v5 report. Both arms
+then start with identical v5 P and u values:
+
+- Control: train only the original linear `p_head`.
+- Enriched: use the already implemented local boundary scales `(0.08, 0.25)`
+  in the operator's normalized coordinate frame and two residual stress
+  layers; train only `p_head`, local projections, and stress residual blocks.
+
+Migration copies every baseline state tensor exactly and rejects unexpected
+keys or shape/dtype mismatches. New parameters use seed 13002. The local
+projection weights/biases and each residual block's final linear layer are
+zeroed, making the added path neutral before training. The report includes
+both complete configs, module digests, copied/new state-name allowlists,
+trainable names/counts, initial/final states, and the shared frozen-state
+hash. Full vertex and interior-collocation displacement, physical Jacobian,
+and determinant arrays must remain exactly equal to v5, not just their
+minimum values or invalid counts.
+
+Both arms receive fresh CPU float64 Adam with learning rate `2e-5`, betas
+`(0.9, 0.999)`, epsilon `1e-8`, zero weight decay, and 4,000 additional steps.
+The deterministic 57-vertex v5 schedule restarts identically for both arms;
+this is matched fine-tuning, not continued Adam state. The only objective is
+the unchanged `DATA_U + DATA_P`, with no peak term, reweighting, or physics
+term. Every finite loss is retained. Displacement data loss is constant
+because its parameters are frozen. Six implementation-file SHA-256 hashes
+are captured before execution and must be unchanged afterward.
+
+The canonical contrast plan hash is
+`8ad9644d53e8363d95030f6f1a67fcc7cea1fcc0616f6f0678244b3533846ae2`.
+The 4,000-step fine-tuning sampler hash remains
+`f894eeab7ea354a2d2ee0085ba8fef17b521df59329071e380e02749495df861`.
+The original one-case criteria stay fixed: cumulative combined data-MSE
+reduction at least 80% relative to the **original pinned S11 initial state**,
+U relative L2 at most 2%, P relative L2 at most 5%, absolute root-peak error
+at most 5%, and zero invalid interior points. Additional MSE reduction from
+v5 is reported separately; it is not substituted as the 80% denominator.
+
+The enriched contrast succeeds only if it meets those original criteria,
+reduces root tensor relative L2 by at least 25% versus the matched control,
+and has no more than 5% relative non-root P regression versus that control.
+All raw metrics and both classifications are reported, even on failure.
+No coefficient or threshold will be selected after this result. This is one
+TRAIN case, non-gate mechanistic evidence, with no saved model checkpoint,
+new FEM solve, DEVELOPMENT/HOLDOUT access, or production promotion. G13
+remains failed, CP-FREEZE withheld, and S14 blocked; a production recovery
+still requires a separately ratified full-population protocol.
