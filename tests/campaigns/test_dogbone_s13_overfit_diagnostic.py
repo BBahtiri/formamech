@@ -103,7 +103,38 @@ def test_v4_changes_only_learning_rate_at_the_same_budget() -> None:
     with pytest.raises(ValueError, match="learning_rate"):
         replace(control, learning_rate=v4.learning_rate)
     with pytest.raises(ValueError, match="version"):
-        diagnostic.build_s13_overfit_plan(version="v5")
+        diagnostic.build_s13_overfit_plan(version="v6")
+
+
+def test_v5_extends_the_v4_schedule_without_changing_its_first_800_steps() -> None:
+    v4 = diagnostic.build_s13_overfit_plan(version="v4")
+    v5 = diagnostic.build_s13_overfit_plan(version="v5")
+
+    assert v5.diagnostic_id == "dogbone-s13-one-case-overfit-v5"
+    assert v5.learning_rate == v4.learning_rate
+    assert v5.optimizer_steps == 4_000
+    assert v5.maximum_optimizer_steps == 4_000
+    assert (
+        replace(
+            v5,
+            diagnostic_id=v4.diagnostic_id,
+            optimizer_steps=800,
+            maximum_optimizer_steps=800,
+        )
+        == v4
+    )
+    assert (
+        diagnostic._build_vertex_sampler_plan(  # noqa: SLF001
+            v5, v5.expected_vertex_count
+        ).batches[:800]
+        == diagnostic._build_vertex_sampler_plan(  # noqa: SLF001
+            v4, v4.expected_vertex_count
+        ).batches
+    )
+    with pytest.raises(ValueError, match="maximum_optimizer_steps"):
+        replace(v4, maximum_optimizer_steps=4_000)
+    with pytest.raises(ValueError, match="maximum_optimizer_steps"):
+        replace(v5, maximum_optimizer_steps=800)
 
 
 @pytest.mark.parametrize(
@@ -463,7 +494,7 @@ def test_cli_emits_canonical_json_and_exclusively_writes_output(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    plan = diagnostic.build_s13_overfit_plan(optimizer_steps=2, version="v4")
+    plan = diagnostic.build_s13_overfit_plan(optimizer_steps=2, version="v5")
     classification = diagnostic.classify_s13_overfit(
         plan, _metrics(data_mse=1.0), _metrics(data_mse=0.1)
     )
@@ -495,11 +526,11 @@ def test_cli_emits_canonical_json_and_exclusively_writes_output(
             classification=diagnostic.OverfitClassification(0.9, False, ("forged",)),
         )
 
-    def run_v4(**kwargs: object) -> diagnostic.S13OverfitDiagnosticReport:
+    def run_v5(**kwargs: object) -> diagnostic.S13OverfitDiagnosticReport:
         assert kwargs["plan"] == plan
         return report
 
-    monkeypatch.setattr(diagnostic, "run_s13_overfit_diagnostic", run_v4)
+    monkeypatch.setattr(diagnostic, "run_s13_overfit_diagnostic", run_v5)
     output = tmp_path / "report.json"
     access = tmp_path / "access.json"
 
@@ -514,7 +545,7 @@ def test_cli_emits_canonical_json_and_exclusively_writes_output(
             "--optimizer-steps",
             "2",
             "--version",
-            "v4",
+            "v5",
             "--output",
             str(output),
         )
