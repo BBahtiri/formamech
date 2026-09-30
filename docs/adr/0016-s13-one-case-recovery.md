@@ -56,3 +56,15 @@ The diagnostic uses only TRAIN labels and is not a G13 trial. It cannot create
 `CP-FREEZE`, open DEVELOPMENT or HOLDOUT, or unblock S14. Any production
 recovery still requires a separately ratified full-population protocol and
 complete gate evidence.
+
+## V6 outcome
+
+The completed canonical report is `S13-OVERFIT-PEAK-V6.json`, SHA-256
+`b8da0b8d7aa5319f0f1c17ad30c98b4ab6ef6e88b8e283f40c20a3d0a25fe596`.
+It used all 4,000 frozen steps and no DEVELOPMENT access record appeared. V6
+reduced combined data MSE by 86.28%, kept U relative L2 at 1.42%, and had
+zero invalid vertex or interior-collocation determinants. The absolute peak
+error fell to 0.36%, a 96.04% reduction relative to v5. P relative L2 rose
+from 5.71% to 6.19%, an 8.46% relative regression. The primary one-case
+classification fails its P threshold, and the secondary signal fails its 5%
+P non-regression condition. The coefficient is not promoted.
