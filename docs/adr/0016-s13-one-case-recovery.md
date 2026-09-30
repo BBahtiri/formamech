@@ -299,3 +299,54 @@ coverage rather than drop those points silently. This can distinguish
 kinematic fitting from a material/layout/scaling mismatch before selecting
 a separately preregistered training intervention. No new loss coefficient
 is selected here. G13 remains failed, CP-FREEZE withheld, and S14 blocked.
+
+## Frozen physical-quadrature comparison protocol
+
+This descriptive audit uses only existing TRAIN-fit `candidate-002485`.
+Its fixed canonical plan hash is
+`b0db9305071876d77050d3d89cf6998a2e8d51291f6114eecc7f2dde9ab20e38`.
+Before interpretation, it reproduces the pinned v5, matched control, and
+enriched states, requiring equality of every recorded optimizer loss and
+final state hash. The capacity plan, sampler, migration config/module,
+initial state, frozen state, state-name lists, parameter scope/count, and
+six historical code fingerprints must match the prior evidence. Audit,
+FEM reconstruction, objective, and material-kernel code fingerprints are
+also captured before execution and checked afterward. No checkpoint is
+saved and no new training policy or coefficient is selected.
+
+All 1,792 cells and their seven stored physical quadrature points are used:
+12,544 points with reference-domain area weights in mm squared. Rebuilding
+P2 displacement from every vertex and edge DOF must match the stored
+in-plane F-I within the existing `5e-13` layout tolerance. Root-incident
+cells contain any registered right-arc QoI vertex, excluding right-grip;
+the other cells form the complement. These are cell populations, not the
+20-vertex peak-QoI population. Model queries use cell-major order and
+identical chunks of 512 (24 full chunks and a 256-point tail), with the
+existing physical coordinate and displacement/stress conversions. Frozen
+U and physical grad U arrays must be exactly identical across all arms.
+
+Each population reports area-weighted U relative L2, served P relative L2
+against raw in-plane FEM P, and gradient relative H1 **seminorm**, dividing
+by the FEM grad U norm, never by full F. Gradient component RMS and signed
+component biases are dimensionless; U component RMS is in mm; stress
+component RMS is normalized by the existing 760 MPa scale. The material
+stress recomputed from FEM gradients is compared unconditionally with raw
+FEM P. This checks pipeline consistency, not independent physical validity;
+S8's symbolic MMS supplies the latter.
+
+Every point whose model det F is at or below the existing `1e-12` margin is
+recorded with cell/point IDs, coordinates, determinant and area weight.
+Unconditional U, gradient and served-P errors include those points. The
+material law is not extended to inadmissible F. Conditional material
+metrics explicitly state admissible point count, area and area fraction;
+any constitutive-kernel failure on admissible F stops the audit without
+silently dropping points. On that admissible population, the exact tensor
+identity is decomposed into A=served P-M(model grad U),
+B=M(model grad U)-M(FEM grad U), C=M(FEM grad U)-raw FEM P. All three RMS
+norms and signed cross energies are reported, together with tensor and
+energy reconstruction discrepancies. The norms themselves do not add.
+
+This audit has no success threshold and is not a gate. DEVELOPMENT and
+HOLDOUT stay closed, no FEM solve is run, G13 remains failed, CP-FREEZE is
+withheld, and S14 stays blocked. A subsequent training intervention still
+requires its own fixed, separately ratified protocol.
