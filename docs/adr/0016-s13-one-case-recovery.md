@@ -99,3 +99,17 @@ primary classification. We will not select a coefficient or threshold after
 seeing v7. This sequential TRAIN-only diagnostic is mechanistic evidence,
 not an independent statistical success or a G13 trial. DEVELOPMENT and
 HOLDOUT remain closed; CP-FREEZE and S14 remain blocked.
+
+## V7 outcome
+
+The completed canonical report is `S13-OVERFIT-P-WEIGHT-V7.json`, SHA-256
+`02f701ef87b02b13c9c5321e35eaf9433161cb2f0fbe1b9aef22bc5159dbb4d4`.
+It contains the frozen v7 plan hash, the v5 sampler hash, all 4,000 optimizer
+losses, and the same S10/S11/initial-state bindings as v5. No DEVELOPMENT
+access record appeared. The unweighted combined data MSE fell 88.08%; U
+relative L2 was 1.45%, P relative L2 was 5.10%, and absolute root-peak error
+was 7.92%. Both vertex and interior-collocation invalid counts were zero.
+Relative to v5, P error improved 10.64%, but it remains above the 5% limit.
+The preregistered secondary P-field signal fails narrowly, and the primary
+one-case classification fails both P-field and peak limits. The coefficient
+is not promoted; G13, CP-FREEZE, and S14 remain unchanged.
