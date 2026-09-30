@@ -15,7 +15,7 @@ import torch
 
 from campaigns.dogbone_v1.s11_contingency_models import model_state_hash
 from campaigns.dogbone_v1.s11_contingency_source import open_selective_s10_source
-from campaigns.dogbone_v1.s13_data import materialize_dogbone_s13_training_data
+from campaigns.dogbone_v1.s13_data import materialize_dogbone_s13_training_case
 from campaigns.dogbone_v1.s13_initialization import load_selected_s11_initialization
 from campaigns.dogbone_v1.s13_objective import (
     _COORDINATE_CONVERSION,
@@ -34,8 +34,8 @@ from piginot.training import DeterministicSamplerPlan
 
 _CASE_ID = "candidate-002485"
 _MAXIMUM_OPTIMIZER_STEPS = 800
-_EXPECTED_VERTEX_COUNT = 3_729
-_VERTEX_BATCH_SIZE = 113
+_EXPECTED_VERTEX_COUNT = 969
+_VERTEX_BATCH_SIZE = 57
 _VERTEX_SAMPLER_POLICY_ID = "dogbone-s13-overfit-blake2b-epoch-permutation-v1"
 _VERTEX_SAMPLER_PERSON = b"piginot-vtx-v1"
 
@@ -64,7 +64,7 @@ class S13OverfitPlan:
     maximum_final_invalid_collocation_count: int
 
     def __post_init__(self) -> None:
-        if self.diagnostic_id != "dogbone-s13-one-case-overfit-v2":
+        if self.diagnostic_id != "dogbone-s13-one-case-overfit-v3":
             raise ValueError("diagnostic_id must identify the frozen diagnostic")
         if self.role is not EvidenceRole.TRAIN:
             raise PermissionError("overfit diagnostic is restricted to TRAIN evidence")
@@ -274,7 +274,7 @@ def build_s13_overfit_plan(
     """Build the frozen default plan, allowing only a strict diagnostic prefix."""
 
     return S13OverfitPlan(
-        diagnostic_id="dogbone-s13-one-case-overfit-v2",
+        diagnostic_id="dogbone-s13-one-case-overfit-v3",
         role=EvidenceRole.TRAIN,
         non_gate=True,
         case_id=_CASE_ID,
@@ -704,15 +704,13 @@ def run_s13_overfit_diagnostic(
     )
     if source.development_opened:
         raise RuntimeError("DEVELOPMENT labels opened before TRAIN diagnostic")
-    data = materialize_dogbone_s13_training_data(source, initialization)
+    case = materialize_dogbone_s13_training_case(
+        source,
+        initialization,
+        frozen_plan.case_id,
+    )
     if source.development_opened:
         raise RuntimeError("DEVELOPMENT labels opened during TRAIN materialization")
-    selected = tuple(
-        case for case in data.cases if case.tensors.case_id == frozen_plan.case_id
-    )
-    if len(selected) != 1:
-        raise ValueError("preregistered TRAIN case must resolve exactly once")
-    case = selected[0]
     vertex_count = int(case.tensors.query_xy.shape[0])
     if vertex_count != frozen_plan.expected_vertex_count:
         raise ValueError("TRAIN case vertex count differs from the frozen plan")

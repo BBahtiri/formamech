@@ -140,7 +140,54 @@ def materialize_dogbone_s13_training_data(
     )
 
 
+def materialize_dogbone_s13_training_case(
+    source: SelectiveS10Source,
+    initialization: SelectedS11Initialization,
+    case_id: str,
+) -> DogboneS13TrainingCase:
+    """Resolve one registered TRAIN-fit case using the frozen S11 normalization."""
+
+    if type(source) is not SelectiveS10Source:
+        raise TypeError("source must be an exact verified SelectiveS10Source")
+    if type(initialization) is not SelectedS11Initialization:
+        raise TypeError("initialization must be exact SelectedS11Initialization")
+    if type(case_id) is not str:
+        raise TypeError("case_id must be exact text")
+    if not case_id:
+        raise ValueError("case_id must be non-empty text")
+    if source.development_opened:
+        raise RuntimeError("DEVELOPMENT labels must remain closed during S13 training")
+    if source.bindings.content_hash != initialization.source_bindings_hash:
+        raise ValueError("S10 source differs from the selected S11 checkpoint")
+    normalization = initialization.normalization
+    if normalization.fit_case_ids != source.fit_case_ids:
+        raise ValueError("S11 normalization differs from the registered TRAIN fit set")
+    if case_id not in normalization.fit_case_ids:
+        raise ValueError("case_id is not a registered TRAIN fit case")
+
+    verified, collocation = source.load_fit_with_collocation(case_id)
+    if source.development_opened:
+        raise RuntimeError("DEVELOPMENT labels must remain closed during S13 training")
+    prepared = prepare_operator_case(verified.case, verified.request, verified.result)
+    tensors = normalize_case_values(prepared, normalization)
+    if (
+        tensors.case_id != case_id
+        or tensors.role is not EvidenceRole.TRAIN
+        or tensors.normalization_hash != normalization.content_hash
+    ):
+        raise ValueError("single-case tensors differ from the frozen TRAIN contract")
+    result = DogboneS13TrainingCase(
+        tensors=tensors,
+        request=verified.request,
+        collocation=collocation,
+    )
+    if source.development_opened:
+        raise RuntimeError("DEVELOPMENT labels must remain closed during S13 training")
+    return result
+
+
 __all__ = (
     "DogboneS13TrainingData",
+    "materialize_dogbone_s13_training_case",
     "materialize_dogbone_s13_training_data",
 )

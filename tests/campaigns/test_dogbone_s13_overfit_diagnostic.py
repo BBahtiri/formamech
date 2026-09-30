@@ -9,6 +9,7 @@ import pytest
 import torch
 
 from campaigns.dogbone_v1 import s13_overfit_diagnostic as diagnostic
+from campaigns.dogbone_v1.family import compiled_family
 from campaigns.dogbone_v1.s11_contingency_models import model_state_hash
 from piginot.contracts import canonical_json_bytes
 from piginot.doe import EvidenceRole
@@ -43,7 +44,7 @@ def _metrics(
 def test_default_plan_preregisters_bounded_one_case_success_contract() -> None:
     plan = diagnostic.build_s13_overfit_plan()
 
-    assert plan.diagnostic_id == "dogbone-s13-one-case-overfit-v2"
+    assert plan.diagnostic_id == "dogbone-s13-one-case-overfit-v3"
     assert plan.role is EvidenceRole.TRAIN
     assert plan.non_gate is True
     assert plan.case_id == "candidate-002485"
@@ -51,8 +52,8 @@ def test_default_plan_preregisters_bounded_one_case_success_contract() -> None:
     assert plan.learning_rate == pytest.approx(5.0e-6)
     assert plan.optimizer_steps == 800
     assert plan.maximum_optimizer_steps == 800
-    assert plan.expected_vertex_count == 3_729
-    assert plan.vertex_batch_size == 113
+    assert plan.expected_vertex_count == 969
+    assert plan.vertex_batch_size == 57
     assert (
         plan.vertex_sampler_policy_id
         == "dogbone-s13-overfit-blake2b-epoch-permutation-v1"
@@ -71,6 +72,14 @@ def test_default_plan_preregisters_bounded_one_case_success_contract() -> None:
         replace(plan, role=EvidenceRole.DEVELOPMENT)
 
 
+def test_vertex_contract_matches_the_operator_reference_mesh() -> None:
+    plan = diagnostic.build_s13_overfit_plan()
+    vertex_count = len(compiled_family().reference_mesh.nodes)
+
+    assert vertex_count == 969
+    assert plan.expected_vertex_count == vertex_count
+
+
 @pytest.mark.parametrize(
     ("change", "error"),
     (
@@ -83,8 +92,8 @@ def test_default_plan_preregisters_bounded_one_case_success_contract() -> None:
         ({"learning_rate": 1.0e-5}, ValueError),
         ({"maximum_optimizer_steps": 801}, ValueError),
         ({"optimizer_steps": 0}, ValueError),
-        ({"expected_vertex_count": 3_728}, ValueError),
-        ({"vertex_batch_size": 112}, ValueError),
+        ({"expected_vertex_count": 968}, ValueError),
+        ({"vertex_batch_size": 56}, ValueError),
         ({"vertex_sampler_policy_id": "changed"}, ValueError),
         ({"minimum_data_mse_drop_fraction": 1.1}, ValueError),
         ({"minimum_data_mse_drop_fraction": 0.79}, ValueError),
@@ -152,23 +161,23 @@ def test_success_classification_requires_every_preregistered_condition() -> None
 
 
 def test_minibatch_schedule_is_deterministic_and_covers_complete_epochs() -> None:
-    plan = diagnostic.build_s13_overfit_plan(optimizer_steps=66)
+    plan = diagnostic.build_s13_overfit_plan(optimizer_steps=34)
 
-    left = diagnostic._build_vertex_sampler_plan(plan, 3_729)  # noqa: SLF001
-    right = diagnostic._build_vertex_sampler_plan(plan, 3_729)  # noqa: SLF001
+    left = diagnostic._build_vertex_sampler_plan(plan, 969)  # noqa: SLF001
+    right = diagnostic._build_vertex_sampler_plan(plan, 969)  # noqa: SLF001
 
     assert left == right
-    assert left.population_size == 3_729
-    assert len(left.batches) == 66
-    assert all(len(batch) == 113 for batch in left.batches)
+    assert left.population_size == 969
+    assert len(left.batches) == 34
+    assert all(len(batch) == 57 for batch in left.batches)
     for epoch in range(2):
-        start = epoch * 33
+        start = epoch * 17
         observed = tuple(
             sorted(
-                index for batch in left.batches[start : start + 33] for index in batch
+                index for batch in left.batches[start : start + 17] for index in batch
             )
         )
-        assert observed == tuple(range(3_729))
+        assert observed == tuple(range(969))
     assert len(left.plan_hash) == 64
 
 
@@ -346,11 +355,18 @@ def test_orchestrator_freezes_s11_lineage_before_opening_train_source(
 
     monkeypatch.setattr(diagnostic, "open_selective_s10_source", open_source)
     case = _case("candidate-002485")
-    data = SimpleNamespace(cases=(case,))
+
+    def materialize(opened: object, loaded: object, case_id: str) -> object:
+        assert opened is source
+        assert loaded is initialization
+        assert case_id == "candidate-002485"
+        calls.append("case")
+        return case
+
     monkeypatch.setattr(
         diagnostic,
-        "materialize_dogbone_s13_training_data",
-        lambda opened, loaded: data,
+        "materialize_dogbone_s13_training_case",
+        materialize,
     )
     monkeypatch.setattr(
         diagnostic, "_measure_case", lambda *args: _metrics(data_mse=1.0)
@@ -371,7 +387,7 @@ def test_orchestrator_freezes_s11_lineage_before_opening_train_source(
         plan=diagnostic.build_s13_overfit_plan(optimizer_steps=2),
     )
 
-    assert calls == ["sampler", "initialization", "source", "sampler"]
+    assert calls == ["sampler", "initialization", "source", "case", "sampler"]
     assert report.role is EvidenceRole.TRAIN
     assert report.non_gate is True
     assert report.case_id == "candidate-002485"

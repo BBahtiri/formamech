@@ -6,6 +6,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from campaigns.dogbone_v1 import s13_data
 from campaigns.dogbone_v1.s11_contingency import (
     DERIVED_PARAMETER_NAMES,
     RAW_PARAMETER_NAMES,
@@ -14,6 +15,7 @@ from campaigns.dogbone_v1.s11_contingency_data import CaseNormalizationStatistic
 from campaigns.dogbone_v1.s11_contingency_source import SelectiveS10Source
 from campaigns.dogbone_v1.s13_data import (
     DogboneS13TrainingData,
+    materialize_dogbone_s13_training_case,
     materialize_dogbone_s13_training_data,
 )
 from campaigns.dogbone_v1.s13_initialization import SelectedS11Initialization
@@ -248,4 +250,174 @@ def test_materializer_refuses_normalization_fit_population_drift(
     with pytest.raises(ValueError, match="registered TRAIN fit set"):
         materialize_dogbone_s13_training_data(
             source, _initialization(valid_training_data)
+        )
+
+
+def test_single_case_materializer_uses_frozen_normalization_without_full_fit(
+    tmp_path: Path,
+    valid_training_data: DogboneS13TrainingData,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    expected = valid_training_data.cases[0]
+    case_id = expected.tensors.case_id
+    source = _unopened_source(tmp_path)
+    source._protocol = SimpleNamespace(  # type: ignore[assignment]
+        fit_case_ids=(case_id,),
+    )
+    prepared = object()
+    calls: list[tuple[object, ...]] = []
+    verified = SimpleNamespace(
+        case=object(),
+        request=expected.request,
+        result=object(),
+    )
+
+    def load_one(
+        _source: SelectiveS10Source,
+        selected_id: str,
+    ) -> tuple[object, object]:
+        calls.append(("load", selected_id))
+        return verified, expected.collocation
+
+    def prepare(case: object, request: object, result: object) -> object:
+        calls.append(("prepare", case, request, result))
+        return prepared
+
+    def normalize(case: object, normalization: object) -> object:
+        calls.append(("normalize", case, normalization))
+        return expected.tensors
+
+    monkeypatch.setattr(SelectiveS10Source, "load_fit_with_collocation", load_one)
+    monkeypatch.setattr(s13_data, "prepare_operator_case", prepare)
+    monkeypatch.setattr(s13_data, "normalize_case_values", normalize)
+
+    observed = materialize_dogbone_s13_training_case(
+        source,
+        _initialization(valid_training_data),
+        case_id,
+    )
+
+    assert observed == expected
+    assert calls == [
+        ("load", case_id),
+        ("prepare", verified.case, expected.request, verified.result),
+        ("normalize", prepared, valid_training_data.normalization),
+    ]
+    assert source.development_opened is False
+
+
+def test_single_case_materializer_requires_exact_inputs(
+    tmp_path: Path,
+    valid_training_data: DogboneS13TrainingData,
+) -> None:
+    source = _unopened_source(tmp_path)
+    source._protocol = SimpleNamespace(  # type: ignore[assignment]
+        fit_case_ids=valid_training_data.normalization.fit_case_ids,
+    )
+    initialization = _initialization(valid_training_data)
+    case_id = valid_training_data.cases[0].tensors.case_id
+
+    with pytest.raises(TypeError, match="SelectiveS10Source"):
+        materialize_dogbone_s13_training_case(  # type: ignore[arg-type]
+            object(), initialization, case_id
+        )
+    with pytest.raises(TypeError, match="SelectedS11Initialization"):
+        materialize_dogbone_s13_training_case(  # type: ignore[arg-type]
+            source, object(), case_id
+        )
+    with pytest.raises(TypeError, match="case_id"):
+        materialize_dogbone_s13_training_case(  # type: ignore[arg-type]
+            source, initialization, 1
+        )
+    with pytest.raises(ValueError, match="non-empty"):
+        materialize_dogbone_s13_training_case(source, initialization, "")
+
+
+def test_single_case_materializer_refuses_open_or_drifted_sources(
+    tmp_path: Path,
+    valid_training_data: DogboneS13TrainingData,
+) -> None:
+    case_id = valid_training_data.cases[0].tensors.case_id
+    initialization = _initialization(valid_training_data)
+    opened = _unopened_source(tmp_path)
+    opened._protocol = SimpleNamespace(  # type: ignore[assignment]
+        fit_case_ids=valid_training_data.normalization.fit_case_ids,
+    )
+    opened._development_opened = True
+    with pytest.raises(RuntimeError, match="DEVELOPMENT labels must remain closed"):
+        materialize_dogbone_s13_training_case(opened, initialization, case_id)
+
+    binding_drift = _unopened_source(tmp_path)
+    binding_drift._protocol = SimpleNamespace(  # type: ignore[assignment]
+        fit_case_ids=valid_training_data.normalization.fit_case_ids,
+    )
+    binding_drift._bindings = SimpleNamespace(  # type: ignore[assignment]
+        content_hash="e" * 64,
+    )
+    with pytest.raises(ValueError, match="S10 source differs"):
+        materialize_dogbone_s13_training_case(
+            binding_drift,
+            initialization,
+            case_id,
+        )
+
+    fit_drift = _unopened_source(tmp_path)
+    fit_drift._protocol = SimpleNamespace(  # type: ignore[assignment]
+        fit_case_ids=("different-fit-case",),
+    )
+    with pytest.raises(ValueError, match="registered TRAIN fit set"):
+        materialize_dogbone_s13_training_case(fit_drift, initialization, case_id)
+
+
+def test_single_case_materializer_rejects_non_fit_id_without_loading(
+    tmp_path: Path,
+    valid_training_data: DogboneS13TrainingData,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source = _unopened_source(tmp_path)
+    source._protocol = SimpleNamespace(  # type: ignore[assignment]
+        fit_case_ids=valid_training_data.normalization.fit_case_ids,
+    )
+    loaded = False
+
+    def load_one(*args: object) -> tuple[object, object]:
+        nonlocal loaded
+        loaded = True
+        return object(), object()
+
+    monkeypatch.setattr(SelectiveS10Source, "load_fit_with_collocation", load_one)
+
+    with pytest.raises(ValueError, match="registered TRAIN fit"):
+        materialize_dogbone_s13_training_case(
+            source,
+            _initialization(valid_training_data),
+            "screen-only",
+        )
+    assert loaded is False
+
+
+def test_single_case_materializer_detects_development_opened_during_load(
+    tmp_path: Path,
+    valid_training_data: DogboneS13TrainingData,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source = _unopened_source(tmp_path)
+    source._protocol = SimpleNamespace(  # type: ignore[assignment]
+        fit_case_ids=valid_training_data.normalization.fit_case_ids,
+    )
+
+    def leak(
+        current: SelectiveS10Source,
+        case_id: str,
+    ) -> tuple[object, object]:
+        current._development_opened = True
+        return object(), object()
+
+    monkeypatch.setattr(SelectiveS10Source, "load_fit_with_collocation", leak)
+
+    with pytest.raises(RuntimeError, match="DEVELOPMENT labels must remain closed"):
+        materialize_dogbone_s13_training_case(
+            source,
+            _initialization(valid_training_data),
+            valid_training_data.cases[0].tensors.case_id,
         )
