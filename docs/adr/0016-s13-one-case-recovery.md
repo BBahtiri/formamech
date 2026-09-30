@@ -173,3 +173,26 @@ displacement derivatives. Further budget may also help: the last 170-step
 mean loss falls about 22% from step 3,000 to 4,000 in all three arms. The
 next capacity test therefore needs a matched extra-budget control, not just
 a comparison with the original v5 endpoint. No gate state changes.
+
+## FEM recovery reference
+
+An exploratory read-only probe was performed after the spatial audit; its
+result is now reproduced by `s13_fem_recovery_reference.py`, not presented
+as a preregistered success test. The canonical report
+`S13-FEM-RECOVERY-REFERENCE.json` has SHA-256
+`a3aa61288694358dcbb6298022d502348aeaa5074db1ef864e2ec984fa7dda7c`.
+It reconstructs the existing S10 P2 displacement and recovered stress at
+the stored physical quadrature, without solving a new FEM problem. The
+maximum difference between reconstructed displacement gradient and stored
+F-I is `2.31e-14`.
+
+Recovered versus raw in-plane P has area-weighted relative L2 differences
+of 0.2081% on all 1,792 cells, 0.6058% on the 41 cells incident to any of
+the 20 registered root vertices, and 0.1888% on the 1,751-cell complement.
+The report binds request/result hashes, physical quadrature weights,
+population definitions, and the 760 MPa component-RMS normalization.
+These are quadrature populations, not the unweighted operator-vertex
+populations in the spatial audit; their percentages are not directly
+interchangeable. The small recovered/raw discrepancy does not explain the
+large model root error by itself, nor does it verify an exact continuum
+stress. TRAIN-only access was confirmed; DEVELOPMENT remained closed.
