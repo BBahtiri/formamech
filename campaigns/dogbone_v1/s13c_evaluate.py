@@ -18,7 +18,7 @@ import copy
 import math
 import statistics
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
 
@@ -79,6 +79,7 @@ from piginot.training import (
 )
 
 _ENERGY_EVALUATION_SEED = 13_104
+_ENERGY_GAP_POINTS = 12
 _QUERY_CHUNK = 2_048
 
 
@@ -96,6 +97,16 @@ class S13cCaseDiagnostics:
     reference_peak_vertex: int
     peak_vertex_distance_mm: float
     minimum_vertex_determinant: float
+    model_strain_energy: float = math.nan
+    fem_strain_energy: float = math.nan
+
+    @property
+    def relative_energy_gap(self) -> float:
+        """``(Pi_model - Pi_FEM) / Pi_FEM``; both are upper bounds of the minimum."""
+
+        return (self.model_strain_energy - self.fem_strain_energy) / (
+            self.fem_strain_energy
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -365,8 +376,21 @@ def evaluate_s13c_checkpoint(
         predictions.append(
             OperatorOutput(predicted_u.unsqueeze(0), predicted_p.unsqueeze(0))
         )
+        fine = case_energy(
+            evaluation_model,
+            geometry,
+            replace(protocol.objective.energy, points_per_cell=_ENERGY_GAP_POINTS),
+            generator=generator,
+            create_graph=False,
+        )
         diagnostics.append(
-            _case_diagnostics(tensors, predicted_u, predicted_p, determinant)
+            replace(
+                _case_diagnostics(tensors, predicted_u, predicted_p, determinant),
+                model_strain_energy=float(fine.energy)
+                * float(geometry.material.properties["elastic_modulus"].value)
+                * geometry.domain.area,
+                fem_strain_energy=float(verified.result.total_strain_energy),
+            )
         )
         interior = _interior_determinants(evaluation_model, source, request, geometry)
         count = int((interior <= DETERMINANT_MARGIN).sum().item())
