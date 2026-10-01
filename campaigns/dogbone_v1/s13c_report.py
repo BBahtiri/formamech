@@ -18,6 +18,7 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
+from campaigns.dogbone_v1.s13_pilot import _git_provenance
 from campaigns.dogbone_v1.s13c_evaluate import S13cEvaluation, evaluate_s13c_checkpoint
 from campaigns.dogbone_v1.s13c_trial import TRAINING_LOG_NAME, latest_checkpoint
 from piginot.contracts import canonical_json_bytes, strict_json_loads
@@ -27,6 +28,13 @@ _ROOT = Path(__file__).resolve().parents[2]
 _ARTIFACTS = _ROOT / "artifacts" / "campaigns" / "dogbone-v1"
 SCREEN_REPORT_NAME = "S13C-TRAIN-SCREEN.json"
 PROBE_REPORT_NAME = "S13C-G13-REPLAY-PROBE.json"
+
+
+def _evaluator_revision() -> str:
+    provenance = _git_provenance()
+    if provenance.dirty_worktree:
+        raise RuntimeError("S13c evidence must be written from a clean revision")
+    return provenance.head
 
 
 def _sha256(path: Path) -> str:
@@ -103,6 +111,7 @@ def screen_report(evaluation: S13cEvaluation, run_root: Path) -> dict[str, Any]:
         "protocol_hash": evaluation.protocol_hash,
         "run_hash": evaluation.run_binding.run_hash,
         "training_revision": evaluation.run_binding.implementation_revision,
+        "evaluator_revision": _evaluator_revision(),
         "execution_profile_hash": evaluation.run_binding.execution_profile_hash,
         "checkpoint_step": evaluation.manifest.step,
         "checkpoint_manifest_hash": evaluation.manifest.manifest_hash,

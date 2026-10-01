@@ -48,6 +48,19 @@ the S10 closeout report.
   No DEVELOPMENT metric appears because the TRAIN decision fell back to baseline.
 - `S11-CONTINGENCY-SCREEN.svg` visualizes the four frozen TRAIN-screen metric sets
   and the single guardrail that prevented candidate C from being selected.
+- `S13-TRAIN-SCREEN-FAILED.json`, `S13B-TRAIN-PILOT.json` and
+  `S13B-TRAIN-INVALID-POINT.json` retain the failed S13 six-trial screen and the
+  failed S13b peak pilot (ADR 0015).
+- `S13C-PROTOCOL.json` is the canonical S13c preregistration (ADR 0017): the
+  energy-form operator, potential-energy objective, single registered trial,
+  sampler seed and the unchanged frozen S13 guardrails. Training refuses to run
+  unless the rebuilt protocol equals these bytes.
+- `S13C-TRAIN-SCREEN.json` is the TRAIN-only screen of the final registered S13c
+  checkpoint: frozen guardrail verdict, per-case peak, field, peak-location and
+  FEM energy-gap diagnostics, the orientation count over all 256 TRAIN cases and
+  the comparison with the S11 incumbent, S13 trial 0 and the S13b peak arm.
+- `S13C-G13-REPLAY-PROBE.json` compares an independent replay of the registered
+  trial, interrupted and resumed half-way, with the registered checkpoint bytes.
 
 Pinned identities:
 
