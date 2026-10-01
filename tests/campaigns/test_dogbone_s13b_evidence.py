@@ -111,19 +111,22 @@ def test_s13b_invalid_point_diagnostic_matches_failed_pilot() -> None:
     assert diagnostic["pilot_artifact_sha256"] == (
         "6523895342ad68edf624991b65a4c1a6ad30bc295d5e944afb3c69d31077037b"
     )
-    assert sha256(_ARTIFACT.read_bytes()).hexdigest() == (
-        diagnostic["pilot_artifact_sha256"]
+    assert (
+        sha256(_ARTIFACT.read_bytes()).hexdigest()
+        == (diagnostic["pilot_artifact_sha256"])
     )
-    assert diagnostic["peak_checkpoint_manifest_hash"] == (
-        pilot["peak_arm"]["checkpoint_manifest_hash"]
+    assert (
+        diagnostic["peak_checkpoint_manifest_hash"]
+        == (pilot["peak_arm"]["checkpoint_manifest_hash"])
     )
     assert diagnostic["checked_case_count"] == pilot["invalid_collocation_case_count"]
     assert diagnostic["checked_interior_point_count"] == (
         diagnostic["checked_case_count"] * diagnostic["interior_points_per_case"]
     )
     assert diagnostic["invalid_case_count"] == 1
-    assert diagnostic["invalid_point_count"] == (
-        pilot["peak_arm"]["metrics"]["invalid_collocation_points"]
+    assert (
+        diagnostic["invalid_point_count"]
+        == (pilot["peak_arm"]["metrics"]["invalid_collocation_points"])
     )
     point = diagnostic["invalid_case"]
     assert point["case_id"] == "candidate-002485"

@@ -138,18 +138,14 @@ def test_orientation_count_fails_on_nonfinite_or_missing_points(
         lambda model, case: torch.tensor([float("nan")] * 8),
     )
     with pytest.raises(ValueError, match="finite"):
-        _count_invalid_collocation_points(
-            _model(), (case,), expected_interior_count=8
-        )
+        _count_invalid_collocation_points(_model(), (case,), expected_interior_count=8)
 
     monkeypatch.setattr(
         "campaigns.dogbone_v1.s13_screen._determinants_for_case",
         lambda model, case: torch.ones(7, dtype=torch.float64),
     )
     with pytest.raises(ValueError, match="interior"):
-        _count_invalid_collocation_points(
-            _model(), (case,), expected_interior_count=8
-        )
+        _count_invalid_collocation_points(_model(), (case,), expected_interior_count=8)
 
 
 def test_synthetic_screen_metrics_include_all_fit_folds_and_fixed_hybrid_loss(
@@ -159,7 +155,12 @@ def test_synthetic_screen_metrics_include_all_fit_folds_and_fixed_hybrid_loss(
     screen = _case("screen-001")
     seen: list[tuple[str, ...]] = []
 
-    def count(model: object, cases: tuple[DogboneS13TrainingCase, ...], *, expected_interior_count: int) -> int:
+    def count(
+        model: object,
+        cases: tuple[DogboneS13TrainingCase, ...],
+        *,
+        expected_interior_count: int,
+    ) -> int:
         seen.append(tuple(case.tensors.case_id for case in cases))
         assert expected_interior_count == 8
         return 1
@@ -285,7 +286,9 @@ def test_production_screen_replays_only_registered_train_screen_cases(
     monkeypatch.setattr(
         SelectiveS10Source,
         "bindings",
-        property(lambda self: SimpleNamespace(content_hash=protocol.source_bindings_hash)),
+        property(
+            lambda self: SimpleNamespace(content_hash=protocol.source_bindings_hash)
+        ),
     )
     monkeypatch.setattr(
         SelectiveS10Source,
@@ -300,7 +303,9 @@ def test_production_screen_replays_only_registered_train_screen_cases(
     monkeypatch.setattr(
         SelectiveS10Source,
         "train_snapshot",
-        property(lambda self: SimpleNamespace(content_hash=protocol.dataset_snapshot_hash)),
+        property(
+            lambda self: SimpleNamespace(content_hash=protocol.dataset_snapshot_hash)
+        ),
     )
 
     def iter_screen(self: SelectiveS10Source):  # type: ignore[no-untyped-def]

@@ -83,12 +83,15 @@ def test_pilot_git_provenance_fingerprints_status_and_tracked_diff(
 
     assert provenance.head == "a" * 40
     assert provenance.dirty_worktree
-    assert provenance.status_and_tracked_diff_blake2b256 == hashlib.blake2b(
-        values[("status", "--porcelain=v1", "--untracked-files=all")]
-        + b"\0"
-        + values[("diff", "HEAD", "--binary")],
-        digest_size=32,
-    ).hexdigest()
+    assert (
+        provenance.status_and_tracked_diff_blake2b256
+        == hashlib.blake2b(
+            values[("status", "--porcelain=v1", "--untracked-files=all")]
+            + b"\0"
+            + values[("diff", "HEAD", "--binary")],
+            digest_size=32,
+        ).hexdigest()
+    )
 
 
 def test_pilot_rejects_initial_weight_drift() -> None:
@@ -160,9 +163,7 @@ def test_pilot_training_data_identity_checks() -> None:
         protocol.initial_checkpoint_file_hash,
     )
 
-    s13_pilot._verify_training_data(
-        data, protocol, protocol.source_bindings_hash
-    )
+    s13_pilot._verify_training_data(data, protocol, protocol.source_bindings_hash)
     with pytest.raises(ValueError, match="source bindings"):
         s13_pilot._verify_training_data(data, protocol, "0" * 64)
 

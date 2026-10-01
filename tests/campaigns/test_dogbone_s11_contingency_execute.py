@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import tempfile
 from collections.abc import Iterator
 from dataclasses import dataclass, replace
 from pathlib import Path
@@ -192,6 +193,11 @@ def _install_harness(
     source = object.__new__(SelectiveS10Source)
     object.__setattr__(source, "_bindings", bindings)
     object.__setattr__(source, "_development_opened", False)
+    object.__setattr__(
+        source,
+        "_development_access_record",
+        Path(tempfile.mkdtemp()) / "development-access.json",
+    )
     object.__setattr__(source, "_protocol", protocol)
 
     statistics = CaseNormalizationStatistics(
@@ -490,10 +496,11 @@ def test_entry_validation_fails_before_any_label_access(
             values.get("development_opened", False),
         )
         object.__setattr__(source, "_protocol", values.get("protocol", protocol))
-        if "access_record" in values:
-            object.__setattr__(
-                source, "_development_access_record", values["access_record"]
-            )
+        object.__setattr__(
+            source,
+            "_development_access_record",
+            values.get("access_record", tmp_path / "absent-development-access.json"),
+        )
         return source
 
     with pytest.raises(ValueError, match="Git revision"):

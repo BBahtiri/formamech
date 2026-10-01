@@ -357,9 +357,7 @@ def test_orientation_penalty_keeps_s12_result_on_valid_rows_of_mixed_batch() -> 
         dtype=_DTYPE,
     )
 
-    actual = _constitutive_with_orientation_penalty(
-        stress, gradient, material, scales
-    )
+    actual = _constitutive_with_orientation_penalty(stress, gradient, material, scales)
     expected = constitutive_residual(stress[:, :1], gradient[:, :1], material, scales)
 
     torch.testing.assert_close(actual[:, :1], expected, rtol=0.0, atol=0.0)

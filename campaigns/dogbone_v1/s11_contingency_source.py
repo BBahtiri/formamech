@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import itertools
+import math
 import os
 from collections.abc import Iterator
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import ClassVar, cast
 
@@ -38,7 +40,12 @@ from campaigns.dogbone_v1.s11_contingency_run import (
     validate_train_screen_decision,
     verify_s10_screen_run_index,
 )
-from piginot.contracts import ExecutionProfile, hash_spec
+from piginot.contracts import (
+    CanonicalMesh,
+    ExecutionProfile,
+    hash_spec,
+    strict_json_loads,
+)
 from piginot.datasets import (
     CollocationBatch,
     DatasetCaseRecord,
@@ -46,10 +53,16 @@ from piginot.datasets import (
     SampleTrace,
     sample_request_collocation,
 )
-from piginot.datasets.request_plan import PublicFemRequestPlan
+from piginot.datasets.request_plan import (
+    PublicFemRequestPlan,
+    PublicFemRequestPlanEntry,
+)
 from piginot.doe import EvidenceRole, PublishedCase, PublishedCaseManifest
 from piginot.doe.publication import PublishedCaseStatus
 from piginot.fem import FemRequest, FemResult
+from piginot.geometry import GeometryValidationError
+from piginot.geometry.canonicalize import canonicalize_mesh
+from piginot.geometry.models import CellType, MeshPayload
 from piginot.morphing import apply_morph
 from piginot.store import ObjectStore, StoreError
 
@@ -120,6 +133,22 @@ class VerifiedS10Case:
             raise ValueError("published case and FEM request IDs differ")
         if self.result.request_id != self.request.request_id:
             raise ValueError("FEM result and request IDs differ")
+
+
+@dataclass(frozen=True, slots=True)
+class VerifiedS10Request:
+    """One public case and its rebuilt request, verified without result bytes."""
+
+    case: PublishedCase
+    request: FemRequest
+
+    def __post_init__(self) -> None:
+        if type(self.case) is not PublishedCase:
+            raise TypeError("case must be an exact PublishedCase")
+        if type(self.request) is not FemRequest:
+            raise TypeError("request must be an exact FemRequest")
+        if self.case.case_id != self.request.request_id:
+            raise ValueError("published case and FEM request IDs differ")
 
 
 class _SelectiveS10SourceCore:
@@ -254,11 +283,22 @@ class _SelectiveS10SourceCore:
     ) -> CollocationBatch:
         if type(verified_case) is not VerifiedS10Case:
             raise TypeError("verified_case must be an exact VerifiedS10Case")
+        return self._replay_train_collocation_from_parts(
+            verified_case.case,
+            verified_case.request,
+            snapshot,
+        )
+
+    def _replay_train_collocation_from_parts(
+        self,
+        case: PublishedCase,
+        request: FemRequest,
+        snapshot: RoleDatasetSnapshot,
+    ) -> CollocationBatch:
         if type(snapshot) is not RoleDatasetSnapshot:
             raise TypeError("snapshot must be an exact RoleDatasetSnapshot")
         if snapshot.role is not EvidenceRole.TRAIN:
             raise ValueError("collocation replay requires the TRAIN snapshot")
-        case = verified_case.case
         if (
             case.role is not EvidenceRole.TRAIN
             or case.status is not PublishedCaseStatus.ACTIVE
@@ -273,7 +313,7 @@ class _SelectiveS10SourceCore:
         batch = sample_request_collocation(
             snapshot,
             case.case_id,
-            verified_case.request,
+            request,
             stream_index=policy.stream_index,
             interior_count=policy.interior_count,
             boundary_count=policy.boundary_count,
@@ -297,6 +337,42 @@ class _SelectiveS10SourceCore:
         if persisted != batch.to_bytes():
             raise ValueError("S10 collocation store bytes differ from replay")
         return batch
+
+    def iter_train_geometry(
+        self,
+        case_ids: tuple[str, ...],
+    ) -> Iterator[VerifiedS10Request]:
+        """Rebuild verified TRAIN requests without resolving FEM result bytes.
+
+        Every identity that ``_load_case`` checks before reading a result is
+        checked here: role and status agree across manifest, request plan and
+        report, and the rebuilt request reproduces the planned recipe, content
+        and mesh hashes. Only registered TRAIN cases are accepted.
+        """
+
+        if type(case_ids) is not tuple:
+            raise TypeError("case_ids must be a tuple")
+        registered = set(self._protocol.fit_case_ids) | set(
+            self._protocol.screen_case_ids
+        )
+        for case_id in case_ids:
+            if case_id not in registered:
+                raise PermissionError(f"{case_id} is not a registered TRAIN case")
+            yield self._load_request(case_id, EvidenceRole.TRAIN)
+
+    def replay_train_collocation_for_request(
+        self,
+        verified_request: VerifiedS10Request,
+    ) -> CollocationBatch:
+        """Replay one TRAIN collocation batch from a verified request only."""
+
+        if type(verified_request) is not VerifiedS10Request:
+            raise TypeError("verified_request must be an exact VerifiedS10Request")
+        return self._replay_train_collocation_from_parts(
+            verified_request.case,
+            verified_request.request,
+            self.train_snapshot,
+        )
 
     def iter_fit(self) -> Iterator[VerifiedS10Case]:
         return self._iter_cases(self._protocol.fit_case_ids, EvidenceRole.TRAIN)
@@ -362,14 +438,13 @@ class _SelectiveS10SourceCore:
         for case_id in case_ids:
             yield self._load_case(case_id, expected_role)
 
-    def _load_case(
+    def _load_request(
         self,
         case_id: str,
         expected_role: EvidenceRole,
-    ) -> VerifiedS10Case:
+    ) -> VerifiedS10Request:
         case = self._cases[case_id]
         entry = self._entries[case_id]
-        record = self._ledger_records[case_id]
         evidence = self._report_cases[case_id]
         if (
             case.status is not PublishedCaseStatus.ACTIVE
@@ -379,13 +454,88 @@ class _SelectiveS10SourceCore:
         ):
             raise ValueError(f"{case_id} role/status differs across S10 evidence")
         request = _rebuild_request(case, self._profile, self._family)
-        if (
-            request.recipe_hash != entry.request_recipe_hash
-            or hash_spec(request, "content") != entry.request_content_hash
-            or request.mesh.mesh_id != entry.mesh_id
-            or hash_spec(request.mesh, "content") != entry.mesh_content_hash
-        ):
+        if not _request_matches_plan(request, entry):
+            request = self._portable_request(case_id, entry, request)
+        if not _request_matches_plan(request, entry):
             raise ValueError(f"{case_id} runtime request differs from S10 request plan")
+        return VerifiedS10Request(case, request)
+
+    def _portable_request(
+        self,
+        case_id: str,
+        entry: PublicFemRequestPlanEntry,
+        request: FemRequest,
+    ) -> FemRequest:
+        """Recover platform-dependent float bits; exact plan hashes still decide.
+
+        S10 requests were materialized on Windows. Elsewhere, libm may round a
+        few morphed node coordinates or the ``acos``-derived mesh-quality angles
+        differently in the last place. Node coordinates are taken from the stored
+        FEM result of the same case when the geometric ``mesh_id`` differs, and
+        the two angle diagnostics are searched within a few ulps. Nothing is
+        accepted unless every request-plan hash then matches bit for bit.
+        """
+
+        mesh = request.mesh
+        if mesh.mesh_id != entry.mesh_id:
+            stored = self._stored_vertex_mesh(case_id, mesh)
+            if stored is None or stored.mesh_id != entry.mesh_id:
+                return request
+            mesh = stored
+        repaired = _repair_quality_angle_ulps(mesh, entry.mesh_content_hash)
+        if repaired is None:
+            return request
+        return replace(request, mesh=repaired)
+
+    def _stored_vertex_mesh(
+        self,
+        case_id: str,
+        mesh: CanonicalMesh,
+    ) -> CanonicalMesh | None:
+        evidence = self._report_cases[case_id]
+        try:
+            document = strict_json_loads(self._store.get(evidence.store_content_hash))
+        except (StoreError, ValueError):
+            return None
+        if not isinstance(document, dict):
+            return None
+        payload = document.get("payload")
+        if not isinstance(payload, dict):
+            return None
+        coordinates = payload.get("displacement_dof_coordinates")
+        if not isinstance(coordinates, list) or len(coordinates) < len(mesh.nodes):
+            return None
+        nodes = tuple(
+            (float(point[0]), float(point[1]))
+            for point in coordinates[: len(mesh.nodes)]
+        )
+        try:
+            return canonicalize_mesh(
+                MeshPayload(
+                    nodes=nodes,
+                    cells=mesh.cells,
+                    cell_type=CellType(mesh.cell_type),
+                    boundary_facets=mesh.boundary_facets,
+                    boundary_tags=mesh.semantic_tags,
+                    region_ids=mesh.region_ids,
+                    unit=mesh.unit,
+                    source_provenance=mesh.source_provenance,
+                )
+            )
+        except (GeometryValidationError, TypeError, ValueError):
+            return None
+
+    def _load_case(
+        self,
+        case_id: str,
+        expected_role: EvidenceRole,
+    ) -> VerifiedS10Case:
+        verified_request = self._load_request(case_id, expected_role)
+        case = verified_request.case
+        request = verified_request.request
+        entry = self._entries[case_id]
+        record = self._ledger_records[case_id]
+        evidence = self._report_cases[case_id]
         if (
             record.request_recipe_hash != entry.request_recipe_hash
             or record.request_content_hash != entry.request_content_hash
@@ -841,6 +991,62 @@ def _rebuild_request(
     )
 
 
+def _request_matches_plan(
+    request: FemRequest,
+    entry: PublicFemRequestPlanEntry,
+) -> bool:
+    return (
+        request.recipe_hash == entry.request_recipe_hash
+        and hash_spec(request, "content") == entry.request_content_hash
+        and request.mesh.mesh_id == entry.mesh_id
+        and hash_spec(request.mesh, "content") == entry.mesh_content_hash
+    )
+
+
+_PORTABLE_QUALITY_ANGLES = ("minimum_angle_degrees", "maximum_angle_degrees")
+_PORTABLE_ULP_RADIUS = 4
+
+
+def _ulp_neighbourhood(value: float, radius: int) -> tuple[float, ...]:
+    values = [value]
+    lower = upper = value
+    for _ in range(radius):
+        lower = math.nextafter(lower, -math.inf)
+        upper = math.nextafter(upper, math.inf)
+        values.extend((lower, upper))
+    return tuple(values)
+
+
+def _repair_quality_angle_ulps(
+    mesh: CanonicalMesh,
+    expected_content_hash: str,
+) -> CanonicalMesh | None:
+    """Return the mesh whose angle diagnostics reproduce the planned hash."""
+
+    if hash_spec(mesh, "content") == expected_content_hash:
+        return mesh
+    metrics = dict(mesh.quality_metrics)
+    if any(name not in metrics for name in _PORTABLE_QUALITY_ANGLES):
+        return None
+    for minimum, maximum in itertools.product(
+        *(
+            _ulp_neighbourhood(float(metrics[name]), _PORTABLE_ULP_RADIUS)
+            for name in _PORTABLE_QUALITY_ANGLES
+        )
+    ):
+        candidate = replace(
+            mesh,
+            quality_metrics={
+                **metrics,
+                _PORTABLE_QUALITY_ANGLES[0]: minimum,
+                _PORTABLE_QUALITY_ANGLES[1]: maximum,
+            },
+        )
+        if hash_spec(candidate, "content") == expected_content_hash:
+            return candidate
+    return None
+
+
 def _digest(value: object, label: str) -> str:
     if not isinstance(value, str) or len(value) != 64 or value.lower() != value:
         raise ValueError(f"{label} must be a lowercase 256-bit digest")
@@ -859,6 +1065,7 @@ __all__ = (
     "S10SourceBindings",
     "SelectiveS10Source",
     "VerifiedS10Case",
+    "VerifiedS10Request",
     "load_s10_report_index",
     "open_selective_s10_source",
     "verify_s10_source_bindings",

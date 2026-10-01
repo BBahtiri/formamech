@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import re
 from pathlib import Path
@@ -66,6 +67,34 @@ def _nonnegative_integer(value: object, label: str) -> int:
             f"{label} must be a non-negative RFC 8785-safe integer"
         )
     return value
+
+
+def _canonical_safetensors(payload: bytes) -> bytes:
+    """Re-emit a safetensors header with sorted keys for reproducible bytes.
+
+    The safetensors writer stores ``__metadata__`` from a hash map whose
+    iteration order is randomised per process, so identical tensors and
+    metadata can serialise to different bytes. Sorting every header key keeps
+    the header length, offsets and tensor bytes unchanged.
+    """
+
+    if len(payload) < 8:
+        raise ContractValidationError("safetensors payload is truncated")
+    header_length = int.from_bytes(payload[:8], "little")
+    header_end = 8 + header_length
+    if header_end > len(payload):
+        raise ContractValidationError("safetensors header exceeds the payload")
+    header = json.loads(payload[8:header_end])
+    ordered = json.dumps(
+        header,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    ).encode("utf-8")
+    if len(ordered) > header_length:
+        raise ContractValidationError("canonical safetensors header grew")
+    padded = ordered + b" " * (header_length - len(ordered))
+    return payload[:8] + padded + payload[header_end:]
 
 
 def _file_hash_bytes(payload: bytes) -> str:

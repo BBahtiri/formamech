@@ -128,8 +128,7 @@ def _verify_training_data(
         raise ValueError("S10 source bindings differ from the frozen protocol")
     if (
         data.selected_candidate_id != protocol.selected_candidate_id
-        or data.selected_checkpoint_file_hash
-        != protocol.initial_checkpoint_file_hash
+        or data.selected_checkpoint_file_hash != protocol.initial_checkpoint_file_hash
     ):
         raise ValueError("selected S11 initialization differs from the protocol")
 
@@ -187,9 +186,7 @@ def run_s13_fit_pilot(
 
     if progress is not None and not callable(progress):
         raise TypeError("progress must be callable or None")
-    s10, s11, output = _preflight_paths(
-        s10_run_root, s11_checkpoint_root, output_root
-    )
+    s10, s11, output = _preflight_paths(s10_run_root, s11_checkpoint_root, output_root)
     protocol = build_dogbone_s13_protocol()
     provenance = _git_provenance()
     initialization = load_selected_s11_initialization(s11)

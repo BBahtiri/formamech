@@ -29,6 +29,7 @@ from piginot.training._checkpoint_codec import (
     _OPTIMIZER_PREFIX,
     _RNG_KEY,
     _TENSOR_PAYLOAD_FILENAME,
+    _canonical_safetensors,
     _digest,
     _exact_mapping,
     _file_hash_bytes,
@@ -240,19 +241,21 @@ def _model_export_bytes(
     binding: TrainingRunBinding,
     model_state_hash: str,
 ) -> bytes:
-    return save_safetensors(
-        {
-            name.removeprefix(_MODEL_PREFIX): tensor
-            for name, tensor in model_tensors.items()
-        },
-        metadata={
-            "run_hash": binding.run_hash,
-            "dataset_snapshot_hash": binding.dataset_snapshot_hash,
-            "execution_profile_hash": binding.execution_profile_hash,
-            "architecture_id": binding.architecture_id,
-            "architecture_module_digest": binding.architecture_module_digest,
-            "model_state_hash": model_state_hash,
-        },
+    return _canonical_safetensors(
+        save_safetensors(
+            {
+                name.removeprefix(_MODEL_PREFIX): tensor
+                for name, tensor in model_tensors.items()
+            },
+            metadata={
+                "run_hash": binding.run_hash,
+                "dataset_snapshot_hash": binding.dataset_snapshot_hash,
+                "execution_profile_hash": binding.execution_profile_hash,
+                "architecture_id": binding.architecture_id,
+                "architecture_module_digest": binding.architecture_module_digest,
+                "model_state_hash": model_state_hash,
+            },
+        )
     )
 
 
@@ -343,9 +346,11 @@ def _checkpoint_payloads(
         _RNG_KEY: rng_state,
     }
     model_state_hash = _state_hash(model_tensors)
-    state_payload = save_safetensors(
-        state_tensors,
-        metadata={"run_hash": binding.run_hash, "step": str(step)},
+    state_payload = _canonical_safetensors(
+        save_safetensors(
+            state_tensors,
+            metadata={"run_hash": binding.run_hash, "step": str(step)},
+        )
     )
     model_payload = _model_export_bytes(
         model_tensors=model_tensors,
