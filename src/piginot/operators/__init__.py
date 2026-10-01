@@ -1,4 +1,4 @@
-"""S11 neural-operator architecture surface."""
+"""S11 neural-operator architecture surface and the S13c energy-form operator."""
 
 from piginot.operators.architecture import (
     ARCHITECTURE_ID,
@@ -11,6 +11,18 @@ from piginot.operators.architecture import (
     OperatorOutput,
     PiGinotOperator,
     module_digest,
+)
+from piginot.operators.energy_operator import (
+    ENERGY_ARCHITECTURE_ID,
+    AffineDirichletLifting,
+    AxisAlignedTensionLifting,
+    DirichletLifting,
+    EnergyFormOperator,
+    EnergyOperatorConfig,
+    QueryFrame,
+    constitutive_in_plane_stress,
+    embed_plane_stress_deformation,
+    energy_module_digest,
 )
 from piginot.operators.gate import (
     GateStatus,
@@ -28,21 +40,31 @@ from piginot.operators.safetensors_io import (
 
 __all__ = (
     "ARCHITECTURE_ID",
+    "ENERGY_ARCHITECTURE_ID",
     "LOCAL_STRESS_ARCHITECTURE_ID",
+    "AffineDirichletLifting",
+    "AxisAlignedTensionLifting",
     "BoundaryConditionMode",
     "DirichletData",
+    "DirichletLifting",
+    "EnergyFormOperator",
+    "EnergyOperatorConfig",
     "GeometryEncoding",
     "GateStatus",
     "LiftingVerification",
     "OperatorConfig",
     "OperatorOutput",
     "PiGinotOperator",
+    "QueryFrame",
     "S11GateCheck",
     "S11GateEvaluation",
     "S11GateMeasurements",
     "TensorSpec",
     "load_operator_state_dict",
     "load_operator_state_dict_with_metadata",
+    "constitutive_in_plane_stress",
+    "embed_plane_stress_deformation",
+    "energy_module_digest",
     "evaluate_s11_gate",
     "module_digest",
     "state_dict_schema",

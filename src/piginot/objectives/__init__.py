@@ -4,6 +4,14 @@ from __future__ import annotations
 
 from typing import Any
 
+from piginot.objectives.energy import (
+    POTENTIAL_ENERGY_POLICY_ID,
+    PotentialEnergyConfig,
+    PotentialEnergyTerms,
+    TriangleDomain,
+    plane_stress_potential_energy,
+    stratified_triangle_quadrature,
+)
 from piginot.objectives.equilibrium import (
     strong_equilibrium_residual,
     weak_equilibrium_residual,
@@ -82,10 +90,14 @@ __all__ = (
     "ObjectiveResiduals",
     "ObjectiveTerm",
     "PHYSICS_TERM_IDS",
+    "POTENTIAL_ENERGY_POLICY_ID",
+    "PotentialEnergyConfig",
+    "PotentialEnergyTerms",
     "S12GateCheck",
     "S12GateEvaluation",
     "S12GateMeasurements",
     "S12VerificationReport",
+    "TriangleDomain",
     "VERIFIED_GRADIENT_TERM_IDS",
     "VERIFIED_REACHABILITY_LOSS_PATHS",
     "angular_momentum_residual",
@@ -95,7 +107,9 @@ __all__ = (
     "displacement_gradient",
     "evaluate_objective",
     "evaluate_s12_gate",
+    "plane_stress_potential_energy",
     "run_s12_verification",
+    "stratified_triangle_quadrature",
     "strong_equilibrium_residual",
     "supervised_displacement_residual",
     "supervised_stress_residual",
