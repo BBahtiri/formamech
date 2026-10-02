@@ -287,3 +287,64 @@ choice if made deliberately; it is not supported by any accuracy evidence in thi
 repository, and the sign-off should record which of the two it is.
 
 Next revisit: `CP-FREEZE` (S13), unchanged.
+
+---
+
+## Revisit 2 — `CP-FREEZE` (S13)
+
+- Date: 2026-10-02
+- Trigger: Revisit 1 — *"Next revisit: `CP-FREEZE` (S13), unchanged."*
+- Decision status: **unchanged.** GO with contingency stands. The evidence
+  below is TRAIN-role only; it narrows the register, it does not close it.
+
+### What moved since Revisit 1
+
+The S11 two-head operator went through the S11–S12 contingency iteration
+(closed 2026-09-09) and then failed S13: six registered hybrid fine-tunes and
+the S13b peak pilot missed the frozen TRAIN-screen guardrails (ADRs 0014,
+0015), and the one-case recovery diagnostics traced the failure to inaccurate
+displacement gradients (ADR 0016). S13 replaced the operator with the
+energy-form PI-GINOT (ADR 0018, accepted 2026-10-02). `CP-FREEZE` freezes its
+single registered trial (run `0ca34e32…`). On the 64 preregistered
+TRAIN-screen cases, which were not used for fitting:
+
+| Statistic | S11 incumbent | Frozen candidate |
+| --- | ---: | ---: |
+| Median P-field relative L2 | 19.20% | 0.91% |
+| Median signed root-peak error | −7.76% | −0.29% |
+| Median absolute root-peak error | 8.09% | 0.83% |
+| Cases under-predicting the peak | 55 / 64 | 36 / 64 |
+
+### Risk 1 — peak stress systematically under-predicted
+
+**Status: materially reduced on TRAIN evidence, not closed.** The median
+signed error is −0.29% and the under-predicting share is 36 of 64, so the bias
+is no longer systematic on this population. The evidence is TRAIN-role; S14
+must confirm it on DEVELOPMENT and HOLDOUT and keep any residual bias out of
+the error budget as a non-conservative term.
+
+### Risk 2 — speedup unproven at scale
+
+**Status: unchanged, open.** Nothing was measured. The frozen candidate serves
+stress from the gradient of its displacement, so each query needs one forward
+and two reverse passes; `G14.latency` must measure exactly that path against
+the primary solver.
+
+### Risk 3 — family generality untested
+
+**Status: unchanged and sharpened.** The frozen candidate is conditioned on the
+DogBone family parameters and its exact lifting assumes two symmetry lines and
+one loaded edge. `G17.non-dogbone` therefore tests the conditioning interface
+as well as the topology. An early second-family spike is recommended before
+S14 completes.
+
+### Invalidation conditions
+
+| Condition | Verdict at `CP-FREEZE` |
+| --- | --- |
+| In-envelope stress error > 15% on a preregistered fresh campaign | **Not met.** 0.91% on the preregistered TRAIN screen; the fresh-campaign test is S14 |
+| Peak bias not materially reduced by S12, or persists into S14 | **Reduced on TRAIN evidence** (−7.76% → −0.29%); S14 must confirm |
+| `G17.non-dogbone` fails against a genuinely distinct topology | **Not yet measurable** |
+| S11–S12 contingency iteration consumed by schedule pressure without being run | **Not met.** It ran and closed on 2026-09-09 |
+
+Nothing invalidates the decision. Next revisit: after the S14 holdout reveal.
