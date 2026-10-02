@@ -124,6 +124,7 @@ def build_protocol(
     rehearsal_bytes: bytes,
     revision: str,
     created_utc: str,
+    rehearsal_revision: str | None = None,
 ) -> dict[str, object]:
     """The protocol document; the indicator variant comes from the pilot."""
 
@@ -175,7 +176,10 @@ def build_protocol(
                 "order": "consumption record written and fsynced, then the "
                 "reveal is read and must open the CP-ENVELOPE commitment",
                 "solver": "unchanged S10 P2 request recipe and execution profile",
-                "opened_only_after": "DEVELOPMENT results and calibration are written",
+                "opened_only_after": "DEVELOPMENT results and calibration are "
+                "written, and the DEVELOPMENT budget passes on every gated slice "
+                "and the pooled Spearman correlation meets the threshold; "
+                "otherwise HOLDOUT stays unspent",
             },
         },
         "budget": {
@@ -283,6 +287,7 @@ def build_protocol(
         "train_rehearsal": {
             "artifact": REHEARSAL_PATH.relative_to(_ROOT).as_posix(),
             "sha256": hashlib.sha256(rehearsal_bytes).hexdigest(),
+            "code_revision": rehearsal_revision or revision,
             "summary": _rehearsal_summary(rehearsal),
         },
         "out_of_scope": [

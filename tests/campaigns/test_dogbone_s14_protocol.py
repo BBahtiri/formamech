@@ -17,7 +17,11 @@ from campaigns.dogbone_v1.s14_protocol import (
     verify_frozen_files,
 )
 from campaigns.dogbone_v1.s14_rehearsal import GATED_SLICES
-from campaigns.dogbone_v1.s14_validate import build_parser, run_development
+from campaigns.dogbone_v1.s14_validate import (
+    build_parser,
+    holdout_blockers,
+    run_development,
+)
 from piginot.verification import forbidden_wording
 
 _ROOT = Path(__file__).resolve().parents[2]
@@ -140,3 +144,18 @@ def test_step_three_refuses_to_open_development_without_sign_off(
     assert not run_root.exists()
     options = build_parser().parse_args(["gate", "--run-root", str(tmp_path)])
     assert options.phase == "gate" and options.reducer_status is None
+
+
+def test_holdout_stays_closed_when_development_fails() -> None:
+    def development(status: str, rho: float) -> dict[str, object]:
+        return {
+            "budget": {"gated_status": status},
+            "confidence": {"pooled_spearman": rho},
+        }
+
+    assert holdout_blockers(development("PASS", 0.65)) == ()
+    assert holdout_blockers(development("FAIL", 0.65)) == ("G14.budget",)
+    assert holdout_blockers(development("NOT_RUN", 0.5)) == (
+        "G14.budget",
+        "G14.confidence",
+    )

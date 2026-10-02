@@ -47,7 +47,11 @@ from campaigns.dogbone_v1.s14_evaluation import (
     parse_reveal,
     s10_request,
 )
-from campaigns.dogbone_v1.s14_gate import G14Measurements, g14_report
+from campaigns.dogbone_v1.s14_gate import (
+    SPEARMAN_MINIMUM,
+    G14Measurements,
+    g14_report,
+)
 from campaigns.dogbone_v1.s14_protocol import (
     LATENCY_CASES,
     LATENCY_REPEATS,
@@ -203,6 +207,22 @@ def record_document(record: CaseRecord) -> dict[str, object]:
     }
 
 
+def holdout_blockers(development: dict[str, object]) -> tuple[str, ...]:
+    """DEVELOPMENT results that keep HOLDOUT closed (ADR 0020, decision 4).
+
+    HOLDOUT is consumed only for a candidate whose DEVELOPMENT budget passes
+    on every gated slice and whose pooled Spearman correlation meets the
+    threshold, so a failing candidate leaves the one-time HOLDOUT unspent.
+    """
+
+    blockers: list[str] = []
+    if development["budget"]["gated_status"] != CheckStatus.PASS.value:  # type: ignore[index]
+        blockers.append("G14.budget")
+    if development["confidence"]["pooled_spearman"] < SPEARMAN_MINIMUM:  # type: ignore[index,operator]
+        blockers.append("G14.confidence")
+    return tuple(blockers)
+
+
 def _consumption_record(digest: str) -> ConsumptionRecord:
     return ConsumptionRecord(
         campaign_id="dogbone-v1",
@@ -226,6 +246,11 @@ def run_holdout(
     development = json.loads((run_root / DEVELOPMENT_RESULT).read_text("utf-8"))
     if development["protocol_sha256"] != digest:
         raise PermissionError("DEVELOPMENT results belong to another protocol")
+    failed = holdout_blockers(development)
+    if failed:
+        raise PermissionError(
+            "HOLDOUT stays closed because DEVELOPMENT failed: " + ", ".join(failed)
+        )
     calibration = development["confidence"]["calibration"]
     curve = QuantileCurve(
         calibration["quantile"],
@@ -413,6 +438,7 @@ __all__ = (
     "GATE_RESULT",
     "HOLDOUT_RESULT",
     "build_parser",
+    "holdout_blockers",
     "main",
     "record_document",
     "run_development",
