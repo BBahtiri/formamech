@@ -112,6 +112,25 @@ TRAIN rehearsal (`artifacts/campaigns/dogbone-v1/S14-TRAIN-REHEARSAL.json`,
 HOLDOUT is consumed only if the DEVELOPMENT budget and confidence pass
 (ADR 0020, decision 4).
 
+## 4a. Step 3 — DEVELOPMENT result (2026-10-02)
+
+DEVELOPMENT was opened under the signed protocol
+(`S14-DEVELOPMENT-ACCESS.json`, then `S14-DEVELOPMENT.json`):
+
+| Check | Result |
+| --- | --- |
+| Budget, all cases (p90) | field 2.6%, peak 4.1%, displacement 0.21% (limits 5 / 5 / 2%) |
+| Budget, gated slices | 61 of 63 slice checks pass. **FAIL**: peak on `W_grip:2` (p90 of 19 cases: 5.004%) and on `nominal_axial_strain:2` (maximum of 9 cases: 5.054%) |
+| Surrogate peak error alone | p90 1.9%, maximum 2.7% |
+| FEM reference terms in the peak total | median share 67% (discretisation median 1.2%, projection 0.45%) |
+| G14.confidence (pooled Spearman, patch-mean, 62,016 vertices) | **0.641**, PASS (threshold 0.6) |
+| Latency (8 cases, one thread) | 0.109 s median, 0.174 s p99; FEM 110 s; speed-up 1,009x |
+
+By ADR 0020 decision 4 HOLDOUT stays unspent, because the DEVELOPMENT budget
+failed. The failure is set by the conservative FEM reference bound rather
+than by the surrogate: on the TRAIN refinement check the bound exceeded the
+extrapolated FEM peak error by a factor of 15 or more.
+
 ## 5. Step 3 — Validate (opens DEVELOPMENT, then HOLDOUT once)
 
 1. **Open DEVELOPMENT** (64 cases; their FEM results already exist in the S10

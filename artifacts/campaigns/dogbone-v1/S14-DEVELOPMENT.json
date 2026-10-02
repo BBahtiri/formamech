@@ -1,0 +1,3920 @@
+{
+ "budget": {
+  "gated": [
+   {
+    "cases": 64,
+    "quantity": "p_relative_l2",
+    "slice": "all",
+    "statistic": 0.025809478228301545,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 64,
+    "quantity": "absolute_peak_error",
+    "slice": "all",
+    "statistic": 0.04054520809164782,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 64,
+    "quantity": "u_relative_l2",
+    "slice": "all",
+    "statistic": 0.002133839893205539,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 17,
+    "quantity": "p_relative_l2",
+    "slice": "L_total:0",
+    "statistic": 0.026916807363316964,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 17,
+    "quantity": "absolute_peak_error",
+    "slice": "L_total:0",
+    "statistic": 0.03798730404156965,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 17,
+    "quantity": "u_relative_l2",
+    "slice": "L_total:0",
+    "statistic": 0.002204381871186982,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 15,
+    "quantity": "p_relative_l2",
+    "slice": "L_total:1",
+    "statistic": 0.024255511287964434,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 15,
+    "quantity": "absolute_peak_error",
+    "slice": "L_total:1",
+    "statistic": 0.03926217067184221,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 15,
+    "quantity": "u_relative_l2",
+    "slice": "L_total:1",
+    "statistic": 0.0020689174612940086,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 11,
+    "quantity": "p_relative_l2",
+    "slice": "L_total:2",
+    "statistic": 0.02483458002645687,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 11,
+    "quantity": "absolute_peak_error",
+    "slice": "L_total:2",
+    "statistic": 0.03946278927522846,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 11,
+    "quantity": "u_relative_l2",
+    "slice": "L_total:2",
+    "statistic": 0.001661210105562207,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 21,
+    "quantity": "p_relative_l2",
+    "slice": "L_total:3",
+    "statistic": 0.024549543282796533,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 21,
+    "quantity": "absolute_peak_error",
+    "slice": "L_total:3",
+    "statistic": 0.04061910217408765,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 21,
+    "quantity": "u_relative_l2",
+    "slice": "L_total:3",
+    "statistic": 0.0022246345141795415,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 16,
+    "quantity": "p_relative_l2",
+    "slice": "W_grip:0",
+    "statistic": 0.030436072154186283,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 16,
+    "quantity": "absolute_peak_error",
+    "slice": "W_grip:0",
+    "statistic": 0.032309294207045966,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 16,
+    "quantity": "u_relative_l2",
+    "slice": "W_grip:0",
+    "statistic": 0.002221268331801243,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 17,
+    "quantity": "p_relative_l2",
+    "slice": "W_grip:1",
+    "statistic": 0.024663557980260667,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 17,
+    "quantity": "absolute_peak_error",
+    "slice": "W_grip:1",
+    "statistic": 0.0406382536843025,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 17,
+    "quantity": "u_relative_l2",
+    "slice": "W_grip:1",
+    "statistic": 0.0020794097088219095,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 19,
+    "quantity": "p_relative_l2",
+    "slice": "W_grip:2",
+    "statistic": 0.025648801881886348,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 19,
+    "quantity": "absolute_peak_error",
+    "slice": "W_grip:2",
+    "statistic": 0.050036405723366574,
+    "status": "FAIL",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 19,
+    "quantity": "u_relative_l2",
+    "slice": "W_grip:2",
+    "statistic": 0.001958809269256109,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 12,
+    "quantity": "p_relative_l2",
+    "slice": "W_grip:3",
+    "statistic": 0.025454820640985663,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 12,
+    "quantity": "absolute_peak_error",
+    "slice": "W_grip:3",
+    "statistic": 0.03313845568305934,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 12,
+    "quantity": "u_relative_l2",
+    "slice": "W_grip:3",
+    "statistic": 0.002214833805341921,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 23,
+    "quantity": "p_relative_l2",
+    "slice": "W_gauge:0",
+    "statistic": 0.0243247280889913,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 23,
+    "quantity": "absolute_peak_error",
+    "slice": "W_gauge:0",
+    "statistic": 0.04065740519451736,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 23,
+    "quantity": "u_relative_l2",
+    "slice": "W_gauge:0",
+    "statistic": 0.002582978365127162,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 13,
+    "quantity": "p_relative_l2",
+    "slice": "W_gauge:1",
+    "statistic": 0.02535829030461362,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 13,
+    "quantity": "absolute_peak_error",
+    "slice": "W_gauge:1",
+    "statistic": 0.040418942995234866,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 13,
+    "quantity": "u_relative_l2",
+    "slice": "W_gauge:1",
+    "statistic": 0.0022698100555117564,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 17,
+    "quantity": "p_relative_l2",
+    "slice": "W_gauge:2",
+    "statistic": 0.025051236466241085,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 17,
+    "quantity": "absolute_peak_error",
+    "slice": "W_gauge:2",
+    "statistic": 0.03497895511503631,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 17,
+    "quantity": "u_relative_l2",
+    "slice": "W_gauge:2",
+    "statistic": 0.002045626141823319,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 11,
+    "quantity": "p_relative_l2",
+    "slice": "W_gauge:3",
+    "statistic": 0.035039260986042736,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 11,
+    "quantity": "absolute_peak_error",
+    "slice": "W_gauge:3",
+    "statistic": 0.03715495525516836,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 11,
+    "quantity": "u_relative_l2",
+    "slice": "W_gauge:3",
+    "statistic": 0.001661210105562207,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 11,
+    "quantity": "p_relative_l2",
+    "slice": "R_fillet:0",
+    "statistic": 0.027491709190750592,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 11,
+    "quantity": "absolute_peak_error",
+    "slice": "R_fillet:0",
+    "statistic": 0.04991095599715808,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 11,
+    "quantity": "u_relative_l2",
+    "slice": "R_fillet:0",
+    "statistic": 0.0017909669160536684,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 19,
+    "quantity": "p_relative_l2",
+    "slice": "R_fillet:1",
+    "statistic": 0.025801873443038886,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 19,
+    "quantity": "absolute_peak_error",
+    "slice": "R_fillet:1",
+    "statistic": 0.04096571134313195,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 19,
+    "quantity": "u_relative_l2",
+    "slice": "R_fillet:1",
+    "statistic": 0.0021881859870815676,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 14,
+    "quantity": "p_relative_l2",
+    "slice": "R_fillet:2",
+    "statistic": 0.023033583135336582,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 14,
+    "quantity": "absolute_peak_error",
+    "slice": "R_fillet:2",
+    "statistic": 0.02781871957869466,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 14,
+    "quantity": "u_relative_l2",
+    "slice": "R_fillet:2",
+    "statistic": 0.0022417752026972796,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 20,
+    "quantity": "p_relative_l2",
+    "slice": "R_fillet:3",
+    "statistic": 0.02613064496839374,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 20,
+    "quantity": "absolute_peak_error",
+    "slice": "R_fillet:3",
+    "statistic": 0.030121929731366834,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 20,
+    "quantity": "u_relative_l2",
+    "slice": "R_fillet:3",
+    "statistic": 0.002145701307015217,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 22,
+    "quantity": "p_relative_l2",
+    "slice": "nominal_axial_strain:0",
+    "statistic": 0.025829478142990227,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 22,
+    "quantity": "absolute_peak_error",
+    "slice": "nominal_axial_strain:0",
+    "statistic": 0.04059447081327437,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 22,
+    "quantity": "u_relative_l2",
+    "slice": "nominal_axial_strain:0",
+    "statistic": 0.002365089365084251,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 14,
+    "quantity": "p_relative_l2",
+    "slice": "nominal_axial_strain:1",
+    "statistic": 0.025435680696955176,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 14,
+    "quantity": "absolute_peak_error",
+    "slice": "nominal_axial_strain:1",
+    "statistic": 0.035057356682164975,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 14,
+    "quantity": "u_relative_l2",
+    "slice": "nominal_axial_strain:1",
+    "statistic": 0.002121404169301898,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 9,
+    "quantity": "p_relative_l2",
+    "slice": "nominal_axial_strain:2",
+    "statistic": 0.02322684476137389,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 9,
+    "quantity": "absolute_peak_error",
+    "slice": "nominal_axial_strain:2",
+    "statistic": 0.05053820462820055,
+    "status": "FAIL",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 9,
+    "quantity": "u_relative_l2",
+    "slice": "nominal_axial_strain:2",
+    "statistic": 0.0018221571804865212,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 19,
+    "quantity": "p_relative_l2",
+    "slice": "nominal_axial_strain:3",
+    "statistic": 0.02625113553269337,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 19,
+    "quantity": "absolute_peak_error",
+    "slice": "nominal_axial_strain:3",
+    "statistic": 0.03646917693709831,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 19,
+    "quantity": "u_relative_l2",
+    "slice": "nominal_axial_strain:3",
+    "statistic": 0.002081691846007522,
+    "status": "PASS",
+    "tolerance": 0.02
+   }
+  ],
+  "gated_status": "FAIL",
+  "reported": [
+   {
+    "cases": 62,
+    "quantity": "p_relative_l2",
+    "slice": "arc_feasibility_ratio:0",
+    "statistic": 0.025533623025757717,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 62,
+    "quantity": "absolute_peak_error",
+    "slice": "arc_feasibility_ratio:0",
+    "statistic": 0.04059447081327437,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 62,
+    "quantity": "u_relative_l2",
+    "slice": "arc_feasibility_ratio:0",
+    "statistic": 0.002135900598177596,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 2,
+    "quantity": "p_relative_l2",
+    "slice": "arc_feasibility_ratio:1",
+    "statistic": 0.035039260986042736,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 2,
+    "quantity": "absolute_peak_error",
+    "slice": "arc_feasibility_ratio:1",
+    "statistic": 0.020046915661330822,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 2,
+    "quantity": "u_relative_l2",
+    "slice": "arc_feasibility_ratio:1",
+    "statistic": 0.002080112160179317,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 15,
+    "quantity": "p_relative_l2",
+    "slice": "fillet_to_gauge_ratio:0",
+    "statistic": 0.027462106667035746,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 15,
+    "quantity": "absolute_peak_error",
+    "slice": "fillet_to_gauge_ratio:0",
+    "statistic": 0.04400351128613955,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 15,
+    "quantity": "u_relative_l2",
+    "slice": "fillet_to_gauge_ratio:0",
+    "statistic": 0.0019112132763087228,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 34,
+    "quantity": "p_relative_l2",
+    "slice": "fillet_to_gauge_ratio:1",
+    "statistic": 0.025435680696955173,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 34,
+    "quantity": "absolute_peak_error",
+    "slice": "fillet_to_gauge_ratio:1",
+    "statistic": 0.0351536754055541,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 34,
+    "quantity": "u_relative_l2",
+    "slice": "fillet_to_gauge_ratio:1",
+    "statistic": 0.002083656157007636,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 12,
+    "quantity": "p_relative_l2",
+    "slice": "fillet_to_gauge_ratio:2",
+    "statistic": 0.023125841491028858,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 12,
+    "quantity": "absolute_peak_error",
+    "slice": "fillet_to_gauge_ratio:2",
+    "statistic": 0.039506478136672546,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 12,
+    "quantity": "u_relative_l2",
+    "slice": "fillet_to_gauge_ratio:2",
+    "statistic": 0.002637703939449075,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 3,
+    "quantity": "p_relative_l2",
+    "slice": "fillet_to_gauge_ratio:3",
+    "statistic": 0.028810499782968943,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 3,
+    "quantity": "absolute_peak_error",
+    "slice": "fillet_to_gauge_ratio:3",
+    "statistic": 0.03629773235758079,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 3,
+    "quantity": "u_relative_l2",
+    "slice": "fillet_to_gauge_ratio:3",
+    "statistic": 0.006158323944648455,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 21,
+    "quantity": "p_relative_l2",
+    "slice": "grip_to_gauge_ratio:0",
+    "statistic": 0.028570956759103698,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 21,
+    "quantity": "absolute_peak_error",
+    "slice": "grip_to_gauge_ratio:0",
+    "statistic": 0.03639698102531282,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 21,
+    "quantity": "u_relative_l2",
+    "slice": "grip_to_gauge_ratio:0",
+    "statistic": 0.0019064267931774928,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 25,
+    "quantity": "p_relative_l2",
+    "slice": "grip_to_gauge_ratio:1",
+    "statistic": 0.024470213311695625,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 25,
+    "quantity": "absolute_peak_error",
+    "slice": "grip_to_gauge_ratio:1",
+    "statistic": 0.04000878884966432,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 25,
+    "quantity": "u_relative_l2",
+    "slice": "grip_to_gauge_ratio:1",
+    "statistic": 0.0022732172334351333,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 15,
+    "quantity": "p_relative_l2",
+    "slice": "grip_to_gauge_ratio:2",
+    "statistic": 0.025308241972794094,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 15,
+    "quantity": "absolute_peak_error",
+    "slice": "grip_to_gauge_ratio:2",
+    "statistic": 0.04154402061993142,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 15,
+    "quantity": "u_relative_l2",
+    "slice": "grip_to_gauge_ratio:2",
+    "statistic": 0.0021131113936687707,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 3,
+    "quantity": "p_relative_l2",
+    "slice": "grip_to_gauge_ratio:3",
+    "statistic": 0.028810499782968943,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 3,
+    "quantity": "absolute_peak_error",
+    "slice": "grip_to_gauge_ratio:3",
+    "statistic": 0.05053820462820055,
+    "status": "FAIL",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 3,
+    "quantity": "u_relative_l2",
+    "slice": "grip_to_gauge_ratio:3",
+    "statistic": 0.006158323944648455,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 21,
+    "quantity": "p_relative_l2",
+    "slice": "length_to_gauge_ratio:0",
+    "statistic": 0.028570956759103698,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 21,
+    "quantity": "absolute_peak_error",
+    "slice": "length_to_gauge_ratio:0",
+    "statistic": 0.03715495525516836,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 21,
+    "quantity": "u_relative_l2",
+    "slice": "length_to_gauge_ratio:0",
+    "statistic": 0.002080112160179317,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 25,
+    "quantity": "p_relative_l2",
+    "slice": "length_to_gauge_ratio:1",
+    "statistic": 0.025105286139102758,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 25,
+    "quantity": "absolute_peak_error",
+    "slice": "length_to_gauge_ratio:1",
+    "statistic": 0.04018530427986626,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 25,
+    "quantity": "u_relative_l2",
+    "slice": "length_to_gauge_ratio:1",
+    "statistic": 0.0021854316788290596,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 11,
+    "quantity": "p_relative_l2",
+    "slice": "length_to_gauge_ratio:2",
+    "statistic": 0.02412269767661215,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 11,
+    "quantity": "absolute_peak_error",
+    "slice": "length_to_gauge_ratio:2",
+    "statistic": 0.03588288630470646,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 11,
+    "quantity": "u_relative_l2",
+    "slice": "length_to_gauge_ratio:2",
+    "statistic": 0.0018221571804865212,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 7,
+    "quantity": "p_relative_l2",
+    "slice": "length_to_gauge_ratio:3",
+    "statistic": 0.024549543282796533,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 7,
+    "quantity": "absolute_peak_error",
+    "slice": "length_to_gauge_ratio:3",
+    "statistic": 0.05053820462820055,
+    "status": "FAIL",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 7,
+    "quantity": "u_relative_l2",
+    "slice": "length_to_gauge_ratio:3",
+    "statistic": 0.0027225060887034365,
+    "status": "PASS",
+    "tolerance": 0.02
+   }
+  ]
+ },
+ "case_count": 64,
+ "cases": [
+  {
+   "case_id": "candidate-000156",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.007561189113827018,
+     "projection": 0.0028970073233053712
+    },
+    "p_relative_l2": {
+     "discretisation": 0.005798094113510508,
+     "projection": 0.0008966081061641588
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0005190717186609048,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9760114063159067,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:1",
+    "grip_to_gauge_ratio:0",
+    "length_to_gauge_ratio:0"
+   ],
+   "slices": [
+    "all",
+    "L_total:0",
+    "W_grip:1",
+    "W_gauge:2",
+    "R_fillet:3",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.00622526084395923,
+    "p_relative_l2": 0.012981695214095196,
+    "u_relative_l2": 0.0015001885091838264
+   },
+   "terms": {
+    "case_id": "candidate-000156",
+    "coarse_p_difference": 0.002943194981477415,
+    "coarse_peak_difference": 0.0012310057639184247,
+    "coarse_u_difference": 0.000263488182061373,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0008966081061641588,
+    "recovery_root_cells": 0.0028970073233053712
+   }
+  },
+  {
+   "case_id": "candidate-000157",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.01613622480441449,
+     "projection": 0.006182461610886779
+    },
+    "p_relative_l2": {
+     "discretisation": 0.009777522404484807,
+     "projection": 0.0017935611274082605
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0007204216497024731,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9967673903516407,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:2",
+    "grip_to_gauge_ratio:2",
+    "length_to_gauge_ratio:3"
+   ],
+   "slices": [
+    "all",
+    "L_total:3",
+    "W_grip:1",
+    "W_gauge:0",
+    "R_fillet:1",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.01830041575878638,
+    "p_relative_l2": 0.012978459750903464,
+    "u_relative_l2": 0.0020020844390009635
+   },
+   "terms": {
+    "case_id": "candidate-000157",
+    "coarse_p_difference": 0.004963209342378074,
+    "coarse_peak_difference": 9.246529592650912e-05,
+    "coarse_u_difference": 0.0003656962688845041,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0017935611274082605,
+    "recovery_root_cells": 0.006182461610886779
+   }
+  },
+  {
+   "case_id": "candidate-000316",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.013172442556385859,
+     "projection": 0.005046912856852819
+    },
+    "p_relative_l2": {
+     "discretisation": 0.009273865218250178,
+     "projection": 0.0017938084448192466
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0009668216165198036,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9903603896467866,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:2",
+    "grip_to_gauge_ratio:2",
+    "length_to_gauge_ratio:1"
+   ],
+   "slices": [
+    "all",
+    "L_total:1",
+    "W_grip:2",
+    "W_gauge:0",
+    "R_fillet:2",
+    "nominal_axial_strain:1"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.00036154979113656416,
+    "p_relative_l2": 0.00848975164239356,
+    "u_relative_l2": 0.0006439108883943696
+   },
+   "terms": {
+    "case_id": "candidate-000316",
+    "coarse_p_difference": 0.00470754579606608,
+    "coarse_peak_difference": 0.0010106791356121255,
+    "coarse_u_difference": 0.0004907723941724891,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0017938084448192466,
+    "recovery_root_cells": 0.005046912856852819
+   }
+  },
+  {
+   "case_id": "candidate-000357",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.008950541608139642,
+     "projection": 0.0034293262866435413
+    },
+    "p_relative_l2": {
+     "discretisation": 0.0071534470337761,
+     "projection": 0.0009856769348566003
+    },
+    "u_relative_l2": {
+     "discretisation": 0.000470789250478291,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9746493089083045,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:1",
+    "grip_to_gauge_ratio:0",
+    "length_to_gauge_ratio:0"
+   ],
+   "slices": [
+    "all",
+    "L_total:0",
+    "W_grip:1",
+    "W_gauge:2",
+    "R_fillet:2",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.0004423512516596944,
+    "p_relative_l2": 0.013189576763531802,
+    "u_relative_l2": 0.0014356375426992018
+   },
+   "terms": {
+    "case_id": "candidate-000357",
+    "coarse_p_difference": 0.0036311913877036042,
+    "coarse_peak_difference": 0.002355335423769565,
+    "coarse_u_difference": 0.0002389793149635995,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0009856769348566003,
+    "recovery_root_cells": 0.0034293262866435413
+   }
+  },
+  {
+   "case_id": "candidate-000572",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.019930253018360267,
+     "projection": 0.007636112267570984
+    },
+    "p_relative_l2": {
+     "discretisation": 0.015105853022842251,
+     "projection": 0.0018794033070074865
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0004786403998926301,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9821409765278564,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:0",
+    "grip_to_gauge_ratio:0",
+    "length_to_gauge_ratio:0"
+   ],
+   "slices": [
+    "all",
+    "L_total:0",
+    "W_grip:1",
+    "W_gauge:2",
+    "R_fillet:0",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.004423367055643619,
+    "p_relative_l2": 0.01158570042925396,
+    "u_relative_l2": 0.0014085660408206732
+   },
+   "terms": {
+    "case_id": "candidate-000572",
+    "coarse_p_difference": 0.0076679456968742395,
+    "coarse_peak_difference": 0.006856696682393198,
+    "coarse_u_difference": 0.00024296466999625894,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0018794033070074865,
+    "recovery_root_cells": 0.007636112267570984
+   }
+  },
+  {
+   "case_id": "candidate-000610",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.006724793619155846,
+     "projection": 0.002576549279370056
+    },
+    "p_relative_l2": {
+     "discretisation": 0.0045982023156646455,
+     "projection": 0.0006554882656775964
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0003030631083336999,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9936911375946648,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:1",
+    "grip_to_gauge_ratio:0",
+    "length_to_gauge_ratio:0"
+   ],
+   "slices": [
+    "all",
+    "L_total:0",
+    "W_grip:0",
+    "W_gauge:2",
+    "R_fillet:2",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.00015855764382558953,
+    "p_relative_l2": 0.009921119848902751,
+    "u_relative_l2": 0.0008909696845868072
+   },
+   "terms": {
+    "case_id": "candidate-000610",
+    "coarse_p_difference": 0.0023341128505911905,
+    "coarse_peak_difference": 0.0026288673701100993,
+    "coarse_u_difference": 0.00015383914128614206,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0006554882656775964,
+    "recovery_root_cells": 0.002576549279370056
+   }
+  },
+  {
+   "case_id": "candidate-000649",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.009925596156130428,
+     "projection": 0.003802910404647674
+    },
+    "p_relative_l2": {
+     "discretisation": 0.008283477102026149,
+     "projection": 0.0009445730988170797
+    },
+    "u_relative_l2": {
+     "discretisation": 0.000463827010314978,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9985739097906295,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:2",
+    "grip_to_gauge_ratio:1",
+    "length_to_gauge_ratio:3"
+   ],
+   "slices": [
+    "all",
+    "L_total:3",
+    "W_grip:0",
+    "W_gauge:0",
+    "R_fillet:1",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.008760297209448431,
+    "p_relative_l2": 0.012988761857080307,
+    "u_relative_l2": 0.0022306632084280677
+   },
+   "terms": {
+    "case_id": "candidate-000649",
+    "coarse_p_difference": 0.004204810711688401,
+    "coarse_peak_difference": 0.0010293713826658557,
+    "coarse_u_difference": 0.00023544518290100405,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0009445730988170797,
+    "recovery_root_cells": 0.003802910404647674
+   }
+  },
+  {
+   "case_id": "candidate-000672",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.012958837260128862,
+     "projection": 0.00496507174717581
+    },
+    "p_relative_l2": {
+     "discretisation": 0.009812928113884569,
+     "projection": 0.0015472461877524823
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0007135343293806683,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9924346953781439,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:1",
+    "grip_to_gauge_ratio:1",
+    "length_to_gauge_ratio:1"
+   ],
+   "slices": [
+    "all",
+    "L_total:1",
+    "W_grip:1",
+    "W_gauge:0",
+    "R_fillet:1",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.022743071942320118,
+    "p_relative_l2": 0.008407096626582712,
+    "u_relative_l2": 0.0010262178253706727
+   },
+   "terms": {
+    "case_id": "candidate-000672",
+    "coarse_p_difference": 0.004981181783697751,
+    "coarse_peak_difference": 0.0005767488865272129,
+    "coarse_u_difference": 0.00036220016719830877,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0015472461877524823,
+    "recovery_root_cells": 0.00496507174717581
+   }
+  },
+  {
+   "case_id": "candidate-000678",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.014514376048786132,
+     "projection": 0.005561063620224572
+    },
+    "p_relative_l2": {
+     "discretisation": 0.010606727985574856,
+     "projection": 0.0016136154092760266
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0006473931062014733,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9920345212266711,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:1",
+    "grip_to_gauge_ratio:1",
+    "length_to_gauge_ratio:1"
+   ],
+   "slices": [
+    "all",
+    "L_total:3",
+    "W_grip:3",
+    "W_gauge:1",
+    "R_fillet:2",
+    "nominal_axial_strain:2"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.013376743638521229,
+    "p_relative_l2": 0.007298416887014919,
+    "u_relative_l2": 0.0005731443349942653
+   },
+   "terms": {
+    "case_id": "candidate-000678",
+    "coarse_p_difference": 0.0053841258810024654,
+    "coarse_peak_difference": 0.0010234652689992485,
+    "coarse_u_difference": 0.0003286259422342504,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0016136154092760266,
+    "recovery_root_cells": 0.005561063620224572
+   }
+  },
+  {
+   "case_id": "candidate-000905",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.012572532126487594,
+     "projection": 0.004817062117428197
+    },
+    "p_relative_l2": {
+     "discretisation": 0.010475050057865101,
+     "projection": 0.0011415430237792575
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0003947289165218162,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9971383112566643,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:1",
+    "grip_to_gauge_ratio:1",
+    "length_to_gauge_ratio:2"
+   ],
+   "slices": [
+    "all",
+    "L_total:2",
+    "W_grip:0",
+    "W_gauge:0",
+    "R_fillet:0",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.007039684267633015,
+    "p_relative_l2": 0.009233697904121527,
+    "u_relative_l2": 0.0004763647370771559
+   },
+   "terms": {
+    "case_id": "candidate-000905",
+    "coarse_p_difference": 0.005317284293332539,
+    "coarse_peak_difference": 0.0029977257133571114,
+    "coarse_u_difference": 0.00020037000838670873,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0011415430237792575,
+    "recovery_root_cells": 0.004817062117428197
+   }
+  },
+  {
+   "case_id": "candidate-000918",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.006227916210819037,
+     "projection": 0.0023861747934172555
+    },
+    "p_relative_l2": {
+     "discretisation": 0.00438103057342884,
+     "projection": 0.0005743134519898606
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0002573876514351414,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.010668744048219,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:1",
+    "grip_to_gauge_ratio:0",
+    "length_to_gauge_ratio:1"
+   ],
+   "slices": [
+    "all",
+    "L_total:1",
+    "W_grip:0",
+    "W_gauge:2",
+    "R_fillet:2",
+    "nominal_axial_strain:2"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.009336356986967895,
+    "p_relative_l2": 0.009842197191324812,
+    "u_relative_l2": 0.0008817952021910497
+   },
+   "terms": {
+    "case_id": "candidate-000918",
+    "coarse_p_difference": 0.00222387338752733,
+    "coarse_peak_difference": 0.002661233596224666,
+    "coarse_u_difference": 0.00013065363017012252,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0005743134519898606,
+    "recovery_root_cells": 0.0023861747934172555
+   }
+  },
+  {
+   "case_id": "candidate-000951",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.011966754456989992,
+     "projection": 0.004584963393482756
+    },
+    "p_relative_l2": {
+     "discretisation": 0.01053872726341592,
+     "projection": 0.0009044232723247406
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0002509774009496998,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9990551055200204,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:0",
+    "grip_to_gauge_ratio:0",
+    "length_to_gauge_ratio:1"
+   ],
+   "slices": [
+    "all",
+    "L_total:3",
+    "W_grip:0",
+    "W_gauge:1",
+    "R_fillet:0",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.006789598441274519,
+    "p_relative_l2": 0.010793135643585177,
+    "u_relative_l2": 0.0004980150064255546
+   },
+   "terms": {
+    "case_id": "candidate-000951",
+    "coarse_p_difference": 0.005349607747926863,
+    "coarse_peak_difference": 0.005031477300828346,
+    "coarse_u_difference": 0.0001273996959135532,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0009044232723247406,
+    "recovery_root_cells": 0.004584963393482756
+   }
+  },
+  {
+   "case_id": "candidate-000954",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.01703517723975421,
+     "projection": 0.006526887831323453
+    },
+    "p_relative_l2": {
+     "discretisation": 0.013123811753674887,
+     "projection": 0.001469363499010229
+    },
+    "u_relative_l2": {
+     "discretisation": 0.00036403337336268093,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9956016904338701,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:0",
+    "grip_to_gauge_ratio:1",
+    "length_to_gauge_ratio:1"
+   ],
+   "slices": [
+    "all",
+    "L_total:2",
+    "W_grip:1",
+    "W_gauge:1",
+    "R_fillet:0",
+    "nominal_axial_strain:1"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.006814431434032968,
+    "p_relative_l2": 0.009753098389885055,
+    "u_relative_l2": 0.0007306625432984685
+   },
+   "terms": {
+    "case_id": "candidate-000954",
+    "coarse_p_difference": 0.006661833377499943,
+    "coarse_peak_difference": 0.005285386760519761,
+    "coarse_u_difference": 0.00018478851439729998,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.001469363499010229,
+    "recovery_root_cells": 0.006526887831323453
+   }
+  },
+  {
+   "case_id": "candidate-000976",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.01222059206528475,
+     "projection": 0.004682219182101437
+    },
+    "p_relative_l2": {
+     "discretisation": 0.010562213780287932,
+     "projection": 0.001196846699012174
+    },
+    "u_relative_l2": {
+     "discretisation": 0.00042713910985159293,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9882912811764708,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:0",
+    "grip_to_gauge_ratio:0",
+    "length_to_gauge_ratio:0"
+   ],
+   "slices": [
+    "all",
+    "L_total:1",
+    "W_grip:2",
+    "W_gauge:3",
+    "R_fillet:1",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.01647964311806602,
+    "p_relative_l2": 0.009319149147997563,
+    "u_relative_l2": 0.0008732041928253974
+   },
+   "terms": {
+    "case_id": "candidate-000976",
+    "coarse_p_difference": 0.00536152983770961,
+    "coarse_peak_difference": 0.003780503688548925,
+    "coarse_u_difference": 0.00021682188317339744,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.001196846699012174,
+    "recovery_root_cells": 0.004682219182101437
+   }
+  },
+  {
+   "case_id": "candidate-000993",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.007748059080001942,
+     "projection": 0.0029686050114949973
+    },
+    "p_relative_l2": {
+     "discretisation": 0.00602996170579636,
+     "projection": 0.0007517431742259742
+    },
+    "u_relative_l2": {
+     "discretisation": 0.00037806528384315733,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9966060266058784,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:1",
+    "grip_to_gauge_ratio:0",
+    "length_to_gauge_ratio:1"
+   ],
+   "slices": [
+    "all",
+    "L_total:3",
+    "W_grip:2",
+    "W_gauge:2",
+    "R_fillet:3",
+    "nominal_axial_strain:1"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.02121490245665636,
+    "p_relative_l2": 0.007993559915952408,
+    "u_relative_l2": 0.0005315745362564864
+   },
+   "terms": {
+    "case_id": "candidate-000993",
+    "coarse_p_difference": 0.003060894266901706,
+    "coarse_peak_difference": 0.001992891336402669,
+    "coarse_u_difference": 0.00019191131159551134,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0007517431742259742,
+    "recovery_root_cells": 0.0029686050114949973
+   }
+  },
+  {
+   "case_id": "candidate-000997",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.01805708223792303,
+     "projection": 0.006918422313380471
+    },
+    "p_relative_l2": {
+     "discretisation": 0.011008486376731793,
+     "projection": 0.0022022463146834552
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0007870176635173972,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9964547486983397,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:1",
+    "grip_to_gauge_ratio:2",
+    "length_to_gauge_ratio:2"
+   ],
+   "slices": [
+    "all",
+    "L_total:3",
+    "W_grip:2",
+    "W_gauge:0",
+    "R_fillet:1",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.003728224312464313,
+    "p_relative_l2": 0.010214734622355124,
+    "u_relative_l2": 0.001073404322538452
+   },
+   "terms": {
+    "case_id": "candidate-000997",
+    "coarse_p_difference": 0.0055880641506252755,
+    "coarse_peak_difference": 0.00024843133218032954,
+    "coarse_u_difference": 0.0003995013520392879,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0022022463146834552,
+    "recovery_root_cells": 0.006918422313380471
+   }
+  },
+  {
+   "case_id": "candidate-001004",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.019247400126691898,
+     "projection": 0.0073744828071616465
+    },
+    "p_relative_l2": {
+     "discretisation": 0.012335145781858665,
+     "projection": 0.002210674692873691
+    },
+    "u_relative_l2": {
+     "discretisation": 0.000646361700235839,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9955079652287907,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:1",
+    "grip_to_gauge_ratio:2",
+    "length_to_gauge_ratio:2"
+   ],
+   "slices": [
+    "all",
+    "L_total:3",
+    "W_grip:2",
+    "W_gauge:0",
+    "R_fillet:0",
+    "nominal_axial_strain:1"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.027200557966146142,
+    "p_relative_l2": 0.012945888716018233,
+    "u_relative_l2": 0.0011446052158178295
+   },
+   "terms": {
+    "case_id": "candidate-001004",
+    "coarse_p_difference": 0.006261495320740439,
+    "coarse_peak_difference": 0.0017118502666205826,
+    "coarse_u_difference": 0.00032810238590651723,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.002210674692873691,
+    "recovery_root_cells": 0.0073744828071616465
+   }
+  },
+  {
+   "case_id": "candidate-001014",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.006946942930725981,
+     "projection": 0.0026616639581325597
+    },
+    "p_relative_l2": {
+     "discretisation": 0.005465668048817501,
+     "projection": 0.0007353194710648986
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0006070695260368056,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9982142978965959,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:3",
+    "grip_to_gauge_ratio:1",
+    "length_to_gauge_ratio:3"
+   ],
+   "slices": [
+    "all",
+    "L_total:3",
+    "W_grip:0",
+    "W_gauge:0",
+    "R_fillet:3",
+    "nominal_axial_strain:1"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.019127095220526934,
+    "p_relative_l2": 0.013665750555559793,
+    "u_relative_l2": 0.0015298614246268194
+   },
+   "terms": {
+    "case_id": "candidate-001014",
+    "coarse_p_difference": 0.002774450786201777,
+    "coarse_peak_difference": 0.000868475424034765,
+    "coarse_u_difference": 0.0003081571198156374,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0007353194710648986,
+    "recovery_root_cells": 0.0026616639581325597
+   }
+  },
+  {
+   "case_id": "candidate-001134",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.010021462725235002,
+     "projection": 0.003839640890894637
+    },
+    "p_relative_l2": {
+     "discretisation": 0.008602902397620163,
+     "projection": 0.001218318000260972
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0006555711145748954,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9874471683681817,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:1",
+    "grip_to_gauge_ratio:1",
+    "length_to_gauge_ratio:1"
+   ],
+   "slices": [
+    "all",
+    "L_total:0",
+    "W_grip:1",
+    "W_gauge:1",
+    "R_fillet:2",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.00442504565579998,
+    "p_relative_l2": 0.009146287538290963,
+    "u_relative_l2": 0.0010772786733744676
+   },
+   "terms": {
+    "case_id": "candidate-001134",
+    "coarse_p_difference": 0.004366955531786885,
+    "coarse_peak_difference": 0.0006298911580244976,
+    "coarse_u_difference": 0.0003327772155202515,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.001218318000260972,
+    "recovery_root_cells": 0.003839640890894637
+   }
+  },
+  {
+   "case_id": "candidate-001146",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.01328223158817488,
+     "projection": 0.005088977619990376
+    },
+    "p_relative_l2": {
+     "discretisation": 0.010192135871178815,
+     "projection": 0.0014459224966649612
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0006146111417311843,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9898548540982182,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:1",
+    "grip_to_gauge_ratio:1",
+    "length_to_gauge_ratio:1"
+   ],
+   "slices": [
+    "all",
+    "L_total:3",
+    "W_grip:3",
+    "W_gauge:2",
+    "R_fillet:2",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.0048464199365955305,
+    "p_relative_l2": 0.008617312092091168,
+    "u_relative_l2": 0.0011637185877932806
+   },
+   "terms": {
+    "case_id": "candidate-001146",
+    "coarse_p_difference": 0.005173673031055236,
+    "coarse_peak_difference": 0.0009190257083752762,
+    "coarse_u_difference": 0.0003119853511325809,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0014459224966649612,
+    "recovery_root_cells": 0.005088977619990376
+   }
+  },
+  {
+   "case_id": "candidate-001321",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.007371972990255637,
+     "projection": 0.0028245107242358763
+    },
+    "p_relative_l2": {
+     "discretisation": 0.005246412352726576,
+     "projection": 0.0006610294469347067
+    },
+    "u_relative_l2": {
+     "discretisation": 0.00028074614991628936,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9968987064532558,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:1",
+    "grip_to_gauge_ratio:0",
+    "length_to_gauge_ratio:0"
+   ],
+   "slices": [
+    "all",
+    "L_total:3",
+    "W_grip:2",
+    "W_gauge:3",
+    "R_fillet:3",
+    "nominal_axial_strain:1"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.002371489488070614,
+    "p_relative_l2": 0.010204240858017546,
+    "u_relative_l2": 0.0008041793916062879
+   },
+   "terms": {
+    "case_id": "candidate-001321",
+    "coarse_p_difference": 0.0026631534785414093,
+    "coarse_peak_difference": 0.003088952095078792,
+    "coarse_u_difference": 0.00014251073599811642,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0006610294469347067,
+    "recovery_root_cells": 0.0028245107242358763
+   }
+  },
+  {
+   "case_id": "candidate-001479",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.011262656336089817,
+     "projection": 0.004315193998501846
+    },
+    "p_relative_l2": {
+     "discretisation": 0.00954298294136724,
+     "projection": 0.001505446098990606
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0007518389068970373,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9818325012999309,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:1",
+    "grip_to_gauge_ratio:1",
+    "length_to_gauge_ratio:0"
+   ],
+   "slices": [
+    "all",
+    "L_total:0",
+    "W_grip:2",
+    "W_gauge:1",
+    "R_fillet:2",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.0007560825048448781,
+    "p_relative_l2": 0.012715817982052487,
+    "u_relative_l2": 0.0016198597528700347
+   },
+   "terms": {
+    "case_id": "candidate-001479",
+    "coarse_p_difference": 0.0048441537773437765,
+    "coarse_peak_difference": 0.0007764766356167,
+    "coarse_u_difference": 0.0003816441151761611,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.001505446098990606,
+    "recovery_root_cells": 0.004315193998501846
+   }
+  },
+  {
+   "case_id": "candidate-001512",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.010743327966670456,
+     "projection": 0.0041162176117511325
+    },
+    "p_relative_l2": {
+     "discretisation": 0.008016964026047138,
+     "projection": 0.0013498546328641209
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0008948958060411527,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9965381029457077,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:2",
+    "grip_to_gauge_ratio:2",
+    "length_to_gauge_ratio:2"
+   ],
+   "slices": [
+    "all",
+    "L_total:2",
+    "W_grip:2",
+    "W_gauge:0",
+    "R_fillet:3",
+    "nominal_axial_strain:1"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.009334882308027828,
+    "p_relative_l2": 0.008096827574420085,
+    "u_relative_l2": 0.0006392128667256754
+   },
+   "terms": {
+    "case_id": "candidate-001512",
+    "coarse_p_difference": 0.004069524886318344,
+    "coarse_peak_difference": 0.0016256775424459732,
+    "coarse_u_difference": 0.0004542618304777425,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0013498546328641209,
+    "recovery_root_cells": 0.0041162176117511325
+   }
+  },
+  {
+   "case_id": "candidate-001549",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.010484935232434949,
+     "projection": 0.004017216564151322
+    },
+    "p_relative_l2": {
+     "discretisation": 0.013347505872708205,
+     "projection": 0.000635327494142651
+    },
+    "u_relative_l2": {
+     "discretisation": 8.261476214864987e-05,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0276414088105317,
+   "reported_slices": [
+    "arc_feasibility_ratio:1",
+    "fillet_to_gauge_ratio:1",
+    "grip_to_gauge_ratio:0",
+    "length_to_gauge_ratio:0"
+   ],
+   "slices": [
+    "all",
+    "L_total:3",
+    "W_grip:0",
+    "W_gauge:3",
+    "R_fillet:3",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.005544763864744549,
+    "p_relative_l2": 0.021056427619191884,
+    "u_relative_l2": 0.0019974973980306674
+   },
+   "terms": {
+    "case_id": "candidate-001549",
+    "coarse_p_difference": 0.006775383691730054,
+    "coarse_peak_difference": 0.0029740149313646235,
+    "coarse_u_difference": 4.1936427486624305e-05,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.000635327494142651,
+    "recovery_root_cells": 0.004017216564151322
+   }
+  },
+  {
+   "case_id": "candidate-001591",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.00842542987776714,
+     "projection": 0.003228134052784345
+    },
+    "p_relative_l2": {
+     "discretisation": 0.006757859307783516,
+     "projection": 0.0010343241574291328
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0008840681112865593,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9964398126005148,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:3",
+    "grip_to_gauge_ratio:2",
+    "length_to_gauge_ratio:3"
+   ],
+   "slices": [
+    "all",
+    "L_total:2",
+    "W_grip:1",
+    "W_gauge:0",
+    "R_fillet:3",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.018267295043394624,
+    "p_relative_l2": 0.010193655931710118,
+    "u_relative_l2": 0.001186389839772009
+   },
+   "terms": {
+    "case_id": "candidate-001591",
+    "coarse_p_difference": 0.003430385435423105,
+    "coarse_peak_difference": 0.0020185841441167996,
+    "coarse_u_difference": 0.0004487655387241418,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0010343241574291328,
+    "recovery_root_cells": 0.003228134052784345
+   }
+  },
+  {
+   "case_id": "candidate-001613",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.01563343510631042,
+     "projection": 0.005989821879812421
+    },
+    "p_relative_l2": {
+     "discretisation": 0.010849513021647529,
+     "projection": 0.001539754445352106
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0005308974436960219,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9919278227602081,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:1",
+    "grip_to_gauge_ratio:1",
+    "length_to_gauge_ratio:2"
+   ],
+   "slices": [
+    "all",
+    "L_total:2",
+    "W_grip:0",
+    "W_gauge:0",
+    "R_fillet:0",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.014259629318583614,
+    "p_relative_l2": 0.009522945456947539,
+    "u_relative_l2": 0.0005951853723386942
+   },
+   "terms": {
+    "case_id": "candidate-001613",
+    "coarse_p_difference": 0.0055073670160647355,
+    "coarse_peak_difference": 0.0015551810182750836,
+    "coarse_u_difference": 0.0002694910881705695,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.001539754445352106,
+    "recovery_root_cells": 0.005989821879812421
+   }
+  },
+  {
+   "case_id": "candidate-001660",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.010754155958106706,
+     "projection": 0.004120366267473834
+    },
+    "p_relative_l2": {
+     "discretisation": 0.009200703557595944,
+     "projection": 0.0012137639135205395
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0005860555412169285,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9824407919131213,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:1",
+    "grip_to_gauge_ratio:1",
+    "length_to_gauge_ratio:1"
+   ],
+   "slices": [
+    "all",
+    "L_total:0",
+    "W_grip:0",
+    "W_gauge:0",
+    "R_fillet:1",
+    "nominal_axial_strain:2"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.005169555077680903,
+    "p_relative_l2": 0.00891882540307064,
+    "u_relative_l2": 0.0008325613912205723
+   },
+   "terms": {
+    "case_id": "candidate-001660",
+    "coarse_p_difference": 0.004670407897256825,
+    "coarse_peak_difference": 0.0011777249227262435,
+    "coarse_u_difference": 0.0002974901224451414,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0012137639135205395,
+    "recovery_root_cells": 0.004120366267473834
+   }
+  },
+  {
+   "case_id": "candidate-001716",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.014677387242324888,
+     "projection": 0.005623520016216433
+    },
+    "p_relative_l2": {
+     "discretisation": 0.011834069076340508,
+     "projection": 0.0014066663751668488
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0004374865883633754,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9920851441412587,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:0",
+    "grip_to_gauge_ratio:1",
+    "length_to_gauge_ratio:1"
+   ],
+   "slices": [
+    "all",
+    "L_total:2",
+    "W_grip:2",
+    "W_gauge:2",
+    "R_fillet:1",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.019161882016687146,
+    "p_relative_l2": 0.00955394555735413,
+    "u_relative_l2": 0.0005970514367071882
+   },
+   "terms": {
+    "case_id": "candidate-001716",
+    "coarse_p_difference": 0.006007141663117009,
+    "coarse_peak_difference": 0.0041109721025554165,
+    "coarse_u_difference": 0.00022207441033673876,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0014066663751668488,
+    "recovery_root_cells": 0.005623520016216433
+   }
+  },
+  {
+   "case_id": "candidate-001761",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.016705077495489332,
+     "projection": 0.006400412833520818
+    },
+    "p_relative_l2": {
+     "discretisation": 0.011952124125462538,
+     "projection": 0.0015650230866970896
+    },
+    "u_relative_l2": {
+     "discretisation": 0.00044306253370374643,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9961283208115401,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:0",
+    "grip_to_gauge_ratio:1",
+    "length_to_gauge_ratio:2"
+   ],
+   "slices": [
+    "all",
+    "L_total:3",
+    "W_grip:1",
+    "W_gauge:1",
+    "R_fillet:0",
+    "nominal_axial_strain:1"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.0013117810645172708,
+    "p_relative_l2": 0.009642765399701067,
+    "u_relative_l2": 0.0005561106567389081
+   },
+   "terms": {
+    "case_id": "candidate-001761",
+    "coarse_p_difference": 0.006067068083991136,
+    "coarse_peak_difference": 0.003444176667214951,
+    "coarse_u_difference": 0.0002249048394435261,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0015650230866970896,
+    "recovery_root_cells": 0.006400412833520818
+   }
+  },
+  {
+   "case_id": "candidate-001771",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.01704249261573046,
+     "projection": 0.006529690657367993
+    },
+    "p_relative_l2": {
+     "discretisation": 0.010673868047337718,
+     "projection": 0.0019811736314709737
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0007617236389565541,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9969389604741736,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:1",
+    "grip_to_gauge_ratio:2",
+    "length_to_gauge_ratio:2"
+   ],
+   "slices": [
+    "all",
+    "L_total:3",
+    "W_grip:3",
+    "W_gauge:0",
+    "R_fillet:1",
+    "nominal_axial_strain:2"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.001053729150935539,
+    "p_relative_l2": 0.008912587492584619,
+    "u_relative_l2": 0.001060433541529967
+   },
+   "terms": {
+    "case_id": "candidate-001771",
+    "coarse_p_difference": 0.005418207130628284,
+    "coarse_peak_difference": 5.239997099169258e-05,
+    "coarse_u_difference": 0.0003866617456632254,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0019811736314709737,
+    "recovery_root_cells": 0.006529690657367993
+   }
+  },
+  {
+   "case_id": "candidate-001796",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.0074387478373263375,
+     "projection": 0.0028500949568300146
+    },
+    "p_relative_l2": {
+     "discretisation": 0.005194933939549122,
+     "projection": 0.0007682393084781096
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0003442440174977756,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9844245909373115,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:1",
+    "grip_to_gauge_ratio:0",
+    "length_to_gauge_ratio:0"
+   ],
+   "slices": [
+    "all",
+    "L_total:0",
+    "W_grip:2",
+    "W_gauge:3",
+    "R_fillet:3",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.004865568661334022,
+    "p_relative_l2": 0.013436242647837573,
+    "u_relative_l2": 0.0010720854291130758
+   },
+   "terms": {
+    "case_id": "candidate-001796",
+    "coarse_p_difference": 0.002637022304339656,
+    "coarse_peak_difference": 0.003097265787814724,
+    "coarse_u_difference": 0.00017474315609024142,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0007682393084781096,
+    "recovery_root_cells": 0.0028500949568300146
+   }
+  },
+  {
+   "case_id": "candidate-001894",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.008152632488413563,
+     "projection": 0.003123613980235082
+    },
+    "p_relative_l2": {
+     "discretisation": 0.006229804521465405,
+     "projection": 0.0007189715812667148
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0003218634996339777,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9963212406069119,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:1",
+    "grip_to_gauge_ratio:0",
+    "length_to_gauge_ratio:1"
+   ],
+   "slices": [
+    "all",
+    "L_total:3",
+    "W_grip:1",
+    "W_gauge:2",
+    "R_fillet:3",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.0008763150349214199,
+    "p_relative_l2": 0.00789670920038327,
+    "u_relative_l2": 0.0004999257269099771
+   },
+   "terms": {
+    "case_id": "candidate-001894",
+    "coarse_p_difference": 0.0031623373205408147,
+    "coarse_peak_difference": 0.0024123006360236266,
+    "coarse_u_difference": 0.00016338248712384655,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0007189715812667148,
+    "recovery_root_cells": 0.003123613980235082
+   }
+  },
+  {
+   "case_id": "candidate-001970",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.01833480897594551,
+     "projection": 0.0070248310252664795
+    },
+    "p_relative_l2": {
+     "discretisation": 0.01244980884315764,
+     "projection": 0.001911602147828972
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0005431484972210286,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9961508059938592,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:0",
+    "grip_to_gauge_ratio:1",
+    "length_to_gauge_ratio:2"
+   ],
+   "slices": [
+    "all",
+    "L_total:3",
+    "W_grip:2",
+    "W_gauge:1",
+    "R_fillet:0",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.004016574578851529,
+    "p_relative_l2": 0.009761286685625535,
+    "u_relative_l2": 0.000646571794998732
+   },
+   "terms": {
+    "case_id": "candidate-001970",
+    "coarse_p_difference": 0.0063196999203845895,
+    "coarse_peak_difference": 0.0030510993910060065,
+    "coarse_u_difference": 0.00027570989706651196,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.001911602147828972,
+    "recovery_root_cells": 0.0070248310252664795
+   }
+  },
+  {
+   "case_id": "candidate-002036",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.015545124593868911,
+     "projection": 0.005955986434432533
+    },
+    "p_relative_l2": {
+     "discretisation": 0.011821357888670643,
+     "projection": 0.0018784841782122498
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0006998481760291935,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.981971676078814,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:0",
+    "grip_to_gauge_ratio:1",
+    "length_to_gauge_ratio:0"
+   ],
+   "slices": [
+    "all",
+    "L_total:0",
+    "W_grip:2",
+    "W_gauge:2",
+    "R_fillet:1",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.01887167753765344,
+    "p_relative_l2": 0.012098989462050928,
+    "u_relative_l2": 0.0012273696573431422
+   },
+   "terms": {
+    "case_id": "candidate-002036",
+    "coarse_p_difference": 0.006000689283589159,
+    "coarse_peak_difference": 0.002714159435085411,
+    "coarse_u_difference": 0.00035525288123309314,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0018784841782122498,
+    "recovery_root_cells": 0.005955986434432533
+   }
+  },
+  {
+   "case_id": "candidate-002046",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.018468039411353353,
+     "projection": 0.007075877169100902
+    },
+    "p_relative_l2": {
+     "discretisation": 0.011996149441989307,
+     "projection": 0.002377281078817305
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0008476862276915243,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9910054442417401,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:1",
+    "grip_to_gauge_ratio:2",
+    "length_to_gauge_ratio:1"
+   ],
+   "slices": [
+    "all",
+    "L_total:0",
+    "W_grip:2",
+    "W_gauge:1",
+    "R_fillet:1",
+    "nominal_axial_strain:2"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.016616716336706337,
+    "p_relative_l2": 0.008165307365383739,
+    "u_relative_l2": 0.0007449137494494826
+   },
+   "terms": {
+    "case_id": "candidate-002046",
+    "coarse_p_difference": 0.0060894159604006634,
+    "coarse_peak_difference": 0.0010059746161306387,
+    "coarse_u_difference": 0.000430297577508388,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.002377281078817305,
+    "recovery_root_cells": 0.007075877169100902
+   }
+  },
+  {
+   "case_id": "candidate-002151",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.011731711378736414,
+     "projection": 0.004494908574228512
+    },
+    "p_relative_l2": {
+     "discretisation": 0.010114507008389713,
+     "projection": 0.0014149461486967084
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0006250160493747936,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.977822835902143,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:1",
+    "grip_to_gauge_ratio:1",
+    "length_to_gauge_ratio:0"
+   ],
+   "slices": [
+    "all",
+    "L_total:0",
+    "W_grip:2",
+    "W_gauge:2",
+    "R_fillet:2",
+    "nominal_axial_strain:1"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.004305663220396804,
+    "p_relative_l2": 0.013023386600692839,
+    "u_relative_l2": 0.0014601589634164079
+   },
+   "terms": {
+    "case_id": "candidate-002151",
+    "coarse_p_difference": 0.0051342675169490926,
+    "coarse_peak_difference": 0.002092645296442921,
+    "coarse_u_difference": 0.00031726703013948914,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0014149461486967084,
+    "recovery_root_cells": 0.004494908574228512
+   }
+  },
+  {
+   "case_id": "candidate-002164",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.006069996681618227,
+     "projection": 0.0023256692266736506
+    },
+    "p_relative_l2": {
+     "discretisation": 0.004428212244113886,
+     "projection": 0.0006591157046201354
+    },
+    "u_relative_l2": {
+     "discretisation": 0.00032594195193312646,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9967064705542517,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:1",
+    "grip_to_gauge_ratio:0",
+    "length_to_gauge_ratio:0"
+   ],
+   "slices": [
+    "all",
+    "L_total:0",
+    "W_grip:0",
+    "W_gauge:2",
+    "R_fillet:3",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.005804279420145593,
+    "p_relative_l2": 0.011883348098481608,
+    "u_relative_l2": 0.001341294080747714
+   },
+   "terms": {
+    "case_id": "candidate-002164",
+    "coarse_p_difference": 0.0022478234741694853,
+    "coarse_peak_difference": 0.0024726254653208387,
+    "coarse_u_difference": 0.0001654527674787444,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0006591157046201354,
+    "recovery_root_cells": 0.0023256692266736506
+   }
+  },
+  {
+   "case_id": "candidate-002230",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.014360797363423251,
+     "projection": 0.00550222121203956
+    },
+    "p_relative_l2": {
+     "discretisation": 0.01196534656839119,
+     "projection": 0.0014155876267319192
+    },
+    "u_relative_l2": {
+     "discretisation": 0.00046788733860916615,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9755783450456612,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:0",
+    "grip_to_gauge_ratio:0",
+    "length_to_gauge_ratio:0"
+   ],
+   "slices": [
+    "all",
+    "L_total:2",
+    "W_grip:3",
+    "W_gauge:3",
+    "R_fillet:1",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.010451888487343214,
+    "p_relative_l2": 0.008504679034267664,
+    "u_relative_l2": 0.000733431871272235
+   },
+   "terms": {
+    "case_id": "candidate-002230",
+    "coarse_p_difference": 0.006073779983954919,
+    "coarse_peak_difference": 0.0035301449163312125,
+    "coarse_u_difference": 0.00023750626325338384,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0014155876267319192,
+    "recovery_root_cells": 0.00550222121203956
+   }
+  },
+  {
+   "case_id": "candidate-002298",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.009169093153838646,
+     "projection": 0.00351306251104929
+    },
+    "p_relative_l2": {
+     "discretisation": 0.007797388325262234,
+     "projection": 0.0009701770073731805
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0005241837239315023,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9937382452756851,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:1",
+    "grip_to_gauge_ratio:1",
+    "length_to_gauge_ratio:1"
+   ],
+   "slices": [
+    "all",
+    "L_total:1",
+    "W_grip:1",
+    "W_gauge:1",
+    "R_fillet:2",
+    "nominal_axial_strain:2"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.006106750481737183,
+    "p_relative_l2": 0.006851644797730218,
+    "u_relative_l2": 0.0004947825906207021
+   },
+   "terms": {
+    "case_id": "candidate-002298",
+    "coarse_p_difference": 0.003958065139727023,
+    "coarse_peak_difference": 0.0008566597760739469,
+    "coarse_u_difference": 0.00026608310859467125,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0009701770073731805,
+    "recovery_root_cells": 0.00351306251104929
+   }
+  },
+  {
+   "case_id": "candidate-002356",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.011358647038252562,
+     "projection": 0.0043519720453074956
+    },
+    "p_relative_l2": {
+     "discretisation": 0.008882045394668853,
+     "projection": 0.0016253875739137432
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0009676860238975007,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9800802501552167,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:2",
+    "grip_to_gauge_ratio:2",
+    "length_to_gauge_ratio:1"
+   ],
+   "slices": [
+    "all",
+    "L_total:1",
+    "W_grip:3",
+    "W_gauge:1",
+    "R_fillet:3",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.008813712585764986,
+    "p_relative_l2": 0.00904686344500553,
+    "u_relative_l2": 0.001158941401905836
+   },
+   "terms": {
+    "case_id": "candidate-002356",
+    "coarse_p_difference": 0.004508652484603479,
+    "coarse_peak_difference": 0.0011712429747688482,
+    "coarse_u_difference": 0.0004912111796434014,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0016253875739137432,
+    "recovery_root_cells": 0.0043519720453074956
+   }
+  },
+  {
+   "case_id": "candidate-002569",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.01451078193082285,
+     "projection": 0.005559686563533659
+    },
+    "p_relative_l2": {
+     "discretisation": 0.01052006622300263,
+     "projection": 0.0013949856984210945
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0005006429563867007,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9937448487488912,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:1",
+    "grip_to_gauge_ratio:1",
+    "length_to_gauge_ratio:2"
+   ],
+   "slices": [
+    "all",
+    "L_total:3",
+    "W_grip:1",
+    "W_gauge:0",
+    "R_fillet:1",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.01152954219045891,
+    "p_relative_l2": 0.009164482239647288,
+    "u_relative_l2": 0.0005197352956116888
+   },
+   "terms": {
+    "case_id": "candidate-002569",
+    "coarse_p_difference": 0.005340135138580016,
+    "coarse_peak_difference": 0.0016303056679538195,
+    "coarse_u_difference": 0.00025413348039934045,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0013949856984210945,
+    "recovery_root_cells": 0.005559686563533659
+   }
+  },
+  {
+   "case_id": "candidate-002610",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.006362729335720666,
+     "projection": 0.002437827331693742
+    },
+    "p_relative_l2": {
+     "discretisation": 0.004829024441620634,
+     "projection": 0.0005514797742260814
+    },
+    "u_relative_l2": {
+     "discretisation": 0.00021781768579343404,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0123269471083303,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:1",
+    "grip_to_gauge_ratio:0",
+    "length_to_gauge_ratio:1"
+   ],
+   "slices": [
+    "all",
+    "L_total:3",
+    "W_grip:1",
+    "W_gauge:3",
+    "R_fillet:3",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.005761249111036918,
+    "p_relative_l2": 0.010407683517923273,
+    "u_relative_l2": 0.000635599932860168
+   },
+   "terms": {
+    "case_id": "candidate-002610",
+    "coarse_p_difference": 0.002451281442447022,
+    "coarse_peak_difference": 0.0030891557539301983,
+    "coarse_u_difference": 0.00011056735319463657,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0005514797742260814,
+    "recovery_root_cells": 0.002437827331693742
+   }
+  },
+  {
+   "case_id": "candidate-002629",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.014541595969551199,
+     "projection": 0.005571492708640306
+    },
+    "p_relative_l2": {
+     "discretisation": 0.009260187337456127,
+     "projection": 0.002382078540386209
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0013541516075964313,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9806635760119811,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:3",
+    "grip_to_gauge_ratio:3",
+    "length_to_gauge_ratio:1"
+   ],
+   "slices": [
+    "all",
+    "L_total:0",
+    "W_grip:3",
+    "W_gauge:0",
+    "R_fillet:3",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.01618464367938929,
+    "p_relative_l2": 0.017168233905126604,
+    "u_relative_l2": 0.004804172337052024
+   },
+   "terms": {
+    "case_id": "candidate-002629",
+    "coarse_p_difference": 0.004700602709368592,
+    "coarse_peak_difference": 0.0027752688692985823,
+    "coarse_u_difference": 0.000687386602840828,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.002382078540386209,
+    "recovery_root_cells": 0.005571492708640306
+   }
+  },
+  {
+   "case_id": "candidate-002652",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.017472904005202416,
+     "projection": 0.006694599235709738
+    },
+    "p_relative_l2": {
+     "discretisation": 0.010030265603706665,
+     "projection": 0.0020816440329130786
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0008443858735451542,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9951063911828419,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:2",
+    "grip_to_gauge_ratio:3",
+    "length_to_gauge_ratio:3"
+   ],
+   "slices": [
+    "all",
+    "L_total:3",
+    "W_grip:2",
+    "W_gauge:0",
+    "R_fillet:1",
+    "nominal_axial_strain:2"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.026370701387288396,
+    "p_relative_l2": 0.011114935124754147,
+    "u_relative_l2": 0.0009693273577105855
+   },
+   "terms": {
+    "case_id": "candidate-002652",
+    "coarse_p_difference": 0.005091505382592215,
+    "coarse_peak_difference": 0.0009677166538291146,
+    "coarse_u_difference": 0.00042862227083510367,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0020816440329130786,
+    "recovery_root_cells": 0.006694599235709738
+   }
+  },
+  {
+   "case_id": "candidate-002821",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.017299356588234015,
+     "projection": 0.005618874909358024
+    },
+    "p_relative_l2": {
+     "discretisation": 0.012095301279820213,
+     "projection": 0.0009593572813476097
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0001909899854069658,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9995111488967863,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:0",
+    "grip_to_gauge_ratio:0",
+    "length_to_gauge_ratio:0"
+   ],
+   "slices": [
+    "all",
+    "L_total:2",
+    "W_grip:1",
+    "W_gauge:3",
+    "R_fillet:0",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.023505761602003968,
+    "p_relative_l2": 0.011779921465289049,
+    "u_relative_l2": 0.0009454149614411478
+   },
+   "terms": {
+    "case_id": "candidate-002821",
+    "coarse_p_difference": 0.006139746842548332,
+    "coarse_peak_difference": 0.008781399283367521,
+    "coarse_u_difference": 9.694923117104862e-05,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0009593572813476097,
+    "recovery_root_cells": 0.005618874909358024
+   }
+  },
+  {
+   "case_id": "candidate-002828",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.015518953667332566,
+     "projection": 0.005945959259514393
+    },
+    "p_relative_l2": {
+     "discretisation": 0.010144575489813594,
+     "projection": 0.0018831682139664131
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0008331595297608185,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9914097874777843,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:1",
+    "grip_to_gauge_ratio:2",
+    "length_to_gauge_ratio:1"
+   ],
+   "slices": [
+    "all",
+    "L_total:1",
+    "W_grip:1",
+    "W_gauge:0",
+    "R_fillet:1",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.00036547978140334496,
+    "p_relative_l2": 0.0074613234453587704,
+    "u_relative_l2": 0.0009449894045254741
+   },
+   "terms": {
+    "case_id": "candidate-002828",
+    "coarse_p_difference": 0.0051495307054891335,
+    "coarse_peak_difference": 0.00038625110722508883,
+    "coarse_u_difference": 0.0004229236191679282,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0018831682139664131,
+    "recovery_root_cells": 0.005945959259514393
+   }
+  },
+  {
+   "case_id": "candidate-002859",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.01221146865090185,
+     "projection": 0.004678723621035191
+    },
+    "p_relative_l2": {
+     "discretisation": 0.01465116776312743,
+     "projection": 0.00065811153974675
+    },
+    "u_relative_l2": {
+     "discretisation": 8.496203882229228e-05,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0407688058848137,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:0",
+    "grip_to_gauge_ratio:0",
+    "length_to_gauge_ratio:0"
+   ],
+   "slices": [
+    "all",
+    "L_total:2",
+    "W_grip:0",
+    "W_gauge:3",
+    "R_fillet:1",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.00707675363362172,
+    "p_relative_l2": 0.021779249219278905,
+    "u_relative_l2": 0.0015762480667399147
+   },
+   "terms": {
+    "case_id": "candidate-002859",
+    "coarse_p_difference": 0.0074371409965113865,
+    "coarse_peak_difference": 0.005961241556468852,
+    "coarse_u_difference": 4.312793848847324e-05,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.00065811153974675,
+    "recovery_root_cells": 0.004678723621035191
+   }
+  },
+  {
+   "case_id": "candidate-002866",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.012433712954915153,
+     "projection": 0.004763874695369791
+    },
+    "p_relative_l2": {
+     "discretisation": 0.010395916414164603,
+     "projection": 0.0010906892870650926
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0003443447286749305,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9761749841663201,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:0",
+    "grip_to_gauge_ratio:0",
+    "length_to_gauge_ratio:0"
+   ],
+   "slices": [
+    "all",
+    "L_total:1",
+    "W_grip:2",
+    "W_gauge:3",
+    "R_fillet:1",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.019957367604883414,
+    "p_relative_l2": 0.00975933724350713,
+    "u_relative_l2": 0.0007364249402481061
+   },
+   "terms": {
+    "case_id": "candidate-002866",
+    "coarse_p_difference": 0.005277114931048022,
+    "coarse_peak_difference": 0.004620835937337378,
+    "coarse_u_difference": 0.00017479427851519315,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0010906892870650926,
+    "recovery_root_cells": 0.004763874695369791
+   }
+  },
+  {
+   "case_id": "candidate-002878",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.01639976375388034,
+     "projection": 0.0062834343884599015
+    },
+    "p_relative_l2": {
+     "discretisation": 0.012011330865857399,
+     "projection": 0.0018307050253011364
+    },
+    "u_relative_l2": {
+     "discretisation": 0.000625197203469311,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9866168929688416,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:0",
+    "grip_to_gauge_ratio:1",
+    "length_to_gauge_ratio:0"
+   ],
+   "slices": [
+    "all",
+    "L_total:1",
+    "W_grip:3",
+    "W_gauge:2",
+    "R_fillet:1",
+    "nominal_axial_strain:1"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.0022549579572001656,
+    "p_relative_l2": 0.008379800623565834,
+    "u_relative_l2": 0.0013571553110607057
+   },
+   "terms": {
+    "case_id": "candidate-002878",
+    "coarse_p_difference": 0.0060971222669326895,
+    "coarse_peak_difference": 0.002591798149236308,
+    "coarse_u_difference": 0.0003173589865326452,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0018307050253011364,
+    "recovery_root_cells": 0.0062834343884599015
+   }
+  },
+  {
+   "case_id": "candidate-002933",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.008992909663409118,
+     "projection": 0.0034455592580111567
+    },
+    "p_relative_l2": {
+     "discretisation": 0.007386197504110448,
+     "projection": 0.0009653014788087189
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0006449382661872596,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9967588000422154,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:2",
+    "grip_to_gauge_ratio:1",
+    "length_to_gauge_ratio:3"
+   ],
+   "slices": [
+    "all",
+    "L_total:3",
+    "W_grip:0",
+    "W_gauge:0",
+    "R_fillet:3",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.01220401172963569,
+    "p_relative_l2": 0.008651737599921626,
+    "u_relative_l2": 0.00040249490798003896
+   },
+   "terms": {
+    "case_id": "candidate-002933",
+    "coarse_p_difference": 0.0037493388345738315,
+    "coarse_peak_difference": 0.0007575498043494974,
+    "coarse_u_difference": 0.00032737983055190843,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0009653014788087189,
+    "recovery_root_cells": 0.0034455592580111567
+   }
+  },
+  {
+   "case_id": "candidate-002965",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.008863821396069706,
+     "projection": 0.003396100151750845
+    },
+    "p_relative_l2": {
+     "discretisation": 0.007579962402990814,
+     "projection": 0.001055210440834047
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0005965757661262109,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9863258892309056,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:1",
+    "grip_to_gauge_ratio:1",
+    "length_to_gauge_ratio:0"
+   ],
+   "slices": [
+    "all",
+    "L_total:1",
+    "W_grip:2",
+    "W_gauge:2",
+    "R_fillet:3",
+    "nominal_axial_strain:1"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.011936831141016391,
+    "p_relative_l2": 0.010319043184951632,
+    "u_relative_l2": 0.0009216371688965046
+   },
+   "terms": {
+    "case_id": "candidate-002965",
+    "coarse_p_difference": 0.003847696651264373,
+    "coarse_peak_difference": 0.0008220274248194225,
+    "coarse_u_difference": 0.00030283033813513244,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.001055210440834047,
+    "recovery_root_cells": 0.003396100151750845
+   }
+  },
+  {
+   "case_id": "candidate-002972",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.015372062155763347,
+     "projection": 0.003932835986741072
+    },
+    "p_relative_l2": {
+     "discretisation": 0.008342474402611903,
+     "projection": 0.0006931471817738366
+    },
+    "u_relative_l2": {
+     "discretisation": 0.00014679486904185438,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.013273803395878,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:0",
+    "grip_to_gauge_ratio:0",
+    "length_to_gauge_ratio:0"
+   ],
+   "slices": [
+    "all",
+    "L_total:0",
+    "W_grip:0",
+    "W_gauge:3",
+    "R_fillet:0",
+    "nominal_axial_strain:1"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.017092082882808404,
+    "p_relative_l2": 0.012536795348134946,
+    "u_relative_l2": 0.0005736998280127645
+   },
+   "terms": {
+    "case_id": "candidate-002972",
+    "coarse_p_difference": 0.004234758580006042,
+    "coarse_peak_difference": 0.007803077236428095,
+    "coarse_u_difference": 7.451516195017988e-05,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0006931471817738366,
+    "recovery_root_cells": 0.003932835986741072
+   }
+  },
+  {
+   "case_id": "candidate-003023",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.008670420884991257,
+     "projection": 0.0033220003390771104
+    },
+    "p_relative_l2": {
+     "discretisation": 0.00738139913879609,
+     "projection": 0.0008982661191627421
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0004795709749973619,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9961324390179009,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:1",
+    "grip_to_gauge_ratio:1",
+    "length_to_gauge_ratio:1"
+   ],
+   "slices": [
+    "all",
+    "L_total:1",
+    "W_grip:0",
+    "W_gauge:1",
+    "R_fillet:2",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.0077593227431927946,
+    "p_relative_l2": 0.009537426410906075,
+    "u_relative_l2": 0.0018260347379414992
+   },
+   "terms": {
+    "case_id": "candidate-003023",
+    "coarse_p_difference": 0.0037469031161401476,
+    "coarse_peak_difference": 0.0012108450749881575,
+    "coarse_u_difference": 0.00024343704314586898,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0008982661191627421,
+    "recovery_root_cells": 0.0033220003390771104
+   }
+  },
+  {
+   "case_id": "candidate-003052",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.010747505300200768,
+     "projection": 0.004117818122682287
+    },
+    "p_relative_l2": {
+     "discretisation": 0.009080600121294876,
+     "projection": 0.0013712533501855893
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0007338021632868124,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.979326398341102,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:1",
+    "grip_to_gauge_ratio:1",
+    "length_to_gauge_ratio:0"
+   ],
+   "slices": [
+    "all",
+    "L_total:1",
+    "W_grip:3",
+    "W_gauge:2",
+    "R_fillet:3",
+    "nominal_axial_strain:2"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.004058684133410828,
+    "p_relative_l2": 0.00837996319344142,
+    "u_relative_l2": 0.0008296756994871573
+   },
+   "terms": {
+    "case_id": "candidate-003052",
+    "coarse_p_difference": 0.004609441685936485,
+    "coarse_peak_difference": 0.000260920938521397,
+    "coarse_u_difference": 0.0003724884077598033,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0013712533501855893,
+    "recovery_root_cells": 0.004117818122682287
+   }
+  },
+  {
+   "case_id": "candidate-003144",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.008990326823274332,
+     "projection": 0.003444569664089783
+    },
+    "p_relative_l2": {
+     "discretisation": 0.010973339469027395,
+     "projection": 0.000656225314398257
+    },
+    "u_relative_l2": {
+     "discretisation": 0.000128945701847317,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0200572954751084,
+   "reported_slices": [
+    "arc_feasibility_ratio:1",
+    "fillet_to_gauge_ratio:1",
+    "grip_to_gauge_ratio:0",
+    "length_to_gauge_ratio:0"
+   ],
+   "slices": [
+    "all",
+    "L_total:1",
+    "W_grip:0",
+    "W_gauge:3",
+    "R_fillet:3",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.005642475538337818,
+    "p_relative_l2": 0.014203318538904174,
+    "u_relative_l2": 0.0007629831969327533
+   },
+   "terms": {
+    "case_id": "candidate-003144",
+    "coarse_p_difference": 0.005570223080724566,
+    "coarse_peak_difference": 0.0028160144503779896,
+    "coarse_u_difference": 6.545467098848579e-05,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.000656225314398257,
+    "recovery_root_cells": 0.003444569664089783
+   }
+  },
+  {
+   "case_id": "candidate-003268",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.019913246103427252,
+     "projection": 0.007629596208209676
+    },
+    "p_relative_l2": {
+     "discretisation": 0.012784266120845223,
+     "projection": 0.002889082573095643
+    },
+    "u_relative_l2": {
+     "discretisation": 0.001013292392192139,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9883086301008358,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:1",
+    "grip_to_gauge_ratio:2",
+    "length_to_gauge_ratio:1"
+   ],
+   "slices": [
+    "all",
+    "L_total:0",
+    "W_grip:3",
+    "W_gauge:1",
+    "R_fillet:1",
+    "nominal_axial_strain:1"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.00221937261445073,
+    "p_relative_l2": 0.010140692405518275,
+    "u_relative_l2": 0.0010483175369740598
+   },
+   "terms": {
+    "case_id": "candidate-003268",
+    "coarse_p_difference": 0.006489475188246306,
+    "coarse_peak_difference": 0.0008958353973398901,
+    "coarse_u_difference": 0.0005143616204021011,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.002889082573095643,
+    "recovery_root_cells": 0.007629596208209676
+   }
+  },
+  {
+   "case_id": "candidate-003369",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.020747834733156195,
+     "projection": 0.007949361966726512
+    },
+    "p_relative_l2": {
+     "discretisation": 0.014061224886938475,
+     "projection": 0.002398703014212679
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0006452151564229597,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.993978104819199,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:0",
+    "grip_to_gauge_ratio:1",
+    "length_to_gauge_ratio:1"
+   ],
+   "slices": [
+    "all",
+    "L_total:1",
+    "W_grip:2",
+    "W_gauge:1",
+    "R_fillet:0",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.021213759297275373,
+    "p_relative_l2": 0.009151366568973328,
+    "u_relative_l2": 0.0006279558013211505
+   },
+   "terms": {
+    "case_id": "candidate-003369",
+    "coarse_p_difference": 0.0071376776075829824,
+    "coarse_peak_difference": 0.002889448859917342,
+    "coarse_u_difference": 0.0003275203839710456,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.002398703014212679,
+    "recovery_root_cells": 0.007949361966726512
+   }
+  },
+  {
+   "case_id": "candidate-003581",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.01633731324210981,
+     "projection": 0.006259506989314104
+    },
+    "p_relative_l2": {
+     "discretisation": 0.009468907439203362,
+     "projection": 0.002016022627876081
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0009196297553403267,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9964213939426767,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:2",
+    "grip_to_gauge_ratio:3",
+    "length_to_gauge_ratio:3"
+   ],
+   "slices": [
+    "all",
+    "L_total:2",
+    "W_grip:2",
+    "W_gauge:0",
+    "R_fillet:1",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.006896041568512681,
+    "p_relative_l2": 0.009529612950672381,
+    "u_relative_l2": 0.0006584918679283342
+   },
+   "terms": {
+    "case_id": "candidate-003581",
+    "coarse_p_difference": 0.004806551999595615,
+    "coarse_peak_difference": 0.0013527514420789664,
+    "coarse_u_difference": 0.0004668171346905212,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.002016022627876081,
+    "recovery_root_cells": 0.006259506989314104
+   }
+  },
+  {
+   "case_id": "candidate-003584",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.011659917649011106,
+     "projection": 0.004467401398088547
+    },
+    "p_relative_l2": {
+     "discretisation": 0.009007303818769309,
+     "projection": 0.0015532641882676672
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0008879575221792565,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9855042681658773,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:2",
+    "grip_to_gauge_ratio:2",
+    "length_to_gauge_ratio:1"
+   ],
+   "slices": [
+    "all",
+    "L_total:0",
+    "W_grip:1",
+    "W_gauge:0",
+    "R_fillet:2",
+    "nominal_axial_strain:2"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.0005910588429994684,
+    "p_relative_l2": 0.00774991532731375,
+    "u_relative_l2": 0.0007598488783584739
+   },
+   "terms": {
+    "case_id": "candidate-003584",
+    "coarse_p_difference": 0.004572235440999649,
+    "coarse_peak_difference": 0.0008223911408391615,
+    "coarse_u_difference": 0.0004507398589742419,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0015532641882676672,
+    "recovery_root_cells": 0.004467401398088547
+   }
+  },
+  {
+   "case_id": "candidate-003632",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.011735332561388645,
+     "projection": 0.004496296000532048
+    },
+    "p_relative_l2": {
+     "discretisation": 0.00864790904192856,
+     "projection": 0.0017211380567527328
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0010489422444496552,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9884969583995573,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:2",
+    "grip_to_gauge_ratio:2",
+    "length_to_gauge_ratio:1"
+   ],
+   "slices": [
+    "all",
+    "L_total:0",
+    "W_grip:1",
+    "W_gauge:0",
+    "R_fillet:2",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.012168874872731713,
+    "p_relative_l2": 0.010635123608609014,
+    "u_relative_l2": 0.0010438951010172664
+   },
+   "terms": {
+    "case_id": "candidate-003632",
+    "coarse_p_difference": 0.0043898015441261725,
+    "coarse_peak_difference": 0.0016010474172824276,
+    "coarse_u_difference": 0.000532457992106424,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0017211380567527328,
+    "recovery_root_cells": 0.004496296000532048
+   }
+  },
+  {
+   "case_id": "candidate-003636",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.006180629049444838,
+     "projection": 0.002368057107066988
+    },
+    "p_relative_l2": {
+     "discretisation": 0.005599724485440296,
+     "projection": 0.0005384104206029585
+    },
+    "u_relative_l2": {
+     "discretisation": 0.00020783890513375341,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0203082361208862,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:1",
+    "grip_to_gauge_ratio:0",
+    "length_to_gauge_ratio:1"
+   ],
+   "slices": [
+    "all",
+    "L_total:2",
+    "W_grip:0",
+    "W_gauge:2",
+    "R_fillet:3",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.013264810593718781,
+    "p_relative_l2": 0.010983610730516824,
+    "u_relative_l2": 0.0006931525699746493
+   },
+   "terms": {
+    "case_id": "candidate-003636",
+    "coarse_p_difference": 0.0028424997388021805,
+    "coarse_peak_difference": 0.0025177976770410482,
+    "coarse_u_difference": 0.00010550198230139767,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0005384104206029585,
+    "recovery_root_cells": 0.002368057107066988
+   }
+  },
+  {
+   "case_id": "candidate-003673",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.011574943111242379,
+     "projection": 0.0044348441039242835
+    },
+    "p_relative_l2": {
+     "discretisation": 0.0081869671881716,
+     "projection": 0.0015035897949993353
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0009674447877789801,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.99443289874754,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:2",
+    "grip_to_gauge_ratio:2",
+    "length_to_gauge_ratio:2"
+   ],
+   "slices": [
+    "all",
+    "L_total:3",
+    "W_grip:3",
+    "W_gauge:0",
+    "R_fillet:3",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.007311796082675038,
+    "p_relative_l2": 0.009142548263793746,
+    "u_relative_l2": 0.0006342715966290712
+   },
+   "terms": {
+    "case_id": "candidate-003673",
+    "coarse_p_difference": 0.00415582090770132,
+    "coarse_peak_difference": 0.0018127127580210985,
+    "coarse_u_difference": 0.0004910887247609036,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0015035897949993353,
+    "recovery_root_cells": 0.0044348441039242835
+   }
+  },
+  {
+   "case_id": "candidate-003729",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.016595089263481997,
+     "projection": 0.006358271748460535
+    },
+    "p_relative_l2": {
+     "discretisation": 0.010027510639336573,
+     "projection": 0.002245866269998043
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0010225646407188986,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.995636364797384,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:2",
+    "grip_to_gauge_ratio:2",
+    "length_to_gauge_ratio:2"
+   ],
+   "slices": [
+    "all",
+    "L_total:1",
+    "W_grip:3",
+    "W_gauge:0",
+    "R_fillet:2",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.0035078629028507213,
+    "p_relative_l2": 0.008592378821799283,
+    "u_relative_l2": 0.0007877773119857873
+   },
+   "terms": {
+    "case_id": "candidate-003729",
+    "coarse_p_difference": 0.005090106923521103,
+    "coarse_peak_difference": 0.0011101021727485377,
+    "coarse_u_difference": 0.0005190683455425882,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.002245866269998043,
+    "recovery_root_cells": 0.006358271748460535
+   }
+  },
+  {
+   "case_id": "candidate-003829",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.011096658631884831,
+     "projection": 0.004251593345549744
+    },
+    "p_relative_l2": {
+     "discretisation": 0.00927002693522731,
+     "projection": 0.0012354245400908624
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0005966246329425432,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 0.9886179864408966,
+   "reported_slices": [
+    "arc_feasibility_ratio:0",
+    "fillet_to_gauge_ratio:1",
+    "grip_to_gauge_ratio:1",
+    "length_to_gauge_ratio:1"
+   ],
+   "slices": [
+    "all",
+    "L_total:3",
+    "W_grip:3",
+    "W_gauge:2",
+    "R_fillet:3",
+    "nominal_axial_strain:1"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.0032608059345615318,
+    "p_relative_l2": 0.008577519344395828,
+    "u_relative_l2": 0.001628009881236998
+   },
+   "terms": {
+    "case_id": "candidate-003829",
+    "coarse_p_difference": 0.004705597429049396,
+    "coarse_peak_difference": 0.0008880387025154449,
+    "coarse_u_difference": 0.0003028551436256565,
+    "coarse_vertex_count": 261,
+    "recovery_all_cells": 0.0012354245400908624,
+    "recovery_root_cells": 0.004251593345549744
+   }
+  }
+ ],
+ "components": {
+  "absolute_peak_error.discretisation": {
+   "maximum": 0.020747834733156195,
+   "median": 0.01208911155394592
+  },
+  "absolute_peak_error.projection": {
+   "maximum": 0.007949361966726512,
+   "median": 0.004540629697007402
+  },
+  "absolute_peak_error.surrogate": {
+   "maximum": 0.027200557966146142,
+   "median": 0.006967862918072848
+  },
+  "p_relative_l2.discretisation": {
+   "maximum": 0.015105853022842251,
+   "median": 0.009660252672926023
+  },
+  "p_relative_l2.projection": {
+   "maximum": 0.002889082573095643,
+   "median": 0.001383119524303342
+  },
+  "p_relative_l2.surrogate": {
+   "maximum": 0.021779249219278905,
+   "median": 0.009756217816696092
+  },
+  "u_relative_l2.discretisation": {
+   "maximum": 0.0013541516075964313,
+   "median": 0.0005913156536715697
+  },
+  "u_relative_l2.projection": {
+   "maximum": 0.0,
+   "median": 0.0
+  },
+  "u_relative_l2.surrogate": {
+   "maximum": 0.004804172337052024,
+   "median": 0.0008863824433889284
+  }
+ },
+ "confidence": {
+  "calibration": {
+   "in_sample_coverage": 0.9000257997936016,
+   "quantile": 0.9,
+   "upper_edges": [
+    0.0010738613662499101,
+    0.0013393599974694732,
+    0.0015576532769511343,
+    0.0017558683982190626,
+    0.0019550181905328293,
+    0.0021622831691670004,
+    0.0023715758125612027,
+    0.0025915758732138077,
+    0.002828367644354955,
+    0.003084713866313387,
+    0.0033639275257632017,
+    0.00368147557951252,
+    0.004030662220225865,
+    0.004462032803104435,
+    0.004976740184934236,
+    0.005625710672250705,
+    0.006510109620532593,
+    0.007747170603576893,
+    0.01020664787760958,
+    0.1005827187004633
+   ],
+   "values": [
+    0.0007377377088790054,
+    0.0008297546281686947,
+    0.000924662158272051,
+    0.000972292237375828,
+    0.0010307183646450664,
+    0.0010946638442522183,
+    0.0011729923419045692,
+    0.001210077727181014,
+    0.001282233654003488,
+    0.0013826288790761622,
+    0.0014121205273337303,
+    0.0015095818184333433,
+    0.0016171098652711954,
+    0.0017351060074712666,
+    0.0018580888413220174,
+    0.0020257829832212846,
+    0.00229233952331735,
+    0.002624162620611875,
+    0.0031628061178621465,
+    0.0057729227548817446
+   ]
+  },
+  "indicator": "patch-mean",
+  "pooled_spearman": 0.6407982295212862,
+  "vertex_count": 62016
+ },
+ "evidence_role": "DEVELOPMENT",
+ "latency": {
+  "case_count": 8,
+  "fem_median_seconds": 109.90592941449995,
+  "fem_reproduces_stored_energy": [
+   true,
+   false,
+   true,
+   true,
+   true,
+   true,
+   false,
+   false
+  ],
+  "fem_seconds": [
+   110.13363227299988,
+   109.50668367699973,
+   109.67822655600003,
+   107.83828112299989,
+   131.14020268800004,
+   129.13094476700007,
+   130.34109614999988,
+   109.261662377
+  ],
+  "model_u_and_p_median_seconds": 0.10888460200000001,
+  "model_u_and_p_p99_seconds": 0.17410443222999994,
+  "model_u_median_seconds": 0.035701362,
+  "query_set": "all mesh vertices of each case (969 points)",
+  "speedup_target": 100.0,
+  "speedup_u_and_p": 1009.3799067612879,
+  "threads": 1
+ },
+ "protocol_sha256": "99c27839754fd734fcb19d3b3b6070ad6f2a8347972f830e7e696abc7800e0db"
+}
