@@ -179,3 +179,24 @@ EMA adaptive weighting is not used because the objective is one energy term
 with a fixed barrier penalty (the S13 adaptive controller remains available
 to the hybrid objectives). `G13` is written to `artifacts/gates/S13.json` and
 the frozen candidate to `artifacts/campaigns/dogbone-v1/CP-FREEZE.json`.
+
+## Close-out (2026-10-02)
+
+`codex/s13-closeout` merges the S13 recovery record (ADR 0016 and the parked
+ADR 0017) into the S13c line and carries the ADR 0001 `CP-ENVELOPE` revisit.
+
+- Amended G11, `artifacts/gates/S11-ENERGY.json` (source `58e6730`): PASS, all
+  eight checks. Query order and batching change nothing (0.0); all five
+  conditioning parameters reach `u` and `P`; a pickle payload is refused before
+  deserialisation; the served stress equals the S4 energy gradient to 3.4e-16;
+  the lifting error is exactly 0 for 64 parameter vectors at 320, 480 and 4,800
+  points per edge; the identity-lifting mutant fires (1.002 against 0.0);
+  operator coverage is 90.40%.
+- G13, `artifacts/gates/S13.json` (source `3f2c585`): PASS, all eight checks,
+  with training coverage 83.11%. At that revision the full suite records 2,769
+  passed with 90.51% branch coverage, and ruff, `mypy --strict` and pip-audit
+  are clean (the lock now pins urllib3 2.8.0 and virtualenv 21.14.3).
+- `artifacts/campaigns/dogbone-v1/CP-FREEZE.json` freezes run `0ca34e32…`
+  (manifest `a978c3d6…`, weights `b9c97e6c…`) and authorises S14 to open
+  DEVELOPMENT and to consume HOLDOUT once for exactly this candidate.
+- ADR 0001 Revisit 2 records that GO with contingency stands.

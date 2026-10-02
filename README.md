@@ -10,7 +10,7 @@ a fixed TRAIN-only protocol and formally fell back to the S11 baseline. S12 is n
 complete and G12 is PASS: 89 focused tests pass with 92.99% branch coverage, while
 the full suite records 1,928 passed and 2 skipped.
 
-S13 training is closing out. The six registered S13 hybrid fine-tunes of the
+S13 training is complete. The six registered S13 hybrid fine-tunes of the
 S11 operator and the S13b peak pilot failed the frozen TRAIN-screen guardrails
 (ADR 0015); one-case diagnostics traced the failure to inaccurate displacement
 gradients (ADR 0016). S13c replaces the operator with the energy-form PI-GINOT:
@@ -21,7 +21,9 @@ predicted displacement gradient
 [plan and outcome](docs/campaigns/s13c-enhanced-model-plan.md)). Its registered
 TRAIN-only checkpoint passes every frozen S13 guardrail: median absolute
 root-peak error 0.83% against the incumbent's 8.09%, P-field relative L2 0.91%
-against 19.20%, and no folded interior point. The joint-hybrid contrast of
+against 19.20%, and no folded interior point. The amended G11 gate
+(`artifacts/gates/S11-ENERGY.json`) and G13 (`artifacts/gates/S13.json`) pass,
+and `CP-FREEZE` freezes that checkpoint for S14. The joint-hybrid contrast of
 ADR 0017 is parked unexecuted. The project does not yet certify or serve a
 trained neural operator. Read the
 [project limitations](docs/limitations.md) before using its numerical results.

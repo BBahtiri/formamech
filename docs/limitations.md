@@ -152,6 +152,22 @@ neither equilibrium of the recovered stress nor `1e-12` FEM discretization error
 S12 opened neither DEVELOPMENT nor HOLDOUT, ran no production training, and created
 no checkpoint.
 
+[S13](adr/0018-s13c-energy-form-operator.md) freezes a different operator from the
+S11 baseline described above. The frozen energy-form candidate serves the
+constitutive stress `P_NH(I + grad u)` of its predicted displacement and has no
+independent stress head; the `P_predicted` statement above applies to the S11
+operator only. Its Dirichlet conditions are imposed by an exact affine lifting,
+verified over the full primitive parameter box at three boundary refinements
+(`artifacts/gates/S11-ENERGY.json`). It is conditioned on the five DogBone
+parameters (`L_total`, `W_grip`, `W_gauge`, `R_fillet`, nominal axial strain) with
+fixed `E` and `nu`, and does not encode an arbitrary boundary point cloud. Every
+selection number is TRAIN-role evidence on 64 TRAIN-screen cases that were not
+used for fitting; DEVELOPMENT and HOLDOUT were unopened at `CP-FREEZE`. Bitwise
+determinism and resume are shown on one recorded Linux CPU profile, and a new
+training run reproduces the pinned initial weights only on a CPU whose PyTorch
+kernels dispatch AVX2 or AVX512. The S14 error budget, envelope refusal, per-query
+confidence and latency checks do not exist yet.
+
 The S10 production run recorded zero natural FEM failures. Failed-case visibility is
 therefore exercised by one explicitly non-production canary through the same role
 snapshot path; that proves the path represents the controlled failure but is not an
@@ -164,5 +180,6 @@ The public commitment proves only that a later reveal matches the committed
 coordinates. It cannot prove that the local holder never saw the
 ignored private reveal. Git also does not preserve historical file mtimes, so live
 ordering must be captured and committed with each artifact batch, while Git first-add
-ancestry is verified separately. The project does not yet implement neural-operator
-training, certification, or inference.
+ancestry is verified separately. The project implements deterministic training and
+one frozen, TRAIN-selected candidate; it does not yet implement certification,
+verified inference or a served bundle.

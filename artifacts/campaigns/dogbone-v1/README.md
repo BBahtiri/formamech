@@ -61,6 +61,10 @@ the S10 closeout report.
   the comparison with the S11 incumbent, S13 trial 0 and the S13b peak arm.
 - `S13C-G13-REPLAY-PROBE.json` compares an independent replay of the registered
   trial, interrupted and resumed half-way, with the registered checkpoint bytes.
+- `CP-FREEZE.json` freezes exactly the registered S13c checkpoint after the
+  amended G11 (`artifacts/gates/S11-ENERGY.json`) and G13
+  (`artifacts/gates/S13.json`) gates passed, and authorises S14 to open
+  DEVELOPMENT and to consume HOLDOUT once for that candidate.
 
 Pinned identities:
 

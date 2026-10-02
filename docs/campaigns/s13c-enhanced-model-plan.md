@@ -3,12 +3,13 @@
 - Status: Steps 1-3 complete on branch `codex/s13c-enhanced-model`; the
   registered checkpoint passes every frozen S13 guardrail on TRAIN evidence
   (see "Outcome" at the end); ADR 0018 (drafted as ADR 0017) accepted by the
-  user on 2026-10-02; `G13`/`CP-FREEZE` are closed out on `codex/s13-closeout`
+  user on 2026-10-02; amended G11 and G13 PASS and `CP-FREEZE` written on
+  `codex/s13-closeout`
 - Date: 2026-10-01
 - Base: `codex/s13b-evaluation` at `9f90ca3` (copied from `pi_ginot_large_s13b_eval`)
 - New implementation source: `pi-ginot-enhanced`, published commit `12c9c1c`
   ("energy-form neural operator for stress concentrations on five specimen families")
-- Gate: `G13` remains open until the evidence below exists and the user ratifies it
+- Gate: `G13` PASS (`artifacts/gates/S13.json`), after the user ratified ADR 0018
 
 **Decisions taken with the user (2026-10-01):**
 
@@ -127,5 +128,5 @@ opening HOLDOUT. Those stay a user decision after reviewing the evidence.
 | I3 grad u inconsistent with served P | Resolved by construction; strain energy within 0.009% of FEM |
 | I4 orientation only softly protected | Improved: exact lifting + barrier never activated; still a sampled check |
 | I5 wrong peak location | Improved: median 0.54 mm from the FEM peak vertex |
-| I6 G13 / CP-FREEZE / S14 blocked | ADR 0018 accepted on 2026-10-02; G11 re-run, G13 gate artifact and CP-FREEZE follow on `codex/s13-closeout` |
+| I6 G13 / CP-FREEZE / S14 blocked | Resolved: ADR 0018 accepted on 2026-10-02; amended G11 PASS (8/8), G13 PASS (8/8), `CP-FREEZE.json` written; S14 unblocked |
 | I7 damaged shared git config | Resolved in the copy (standalone repository, correct author) |

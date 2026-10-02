@@ -21,8 +21,11 @@ then fell back to the S11 baseline under its preregistered guardrails; DEVELOPME
 remained unopened. That contingency is now discharged, S12 is complete, and all
 nine G12 objective and gradient-verification checks pass. The focused S12 suite
 records 89 passed with 92.99% branch coverage; the full suite records 1,928 passed
-and 2 skipped. S13 deterministic production training on the public S10 dataset with
-the S11 baseline architecture is next. S12 opened neither DEVELOPMENT nor HOLDOUT
-and created no training run or production checkpoint.
+and 2 skipped. S12 opened neither DEVELOPMENT nor HOLDOUT. S13 trained on TRAIN
+evidence only: the S11 baseline could not be fine-tuned into an admissible
+candidate, and the
+[energy-form operator of ADR 0018](adr/0018-s13c-energy-form-operator.md) replaced
+it. Its single registered trial passes every frozen S13 guardrail, the amended G11
+and G13 gates pass, and `CP-FREEZE` freezes it for S14.
 
 Read the [limitations](limitations.md) before relying on future numerical results.
