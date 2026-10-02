@@ -117,8 +117,8 @@ opening HOLDOUT. Those stay a user decision after reviewing the evidence.
 | Step | Result |
 |---|---|
 | 1. Implement | Energy-form operator, potential-energy objective and trainer in `src/piginot`; S13c protocol, data, trial, evaluator and evidence writer in `campaigns/dogbone_v1`; ADR 0017. Reproducibility fixes: canonical safetensors headers, exact cross-platform S10 request verification. |
-| 2. Test | New tests for operator, energy, trainer, protocol, data/lifting, trial, evaluator, evidence and portability; pre-existing S11 execute-harness failures fixed; ruff, ruff format and `mypy --strict src/` clean; full suite and coverage in the final commit message. |
-| 3. Validate | Registered 2,400-step trial: median abs. root-peak error 0.83% (limit 8.09%), p90 1.69% (13.63%), median signed -0.29% (>= -6.99%), P L2 0.91% (19.58%), u L2 0.08% (3.81%), 0 invalid points over 256 TRAIN cases. Replay probe: byte-identical after interrupt/resume. |
+| 2. Test | New tests for operator, energy, trainer, protocol, data/lifting, trial, evaluator, evidence and portability; pre-existing S11 execute-harness failures fixed. Full suite at `d9b89ee`: 2,355 passed, 0 failed, 0 skipped; branch coverage 90.56% overall, `energy_operator` 95%, `objectives/energy` 99%, `energy_engine` 98%. Package floors, now also in CI: operators 89.41% (>= 80), objectives 93.76% (>= 85), training 83.33% (>= 80). `ruff check`, `ruff format --check` and `mypy --strict src/` clean. |
+| 3. Validate | Registered 2,400-step trial: median abs. root-peak error 0.83% (limit 8.09%), p90 1.69% (13.63%), median signed -0.29% (>= -6.99%), P L2 0.91% (19.58%), u L2 0.08% (3.81%), 0 invalid points over 256 TRAIN cases. Replay probe: byte-identical after interrupt/resume. Re-evaluating the checkpoint at `d9b89ee` reproduces `S13C-TRAIN-SCREEN.json` exactly; only the recorded evaluator revision differs. |
 
 | Issue | Status |
 |---|---|
