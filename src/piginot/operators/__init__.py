@@ -12,6 +12,13 @@ from piginot.operators.architecture import (
     PiGinotOperator,
     module_digest,
 )
+from piginot.operators.energy_gate import (
+    ENERGY_G11_CHECK_IDS,
+    ENERGY_G11_LIFTING_POINTS_PER_EDGE,
+    ENERGY_G11_MINIMUM_PARAMETER_VECTORS,
+    EnergyG11Measurements,
+    evaluate_energy_g11_gate,
+)
 from piginot.operators.energy_operator import (
     ENERGY_ARCHITECTURE_ID,
     AffineDirichletLifting,
@@ -41,6 +48,9 @@ from piginot.operators.safetensors_io import (
 __all__ = (
     "ARCHITECTURE_ID",
     "ENERGY_ARCHITECTURE_ID",
+    "ENERGY_G11_CHECK_IDS",
+    "ENERGY_G11_LIFTING_POINTS_PER_EDGE",
+    "ENERGY_G11_MINIMUM_PARAMETER_VECTORS",
     "LOCAL_STRESS_ARCHITECTURE_ID",
     "AffineDirichletLifting",
     "AxisAlignedTensionLifting",
@@ -48,6 +58,7 @@ __all__ = (
     "DirichletData",
     "DirichletLifting",
     "EnergyFormOperator",
+    "EnergyG11Measurements",
     "EnergyOperatorConfig",
     "GeometryEncoding",
     "GateStatus",
@@ -65,6 +76,7 @@ __all__ = (
     "constitutive_in_plane_stress",
     "embed_plane_stress_deformation",
     "energy_module_digest",
+    "evaluate_energy_g11_gate",
     "evaluate_s11_gate",
     "module_digest",
     "state_dict_schema",
