@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 import rfc8785
@@ -372,6 +373,51 @@ def test_train_snapshot_rejects_retained_public_identity_drift(tmp_path: Path) -
 
     with pytest.raises(ValueError, match="retained request plan"):
         _ = source.train_snapshot
+
+
+def test_single_fit_loader_resolves_only_a_registered_train_fit_case(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source = object.__new__(_FixtureSelectiveS10Source)
+    source._protocol = SimpleNamespace(  # type: ignore[assignment]
+        fit_case_ids=("fit-a", "fit-b"),
+    )
+    verified = object()
+    collocation = object()
+    calls: list[tuple[object, ...]] = []
+
+    def load_case(
+        _source: object,
+        case_id: str,
+        role: EvidenceRole,
+    ) -> object:
+        calls.append(("load", case_id, role))
+        return verified
+
+    def replay(_source: object, selected: object) -> object:
+        calls.append(("replay", selected))
+        return collocation
+
+    monkeypatch.setattr(_FixtureSelectiveS10Source, "_load_case", load_case)
+    monkeypatch.setattr(
+        _FixtureSelectiveS10Source,
+        "replay_train_collocation",
+        replay,
+    )
+
+    assert source.load_fit_with_collocation("fit-b") == (verified, collocation)
+    assert calls == [
+        ("load", "fit-b", EvidenceRole.TRAIN),
+        ("replay", verified),
+    ]
+
+    with pytest.raises(ValueError, match="registered TRAIN fit"):
+        source.load_fit_with_collocation("screen-only")
+    with pytest.raises(ValueError, match="non-empty"):
+        source.load_fit_with_collocation("")
+    with pytest.raises(TypeError, match="case_id"):
+        source.load_fit_with_collocation(1)  # type: ignore[arg-type]
+    assert len(calls) == 2
 
 
 def test_train_collocation_replay_checks_report_and_store_identities(

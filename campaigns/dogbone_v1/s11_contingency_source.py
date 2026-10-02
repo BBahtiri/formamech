@@ -276,6 +276,21 @@ class _SelectiveS10SourceCore:
 
         return self._replay_train_collocation(verified_case, self.train_snapshot)
 
+    def load_fit_with_collocation(
+        self,
+        case_id: str,
+    ) -> tuple[VerifiedS10Case, CollocationBatch]:
+        """Resolve one registered TRAIN-fit case and its exact collocation batch."""
+
+        if type(case_id) is not str:
+            raise TypeError("case_id must be exact text")
+        if not case_id:
+            raise ValueError("case_id must be non-empty text")
+        if case_id not in self._protocol.fit_case_ids:
+            raise ValueError("case_id is not a registered TRAIN fit case")
+        verified = self._load_case(case_id, EvidenceRole.TRAIN)
+        return verified, self.replay_train_collocation(verified)
+
     def _replay_train_collocation(
         self,
         verified_case: VerifiedS10Case,
