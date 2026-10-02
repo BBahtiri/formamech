@@ -1,0 +1,206 @@
+{
+ "branch": "codex/s14-verification",
+ "claim_level": "NOT_VERIFIED",
+ "claim_level_if_reducer_passes": "HOLDOUT_VERIFIED",
+ "decision_record": [
+  "docs/adr/0019-s14-verification-decisions.md",
+  "docs/adr/0020-s14-protocol-methods.md",
+  "docs/adr/0021-s14-development-budget-acceptance.md"
+ ],
+ "evidence": {
+  "artifacts/campaigns/dogbone-v1/CP-FREEZE.json": "1b5ceb15831dc96e0381358f6e823152ceb70e347f419a3771b84ee70abb6015",
+  "artifacts/campaigns/dogbone-v1/S14-DEVELOPMENT-ACCESS.json": "3aa1e02aa14e196d6b15c43d0edadef2e368c1e903ebef6c4c7cd6627e1e4110",
+  "artifacts/campaigns/dogbone-v1/S14-DEVELOPMENT.json": "85e2132cf1732c22555ba06ff7477d682494ae8ab9ea19dfcbb41c2632e7c55b",
+  "artifacts/campaigns/dogbone-v1/S14-GATE.json": "7b60d87f90377a509473619be08c8f89742320f9013ac456cf61c318a67948ea",
+  "artifacts/campaigns/dogbone-v1/S14-HOLDOUT-CONSUMED.json": "9fcab9f80d2f885573d3459de6dcc9de0d851fefdfbac9d4330cc335812501c4",
+  "artifacts/campaigns/dogbone-v1/S14-HOLDOUT.json": "102af8880d793d634c8d333e25b643ba0708376cf588e009101c9b1df028848f",
+  "artifacts/campaigns/dogbone-v1/S14-PROTOCOL-AMENDMENT-1.json": "618a54a703aacf2abea419b5ebe6d8fa7dbe1f5827aab80dea1fcf0263faf08b",
+  "artifacts/campaigns/dogbone-v1/S14-PROTOCOL-SIGNOFF.json": "81289192d6ab8cb1b63b50424dddade40a0913a3f537e1e5dc8c052870ca4067",
+  "artifacts/campaigns/dogbone-v1/S14-PROTOCOL.json": "99c27839754fd734fcb19d3b3b6070ad6f2a8347972f830e7e696abc7800e0db",
+  "artifacts/campaigns/dogbone-v1/S14-TRAIN-REHEARSAL.json": "2dd3eaea05c4ed3031df6caa1253d7eb101abd6a7967b01d77e9c06d9ebda090"
+ },
+ "gate_id": "G14",
+ "implementation_evidence": {
+  "focused_coverage_command": "pytest tests/verification tests/campaigns/test_dogbone_s14_envelope.py tests/test_s14_anti_scope.py --cov=src/piginot/verification --cov-fail-under=85",
+  "focused_test_result": "54 passed; total coverage 97.75%",
+  "full_test_command": "python -m pytest -q --cov=src/piginot",
+  "full_test_pass_count": 2856,
+  "full_test_result": "2856 passed, 0 failed, 0 skipped; total branch coverage 91%",
+  "quality_checks": {
+   "mypy_strict_src": "PASS (122 source files)",
+   "ruff_check": "PASS",
+   "ruff_format_check": "PASS"
+  }
+ },
+ "implementation_source_revision": "5ee06324af83660e0ca4774dff00e2f8e92ad091",
+ "limitations": [
+  "The budget is a slice statistic (p90, or the maximum below ten cases), not a per-case guarantee; two DEVELOPMENT cases exceed the 5% peak tolerance.",
+  "The DEVELOPMENT budget was accepted after its result was seen (ADR 0021); HOLDOUT was judged with the unchanged rule.",
+  "FEM reference terms are conservative estimates (S8 recovery and Richardson estimators), not rigorous pointwise bounds.",
+  "The confidence indicator ranks errors moderately (Spearman 0.641 DEVELOPMENT, 0.620 HOLDOUT); the 90% calibration curve covers 86.8% on HOLDOUT.",
+  "Latency is measured on one Linux CPU thread at 969 vertices against the S10 P2 solve.",
+  "Only the DogBone family is measured; family generality remains for G17."
+ ],
+ "protocol_sha256": "99c27839754fd734fcb19d3b3b6070ad6f2a8347972f830e7e696abc7800e0db",
+ "report": {
+  "checks": [
+   {
+    "id": "G14.budget",
+    "measured": "FAIL as computed; accepted by signed waiver",
+    "reason": "accepted by the decision owner (ADR 0021); computed FAIL on W_grip:2 absolute_peak_error 0.05004, nominal_axial_strain:2 absolute_peak_error 0.05054",
+    "required": true,
+    "status": "PASS",
+    "threshold": "every slice"
+   },
+   {
+    "id": "G14.reducer",
+    "measured": null,
+    "reason": "the twelve verification families of IMPLEMENTATION-v1.0-OSS.md are not available",
+    "required": true,
+    "status": "NOT_RUN",
+    "threshold": null
+   },
+   {
+    "id": "G14.report-sections",
+    "measured": true,
+    "reason": null,
+    "required": true,
+    "status": "PASS",
+    "threshold": "all six sections"
+   },
+   {
+    "id": "G14.refusal",
+    "measured": {
+     "false_refusal_rate": 0.0,
+     "fixtures": 240,
+     "refused_with_expected_code": 240
+    },
+    "reason": null,
+    "required": true,
+    "status": "PASS",
+    "threshold": {
+     "false_refusal_rate": "<= 0.01",
+     "fixtures": ">= 200",
+     "refused": "100%"
+    }
+   },
+   {
+    "id": "G14.reason-codes",
+    "measured": true,
+    "reason": null,
+    "required": true,
+    "status": "PASS",
+    "threshold": "identical across runs"
+   },
+   {
+    "id": "G14.confidence",
+    "measured": 0.6407982295212862,
+    "reason": null,
+    "required": true,
+    "status": "PASS",
+    "threshold": ">= 0.6"
+   },
+   {
+    "id": "G14.latency",
+    "measured": {
+     "median_seconds": 0.10888460200000001,
+     "p99_seconds": 0.17410443222999994,
+     "speedup": 1009.3799067612879
+    },
+    "reason": null,
+    "required": true,
+    "status": "PASS",
+    "threshold": "median, p99 and speed-up measured on one thread; speed-up target 100x reported"
+   },
+   {
+    "id": "G14.holdout-order",
+    "measured": true,
+    "reason": null,
+    "required": true,
+    "status": "PASS",
+    "threshold": "record before reveal"
+   },
+   {
+    "id": "G14.no-certified",
+    "measured": true,
+    "reason": null,
+    "required": true,
+    "status": "PASS",
+    "threshold": "no forbidden claim wording"
+   },
+   {
+    "id": "G14.coverage",
+    "measured": 97.75,
+    "reason": null,
+    "required": true,
+    "status": "PASS",
+    "threshold": ">= 85.0"
+   },
+   {
+    "id": "G14.holdout-budget",
+    "measured": "PASS",
+    "reason": null,
+    "required": false,
+    "status": "PASS",
+    "threshold": "every slice"
+   },
+   {
+    "id": "G14.holdout-calibration",
+    "measured": 0.8680179308565531,
+    "reason": null,
+    "required": false,
+    "status": "PASS",
+    "threshold": "reported (nominal 0.9)"
+   }
+  ],
+  "claim_level": "NOT_VERIFIED",
+  "sections": {
+   "errored": [],
+   "failed": [],
+   "not_run": [
+    "G14.reducer"
+   ],
+   "passed": [
+    "G14.budget",
+    "G14.report-sections",
+    "G14.refusal",
+    "G14.reason-codes",
+    "G14.confidence",
+    "G14.latency",
+    "G14.holdout-order",
+    "G14.no-certified",
+    "G14.coverage",
+    "G14.holdout-budget",
+    "G14.holdout-calibration"
+   ],
+   "required": [
+    "G14.budget",
+    "G14.reducer",
+    "G14.report-sections",
+    "G14.refusal",
+    "G14.reason-codes",
+    "G14.confidence",
+    "G14.latency",
+    "G14.holdout-order",
+    "G14.no-certified",
+    "G14.coverage"
+   ],
+   "skipped": []
+  }
+ },
+ "schema_version": "1.0",
+ "scope": {
+  "candidate_run_hash": "0ca34e327d9220ccb6030c4f669fac028938beb086fb17e49818815e8dcbce43",
+  "claim": "The frozen S13c candidate meets the S14 error budget on every HOLDOUT slice and passes nine of the ten required G14 checks; the DEVELOPMENT budget passes by the decision owner's waiver (ADR 0021). No claim is made beyond the DogBone envelope, and none above HOLDOUT_VERIFIED.",
+  "development_or_holdout_read": true,
+  "evidence_roles": [
+   "TRAIN (rehearsal)",
+   "DEVELOPMENT (64 cases)",
+   "HOLDOUT (64 cases, consumed once)"
+  ]
+ },
+ "step": "S14",
+ "timestamp_utc": "2026-10-02T21:49:08Z",
+ "verdict": "FAIL",
+ "verdict_reason": "nine of ten required G14 checks pass; G14.reducer is NOT_RUN because the twelve verification families of IMPLEMENTATION-v1.0-OSS.md are not available; G14.budget passes by the signed waiver of ADR 0021 (computed FAIL on two DEVELOPMENT peak slices)"
+}

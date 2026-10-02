@@ -26,9 +26,10 @@ evidence only: the S11 baseline could not be fine-tuned into an admissible
 candidate, and the
 [energy-form operator of ADR 0018](adr/0018-s13c-energy-form-operator.md) replaced
 it. Its single registered trial passes every frozen S13 guardrail, the amended G11
-and G13 gates pass, and `CP-FREEZE` freezes it for S14. S14 has rehearsed its
-verification pipeline on TRAIN evidence; its frozen protocol
-([ADR 0020](adr/0020-s14-protocol-methods.md)) awaits sign-off before DEVELOPMENT
-is opened.
+and G13 gates pass, and `CP-FREEZE` freezes it for S14. S14 measured it on
+DEVELOPMENT and once on HOLDOUT under a signed protocol: the HOLDOUT error budget
+passes every slice, two DEVELOPMENT peak slices were accepted by the decision owner
+([ADR 0021](adr/0021-s14-development-budget-acceptance.md)), and G14 waits only for
+the reducer families of `IMPLEMENTATION-v1.0-OSS.md`.
 
 Read the [limitations](limitations.md) before relying on future numerical results.

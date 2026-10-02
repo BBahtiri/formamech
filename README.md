@@ -24,12 +24,17 @@ root-peak error 0.83% against the incumbent's 8.09%, P-field relative L2 0.91%
 against 19.20%, and no folded interior point. The amended G11 gate
 (`artifacts/gates/S11-ENERGY.json`) and G13 (`artifacts/gates/S13.json`) pass,
 and `CP-FREEZE` freezes that checkpoint for S14. The joint-hybrid contrast of
-ADR 0017 is parked unexecuted. S14 has built its verification layer and
-rehearsed it on TRAIN evidence only
-([plan](docs/campaigns/s14-verification-plan.md),
-[ADR 0019](docs/adr/0019-s14-verification-decisions.md),
-[ADR 0020](docs/adr/0020-s14-protocol-methods.md)); the frozen
-`S14-PROTOCOL.json` awaits sign-off before DEVELOPMENT is opened. The project does not yet certify or serve a
+ADR 0017 is parked unexecuted. S14 then measured the frozen candidate under a signed protocol
+([plan and results](docs/campaigns/s14-verification-plan.md), ADRs
+[0019](docs/adr/0019-s14-verification-decisions.md),
+[0020](docs/adr/0020-s14-protocol-methods.md) and
+[0021](docs/adr/0021-s14-development-budget-acceptance.md)). On the 64 HOLDOUT
+cases the error budget passes every slice (p90 including FEM terms: stress
+field 2.8%, root peak 4.0%, displacement 0.29%); on DEVELOPMENT two peak
+slices exceeded 5% by at most 0.054 points and were accepted by the decision
+owner. Inference is about 1,000x faster than the FEM solver on one thread.
+G14 is not yet passed, because the reducer check waits for the verification
+families of `IMPLEMENTATION-v1.0-OSS.md` (`artifacts/gates/S14.json`). The project does not yet certify or serve a
 trained neural operator. Read the
 [project limitations](docs/limitations.md) before using its numerical results.
 

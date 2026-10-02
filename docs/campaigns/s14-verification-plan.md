@@ -1,12 +1,11 @@
 # S14 plan — verification, gates, envelope, confidence
 
-- Status: **Decisions accepted** by the user on 2026-10-02 (S14-D1 … D4, see
-  [ADR 0019](../adr/0019-s14-verification-decisions.md)). Steps 1 and 2 are
-  done: the TRAIN rehearsal is in `S14-TRAIN-REHEARSAL.json`, and the user
-  signed off the frozen `S14-PROTOCOL.json` and the methods of
-  [ADR 0020](../adr/0020-s14-protocol-methods.md) on 2026-10-02
-  (`S14-PROTOCOL-SIGNOFF.json`). Step 3 opens DEVELOPMENT; HOLDOUT is
-  consumed only if DEVELOPMENT passes.
+- Status: **Steps 1–3 done.** Decisions accepted on 2026-10-02 (ADR 0019);
+  protocol and methods signed off (ADR 0020, `S14-PROTOCOL-SIGNOFF.json`);
+  DEVELOPMENT measured and its two peak-slice exceedances accepted by the
+  decision owner (ADR 0021); HOLDOUT consumed once and passing every budget
+  slice. G14 (`artifacts/gates/S14.json`) is not passed only because
+  `G14.reducer` is `NOT_RUN` (§4c).
 - Date: 2026-10-02
 - Base: `codex/s13-closeout` at `6f2034f` (G13 PASS, `CP-FREEZE` written)
 - Frozen candidate: S13c energy-form operator, run `0ca34e32…`, manifest
@@ -126,10 +125,48 @@ DEVELOPMENT was opened under the signed protocol
 | G14.confidence (pooled Spearman, patch-mean, 62,016 vertices) | **0.641**, PASS (threshold 0.6) |
 | Latency (8 cases, one thread) | 0.109 s median, 0.174 s p99; FEM 110 s; speed-up 1,009x |
 
-By ADR 0020 decision 4 HOLDOUT stays unspent, because the DEVELOPMENT budget
-failed. The failure is set by the conservative FEM reference bound rather
-than by the surrogate: on the TRAIN refinement check the bound exceeded the
-extrapolated FEM peak error by a factor of 15 or more.
+The failure is set by the conservative FEM reference bound rather than by
+the surrogate: on the TRAIN refinement check the bound exceeded the
+extrapolated FEM peak error by a factor of 15 or more. The decision owner
+accepted the two exceedances as passing
+([ADR 0021](../adr/0021-s14-development-budget-acceptance.md), signed
+`S14-PROTOCOL-AMENDMENT-1.json`); the measured values stay in the record and
+the HOLDOUT rule is unchanged.
+
+## 4b. Step 3 — HOLDOUT result (2026-10-02)
+
+`S14-HOLDOUT-CONSUMED.json` was written and fsynced; the private S9 reveal was
+then read and opened the `CP-ENVELOPE` commitment. The 64 HOLDOUT shapes were
+solved with the S10 recipe (median 140 s per solve) and scored once
+(`S14-HOLDOUT.json`):
+
+| Check | Result |
+| --- | --- |
+| Budget, all cases (p90) | field 2.8%, peak 4.0%, displacement 0.29% |
+| Budget, gated slices | **all 63 slice checks pass**; no single case exceeds a tolerance (largest per-case totals: field 4.3%, peak 4.8%, displacement 0.58%) |
+| Surrogate peak error alone | p90 1.8%, maximum 2.5% |
+| Pooled Spearman (patch-mean, reported) | 0.620 |
+| Coverage of the DEVELOPMENT 90% calibration curve | 86.8% |
+| Smallest vertex `det F` | 0.967 |
+
+## 4c. G14
+
+| Check | Status |
+| --- | --- |
+| `G14.budget` (DEVELOPMENT) | PASS by the signed waiver of ADR 0021; computed FAIL on two peak slices |
+| `G14.reducer` | **NOT_RUN**: the twelve families of `IMPLEMENTATION-v1.0-OSS.md` are not available |
+| `G14.report-sections`, `G14.no-certified` | PASS |
+| `G14.refusal`, `G14.reason-codes` | PASS (240/240, 0/844 false refusals, stable over two runs) |
+| `G14.confidence` | PASS (0.641) |
+| `G14.latency` | PASS (measured: 0.109 s median, 1,009x) |
+| `G14.holdout-order` | PASS (consumption record before the reveal) |
+| `G14.coverage` | PASS (97.75% of `piginot.verification`) |
+| `G14.holdout-budget` (reported) | PASS, so the reachable claim is `HOLDOUT_VERIFIED` |
+| `G14.holdout-calibration` (reported) | 86.8% coverage of the 90% curve |
+
+Verdict: not passed (one required check `NOT_RUN`); claim level `NOT_VERIFIED`.
+Once the reducer families are available and pass, the recorded measurements
+support `HOLDOUT_VERIFIED` without reopening any evidence.
 
 ## 5. Step 3 — Validate (opens DEVELOPMENT, then HOLDOUT once)
 

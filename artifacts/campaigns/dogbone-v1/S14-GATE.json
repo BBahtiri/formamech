@@ -1,0 +1,153 @@
+{
+ "claim_level": "NOT_VERIFIED",
+ "gate_id": "G14",
+ "protocol_sha256": "99c27839754fd734fcb19d3b3b6070ad6f2a8347972f830e7e696abc7800e0db",
+ "report": {
+  "checks": [
+   {
+    "id": "G14.budget",
+    "measured": "FAIL as computed; accepted by signed waiver",
+    "reason": "accepted by the decision owner (ADR 0021); computed FAIL on W_grip:2 absolute_peak_error 0.05004, nominal_axial_strain:2 absolute_peak_error 0.05054",
+    "required": true,
+    "status": "PASS",
+    "threshold": "every slice"
+   },
+   {
+    "id": "G14.reducer",
+    "measured": null,
+    "reason": "the twelve verification families of IMPLEMENTATION-v1.0-OSS.md are not available",
+    "required": true,
+    "status": "NOT_RUN",
+    "threshold": null
+   },
+   {
+    "id": "G14.report-sections",
+    "measured": true,
+    "reason": null,
+    "required": true,
+    "status": "PASS",
+    "threshold": "all six sections"
+   },
+   {
+    "id": "G14.refusal",
+    "measured": {
+     "false_refusal_rate": 0.0,
+     "fixtures": 240,
+     "refused_with_expected_code": 240
+    },
+    "reason": null,
+    "required": true,
+    "status": "PASS",
+    "threshold": {
+     "false_refusal_rate": "<= 0.01",
+     "fixtures": ">= 200",
+     "refused": "100%"
+    }
+   },
+   {
+    "id": "G14.reason-codes",
+    "measured": true,
+    "reason": null,
+    "required": true,
+    "status": "PASS",
+    "threshold": "identical across runs"
+   },
+   {
+    "id": "G14.confidence",
+    "measured": 0.6407982295212862,
+    "reason": null,
+    "required": true,
+    "status": "PASS",
+    "threshold": ">= 0.6"
+   },
+   {
+    "id": "G14.latency",
+    "measured": {
+     "median_seconds": 0.10888460200000001,
+     "p99_seconds": 0.17410443222999994,
+     "speedup": 1009.3799067612879
+    },
+    "reason": null,
+    "required": true,
+    "status": "PASS",
+    "threshold": "median, p99 and speed-up measured on one thread; speed-up target 100x reported"
+   },
+   {
+    "id": "G14.holdout-order",
+    "measured": true,
+    "reason": null,
+    "required": true,
+    "status": "PASS",
+    "threshold": "record before reveal"
+   },
+   {
+    "id": "G14.no-certified",
+    "measured": true,
+    "reason": null,
+    "required": true,
+    "status": "PASS",
+    "threshold": "no forbidden claim wording"
+   },
+   {
+    "id": "G14.coverage",
+    "measured": 97.75,
+    "reason": null,
+    "required": true,
+    "status": "PASS",
+    "threshold": ">= 85.0"
+   },
+   {
+    "id": "G14.holdout-budget",
+    "measured": "PASS",
+    "reason": null,
+    "required": false,
+    "status": "PASS",
+    "threshold": "every slice"
+   },
+   {
+    "id": "G14.holdout-calibration",
+    "measured": 0.8680179308565531,
+    "reason": null,
+    "required": false,
+    "status": "PASS",
+    "threshold": "reported (nominal 0.9)"
+   }
+  ],
+  "claim_level": "NOT_VERIFIED",
+  "sections": {
+   "errored": [],
+   "failed": [],
+   "not_run": [
+    "G14.reducer"
+   ],
+   "passed": [
+    "G14.budget",
+    "G14.report-sections",
+    "G14.refusal",
+    "G14.reason-codes",
+    "G14.confidence",
+    "G14.latency",
+    "G14.holdout-order",
+    "G14.no-certified",
+    "G14.coverage",
+    "G14.holdout-budget",
+    "G14.holdout-calibration"
+   ],
+   "required": [
+    "G14.budget",
+    "G14.reducer",
+    "G14.report-sections",
+    "G14.refusal",
+    "G14.reason-codes",
+    "G14.confidence",
+    "G14.latency",
+    "G14.holdout-order",
+    "G14.no-certified",
+    "G14.coverage"
+   ],
+   "skipped": []
+  }
+ },
+ "step": "S14",
+ "verdict": "FAIL"
+}

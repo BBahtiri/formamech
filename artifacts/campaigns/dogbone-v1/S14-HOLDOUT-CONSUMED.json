@@ -1,0 +1,7 @@
+{
+ "campaign_id": "dogbone-v1",
+ "candidate_run_hash": "0ca34e327d9220ccb6030c4f669fac028938beb086fb17e49818815e8dcbce43",
+ "consumed_utc": "2026-10-02T17:36:00Z",
+ "freeze_record_sha256": "1b5ceb15831dc96e0381358f6e823152ceb70e347f419a3771b84ee70abb6015",
+ "purpose": "S14 HOLDOUT evaluation under protocol 99c27839754fd734fcb19d3b3b6070ad6f2a8347972f830e7e696abc7800e0db"
+}

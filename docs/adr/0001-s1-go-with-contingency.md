@@ -348,3 +348,59 @@ S14 completes.
 | S11–S12 contingency iteration consumed by schedule pressure without being run | **Not met.** It ran and closed on 2026-09-09 |
 
 Nothing invalidates the decision. Next revisit: after the S14 holdout reveal.
+
+## Revisit 3 — S14 holdout reveal
+
+- Date: 2026-10-02
+- Trigger: Revisit 2 — *"Next revisit: after the S14 holdout reveal."*
+- Decision status: **unchanged.** GO with contingency stands. The frozen
+  candidate has now been measured on DEVELOPMENT and once on HOLDOUT under the
+  signed S14 protocol (ADRs 0019–0021).
+
+### What moved since Revisit 2
+
+S14 scored the `CP-FREEZE` candidate on the 64 DEVELOPMENT cases and, after
+the durable consumption record, on the 64 HOLDOUT cases revealed from the S9
+commitment. Each total adds the surrogate error to conservative FEM reference
+terms (ADR 0020):
+
+| Statistic | DEVELOPMENT | HOLDOUT |
+| --- | ---: | ---: |
+| Surrogate P-field relative L2, median | 0.98% | 0.97% |
+| Surrogate absolute root-peak error, median / max | 0.70% / 2.72% | 1.03% / 2.48% |
+| Budget p90, field / peak / displacement | 2.6% / 4.1% / 0.21% | 2.8% / 4.0% / 0.29% |
+| Gated budget slices passing | 61 / 63 (accepted, ADR 0021) | 63 / 63 |
+| Pooled Spearman of the confidence indicator | 0.641 | 0.620 |
+| Single-thread speed-up against the P2 FEM | 1,009x | — |
+
+### Risk 1 — peak stress systematically under-predicted
+
+**Status: closed for the DogBone envelope on HOLDOUT evidence.** The largest
+surrogate peak error on HOLDOUT is 2.48%, and with the FEM reference terms
+every HOLDOUT case stays inside the 5% peak tolerance.
+
+### Risk 2 — speedup unproven at scale
+
+**Status: closed for this query set.** Displacement and stress at all 969
+vertices take 0.109 s median (0.174 s p99) on one CPU thread against 110 s for
+the S10 FEM solve: 1,009x, above the 100x target.
+
+### Risk 3 — family generality untested
+
+**Status: unchanged, open.** S14 measures only the DogBone family. The
+second-family spike (`codex/second-family-spike`) remains the only evidence:
+the unchanged operator handles a domain with a hole, but its field error
+(5.05%) misses the preregistered 5%. `G17.non-dogbone` is still ahead.
+
+### Invalidation conditions
+
+| Condition | Verdict after the holdout reveal |
+| --- | --- |
+| In-envelope stress error > 15% on a preregistered fresh campaign | **Not met.** HOLDOUT p90 field 2.8% including FEM terms; largest surrogate field error 2.3% |
+| Peak bias not materially reduced by S12, or persists into S14 | **Not met.** HOLDOUT surrogate peak error at most 2.48% |
+| `G17.non-dogbone` fails against a genuinely distinct topology | **Not yet measurable** |
+| S11–S12 contingency iteration consumed by schedule pressure without being run | **Not met** |
+
+Nothing invalidates the decision. G14 is not yet passed: `G14.reducer` is
+`NOT_RUN` until the twelve verification families of
+`IMPLEMENTATION-v1.0-OSS.md` are available. Next revisit: at `G17`.

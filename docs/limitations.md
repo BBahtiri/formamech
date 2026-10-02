@@ -165,8 +165,29 @@ selection number is TRAIN-role evidence on 64 TRAIN-screen cases that were not
 used for fitting; DEVELOPMENT and HOLDOUT were unopened at `CP-FREEZE`. Bitwise
 determinism and resume are shown on one recorded Linux CPU profile, and a new
 training run reproduces the pinned initial weights only on a CPU whose PyTorch
-kernels dispatch AVX2 or AVX512. The S14 error budget, envelope refusal, per-query
-confidence and latency checks do not exist yet.
+kernels dispatch AVX2 or AVX512.
+
+S14 measured that candidate on 64 DEVELOPMENT and, once, on 64 HOLDOUT DogBone
+cases under a signed protocol (ADRs 0019–0021). Its numbers carry these limits:
+
+- The error budget is a slice statistic (p90, or the maximum for slices with
+  fewer than ten cases), not a per-case guarantee. Two DEVELOPMENT cases exceed
+  the 5% peak tolerance, and the two DEVELOPMENT slices they fail were
+  accepted as passing by the decision owner after the result was seen
+  (ADR 0021). HOLDOUT passes every slice under the unchanged rule.
+- The FEM reference terms are conservative estimates from the S8 recovery and
+  Richardson estimators on one coarser solve, applied to vertex values. The
+  peak term is not a rigorous pointwise bound. The reference itself is the
+  recovered P2 stress of the S10 mesh, not an exact solution.
+- The confidence indicator ranks errors only moderately (pooled Spearman 0.641
+  on DEVELOPMENT, 0.620 on HOLDOUT). Its 90% calibration curve, fitted on
+  DEVELOPMENT, covers 86.8% of HOLDOUT vertices.
+- Latency is measured on one Linux CPU thread at the 969 mesh vertices of a
+  case, against the S10 P2 solve with 64 load steps; other query sets,
+  hardware or solver settings change the ratio.
+- G14 is not passed: `G14.reducer` is `NOT_RUN` until the twelve verification
+  families of `IMPLEMENTATION-v1.0-OSS.md` are available, so the claim level is
+  `NOT_VERIFIED`.
 
 The S10 production run recorded zero natural FEM failures. Failed-case visibility is
 therefore exercised by one explicitly non-production canary through the same role
