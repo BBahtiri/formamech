@@ -617,3 +617,30 @@ def test_manifest_refuses_unknown_fields_and_noncanonical_bytes() -> None:
         TrainingCheckpointManifest.from_mapping(payload)
     with pytest.raises(Exception, match="canonical"):
         TrainingCheckpointManifest.from_bytes(manifest.to_bytes() + b"\n")
+
+
+def test_canonical_safetensors_sorts_header_without_moving_tensor_bytes() -> None:
+    import json as _json
+
+    from safetensors.torch import load as _load
+    from safetensors.torch import save as _save
+
+    from piginot.contracts.errors import ContractValidationError as _Error
+    from piginot.training._checkpoint_codec import _canonical_safetensors
+
+    tensors = {"b": torch.arange(3.0), "a": torch.ones(2, dtype=torch.float64)}
+    payload = _save(tensors, metadata={"zeta": "1", "alpha": "2"})
+    canonical = _canonical_safetensors(payload)
+    length = int.from_bytes(canonical[:8], "little")
+    header = canonical[8 : 8 + length].decode("utf-8").rstrip(" ")
+
+    assert len(canonical) == len(payload)
+    assert list(_json.loads(header)) == sorted(_json.loads(header))
+    assert canonical[8 + length :] == payload[8 + length :]
+    assert _canonical_safetensors(canonical) == canonical
+    restored = _load(canonical)
+    assert all(torch.equal(restored[name], tensors[name]) for name in tensors)
+    with pytest.raises(_Error, match="truncated"):
+        _canonical_safetensors(b"1234")
+    with pytest.raises(_Error, match="exceeds"):
+        _canonical_safetensors((10_000).to_bytes(8, "little") + b"{}")

@@ -449,3 +449,153 @@ def test_checkpoint_bytes_are_reproducible_across_processes(tmp_path: Path) -> N
         assert (tmp_path / "one" / name).read_bytes() == (
             tmp_path / "two" / name
         ).read_bytes()
+
+
+def test_trainer_validates_every_binding_and_plan_input(tmp_path: Path) -> None:
+    model = _model()
+    binding = _binding(model)
+    base = {
+        "model": model,
+        "population": _population(),
+        "plan": _plan(),
+        "binding": binding,
+        "config": _config(),
+        "objective": _Objective(),
+        "objective_hash": _OBJECTIVE_HASH,
+    }
+    short_plan = DeterministicSamplerPlan(
+        sampler_id="energy-engine-test",
+        population_size=2,
+        batches=((0, 1),) * (_STEPS - 1),
+    )
+    single_plan = DeterministicSamplerPlan(
+        sampler_id="energy-engine-test",
+        population_size=2,
+        batches=((0,),) * _STEPS,
+    )
+    wide_population = TrainingPopulation(
+        dataset_snapshot_hash="1" * 64,
+        public_manifest_hash="2" * 64,
+        role=EvidenceRole.TRAIN,
+        sample_ids=("case-a", "case-b", "case-c"),
+    )
+    cases: list[tuple[dict[str, object], type[Exception], str]] = [
+        ({"population": object()}, TypeError, "population"),
+        ({"plan": object()}, TypeError, "plan"),
+        ({"binding": object()}, TypeError, "binding"),
+        ({"config": object()}, TypeError, "config"),
+        ({"model": object()}, TypeError, "torch module"),
+        ({"objective": object()}, TypeError, "callable"),
+        (
+            {"binding": _binding(model, dataset_snapshot_hash="9" * 64)},
+            ValueError,
+            "dataset snapshot",
+        ),
+        (
+            {"binding": _binding(model, public_manifest_hash="9" * 64)},
+            ValueError,
+            "public manifest",
+        ),
+        (
+            {"binding": _binding(model, sampler_plan_hash="9" * 64)},
+            ValueError,
+            "sampler plan does not match",
+        ),
+        (
+            {"binding": _binding(model, trainer_config_hash="9" * 64)},
+            ValueError,
+            "trainer config",
+        ),
+        (
+            {"population": wide_population},
+            ValueError,
+            "population_size",
+        ),
+        (
+            {
+                "plan": short_plan,
+                "binding": _binding(model, sampler_plan_hash=short_plan.plan_hash),
+            },
+            ValueError,
+            "plan length",
+        ),
+        (
+            {
+                "plan": single_plan,
+                "binding": _binding(model, sampler_plan_hash=single_plan.plan_hash),
+            },
+            ValueError,
+            "batch size",
+        ),
+    ]
+    for index, (changes, error, message) in enumerate(cases):
+        with pytest.raises(error, match=message):
+            train_energy_to_checkpoint(
+                tmp_path / f"case-{index}",
+                **{**base, **changes},  # type: ignore[arg-type]
+            )
+    with pytest.raises(TypeError, match="pathlib"):
+        train_energy_to_checkpoint("not-a-path", **base)  # type: ignore[arg-type]
+    with pytest.raises(TypeError, match="resume_from"):
+        train_energy_to_checkpoint(
+            tmp_path / "resume",
+            resume_from="not-a-path",  # type: ignore[arg-type]
+            **base,  # type: ignore[arg-type]
+        )
+    with pytest.raises(TypeError, match="progress"):
+        train_energy_to_checkpoint(
+            tmp_path / "progress",
+            progress=object(),  # type: ignore[arg-type]
+            **base,  # type: ignore[arg-type]
+        )
+
+
+def test_trainer_rejects_parameterless_models_and_bad_contracts(tmp_path: Path) -> None:
+    class _Empty(torch.nn.Module):
+        def __init__(self) -> None:
+            super().__init__()
+            self.register_buffer("state", torch.zeros(1, dtype=_DTYPE))
+
+    empty = _Empty()
+    with pytest.raises(ValueError, match="trainable parameters"):
+        train_energy_to_checkpoint(
+            tmp_path / "empty",
+            model=empty,
+            population=_population(),
+            plan=_plan(),
+            binding=_binding(_model(), initial_weights_hash=model_state_hash(empty)),
+            config=_config(),
+            objective=_Objective(),
+            objective_hash=_OBJECTIVE_HASH,
+        )
+    config = _config()
+    with pytest.raises(ContractValidationError):
+        replace(config, search_space=object())
+    with pytest.raises(ContractValidationError):
+        replace(config, trial=object())
+    with pytest.raises(ContractValidationError):
+        replace(config, schedule=object())
+    with pytest.raises(ContractValidationError):
+        replace(config, adam_betas=(0.9,))
+    with pytest.raises(ContractValidationError):
+        replace(config, adam_weight_decay=-1.0)
+    with pytest.raises(TypeError):
+        scheduler_state_for_step(object(), 0)  # type: ignore[arg-type]
+
+
+def test_progress_callback_receives_every_step(tmp_path: Path) -> None:
+    model = _model()
+    records: list[int] = []
+    train_energy_to_checkpoint(
+        tmp_path / "progress",
+        model=model,
+        population=_population(),
+        plan=_plan(),
+        binding=_binding(model),
+        config=_config(),
+        objective=_Objective(),
+        objective_hash=_OBJECTIVE_HASH,
+        target_step=2,
+        progress=lambda record: records.append(record.step),
+    )
+    assert records == [1, 2]

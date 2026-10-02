@@ -52,6 +52,9 @@ pytest tests/geometry --cov=src/piginot/geometry --cov-fail-under=85
 pytest tests/morphing --cov=src/piginot/morphing --cov-fail-under=85
 pytest tests/fem --cov=src/piginot/fem --cov-fail-under=85
 pytest tests/doe tests/test_s9_anti_scope.py --cov=src/piginot/doe --cov-fail-under=90
+pytest tests/operators --cov=src/piginot/operators --cov-fail-under=80
+pytest tests/objectives --cov=src/piginot/objectives --cov-fail-under=85
+pytest tests/training tests/test_s13_anti_scope.py --cov=src/piginot/training --cov-fail-under=80
 pip-audit
 ```
 

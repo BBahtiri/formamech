@@ -266,7 +266,7 @@ def test_barrier_acts_only_below_threshold_and_masks_folded_energy() -> None:
     assert float(safe.barrier) == 0.0
     assert float(near.barrier) > 0.0 and near.inadmissible_points == 0
     assert folded.inadmissible_points == 1
-    assert math.isfinite(float(folded.total))
+    assert math.isfinite(float(folded.total.detach()))
     assert folded.minimum_determinant == pytest.approx(-0.2)
     assert float(recovery[0, 0, 0]) < 0.0  # descent raises the folded determinant
 
