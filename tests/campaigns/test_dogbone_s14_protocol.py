@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
 from pathlib import Path
@@ -159,3 +160,18 @@ def test_holdout_stays_closed_when_development_fails() -> None:
         "G14.budget",
         "G14.confidence",
     )
+
+
+def test_committed_protocol_matches_the_frozen_code_and_rehearsal() -> None:
+    document = json.loads(s14_protocol.PROTOCOL_PATH.read_text(encoding="utf-8"))
+    rehearsal = s14_protocol.REHEARSAL_PATH.read_bytes()
+
+    assert verify_frozen_files(document) == ()
+    assert (
+        document["train_rehearsal"]["sha256"] == hashlib.sha256(rehearsal).hexdigest()
+    )
+    assert (
+        document["confidence"]["indicator"]
+        == json.loads(rehearsal)["confidence_pilot"]["selected_variant"]
+    )
+    assert document["status"] == "FROZEN_PENDING_USER_SIGN_OFF"

@@ -1,0 +1,252 @@
+{
+ "budget": {
+  "claim_population": "HOLDOUT (sets HOLDOUT_VERIFIED or DEVELOPMENT_VERIFIED when every required check passes)",
+  "components": {
+   "coarse_level": "18 + 10 columns, 8 rows (S10: 36 + 20, 16)",
+   "d": "relative difference between the S10 solve and one solve on the half-resolution level mesh, at the coarse vertices",
+   "discretisation": {
+    "absolute_peak_error": "max(2.61 eta_root, 1.97 d_peak)",
+    "p_relative_l2": "max(2.61 eta_all, 1.97 d_P)",
+    "u_relative_l2": "1.97 d_u"
+   },
+   "eta": "|P_recovered - P_raw| / |P_raw|, quadrature L2 of the in-plane block; all cells (eta_all) or the cells incident to a root vertex (eta_root)",
+   "projection": {
+    "absolute_peak_error": "eta_root",
+    "p_relative_l2": "eta_all",
+    "u_relative_l2": "0 (vertex values are P2 degrees of freedom)"
+   },
+   "recovery_safety_factor": 2.61,
+   "refinement_ratio": 2.0,
+   "richardson_order": 1.0,
+   "richardson_safety_factor": 1.97,
+   "surrogate": "the unchanged S13c metric code at the vertices"
+  },
+  "gated_population": "DEVELOPMENT",
+  "gated_slices": [
+   "all",
+   "L_total:0",
+   "L_total:1",
+   "L_total:2",
+   "L_total:3",
+   "W_grip:0",
+   "W_grip:1",
+   "W_grip:2",
+   "W_grip:3",
+   "W_gauge:0",
+   "W_gauge:1",
+   "W_gauge:2",
+   "W_gauge:3",
+   "R_fillet:0",
+   "R_fillet:1",
+   "R_fillet:2",
+   "R_fillet:3",
+   "nominal_axial_strain:0",
+   "nominal_axial_strain:1",
+   "nominal_axial_strain:2",
+   "nominal_axial_strain:3"
+  ],
+  "missing_component": "NOT_RUN, never zero",
+  "per_case_total": "surrogate + discretisation + projection",
+  "quantities": {
+   "absolute_peak_error": {
+    "definition": "absolute relative error of the largest in-plane stress norm over the root vertices (right_arc without right_grip)",
+    "tolerance": 0.05
+   },
+   "p_relative_l2": {
+    "definition": "relative L2 of the in-plane first-Piola stress over the case vertices (reference: recovered P2 stress)",
+    "tolerance": 0.05
+   },
+   "u_relative_l2": {
+    "definition": "relative L2 of the displacement over the case vertices",
+    "tolerance": 0.02
+   }
+  },
+  "reported_slices": [
+   "arc_feasibility_ratio:0",
+   "arc_feasibility_ratio:1",
+   "fillet_to_gauge_ratio:0",
+   "fillet_to_gauge_ratio:1",
+   "fillet_to_gauge_ratio:2",
+   "fillet_to_gauge_ratio:3",
+   "grip_to_gauge_ratio:0",
+   "grip_to_gauge_ratio:1",
+   "grip_to_gauge_ratio:2",
+   "grip_to_gauge_ratio:3",
+   "length_to_gauge_ratio:0",
+   "length_to_gauge_ratio:1",
+   "length_to_gauge_ratio:2",
+   "length_to_gauge_ratio:3"
+  ],
+  "slice_statistic": {
+   "interpolation": "linear between order statistics",
+   "minimum_cases_for_quantile": 10,
+   "otherwise": "maximum",
+   "quantile": 0.9
+  }
+ },
+ "confidence": {
+  "calibration": {
+   "bins": 20,
+   "coverage_reported_on": "HOLDOUT",
+   "fitted_on": "DEVELOPMENT",
+   "method": "equal-count bins, per-bin quantile, pool-adjacent-violators isotonic fit",
+   "quantile": 0.9
+  },
+  "error": "Frobenius norm of the in-plane first-Piola error at the vertex divided by 760 MPa",
+  "indicator": "patch-mean",
+  "length_scale_mm": 1.0,
+  "residual": "|Div P| * length_scale / E of the served stress, by automatic differentiation",
+  "statistic": "Spearman correlation, all DEVELOPMENT vertices pooled",
+  "threshold": 0.6,
+  "train_pilot": {
+   "median_per_case_spearman": {
+    "patch-mean": 0.5858707057752586,
+    "patch-mean-times-h": 0.5848695058441578,
+    "pointwise": 0.3968522581205054
+   },
+   "pooled_spearman": {
+    "patch-mean": 0.643644983954839,
+    "patch-mean-times-h": 0.5904315067694359,
+    "pointwise": 0.4718738372977192
+   }
+  },
+  "variants": [
+   "pointwise",
+   "patch-mean",
+   "patch-mean-times-h"
+  ]
+ },
+ "created_utc": "2026-10-02T12:59:23Z",
+ "decision_records": [
+  "docs/adr/0019-s14-verification-decisions.md",
+  "docs/adr/0020-s14-protocol-methods.md"
+ ],
+ "evaluation_code": {
+  "file_sha256": {
+   "campaigns/dogbone_v1/s14_candidate.py": "db9793549d59226c18c0e8bbc9e5699d3267966e8d89a96d7fad9c926fdfa630",
+   "campaigns/dogbone_v1/s14_envelope.py": "af2e4c5c198563b95ef0a0036b77899ded252da7e662a291e5f097974d34ca57",
+   "campaigns/dogbone_v1/s14_evaluation.py": "1046fd6e0e666cc3abb1c1a9f4af8ccd88d9f6fd376080c145198856c15156a6",
+   "campaigns/dogbone_v1/s14_gate.py": "a24b5d35bd008ca2e8adec6f66e4f39eb60eee2e90377a95f1d23c637757bbe6",
+   "campaigns/dogbone_v1/s14_protocol.py": "bebaf8a75b404104d0e87694c9944a00e6ceabc26c442715d1a1af6a16947907",
+   "campaigns/dogbone_v1/s14_reference.py": "84e8d2dd2fd832026f9616459eef04a60c1a80d9dc0fa6212cb29f4c6df0a29f",
+   "campaigns/dogbone_v1/s14_rehearsal.py": "cfc42be5faab073f6cece8bb3e0f0be61158a6013a7d75988663acde717ca7f0",
+   "campaigns/dogbone_v1/s14_validate.py": "6d00c72e2139a9dddff039973dbaba7afcfff2a5324272564cd26eefbda1a66b",
+   "src/piginot/verification/__init__.py": "04041465651ef4171c308cffa756a621350d7ebf0f391bb1baa7f044c66a1aba",
+   "src/piginot/verification/budget.py": "ae74c43eb2938cc7739ca488e9b4e67ec8c4ff6d8526789e901e242143818de3",
+   "src/piginot/verification/confidence.py": "ab72c326f44a08eea2410737be983463e5af4cfd7abb3a85305635743500a9a7",
+   "src/piginot/verification/envelope.py": "32ca8cddffa6ce11695f65202d6affef4c40a211df6e20d9e3031915f756948e",
+   "src/piginot/verification/holdout.py": "7322898849829ba0682058a463e4a16a2fe9bd31e4df208a2ded0d1c18d87d80",
+   "src/piginot/verification/latency.py": "dfdc51ae9d643a1d15c4ad19a2d03e871b2b8554849ade5c2c52985e1cfd93f8",
+   "src/piginot/verification/reducer.py": "592d6867dfc622f8c9b75ffe1786257ee2261b79270e2c0a6801e7f93e282804",
+   "src/piginot/verification/report.py": "626ae05b703f7d911007573568776baaa7831b11f1b45a51ad82ef64e902c7c3",
+   "src/piginot/verification/status.py": "9b04bf534936765dfa82a1ada49d813a8446dac23ca36e68d2e91a6cce085b81"
+  },
+  "line_endings": "LF-normalised before hashing",
+  "revision": "2174725ca2a0a3ae7d805d985dff2760038183f8"
+ },
+ "execution": {
+  "dtype": "float64",
+  "fem_threads": 1,
+  "scoring_threads": 2
+ },
+ "frozen_candidate": {
+  "checkpoint_manifest_hash": "a978c3d645f08c329b8c90b9e10dcd3a296b95e2319064a97f539358e50905ee",
+  "cp_freeze_sha256": "1b5ceb15831dc96e0381358f6e823152ceb70e347f419a3771b84ee70abb6015",
+  "run_hash": "0ca34e327d9220ccb6030c4f669fac028938beb086fb17e49818815e8dcbce43",
+  "weights_hash": "b9c97e6cdb6a80b1e263b2a7cbc3935b08cda6dd3f6887b57743a1cd52dbc769"
+ },
+ "gate": {
+  "claim_ceiling": "HOLDOUT_VERIFIED",
+  "coverage_minimum_percent": 85.0,
+  "reported": [
+   "G14.holdout-budget",
+   "G14.holdout-calibration"
+  ],
+  "required": [
+   "G14.budget",
+   "G14.reducer",
+   "G14.report-sections",
+   "G14.refusal",
+   "G14.reason-codes",
+   "G14.confidence",
+   "G14.latency",
+   "G14.holdout-order",
+   "G14.no-certified",
+   "G14.coverage"
+  ],
+  "verdict": "PASS only if every required check passes; FAIL, ERROR and NOT_RUN all leave the claim at NOT_VERIFIED"
+ },
+ "latency": {
+  "cases": "the first 8 DEVELOPMENT cases",
+  "decision": "measured and reported",
+  "fem": "re-solve of the same S10 request on one thread",
+  "model": "displacement only, and displacement with stress",
+  "query_set": "every mesh vertex of the case",
+  "repeats": 20,
+  "speedup_target": 100.0,
+  "statistics": "median and p99 of the operator; median FEM time; speed-up of the median",
+  "threads": 1,
+  "warmup": 3
+ },
+ "out_of_scope": [
+  "retraining or any change to the frozen candidate",
+  "threshold or method changes after DEVELOPMENT is opened",
+  "any claim above HOLDOUT_VERIFIED"
+ ],
+ "populations": {
+  "development": {
+   "access_record": "S14-DEVELOPMENT-ACCESS.json",
+   "count": 64,
+   "opened_only_after": "user sign-off of this protocol",
+   "source": "pinned S10 selective source, DEVELOPMENT case list"
+  },
+  "holdout": {
+   "campaign_hash": "8f58fe30803e2bd147f863ac000e1e89a19092c8b347df6b4d74f38487d96d46",
+   "commitment": "a0956fb5a2d7c826083c83837f9a7954e1631e7c6ea3fe5385edfbd7ace766af",
+   "consumption_record": "S14-HOLDOUT-CONSUMED.json",
+   "count": 64,
+   "opened_only_after": "DEVELOPMENT results and calibration are written, and the DEVELOPMENT budget passes on every gated slice and the pooled Spearman correlation meets the threshold; otherwise HOLDOUT stays unspent",
+   "order": "consumption record written and fsynced, then the reveal is read and must open the CP-ENVELOPE commitment",
+   "reveal": "pi_ginot_private_reveals/.piginot-private/dogbone-v1/reveal-v1.json",
+   "solver": "unchanged S10 P2 request recipe and execution profile"
+  }
+ },
+ "protocol_id": "dogbone-v1-s14-protocol-v1",
+ "refusal": {
+  "fixture_counts": {
+   "derived-bound": 48,
+   "guard-band": 36,
+   "material-load": 24,
+   "primitive-bound": 60,
+   "query-containment": 36,
+   "topology-tag": 36
+  },
+  "fixture_set_hash": "5fa367dc1519bb3fd26968f23eef45d75ce76ae827b249a5066989e9aea659d6",
+  "in_domain_count": 844,
+  "maximum_false_refusal_rate": 0.01,
+  "reason_codes": "identical on two consecutive runs",
+  "required_refusal": "100% with the expected reason code"
+ },
+ "schema_version": "1.0",
+ "status": "FROZEN_PENDING_USER_SIGN_OFF",
+ "train_rehearsal": {
+  "artifact": "artifacts/campaigns/dogbone-v1/S14-TRAIN-REHEARSAL.json",
+  "code_revision": "a5ac1b134983dc9b3f212bd985f9768a22ef1e6c",
+  "sha256": "2dd3eaea05c4ed3031df6caa1253d7eb101abd6a7967b01d77e9c06d9ebda090",
+  "summary": {
+   "case_count": 64,
+   "gated_status": "FAIL",
+   "largest_gated_slice_statistic": {
+    "absolute_peak_error": 0.10996371362204689,
+    "p_relative_l2": 0.06296232738963538,
+    "u_relative_l2": 0.005693234590642988
+   },
+   "pooled_spearman": {
+    "patch-mean": 0.643644983954839,
+    "patch-mean-times-h": 0.5904315067694359,
+    "pointwise": 0.4718738372977192
+   },
+   "selected_variant": "patch-mean"
+  }
+ }
+}

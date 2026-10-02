@@ -1,8 +1,11 @@
 # S14 plan — verification, gates, envelope, confidence
 
 - Status: **Decisions accepted** by the user on 2026-10-02 (S14-D1 … D4, see
-  [ADR 0019](../adr/0019-s14-verification-decisions.md)). Step 1 is in
-  progress; nothing has opened DEVELOPMENT or HOLDOUT.
+  [ADR 0019](../adr/0019-s14-verification-decisions.md)). Steps 1 and 2 are
+  done: the TRAIN rehearsal is in `S14-TRAIN-REHEARSAL.json` and the frozen
+  `S14-PROTOCOL.json` awaits the user's sign-off, together with the methods
+  of [ADR 0020](../adr/0020-s14-protocol-methods.md). Nothing has opened
+  DEVELOPMENT or HOLDOUT.
 - Date: 2026-10-02
 - Base: `codex/s13-closeout` at `6f2034f` (G13 PASS, `CP-FREEZE` written)
 - Frozen candidate: S13c energy-form operator, run `0ca34e32…`, manifest
@@ -75,6 +78,38 @@ and S8 bounds the FEM error at 2%.
   tolerance, slices, statistic, chosen indicator variant, the fixture set
   hash and the evaluation code revision. **User sign-off on the frozen
   protocol before step 3.**
+
+Implemented (`codex/s14-verification`):
+
+| Module | Content |
+| --- | --- |
+| `campaigns/dogbone_v1/s14_reference.py` | per-case FEM reference error: recovery estimator and one half-resolution Richardson solve (ADR 0020 §1–2); the refinement check |
+| `campaigns/dogbone_v1/s14_candidate.py` | `CP-FREEZE`-verified loader, role-gated serving of any `S14Case`, the unchanged S13c metrics, the three indicators with the boundary term |
+| `campaigns/dogbone_v1/s14_rehearsal.py` | the TRAIN rehearsal: budget per slice, pilot, refusal run, latency, refinement check |
+| `campaigns/dogbone_v1/s14_evaluation.py` | DEVELOPMENT access record; HOLDOUT consumption, verified reveal, S9 strata, S10 recipe |
+| `campaigns/dogbone_v1/s14_gate.py` | G14 required and reported checks; claim level |
+| `campaigns/dogbone_v1/s14_protocol.py` | protocol builder, evaluation-file digests, sign-off check |
+| `campaigns/dogbone_v1/s14_validate.py` | step 3 phases `development`, `holdout`, `gate` |
+
+Sign-off is recorded as `S14-PROTOCOL-SIGNOFF.json` (protocol digest, name,
+date). `s14_validate` refuses every phase without it, or if any evaluation
+file differs from its frozen digest.
+
+TRAIN rehearsal (`artifacts/campaigns/dogbone-v1/S14-TRAIN-REHEARSAL.json`,
+64 TRAIN-screen cases, code `a5ac1b1`):
+
+| Item | Result |
+| --- | --- |
+| Budget, all cases (p90 of surrogate + FEM terms) | field 2.6%, peak 3.5%, displacement 0.30% |
+| Budget, gated slices | 20 of 21 pass; `R_fillet:0` fails (9 cases, maximum statistic: field 6.3%, peak 11.0%), driven by `candidate-001561` |
+| FEM reference terms (median) | field 1.04%, peak 1.56%, displacement 0.055% |
+| Refinement check (4 cases, doubled resolution) | the terms exceed the extrapolated FEM error in every case (smallest factor 2.6) |
+| Confidence pilot (pooled Spearman) | patch-mean 0.644 (selected), patch-mean x h 0.590, pointwise 0.472 |
+| Refusal | 240/240 with the expected code; 0/844 false refusals; codes stable |
+| Latency (one thread, 969 vertices) | 0.116 s median, 0.153 s p99 (u and P); FEM 138 s; speed-up 1,188x |
+
+HOLDOUT is consumed only if the DEVELOPMENT budget and confidence pass
+(ADR 0020, decision 4).
 
 ## 5. Step 3 — Validate (opens DEVELOPMENT, then HOLDOUT once)
 

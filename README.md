@@ -24,7 +24,12 @@ root-peak error 0.83% against the incumbent's 8.09%, P-field relative L2 0.91%
 against 19.20%, and no folded interior point. The amended G11 gate
 (`artifacts/gates/S11-ENERGY.json`) and G13 (`artifacts/gates/S13.json`) pass,
 and `CP-FREEZE` freezes that checkpoint for S14. The joint-hybrid contrast of
-ADR 0017 is parked unexecuted. The project does not yet certify or serve a
+ADR 0017 is parked unexecuted. S14 has built its verification layer and
+rehearsed it on TRAIN evidence only
+([plan](docs/campaigns/s14-verification-plan.md),
+[ADR 0019](docs/adr/0019-s14-verification-decisions.md),
+[ADR 0020](docs/adr/0020-s14-protocol-methods.md)); the frozen
+`S14-PROTOCOL.json` awaits sign-off before DEVELOPMENT is opened. The project does not yet certify or serve a
 trained neural operator. Read the
 [project limitations](docs/limitations.md) before using its numerical results.
 
