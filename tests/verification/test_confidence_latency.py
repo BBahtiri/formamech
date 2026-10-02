@@ -16,6 +16,7 @@ from piginot.operators import (
 from piginot.verification import (
     INDICATOR_VARIANTS,
     QuantileCurve,
+    boundary_traction_residual,
     cell_quadrature_points,
     equilibrium_residual,
     fit_quantile_curve,
@@ -218,3 +219,53 @@ def test_latency_reports_median_and_p99_and_restores_threads() -> None:
         measure_latency(lambda: None, repeats=0)
     with pytest.raises(TypeError):
         measure_latency(None)  # type: ignore[arg-type]
+
+
+def test_boundary_traction_residual_uses_outward_normals_and_free_components() -> None:
+    vertices = torch.tensor(
+        [[0.0, 0.0], [2.0, 0.0], [0.0, 2.0], [2.0, 2.0]], dtype=_DTYPE
+    )
+    cells = torch.tensor([[0, 1, 2], [1, 3, 2]])
+    a, b, c, d = 3.0, 4.0, 5.0, 6.0
+    stress = torch.tensor([[a, b], [c, d]], dtype=_DTYPE).expand(4, 2, 2).clone()
+    facets = ((0, 1), (1, 3), (3, 2), (2, 0))
+    free = ((0,), (0, 1), (), (1,))
+    traction = boundary_traction_residual(
+        stress, vertices, cells, facets, free, elastic_modulus=10.0
+    )
+    right = math.hypot(a, c)
+
+    assert traction.tolist() == pytest.approx(
+        [(b + c) / 20.0, (b + right) / 20.0, c / 20.0, right / 20.0]
+    )
+    variants = indicator_variants(
+        lambda x: torch.zeros(x.shape[0], dtype=_DTYPE),
+        vertices,
+        cells,
+        length_scale=1.0,
+        traction=traction,
+    )
+    assert all(torch.allclose(v, traction) for v in variants.values())
+    with pytest.raises(ValueError):
+        indicator_variants(
+            lambda x: x[:, 0], vertices, cells, length_scale=1.0, traction=traction[:3]
+        )
+    for bad in (
+        {"vertex_stress": stress[:3]},
+        {"free_components": free[:3]},
+        {"elastic_modulus": 0.0},
+        {"facets": ((0, 3), *facets[1:])},
+        {"free_components": ((2,), *free[1:])},
+    ):
+        arguments = {
+            "vertex_stress": stress,
+            "vertices": vertices,
+            "cells": cells,
+            "facets": facets,
+            "free_components": free,
+            "elastic_modulus": 10.0,
+            **bad,
+        }
+        modulus = arguments.pop("elastic_modulus")
+        with pytest.raises(ValueError):
+            boundary_traction_residual(**arguments, elastic_modulus=modulus)  # type: ignore[arg-type]

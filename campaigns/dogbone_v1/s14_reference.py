@@ -38,8 +38,9 @@ from __future__ import annotations
 
 import dataclasses
 import math
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import ClassVar
+from typing import ClassVar, Protocol
 
 import numpy as np
 
@@ -55,13 +56,23 @@ from campaigns.dogbone_v1.s13_fem_recovery_reference import (
     summarize_fem_recovery_reference,
 )
 from piginot.contracts import CanonicalMesh
-from piginot.doe import PublishedCase
 from piginot.fem import FemRequest, FemResult
 from piginot.fem.error_estimation import richardson_fine_grid_error
 from piginot.morphing.circular_transition import (
     build_circular_transition_reference_mesh,
 )
 from piginot.morphing.validation import validate_deformation
+
+
+class CaseGeometry(Protocol):
+    """Any case record with an identifier and primitive coordinates."""
+
+    @property
+    def case_id(self) -> str: ...
+
+    @property
+    def primitive_coordinates(self) -> Mapping[str, float]: ...
+
 
 RECOVERY_SAFETY_FACTOR = 2.61
 RICHARDSON_SAFETY_FACTOR = 1.97
@@ -82,7 +93,7 @@ def root_vertices(mesh: CanonicalMesh) -> tuple[int, ...]:
     )
 
 
-def level_mesh(case: PublishedCase, scale: float) -> CanonicalMesh:
+def level_mesh(case: CaseGeometry, scale: float) -> CanonicalMesh:
     """The S10 mesh recipe with ``scale`` times the columns and rows."""
 
     counts = {
@@ -112,7 +123,7 @@ def level_mesh(case: PublishedCase, scale: float) -> CanonicalMesh:
     return mesh
 
 
-def level_request(case: PublishedCase, request: FemRequest, scale: float) -> FemRequest:
+def level_request(case: CaseGeometry, request: FemRequest, scale: float) -> FemRequest:
     """The S10 request of ``case`` on the level mesh with ``scale`` resolution."""
 
     if request.request_id != case.case_id:
@@ -325,7 +336,7 @@ def refined_error_proxy(
 
 
 def observed_orders(
-    case: PublishedCase,
+    case: CaseGeometry,
     request: FemRequest,
     result: FemResult,
     fine: FemRequest,
@@ -374,6 +385,7 @@ __all__ = (
     "REFINEMENT_RATIO",
     "RICHARDSON_ORDER",
     "RICHARDSON_SAFETY_FACTOR",
+    "CaseGeometry",
     "FemReferenceTerms",
     "nested_vertex_map",
     "observed_orders",

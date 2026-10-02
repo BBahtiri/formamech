@@ -16,6 +16,7 @@ from piginot.verification.budget import (
 from piginot.verification.confidence import (
     INDICATOR_VARIANTS,
     QuantileCurve,
+    boundary_traction_residual,
     cell_quadrature_points,
     equilibrium_residual,
     fit_quantile_curve,
@@ -78,6 +79,7 @@ __all__ = (
     "VerificationFamily",
     "VerificationReport",
     "build_report",
+    "boundary_traction_residual",
     "cell_quadrature_points",
     "consume_holdout",
     "equilibrium_residual",

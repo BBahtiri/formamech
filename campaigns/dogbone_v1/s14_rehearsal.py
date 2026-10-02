@@ -39,6 +39,7 @@ from campaigns.dogbone_v1.s13c_data import DogboneS13cGeometryCase
 from campaigns.dogbone_v1.s13c_protocol import load_s13c_normalization
 from campaigns.dogbone_v1.s14_candidate import (
     INDICATOR_LENGTH_SCALE_MM,
+    S14Case,
     ScoredCase,
     load_frozen_candidate,
     score_case,
@@ -185,6 +186,21 @@ class CaseRecord:
     minimum_vertex_determinant: float
 
 
+@dataclass(frozen=True, slots=True)
+class SolvedCase:
+    """One case with its verified S10-recipe request and P2 result."""
+
+    case: S14Case
+    request: FemRequest
+    result: FemResult
+
+    @classmethod
+    def from_s10(cls, verified: VerifiedS10Case) -> SolvedCase:
+        return cls(
+            S14Case.from_published(verified.case), verified.request, verified.result
+        )
+
+
 def _solve(request: FemRequest) -> tuple[FemResult, float]:
     """Solve on one torch thread (the S10 execution profile) and time it."""
 
@@ -209,61 +225,78 @@ def _case_files(run_root: Path, case_id: str) -> tuple[Path, Path]:
 
 def rehearse_case(
     model: torch.nn.Module,
-    verified: VerifiedS10Case,
+    solved: SolvedCase,
     normalization: object,
     run_root: Path,
+    *,
+    allowed_roles: frozenset[EvidenceRole] = _TRAIN,
 ) -> tuple[CaseRecord, torch.Tensor, dict[str, torch.Tensor]]:
     """Score, solve the coarse level and measure the reference terms (cached)."""
 
-    case = verified.case
+    case = solved.case
     record_path, arrays_path = _case_files(run_root, case.case_id)
-    if record_path.exists() and arrays_path.exists():
+    record: CaseRecord | None = None
+    if record_path.exists():
         document = json.loads(record_path.read_text(encoding="utf-8"))
         document["slices"] = tuple(document["slices"])
         document["reported_slices"] = tuple(document["reported_slices"])
-        arrays = np.load(arrays_path)
-        return (
-            CaseRecord(**document),
-            torch.from_numpy(arrays["error"]),
-            {
-                variant: torch.from_numpy(arrays[variant])
-                for variant in INDICATOR_VARIANTS
-            },
-        )
+        record = CaseRecord(**document)
+        if arrays_path.exists():
+            arrays = np.load(arrays_path)
+            if "traction" in arrays.files:
+                return (
+                    record,
+                    torch.from_numpy(arrays["error"]),
+                    {
+                        name: torch.from_numpy(arrays[name])
+                        for name in (*INDICATOR_VARIANTS, "traction")
+                    },
+                )
     torch.set_num_threads(SCORING_THREADS)
     scored = score_case(
         model,  # type: ignore[arg-type]
         case,
-        verified.request,
-        verified.result,
+        solved.request,
+        solved.result,
         normalization,  # type: ignore[arg-type]
-        allowed_roles=_TRAIN,
+        allowed_roles=allowed_roles,
     )
-    coarse = level_request(case, verified.request, 0.5)
-    coarse_result, seconds = _solve(coarse)
-    terms = reference_terms(
-        case.case_id, verified.request, verified.result, coarse, coarse_result
-    )
-    record = CaseRecord(
-        case_id=case.case_id,
-        slices=slice_ids(case, GATED_AXES),
-        reported_slices=slice_ids(case, REPORTED_AXES)[1:],
-        surrogate=surrogate_components(scored),
-        terms=asdict(terms),
-        components=terms.components(),
-        coarse_solve_seconds=seconds,
-        minimum_vertex_determinant=scored.diagnostics.minimum_vertex_determinant,
-    )
-    record_path.write_text(json.dumps(asdict(record), sort_keys=True), encoding="utf-8")
+    if record is None:
+        coarse = level_request(case, solved.request, 0.5)
+        coarse_result, seconds = _solve(coarse)
+        terms = reference_terms(
+            case.case_id, solved.request, solved.result, coarse, coarse_result
+        )
+        record = CaseRecord(
+            case_id=case.case_id,
+            slices=slice_ids(case, GATED_AXES),
+            reported_slices=slice_ids(case, REPORTED_AXES)[1:],
+            surrogate=surrogate_components(scored),
+            terms=asdict(terms),
+            components=terms.components(),
+            coarse_solve_seconds=seconds,
+            minimum_vertex_determinant=scored.diagnostics.minimum_vertex_determinant,
+        )
+        record_path.write_text(
+            json.dumps(asdict(record), sort_keys=True), encoding="utf-8"
+        )
+    elif surrogate_components(scored) != record.surrogate:
+        raise RuntimeError(f"{case.case_id} rescoring differs from its cached record")
+    assert scored.traction is not None
     np.savez(
         arrays_path,
         error=scored.pointwise_stress_error.numpy(),
+        traction=scored.traction.numpy(),
         **{
             variant: scored.indicators[variant].numpy()
             for variant in INDICATOR_VARIANTS
         },
     )
-    return record, scored.pointwise_stress_error, dict(scored.indicators)
+    return (
+        record,
+        scored.pointwise_stress_error,
+        {**scored.indicators, "traction": scored.traction},
+    )
 
 
 def _terms(record: CaseRecord) -> FemReferenceTerms:
@@ -343,6 +376,15 @@ def confidence_pilot(
 
     correlations = pooled_spearman(errors, indicators)
     chosen = select_variant(correlations)
+    interior_only = None
+    if all("traction" in case for case in indicators):
+        interior_only = pooled_spearman(
+            errors,
+            [
+                {v: case[v] - case["traction"] for v in INDICATOR_VARIANTS}
+                for case in indicators
+            ],
+        )
     per_case = {
         variant: statistics.median(
             spearman(case[variant], error)
@@ -364,6 +406,7 @@ def confidence_pilot(
         "error_definition": "Frobenius norm of the in-plane first-Piola error "
         "at the vertex, divided by 760 MPa",
         "pooled_spearman": correlations,
+        "pooled_spearman_without_boundary_term": interior_only,
         "median_per_case_spearman": per_case,
         "selected_variant": chosen,
         "threshold_on_development": CONFIDENCE_THRESHOLD,
@@ -438,9 +481,10 @@ def _model_calls(
 
 def latency_run(
     model: torch.nn.Module,
-    cases: Sequence[VerifiedS10Case],
+    cases: Sequence[SolvedCase],
     normalization: object,
     *,
+    allowed_roles: frozenset[EvidenceRole] = _TRAIN,
     repeats: int = 20,
 ) -> dict[str, object]:
     """Single-thread operator latency at the vertices against re-solved FEM."""
@@ -457,7 +501,7 @@ def latency_run(
             verified.case,
             verified.request,
             normalization,  # type: ignore[arg-type]
-            allowed_roles=_TRAIN,
+            allowed_roles=allowed_roles,
         )
         displacement_only, displacement_and_stress = _model_calls(model, geometry)
         for call, sink in (
@@ -491,7 +535,7 @@ def latency_run(
 
 
 def refinement_check(
-    cases: Sequence[VerifiedS10Case], records: Mapping[str, CaseRecord]
+    cases: Sequence[SolvedCase], records: Mapping[str, CaseRecord]
 ) -> list[dict[str, object]]:
     """Refined (2x) solves: extrapolated S10 error against the budget terms."""
 
@@ -554,19 +598,18 @@ def run_rehearsal(
     records: list[CaseRecord] = []
     errors: list[torch.Tensor] = []
     indicators: list[dict[str, torch.Tensor]] = []
-    verified_cases: list[VerifiedS10Case] = []
+    verified_cases: list[SolvedCase] = []
     for verified in source.iter_train_screen():
         if max_cases is not None and len(records) >= max_cases:
             break
         if verified.case.role is not EvidenceRole.TRAIN:
             raise PermissionError("non-TRAIN evidence reached the rehearsal")
-        record, error, variants = rehearse_case(
-            model, verified, normalization, run_root
-        )
+        solved = SolvedCase.from_s10(verified)
+        record, error, variants = rehearse_case(model, solved, normalization, run_root)
         records.append(record)
         errors.append(error)
         indicators.append(variants)
-        verified_cases.append(verified)
+        verified_cases.append(solved)
         progress(f"{len(records):2d}/64 {record.case_id}")
     if source.development_opened:
         raise RuntimeError("DEVELOPMENT labels opened during the TRAIN rehearsal")
@@ -660,6 +703,7 @@ __all__ = (
     "REPORTED_SLICES",
     "TOLERANCES",
     "CaseRecord",
+    "SolvedCase",
     "budget_entry",
     "budget_summary",
     "confidence_pilot",

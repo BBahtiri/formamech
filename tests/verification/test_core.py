@@ -191,6 +191,8 @@ def test_optional_checks_do_not_block_and_empty_required_does_not_verify() -> No
 def test_certification_wording_is_detected_and_refused() -> None:
     assert forbidden_wording("This bundle is Certified.") == ("Certif",)
     assert forbidden_wording("verified within tolerance") == ()
+    assert forbidden_wording('{"id": "G14.no-certified"}') == ()
+    assert forbidden_wording("G14.no-certified: not certified") == ("certif",)
     report = build_report(
         (CheckRecord("a", CheckStatus.NOT_RUN, True, reason="certified elsewhere"),),
         evidence_level=ClaimLevel.DEVELOPMENT_VERIFIED,

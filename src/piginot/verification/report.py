@@ -19,6 +19,9 @@ from piginot.verification.status import CheckStatus, ClaimLevel
 
 SECTIONS = ("required", "passed", "failed", "errored", "skipped", "not_run")
 _FORBIDDEN = re.compile(r"certif", re.IGNORECASE)
+# The registered identifier of the check that enforces this scan is a name,
+# not a claim; it is the only exempt occurrence.
+_CHECK_IDENTIFIER = re.compile(r"\bG14\.no-certified\b")
 _SECTION_OF = {
     CheckStatus.PASS: "passed",
     CheckStatus.FAIL: "failed",
@@ -117,7 +120,8 @@ def forbidden_wording(text: str) -> tuple[str, ...]:
 
     if not isinstance(text, str):
         raise TypeError("text must be a string")
-    return tuple(match.group(0) for match in _FORBIDDEN.finditer(text))
+    scanned = _CHECK_IDENTIFIER.sub("", text)
+    return tuple(match.group(0) for match in _FORBIDDEN.finditer(scanned))
 
 
 def render_report(report: VerificationReport) -> str:

@@ -4,10 +4,20 @@ The served stress of the energy-form operator is constitutive, so its
 in-plane constitutive and angular-momentum residuals vanish identically. The
 remaining indicator is the strong-form equilibrium residual
 ``r = |Div P| * length_scale / E`` evaluated by automatic differentiation of
-the predicted displacement. Three preregistered variants are provided
-(pointwise at the vertices, the mean over the incident cells' quadrature
-points, and that mean times the local mesh size), together with Spearman's
-rank correlation and an isotonic calibration of an error quantile.
+the predicted displacement, together with the natural-boundary residual
+``t = |(P N)_free| / E``: the traction components that no boundary condition
+prescribes, which must vanish (both components on a traction-free edge, the
+tangential one on a symmetry or single-component Dirichlet edge). Three
+preregistered variants combine them at the vertices:
+
+- ``pointwise``: ``r(v) + t(v)``;
+- ``patch-mean``: the mean of ``r`` over the incident cells' quadrature
+  points, plus ``t(v)``;
+- ``patch-mean-times-h``: that mean times ``h(v) / length_scale``, plus
+  ``t(v)`` (the pointwise analogue of a residual error estimator).
+
+``t`` is zero at interior vertices. Spearman's rank correlation and an
+isotonic calibration of an error quantile complete the module.
 """
 
 from __future__ import annotations
@@ -122,24 +132,84 @@ def vertex_mesh_size(vertices: torch.Tensor, cells: torch.Tensor) -> torch.Tenso
     return totals / counts
 
 
+def boundary_traction_residual(
+    vertex_stress: torch.Tensor,
+    vertices: torch.Tensor,
+    cells: torch.Tensor,
+    facets: tuple[tuple[int, int], ...],
+    free_components: tuple[tuple[int, ...], ...],
+    *,
+    elastic_modulus: float,
+) -> torch.Tensor:
+    """Mean ``|(P N)_free| / E`` over the boundary facets incident to a vertex.
+
+    ``free_components[f]`` names the traction components of facet ``f`` that
+    must vanish; ``N`` is the outward unit normal of the facet. Interior
+    vertices get zero.
+    """
+
+    count = vertices.shape[0]
+    if vertex_stress.shape != (count, 2, 2):
+        raise ValueError("vertex_stress must have shape (vertices, 2, 2)")
+    if len(facets) != len(free_components):
+        raise ValueError("every facet needs its free traction components")
+    if not math.isfinite(elastic_modulus) or elastic_modulus <= 0.0:
+        raise ValueError("elastic modulus must be finite and positive")
+    opposite: dict[frozenset[int], int] = {}
+    for cell in cells.tolist():
+        for first, second, third in ((0, 1, 2), (1, 2, 0), (2, 0, 1)):
+            opposite[frozenset((cell[first], cell[second]))] = cell[third]
+    totals = torch.zeros(count, dtype=vertex_stress.dtype)
+    counts = torch.zeros(count, dtype=vertex_stress.dtype)
+    for (first, second), components in zip(facets, free_components, strict=True):
+        if any(component not in (0, 1) for component in components):
+            raise ValueError("traction components must be 0 (x) or 1 (y)")
+        try:
+            inner = opposite[frozenset((first, second))]
+        except KeyError as exc:
+            raise ValueError("boundary facet is not an edge of the mesh") from exc
+        edge = vertices[second] - vertices[first]
+        normal = torch.stack((edge[1], -edge[0])) / torch.linalg.vector_norm(edge)
+        if float(torch.dot(vertices[inner] - vertices[first], normal)) > 0.0:
+            normal = -normal
+        for vertex in (first, second):
+            counts[vertex] += 1.0
+            if components:
+                traction = vertex_stress[vertex] @ normal
+                totals[vertex] += (
+                    torch.linalg.vector_norm(traction[list(components)])
+                    / elastic_modulus
+                )
+    return torch.where(counts > 0, totals / counts.clamp(min=1.0), totals)
+
+
 def indicator_variants(
     residual: Callable[[torch.Tensor], torch.Tensor],
     vertices: torch.Tensor,
     cells: torch.Tensor,
     *,
     length_scale: float,
+    traction: torch.Tensor | None = None,
 ) -> dict[str, torch.Tensor]:
-    """Evaluate the three preregistered variants at the mesh vertices."""
+    """Evaluate the three preregistered variants at the mesh vertices.
+
+    ``traction`` is the vertex boundary residual of
+    :func:`boundary_traction_residual`; ``None`` evaluates the interior
+    residual alone.
+    """
 
     pointwise = residual(vertices)
     points = cell_quadrature_points(vertices, cells)
     cell_mean = residual(points.reshape(-1, 2)).reshape(points.shape[:2]).mean(dim=1)
     patch = vertex_patch_mean(vertices.shape[0], cells, cell_mean)
     size = vertex_mesh_size(vertices, cells) / length_scale
+    boundary = torch.zeros_like(pointwise) if traction is None else traction
+    if boundary.shape != pointwise.shape:
+        raise ValueError("traction must hold one value per vertex")
     return {
-        "pointwise": pointwise,
-        "patch-mean": patch,
-        "patch-mean-times-h": patch * size,
+        "pointwise": pointwise + boundary,
+        "patch-mean": patch + boundary,
+        "patch-mean-times-h": patch * size + boundary,
     }
 
 
@@ -250,6 +320,7 @@ def fit_quantile_curve(
 __all__ = (
     "INDICATOR_VARIANTS",
     "QuantileCurve",
+    "boundary_traction_residual",
     "cell_quadrature_points",
     "equilibrium_residual",
     "fit_quantile_curve",
