@@ -105,4 +105,4 @@ threshold changes after DEVELOPMENT opens, and any claim above
 | Equilibrium residual correlates weakly with the error | `G14.confidence` FAIL | TRAIN pilot before opening; a failure needs a new ADR, not a lowered threshold |
 | Stress needs one forward and two reverse passes per query | latency target tighter | measured and reported regardless (STEPS) |
 | `IMPLEMENTATION-v1.0-OSS.md` missing | reducer families unknown | user provides the file before item 1.3 |
-| Family generality (ADR 0001 Risk 3) | S17 `G17.non-dogbone` | second-family spike runs in parallel (`experiments/holed_plate`) |
+| Family generality (ADR 0001 Risk 3) | S17 `G17.non-dogbone` | second-family spike (`experiments/holed_plate`, branch `codex/second-family-spike`): the unchanged operator handles a domain with a hole (peak error 2.35%, no folded point) but its stress-field error is 5.05% against a preregistered 5%; a follow-up spike is needed before S17 |
