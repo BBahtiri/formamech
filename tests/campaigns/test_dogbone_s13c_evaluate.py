@@ -106,7 +106,9 @@ def test_each_frozen_guardrail_blocks_selection(
 
     assert failed_guardrails(protocol, metrics) == expected
     with pytest.raises(NoEligibleTrialError):
-        select_checkpoint((_result(protocol, metrics),), policy=protocol.selection_policy)
+        select_checkpoint(
+            (_result(protocol, metrics),), policy=protocol.selection_policy
+        )
 
 
 def test_historical_s13_failures_stay_ineligible(protocol: DogboneS13cProtocol) -> None:
@@ -131,9 +133,7 @@ def test_historical_s13_failures_stay_ineligible(protocol: DogboneS13cProtocol) 
         "median_absolute_peak_error",
         "p90_absolute_peak_error",
     )
-    assert failed_guardrails(protocol, s13b_peak_arm) == (
-        "invalid_collocation_points",
-    )
+    assert failed_guardrails(protocol, s13b_peak_arm) == ("invalid_collocation_points",)
 
 
 def test_selection_refuses_non_train_evidence(protocol: DogboneS13cProtocol) -> None:

@@ -52,7 +52,9 @@ def test_training_summary_keeps_replayed_records_once(tmp_path: Path) -> None:
     assert summary["logged_steps"] == 200
     assert summary["replayed_log_records"] == 50
     assert summary["maximum_barrier"] == 0.0
-    assert summary["mean_energy_last_100_steps"] > summary["mean_energy_first_100_steps"]
+    assert (
+        summary["mean_energy_last_100_steps"] > summary["mean_energy_first_100_steps"]
+    )
 
 
 def test_training_summary_rejects_missing_steps(tmp_path: Path) -> None:

@@ -1,6 +1,9 @@
 # S13c plan — replace the S13 model with the energy-form PI-GINOT
 
-- Status: Plan (work in progress on branch `codex/s13c-enhanced-model`)
+- Status: Steps 1-3 complete on branch `codex/s13c-enhanced-model`; the
+  registered checkpoint passes every frozen S13 guardrail on TRAIN evidence
+  (see "Outcome" at the end); `G13`/`CP-FREEZE` await user ratification of
+  ADR 0017
 - Date: 2026-10-01
 - Base: `codex/s13b-evaluation` at `9f90ca3` (copied from `pi_ginot_large_s13b_eval`)
 - New implementation source: `pi-ginot-enhanced`, published commit `12c9c1c`
@@ -108,3 +111,21 @@ Acceptance: everything green in the copy.
 
 **Out of scope here:** writing `CP-FREEZE`, `artifacts/gates/S13.json`, or
 opening HOLDOUT. Those stay a user decision after reviewing the evidence.
+
+## 6. Outcome
+
+| Step | Result |
+|---|---|
+| 1. Implement | Energy-form operator, potential-energy objective and trainer in `src/piginot`; S13c protocol, data, trial, evaluator and evidence writer in `campaigns/dogbone_v1`; ADR 0017. Reproducibility fixes: canonical safetensors headers, exact cross-platform S10 request verification. |
+| 2. Test | New tests for operator, energy, trainer, protocol, data/lifting, trial, evaluator, evidence and portability; pre-existing S11 execute-harness failures fixed; ruff, ruff format and `mypy --strict src/` clean; full suite and coverage in the final commit message. |
+| 3. Validate | Registered 2,400-step trial: median abs. root-peak error 0.83% (limit 8.09%), p90 1.69% (13.63%), median signed -0.29% (>= -6.99%), P L2 0.91% (19.58%), u L2 0.08% (3.81%), 0 invalid points over 256 TRAIN cases. Replay probe: byte-identical after interrupt/resume. |
+
+| Issue | Status |
+|---|---|
+| I1 no admissible S13 trial | Resolved on TRAIN evidence (`S13C-TRAIN-SCREEN.json`) |
+| I2 field/peak trade-off, folded point | Resolved: peak and field improve together; min det F 0.990 |
+| I3 grad u inconsistent with served P | Resolved by construction; strain energy within 0.009% of FEM |
+| I4 orientation only softly protected | Improved: exact lifting + barrier never activated; still a sampled check |
+| I5 wrong peak location | Improved: median 0.54 mm from the FEM peak vertex |
+| I6 G13 / CP-FREEZE / S14 blocked | Open: needs ratification of ADR 0017 (G11.heads amendment, G11 re-run) and the G13 gate artifact |
+| I7 damaged shared git config | Resolved in the copy (standalone repository, correct author) |

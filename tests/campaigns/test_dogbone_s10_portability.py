@@ -65,6 +65,8 @@ def test_repair_refuses_differences_outside_the_angle_diagnostics() -> None:
     moved = replace(reference, nodes=tuple(nodes))
 
     for planned in (far, other_metric, moved):
-        assert _repair_quality_angle_ulps(reference, hash_spec(planned, "content")) is None
+        assert (
+            _repair_quality_angle_ulps(reference, hash_spec(planned, "content")) is None
+        )
     missing = replace(reference, quality_metrics={"maximum_aspect_ratio": 1.0})
     assert _repair_quality_angle_ulps(missing, "0" * 64) is None

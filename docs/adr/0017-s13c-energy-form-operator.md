@@ -1,7 +1,8 @@
 # ADR 0017: Replace the S13 operator with the energy-form PI-GINOT (S13c)
 
-- Status: Proposed — implementation and TRAIN-only evidence complete; awaiting
-  user ratification before any `CP-FREEZE`, `G13` or S14 decision
+- Status: Proposed — implemented; TRAIN-only evidence passes every frozen S13
+  guardrail; awaiting user ratification before any `CP-FREEZE`, `G13` or S14
+  decision
 - Date: 2026-10-01
 - Step: S13 recovery (S13c), branch `codex/s13c-enhanced-model`
 - Supersedes for S13c: the S11 baseline-A operator as the S13 model; amends
@@ -102,3 +103,45 @@ integration tests: `tests/operators/test_energy_operator.py`,
 `tests/campaigns/test_dogbone_s13c_*.py`,
 `tests/campaigns/test_dogbone_s10_portability.py`. TRAIN-screen evidence:
 `artifacts/campaigns/dogbone-v1/S13C-TRAIN-SCREEN.json` (outcome below).
+
+## Outcome (TRAIN-only, 2026-10-01)
+
+The single registered trial trained for all 2,400 steps from revision
+`8736c1a` (run `0ca34e32…`, final manifest `a978c3d6…`) in 2 h 54 min of
+wall time on two CPU cores. The determinant barrier never activated and no
+quadrature point was inadmissible; the smallest sampled `det F` during
+training was 0.947.
+
+TRAIN-screen evidence, `S13C-TRAIN-SCREEN.json` (64 FEM cases, unchanged S13
+metric code, evaluator revision `fdfda00`):
+
+| Metric | S11 incumbent | S13 trial 0 | S13b peak arm | S13c | Frozen limit |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Median absolute root-peak error | 8.086% | 12.255% | 4.313% | **0.828%** | ≤ 8.086% |
+| p90 absolute root-peak error | 13.635% | 17.334% | 7.647% | **1.693%** | ≤ 13.635% |
+| Median signed root-peak error | -7.762% | -12.255% | -4.111% | **-0.288%** | ≥ -6.986% |
+| Median P-field relative L2 | 19.200% | 14.236% | 16.615% | **0.909%** | ≤ 19.584% |
+| Median u-field relative L2 | 3.731% | 3.502% | 3.673% | **0.081%** | ≤ 3.805% |
+| Invalid interior points (256 TRAIN cases) | 0 | 0 | 1 | **0** | 0 |
+
+`select_checkpoint` with the frozen policy admits the trial (no failed
+guardrail). Descriptive diagnostics on the same cases: the model strain
+energy exceeds the stored FEM strain energy by a median 0.0087% (maximum
+0.074%); root-vertex P relative L2 is 2.97% and the remaining field 0.82%;
+the predicted root peak lies a median 0.54 mm from the FEM peak vertex (the
+same vertex in 19 of 64 cases); 36 of 64 cases under-predict the peak, versus
+55 of 64 for the S11 incumbent. The minimum `det F` is 0.990 at the replayed
+interior points and 0.963 at the screen-case vertices.
+
+`S13C-G13-REPLAY-PROBE.json`: an independent process replayed the registered
+trial from a clean checkout of `8736c1a`, interrupted at step 200 and resumed
+to 400; model export, full training state and manifest are byte-identical to
+the registered step-400 checkpoint (`G13.determinism` and `G13.resume` PASS
+on real data).
+
+Issue status: I1-I5 are resolved on TRAIN evidence. I6 is not: closing `G13`,
+writing `CP-FREEZE` and starting S14 still require (a) ratifying this ADR,
+including the `G11.heads` amendment and a G11 re-run for the
+parameter-conditioned operator, where the boundary-cloud checks are not
+applicable, and (b) the remaining `G13` gate artifact. DEVELOPMENT and HOLDOUT
+remain unopened.
