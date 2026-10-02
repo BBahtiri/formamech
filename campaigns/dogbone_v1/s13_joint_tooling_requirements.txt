@@ -1,0 +1,4 @@
+# Isolated copy only: no scientific package or shared-runtime updates.
+urllib3==2.8.0 --hash=sha256:0cf3cae568d36aa9576b28dfb35f11328f1cb974ca7647d9475ebb86c75ac6e3
+virtualenv==21.7.13 --hash=sha256:1bea5af7463f59c4719db48fe739579a2a4f569c96f26c086edda85c96da9f59
+python-discovery==1.6.0 --hash=sha256:d4e244cf17b8b29819ed78003d55fbacf86eda23425b075454fff9271b79377a
