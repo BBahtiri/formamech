@@ -1,7 +1,8 @@
 # ADR 0020: S14 protocol methods — FEM reference error, indicator, access and freeze
 
-- Status: Proposed — to be accepted with the user's sign-off of
+- Status: Accepted — signed off by the user on 2026-10-02 together with
   `artifacts/campaigns/dogbone-v1/S14-PROTOCOL.json`
+  (`S14-PROTOCOL-SIGNOFF.json`, protocol digest `99c27839…`)
 - Date: 2026-10-02
 - Step: S14 step 2 (TRAIN rehearsal), before any DEVELOPMENT access
 - Refines: ADR 0019 (S14-D1 projection component, S14-D4 residual definition)

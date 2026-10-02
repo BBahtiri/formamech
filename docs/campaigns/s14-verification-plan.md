@@ -2,10 +2,11 @@
 
 - Status: **Decisions accepted** by the user on 2026-10-02 (S14-D1 … D4, see
   [ADR 0019](../adr/0019-s14-verification-decisions.md)). Steps 1 and 2 are
-  done: the TRAIN rehearsal is in `S14-TRAIN-REHEARSAL.json` and the frozen
-  `S14-PROTOCOL.json` awaits the user's sign-off, together with the methods
-  of [ADR 0020](../adr/0020-s14-protocol-methods.md). Nothing has opened
-  DEVELOPMENT or HOLDOUT.
+  done: the TRAIN rehearsal is in `S14-TRAIN-REHEARSAL.json`, and the user
+  signed off the frozen `S14-PROTOCOL.json` and the methods of
+  [ADR 0020](../adr/0020-s14-protocol-methods.md) on 2026-10-02
+  (`S14-PROTOCOL-SIGNOFF.json`). Step 3 opens DEVELOPMENT; HOLDOUT is
+  consumed only if DEVELOPMENT passes.
 - Date: 2026-10-02
 - Base: `codex/s13-closeout` at `6f2034f` (G13 PASS, `CP-FREEZE` written)
 - Frozen candidate: S13c energy-form operator, run `0ca34e32…`, manifest

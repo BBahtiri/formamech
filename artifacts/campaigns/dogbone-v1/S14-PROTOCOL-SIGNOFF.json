@@ -1,0 +1,13 @@
+{
+ "accepted_records": [
+  "artifacts/campaigns/dogbone-v1/S14-PROTOCOL.json",
+  "docs/adr/0020-s14-protocol-methods.md"
+ ],
+ "decision": "Sign off S14-PROTOCOL.json and ADR 0020; open DEVELOPMENT",
+ "holdout_rule": "HOLDOUT is consumed only if the DEVELOPMENT budget and confidence pass",
+ "protocol_id": "dogbone-v1-s14-protocol-v1",
+ "protocol_sha256": "99c27839754fd734fcb19d3b3b6070ad6f2a8347972f830e7e696abc7800e0db",
+ "recorded_from": "the decision owner's answer in the S14 session chat",
+ "signed_off_by": "Betim Bahtiri",
+ "signed_off_utc": "2026-10-02T13:43:53Z"
+}
