@@ -1,9 +1,10 @@
-# ADR 0017: Replace the S13 operator with the energy-form PI-GINOT (S13c)
+# ADR 0018: Replace the S13 operator with the energy-form PI-GINOT (S13c)
 
-- Status: Proposed — implemented; TRAIN-only evidence passes every frozen S13
-  guardrail; awaiting user ratification before any `CP-FREEZE`, `G13` or S14
-  decision
-- Date: 2026-10-01
+- Status: Accepted — ratified by the user on 2026-10-02 (decision D1). The
+  same decision parks the joint-hybrid contrast of ADR 0017 unexecuted (D2).
+  Drafted as ADR 0017 on `codex/s13c-enhanced-model` and renumbered when the
+  S13 lines were merged, because ADR 0017 was already the ratified contrast
+- Date: 2026-10-01; accepted 2026-10-02
 - Step: S13 recovery (S13c), branch `codex/s13c-enhanced-model`
 - Supersedes for S13c: the S11 baseline-A operator as the S13 model; amends
   `G11.heads` for the new architecture only (see Decision 2)
@@ -145,3 +146,36 @@ including the `G11.heads` amendment and a G11 re-run for the
 parameter-conditioned operator, where the boundary-cloud checks are not
 applicable, and (b) the remaining `G13` gate artifact. DEVELOPMENT and HOLDOUT
 remain unopened.
+
+## Acceptance and the amended G11 check list (2026-10-02)
+
+The user ratified this ADR on 2026-10-02 together with three consequences:
+the joint-hybrid contrast of ADR 0017 is parked unexecuted, the S13 lines are
+merged into `codex/s13-closeout`, and G11 is re-run for this architecture
+before `G13` and `CP-FREEZE` are written.
+
+`artifacts/gates/S11.json` stays the record for the S11 two-head operator.
+The re-run for `pi-ginot-energy-parametric-film-v1` is a separate artifact,
+`artifacts/gates/S11-ENERGY.json`, measured on the registered S13c checkpoint
+in float64. Its required checks are fixed here, before measurement:
+
+| Check | Rule | Threshold |
+| --- | --- | --- |
+| `G11.node-order` | reverse the query order; compare `u` and `P` | relative change < 1e-6 |
+| `G11.query-batch` | split the queries into three batches | relative change < 1e-6 |
+| `G11.reachability` | every conditioning parameter has a non-zero gradient path to `u` and to `P` | 5 of 5 |
+| `G11.safetensors` | a pickle payload is refused before deserialisation | true |
+| `G11.heads` (amended) | `u` is `(B, Q, 2)`, `P` is `(B, Q, 2, 2)`; the operator's only output layer has two features (no independent stress head); served `P` equals the gradient of the S4 plane-stress energy density at the predicted `F` | all true; relative difference < 1e-10 |
+| `G11.lifting` (replaces `G11.permutation` and `G11.resampling`) | Dirichlet values on `x = 0` (`u_x = 0`), `y = 0` (`u_y = 0`) and `x = L/2` (`u_x = d`) for 64 parameter vectors (the 32 corners of the parameter box, its centre and 31 seeded interior draws) at 320, 480 and 4,800 points per edge | maximum error / `d` < 1e-12 |
+| `G11.lifting-mutant` (replaces `G11.mask`) | the `IGNORE_DIRICHLET_LIFTING` mutant replaces the lifting by the identity (offset 0, scale 1) | fires: control < 1e-12 and mutant > 1e-3 |
+| `G11.coverage` | `tests/operators` coverage of `piginot.operators` | >= 80% |
+
+The boundary-cloud checks do not apply because this operator receives no
+boundary point cloud; the lifting checks are the full-range,
+boundary-refinement verification that S11 requires before hard Dirichlet
+enforcement may be used. Two S13 deliverables are read as follows for this
+architecture: the declared search space is the single registered trial, and
+EMA adaptive weighting is not used because the objective is one energy term
+with a fixed barrier penalty (the S13 adaptive controller remains available
+to the hybrid objectives). `G13` is written to `artifacts/gates/S13.json` and
+the frozen candidate to `artifacts/campaigns/dogbone-v1/CP-FREEZE.json`.

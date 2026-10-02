@@ -43,9 +43,7 @@ from piginot.training import (
 )
 
 _REVISION = re.compile(r"[0-9a-f]{40}\Z")
-_PEAK_MANIFEST_HASH = (
-    "0e2cf32373767784a1ce928e1bd957d305c2901c1fc83d15ee014c2bb8cf7322"
-)
+_PEAK_MANIFEST_HASH = "0e2cf32373767784a1ce928e1bd957d305c2901c1fc83d15ee014c2bb8cf7322"
 _PANEL_STEPS = (
     ("targeted-folded-case-step-753", 753),
     ("post-update-trace-step-800", 800),
@@ -333,9 +331,7 @@ def run_s13_gradient_diagnostic(
                 pilot.base_protocol.objective_registry, "recipe"
             ),
             scheduler_learning_rate=control_loaded.scheduler_state.learning_rate,
-            scheduler_state_hash=hash_spec(
-                control_loaded.scheduler_state, "content"
-            ),
+            scheduler_state_hash=hash_spec(control_loaded.scheduler_state, "content"),
             faithful_snapshots=control_faithful,
             common_peak_snapshots=control_common_peak,
         ),

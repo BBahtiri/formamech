@@ -10,18 +10,19 @@ a fixed TRAIN-only protocol and formally fell back to the S11 baseline. S12 is n
 complete and G12 is PASS: 89 focused tests pass with 92.99% branch coverage, while
 the full suite records 1,928 passed and 2 skipped.
 
-S13 training is in recovery. The six registered S13 hybrid fine-tunes of the S11
-operator and the S13b peak pilot failed the frozen TRAIN-screen guardrails
-(ADR 0015). S13c replaces the operator with the energy-form PI-GINOT: exact
-Dirichlet lifting, a FiLM cross-attention decoder conditioned on the shape and
-load parameters, a potential-energy objective, and stress derived from the
+S13 training is closing out. The six registered S13 hybrid fine-tunes of the
+S11 operator and the S13b peak pilot failed the frozen TRAIN-screen guardrails
+(ADR 0015); one-case diagnostics traced the failure to inaccurate displacement
+gradients (ADR 0016). S13c replaces the operator with the energy-form PI-GINOT:
+exact Dirichlet lifting, a FiLM cross-attention decoder conditioned on the shape
+and load parameters, a potential-energy objective, and stress derived from the
 predicted displacement gradient
-([ADR 0017](docs/adr/0017-s13c-energy-form-operator.md),
+([ADR 0018](docs/adr/0018-s13c-energy-form-operator.md), accepted 2026-10-02;
 [plan and outcome](docs/campaigns/s13c-enhanced-model-plan.md)). Its registered
 TRAIN-only checkpoint passes every frozen S13 guardrail: median absolute
 root-peak error 0.83% against the incumbent's 8.09%, P-field relative L2 0.91%
-against 19.20%, and no folded interior point. `G13`, `CP-FREEZE` and S14 still
-await ratification of ADR 0017. The project does not yet certify or serve a
+against 19.20%, and no folded interior point. The joint-hybrid contrast of
+ADR 0017 is parked unexecuted. The project does not yet certify or serve a
 trained neural operator. Read the
 [project limitations](docs/limitations.md) before using its numerical results.
 

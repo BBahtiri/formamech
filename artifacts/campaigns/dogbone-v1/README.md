@@ -51,7 +51,7 @@ the S10 closeout report.
 - `S13-TRAIN-SCREEN-FAILED.json`, `S13B-TRAIN-PILOT.json` and
   `S13B-TRAIN-INVALID-POINT.json` retain the failed S13 six-trial screen and the
   failed S13b peak pilot (ADR 0015).
-- `S13C-PROTOCOL.json` is the canonical S13c preregistration (ADR 0017): the
+- `S13C-PROTOCOL.json` is the canonical S13c preregistration (ADR 0018): the
   energy-form operator, potential-energy objective, single registered trial,
   sampler seed and the unchanged frozen S13 guardrails. Training refuses to run
   unless the rebuilt protocol equals these bytes.

@@ -154,7 +154,9 @@ def _validate_inputs(
         raise TypeError("post_checkpoint_snapshot must be boolean")
     if not callable(objective):
         raise TypeError("objective must be callable")
-    parameters = tuple(parameter for parameter in model.parameters() if parameter.requires_grad)
+    parameters = tuple(
+        parameter for parameter in model.parameters() if parameter.requires_grad
+    )
     if not parameters:
         raise ValueError("model must contain trainable parameters")
     return parameters
@@ -205,13 +207,11 @@ def _term_gradients(
         flattened[term] = vector
         if term is REFERENCE_PHYSICS_TERM:
             adaptive_statistics[term] = max(
-                float(gradient.detach().abs().max().item())
-                for gradient in connected
+                float(gradient.detach().abs().max().item()) for gradient in connected
             )
         elif term in ADAPTIVE_PHYSICS_TERMS:
             absolute_sum = sum(
-                float(gradient.detach().abs().sum().item())
-                for gradient in connected
+                float(gradient.detach().abs().sum().item()) for gradient in connected
             )
             element_count = sum(gradient.numel() for gradient in connected)
             adaptive_statistics[term] = absolute_sum / element_count
@@ -269,7 +269,9 @@ def measure_objective_gradient_diagnostic(
         if type(residuals) is not ObjectiveResiduals:
             raise TypeError("objective must return exact ObjectiveResiduals")
         missing = tuple(
-            term for term in base_registry.required_terms if term not in residuals.values
+            term
+            for term in base_registry.required_terms
+            if term not in residuals.values
         )
         if missing:
             raise ValueError(
@@ -290,8 +292,12 @@ def measure_objective_gradient_diagnostic(
                 unweighted_loss=float(losses[term].detach().item()),
                 effective_weight=weights[term],
                 weighted_loss=float(losses[term].detach().item()) * weights[term],
-                unweighted_gradient_l2=float(torch.linalg.vector_norm(gradients[term]).item()),
-                weighted_gradient_l2=float(torch.linalg.vector_norm(gradients[term] * weights[term]).item()),
+                unweighted_gradient_l2=float(
+                    torch.linalg.vector_norm(gradients[term]).item()
+                ),
+                weighted_gradient_l2=float(
+                    torch.linalg.vector_norm(gradients[term] * weights[term]).item()
+                ),
             )
             for term in base_registry.required_terms
         )

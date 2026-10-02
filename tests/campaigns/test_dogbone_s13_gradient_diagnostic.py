@@ -68,9 +68,7 @@ def test_matched_diagnostic_validates_checkpoints_before_train_source_and_shares
     access_record = peak.parent / "development-access.json"
     calls: list[str] = []
 
-    monkeypatch.setattr(
-        diagnostic, "build_dogbone_s13b_pilot_plan", lambda: pilot
-    )
+    monkeypatch.setattr(diagnostic, "build_dogbone_s13b_pilot_plan", lambda: pilot)
     monkeypatch.setattr(
         diagnostic,
         "_preflight_paths",
@@ -110,8 +108,12 @@ def test_matched_diagnostic_validates_checkpoints_before_train_source_and_shares
         binding = cast(Any, kwargs["binding"])
         run_hash = binding.run_hash
         manifest_hash = "a" * 64 if checkpoint == control else "b" * 64
-        expected_manifest = pilot.control_manifest_hash if checkpoint == control else (
-            diagnostic._PEAK_MANIFEST_HASH  # noqa: SLF001
+        expected_manifest = (
+            pilot.control_manifest_hash
+            if checkpoint == control
+            else (
+                diagnostic._PEAK_MANIFEST_HASH  # noqa: SLF001
+            )
         )
         assert kwargs["expected_manifest_hash"] == expected_manifest
         return SimpleNamespace(

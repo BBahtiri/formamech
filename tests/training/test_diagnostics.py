@@ -29,9 +29,7 @@ _HASH = "0123456789abcdef" * 4
 class _VectorModel(torch.nn.Module):  # type: ignore[misc]
     def __init__(self) -> None:
         super().__init__()
-        self.weight = torch.nn.Parameter(
-            torch.tensor([1.0, 2.0], dtype=torch.float64)
-        )
+        self.weight = torch.nn.Parameter(torch.tensor([1.0, 2.0], dtype=torch.float64))
         self.unused = torch.nn.Parameter(torch.tensor([7.0], dtype=torch.float64))
 
 
@@ -194,9 +192,7 @@ def test_measurement_exposes_exact_adaptive_targets_and_cap_flags() -> None:
     assert report.post_checkpoint_snapshot is True
     assert report.adaptive_state_last_update_step == 800
     assert report.gradient_space == "raw_loss_gradient_pre_adam"
-    assert report.total_weighted_gradient_l2 == pytest.approx(
-        (3.2**2 + 8.8**2) ** 0.5
-    )
+    assert report.total_weighted_gradient_l2 == pytest.approx((3.2**2 + 8.8**2) ** 0.5)
     assert report.clip_coefficient == pytest.approx(
         1.0 / (report.total_weighted_gradient_l2 + 1.0e-6)
     )
@@ -206,7 +202,9 @@ def test_measurement_is_repeatable_and_restores_runtime_state() -> None:
     model = _VectorModel()
     model.train()
     model.weight.grad = torch.tensor([3.0, 4.0], dtype=torch.float64)
-    before_parameters = tuple(parameter.detach().clone() for parameter in model.parameters())
+    before_parameters = tuple(
+        parameter.detach().clone() for parameter in model.parameters()
+    )
     before_gradient = model.weight.grad.clone()
     torch.manual_seed(991)
     before_rng = torch.random.get_rng_state().clone()
