@@ -58,6 +58,7 @@ pytest tests/doe tests/test_s9_anti_scope.py --cov=src/piginot/doe --cov-fail-un
 pytest tests/operators --cov=src/piginot/operators --cov-fail-under=80
 pytest tests/objectives --cov=src/piginot/objectives --cov-fail-under=85
 pytest tests/training tests/test_s13_anti_scope.py --cov=src/piginot/training --cov-fail-under=80
+pytest tests/verification tests/campaigns/test_dogbone_s14_envelope.py tests/test_s14_anti_scope.py --cov=src/piginot/verification --cov-fail-under=85
 pip-audit
 ```
 

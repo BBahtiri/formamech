@@ -56,5 +56,7 @@ jobs:
         run: python -m pytest tests/objectives --cov=src/piginot/objectives --cov-fail-under=85
       - name: Check S13 training coverage
         run: python -m pytest tests/training tests/test_s13_anti_scope.py --cov=src/piginot/training --cov-fail-under=80
+      - name: Check S14 verification coverage
+        run: python -m pytest tests/verification tests/campaigns/test_dogbone_s14_envelope.py tests/test_s14_anti_scope.py --cov=src/piginot/verification --cov-fail-under=85
       - name: Audit dependencies
         run: python -m pip_audit

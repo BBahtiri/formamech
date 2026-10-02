@@ -1,0 +1,100 @@
+"""S14 verification layer: error budget, report, reducer, holdout order,
+envelope refusal, per-query confidence and latency."""
+
+from piginot.verification.budget import (
+    ALL_CASES_SLICE,
+    COMPONENTS,
+    MINIMUM_QUANTILE_CASES,
+    QUANTILE,
+    BudgetTolerance,
+    CaseBudgetEntry,
+    SliceBudgetResult,
+    evaluate_budget,
+    linear_quantile,
+    slice_statistic,
+)
+from piginot.verification.confidence import (
+    INDICATOR_VARIANTS,
+    QuantileCurve,
+    cell_quadrature_points,
+    equilibrium_residual,
+    fit_quantile_curve,
+    indicator_variants,
+    spearman,
+    vertex_mesh_size,
+    vertex_patch_mean,
+)
+from piginot.verification.envelope import (
+    EnvelopeChecker,
+    GeometryOutcome,
+    RefusalDecision,
+)
+from piginot.verification.holdout import (
+    ConsumptionRecord,
+    HoldoutAlreadyConsumedError,
+    consume_holdout,
+    read_consumption,
+    reveal_after_consumption,
+)
+from piginot.verification.latency import LatencyResult, measure_latency, speedup
+from piginot.verification.reducer import (
+    FamilyOutcome,
+    Reduction,
+    VerificationFamily,
+    reduce_families,
+)
+from piginot.verification.report import (
+    SECTIONS,
+    CheckRecord,
+    VerificationReport,
+    build_report,
+    forbidden_wording,
+    render_report,
+)
+from piginot.verification.status import CheckStatus, ClaimLevel, worst_status
+
+__all__ = (
+    "ALL_CASES_SLICE",
+    "INDICATOR_VARIANTS",
+    "COMPONENTS",
+    "MINIMUM_QUANTILE_CASES",
+    "QUANTILE",
+    "SECTIONS",
+    "BudgetTolerance",
+    "CaseBudgetEntry",
+    "CheckRecord",
+    "CheckStatus",
+    "ClaimLevel",
+    "ConsumptionRecord",
+    "EnvelopeChecker",
+    "FamilyOutcome",
+    "GeometryOutcome",
+    "HoldoutAlreadyConsumedError",
+    "LatencyResult",
+    "QuantileCurve",
+    "RefusalDecision",
+    "Reduction",
+    "SliceBudgetResult",
+    "VerificationFamily",
+    "VerificationReport",
+    "build_report",
+    "cell_quadrature_points",
+    "consume_holdout",
+    "equilibrium_residual",
+    "evaluate_budget",
+    "fit_quantile_curve",
+    "forbidden_wording",
+    "indicator_variants",
+    "linear_quantile",
+    "measure_latency",
+    "read_consumption",
+    "reduce_families",
+    "render_report",
+    "reveal_after_consumption",
+    "slice_statistic",
+    "spearman",
+    "speedup",
+    "vertex_mesh_size",
+    "vertex_patch_mean",
+    "worst_status",
+)
