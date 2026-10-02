@@ -42,7 +42,6 @@ from piginot.training import (
     GridSearchSpace,
     SelectionGuardrails,
     SelectionPolicy,
-    model_state_hash,
 )
 
 DOGBONE_S13C_PROTOCOL_ID: Final = "dogbone-s13c-energy-form-operator-v1"
@@ -76,6 +75,12 @@ _PUBLIC_MANIFEST_HASH = (
     "ce95c03f5b22308a7aa9bf627966a6b21300a4e7b0272d3affa7dd503af564a9"
 )
 _NORMALIZATION_HASH = "b3f59978629e11a4f7535d4f7be17984ffa7323d3a164128a2b8cd4fbf7420df"
+# Pinned from the AVX2/AVX512 initialisation path used for the registered run.
+# Scalar (non-vectorised) torch kernels draw different normal() bits, so the
+# hash is fixed here instead of being recomputed on the evaluating machine.
+INITIAL_WEIGHTS_HASH: Final = (
+    "902356fefd76f04627bc3f150f1ca0f0df1325bb3fa4263d286b2b5fa623a461"
+)
 _DIGEST = re.compile(r"[0-9a-f]{64}\Z")
 _SAMPLER_PERSON = b"piginot-s13c-v1"
 _TRAINING_SEED = 13_101
@@ -242,7 +247,10 @@ class DogboneS13cProtocol:
             if _digest(value, label) != expected:
                 raise ValueError(f"{label} differs from the ratified upstream evidence")
         _digest(self.s13_protocol_hash, "s13_protocol_hash")
-        _digest(self.initial_weights_hash, "initial_weights_hash")
+        if _digest(self.initial_weights_hash, "initial_weights_hash") != (
+            INITIAL_WEIGHTS_HASH
+        ):
+            raise ValueError("initial_weights_hash differs from the preregistration")
         if self.protocol_id != DOGBONE_S13C_PROTOCOL_ID:
             raise ValueError("unexpected DogBone S13c protocol_id")
         if self.architecture_id != ENERGY_ARCHITECTURE_ID:
@@ -344,7 +352,7 @@ def build_dogbone_s13c_protocol() -> DogboneS13cProtocol:
         architecture_id=model.architecture_id,
         architecture_config=model.config,
         architecture_module_digest=energy_module_digest(model),
-        initial_weights_hash=model_state_hash(model),
+        initial_weights_hash=INITIAL_WEIGHTS_HASH,
         objective=_objective_policy(),
         fit_case_ids=s11_protocol.fit_case_ids,
         screen_case_ids=s11_protocol.screen_case_ids,
@@ -442,6 +450,7 @@ __all__ = (
     "DOGBONE_S13C_SCREEN_METRIC_POLICY_ID",
     "EXECUTION_BLAS_THREADS",
     "EXECUTION_DTYPE",
+    "INITIAL_WEIGHTS_HASH",
     "DogboneS13cObjectivePolicy",
     "DogboneS13cProtocol",
     "build_dogbone_s13c_protocol",

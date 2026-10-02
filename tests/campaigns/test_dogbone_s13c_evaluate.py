@@ -221,3 +221,27 @@ def test_binding_verification_rejects_foreign_runs(
             ),
             protocol,
         )
+
+
+def test_binding_check_does_not_reinitialise_weights(
+    protocol: DogboneS13cProtocol, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import campaigns.dogbone_v1.s13c_evaluate as evaluate_module
+
+    binding = build_s13c_binding(
+        protocol,
+        model=build_initial_operator(),
+        config=build_dogbone_s13c_trainer_config(protocol),
+        plan=build_dogbone_s13c_sampler_plan(protocol),
+        implementation_revision="0" * 40,
+    )
+
+    def unavailable() -> None:
+        raise AssertionError("evaluation must not depend on local initialisation")
+
+    monkeypatch.setattr(evaluate_module, "build_initial_operator", unavailable)
+    evaluate_module._verify_binding(binding, protocol)
+    with pytest.raises(ValueError, match="initial_weights_hash"):
+        evaluate_module._verify_binding(
+            replace(binding, initial_weights_hash="8" * 64), protocol
+        )

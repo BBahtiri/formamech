@@ -54,7 +54,6 @@ from campaigns.dogbone_v1.s13c_protocol import (
 from campaigns.dogbone_v1.s13c_trial import (
     DEVELOPMENT_ACCESS_NAME,
     RUN_BINDING_NAME,
-    build_s13c_binding,
     load_committed_s13c_protocol,
 )
 from piginot.contracts import ExecutionProfile, canonical_json_bytes, strict_json_loads
@@ -150,27 +149,29 @@ def _verify_binding(
     binding: TrainingRunBinding,
     protocol: DogboneS13cProtocol,
 ) -> None:
-    expected = build_s13c_binding(
-        protocol,
-        model=build_initial_operator(),
-        config=build_dogbone_s13c_trainer_config(protocol),
-        plan=build_dogbone_s13c_sampler_plan(protocol),
-        implementation_revision=binding.implementation_revision,
-    )
-    fields = (
-        "dataset_snapshot_hash",
-        "public_manifest_hash",
-        "normalization_hash",
-        "architecture_id",
-        "architecture_module_digest",
-        "objective_registry_hash",
-        "trainer_config_hash",
-        "sampler_plan_hash",
-        "initial_weights_hash",
-        "seed",
-    )
-    for name in fields:
-        if getattr(binding, name) != getattr(expected, name):
+    """Check a run binding against the protocol without re-initialising weights.
+
+    Initial weights are compared with the protocol's pinned hash rather than
+    with a freshly initialised operator, so a checkpoint can be evaluated on a
+    CPU whose random-initialisation kernels round differently.
+    """
+
+    config = build_dogbone_s13c_trainer_config(protocol)
+    plan = build_dogbone_s13c_sampler_plan(protocol)
+    expected = {
+        "dataset_snapshot_hash": protocol.dataset_snapshot_hash,
+        "public_manifest_hash": protocol.public_manifest_hash,
+        "normalization_hash": protocol.normalization_hash,
+        "architecture_id": protocol.architecture_id,
+        "architecture_module_digest": protocol.architecture_module_digest,
+        "objective_registry_hash": protocol.objective_hash,
+        "trainer_config_hash": config.config_hash,
+        "sampler_plan_hash": plan.plan_hash,
+        "initial_weights_hash": protocol.initial_weights_hash,
+        "seed": protocol.training_seed,
+    }
+    for name, value in expected.items():
+        if getattr(binding, name) != value:
             raise ValueError(f"run binding {name} differs from the S13c protocol")
     profile = binding.execution_profile
     if (

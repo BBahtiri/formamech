@@ -101,7 +101,11 @@ def build_s13c_binding(
 
     initial = model_state_hash(model)
     if initial != protocol.initial_weights_hash:
-        raise ValueError("initial operator weights differ from the protocol")
+        raise ValueError(
+            "initial operator weights differ from the protocol; this CPU's "
+            "torch initialisation kernels round differently (the registered "
+            "weights come from the AVX2/AVX512 path)"
+        )
     return TrainingRunBinding(
         dataset_snapshot_hash=protocol.dataset_snapshot_hash,
         public_manifest_hash=protocol.public_manifest_hash,

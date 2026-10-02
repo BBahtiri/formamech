@@ -175,3 +175,25 @@ def test_builders_require_the_exact_protocol() -> None:
         build_dogbone_s13c_sampler_plan(object())  # type: ignore[arg-type]
     with pytest.raises(TypeError):
         build_dogbone_s13c_trainer_config(object())  # type: ignore[arg-type]
+
+
+def test_protocol_pins_initial_weights_independently_of_local_kernels(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import campaigns.dogbone_v1.s13c_protocol as protocol_module
+
+    original = protocol_module.build_initial_operator
+
+    def perturbed() -> torch.nn.Module:
+        model = original()
+        with torch.no_grad():
+            model.output.weight.add_(1.0e-7)
+        return model
+
+    monkeypatch.setattr(protocol_module, "build_initial_operator", perturbed)
+    rebuilt = protocol_module.build_dogbone_s13c_protocol()
+
+    assert rebuilt.initial_weights_hash == protocol_module.INITIAL_WEIGHTS_HASH
+    assert rebuilt == load_committed_s13c_protocol()
+    with pytest.raises(ValueError, match="initial_weights_hash"):
+        replace(rebuilt, initial_weights_hash="0" * 64)
