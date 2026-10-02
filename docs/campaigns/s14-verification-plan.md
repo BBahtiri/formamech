@@ -1,8 +1,8 @@
-# S14 plan — verification, gates, envelope, confidence (draft)
+# S14 plan — verification, gates, envelope, confidence
 
-- Status: **Draft for user decision.** Nothing in this plan has opened
-  DEVELOPMENT or HOLDOUT. Four decisions (section 2) must be ratified before
-  the S14 protocol is frozen.
+- Status: **Decisions accepted** by the user on 2026-10-02 (S14-D1 … D4, see
+  [ADR 0019](../adr/0019-s14-verification-decisions.md)). Step 1 is in
+  progress; nothing has opened DEVELOPMENT or HOLDOUT.
 - Date: 2026-10-02
 - Base: `codex/s13-closeout` at `6f2034f` (G13 PASS, `CP-FREEZE` written)
 - Frozen candidate: S13c energy-form operator, run `0ca34e32…`, manifest
@@ -35,9 +35,9 @@ Two facts shape the plan:
   connected folders. **Action for the user: provide that file** before step 1.3
   is built.
 
-## 2. Decisions for the user (proposed defaults)
+## 2. Decisions (accepted 2026-10-02, ADR 0019)
 
-| # | Decision | Proposed default | Alternatives |
+| # | Decision | Accepted value | Alternatives considered |
 | --- | --- | --- | --- |
 | S14-D1 | **Product tolerance** of the error budget | Stress field: in-plane `P` relative L2 ≤ **5%**; peak: absolute root-peak error ≤ **5%**; displacement relative L2 ≤ **2%**. Each is checked on the slice statistic (S14-D2) after adding the per-case conservative FEM discretisation bound (S8 calibrated estimator) and the S10 projection error | 3% / 3% / 1% (tighter; leaves about 1% for the surrogate after a 2% FEM bound) or 10% / 10% / 3% (looser) |
 | S14-D2 | **Coverage slices** and slice statistic | 21 slices: all cases, plus four bins each of `L_total`, `W_grip`, `W_gauge`, `R_fillet` and nominal strain (the S9 strata). Statistic: 90th percentile when a slice holds ≥ 10 cases, the maximum otherwise. Derived-ratio slices are reported but not gated because several bins hold fewer than five DEVELOPMENT cases (for example `fillet_to_gauge_ratio` bin 3: 3 cases) | gate derived-ratio slices with merged bins; or use the maximum everywhere |
