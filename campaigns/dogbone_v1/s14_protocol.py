@@ -59,6 +59,7 @@ PROTOCOL_PATH = ARTIFACTS / "S14-PROTOCOL.json"
 SIGNOFF_PATH = ARTIFACTS / "S14-PROTOCOL-SIGNOFF.json"
 REHEARSAL_PATH = ARTIFACTS / "S14-TRAIN-REHEARSAL.json"
 PROTOCOL_ID = "dogbone-v1-s14-protocol-v1"
+AMENDMENT_GLOB = "S14-PROTOCOL-AMENDMENT-*.json"
 SIGNATORY = "Betim Bahtiri"
 LATENCY_CASES = 8
 LATENCY_REPEATS = 20
@@ -319,10 +320,42 @@ def verify_frozen_files(
     )
 
 
+def amendment_paths(directory: Path | None = None) -> tuple[Path, ...]:
+    """Every signed amendment of the protocol, in order."""
+
+    root = ARTIFACTS if directory is None else directory
+    return tuple(sorted(root.glob(AMENDMENT_GLOB)))
+
+
+def _verified_amendments(
+    paths: tuple[Path, ...], base_digest: str
+) -> tuple[dict[str, object], ...]:
+    amendments: list[dict[str, object]] = []
+    for path in paths:
+        amendment = json.loads(path.read_text(encoding="utf-8"))
+        if amendment.get("base_protocol_sha256") != base_digest:
+            raise PermissionError(f"{path.name} amends a different protocol")
+        if amendment.get("signed_off_by") != SIGNATORY:
+            raise PermissionError(f"{path.name} is not signed by the decision owner")
+        if not isinstance(amendment.get("evaluation_file_sha256"), dict):
+            raise PermissionError(f"{path.name} does not freeze the evaluation files")
+        amendments.append(amendment)
+    return tuple(amendments)
+
+
 def load_signed_protocol(
-    protocol_path: Path | None = None, signoff_path: Path | None = None
+    protocol_path: Path | None = None,
+    signoff_path: Path | None = None,
+    amendments: tuple[Path, ...] | None = None,
 ) -> tuple[dict[str, object], str]:
-    """The protocol and its digest, only if signed off and still frozen."""
+    """The protocol and its digest, only if signed off and still frozen.
+
+    Signed amendments (``S14-PROTOCOL-AMENDMENT-*.json``) name the base
+    protocol digest and re-freeze the evaluation files; the latest one sets
+    the frozen digests. The returned digest stays the base protocol digest, to
+    which every recorded phase is bound, and the document lists the
+    amendments under ``amendments``.
+    """
 
     protocol_path = PROTOCOL_PATH if protocol_path is None else protocol_path
     signoff_path = SIGNOFF_PATH if signoff_path is None else signoff_path
@@ -335,15 +368,25 @@ def load_signed_protocol(
     if signoff.get("signed_off_by") != SIGNATORY:
         raise PermissionError("the protocol is not signed off by the decision owner")
     document = json.loads(protocol_path.read_text(encoding="utf-8"))
-    changed = verify_frozen_files(document)
+    verified = _verified_amendments(
+        amendment_paths() if amendments is None else amendments, digest
+    )
+    frozen = (
+        {"evaluation_code": {"file_sha256": verified[-1]["evaluation_file_sha256"]}}
+        if verified
+        else document
+    )
+    changed = verify_frozen_files(frozen)
     if changed:
         raise PermissionError(
             "evaluation files changed after the freeze: " + ", ".join(changed)
         )
+    document["amendments"] = list(verified)
     return document, digest
 
 
 __all__ = (
+    "AMENDMENT_GLOB",
     "EVALUATION_FILES",
     "LATENCY_CASES",
     "LATENCY_REPEATS",
@@ -352,6 +395,7 @@ __all__ = (
     "REHEARSAL_PATH",
     "SIGNATORY",
     "SIGNOFF_PATH",
+    "amendment_paths",
     "build_protocol",
     "file_digests",
     "load_signed_protocol",

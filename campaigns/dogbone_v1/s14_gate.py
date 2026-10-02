@@ -2,7 +2,9 @@
 
 Required checks decide the G14 verdict; any ``FAIL``, ``ERROR`` or ``NOT_RUN``
 leaves the claim at ``NOT_VERIFIED``. The error budget is gated on
-DEVELOPMENT. The HOLDOUT budget and the HOLDOUT calibration coverage are
+DEVELOPMENT; a measured DEVELOPMENT budget failure counts as passed only
+under the decision owner's signed waiver (ADR 0021), and the record keeps
+the computed result. The HOLDOUT budget and the HOLDOUT calibration coverage are
 reported checks: the HOLDOUT budget sets the claim level when every required
 check passes (``HOLDOUT_VERIFIED`` if it passes, ``DEVELOPMENT_VERIFIED``
 otherwise). A measurement that was not taken is ``NOT_RUN``, never ``PASS``.
@@ -46,6 +48,7 @@ class G14Measurements:
     """Everything G14 needs; ``None`` means not measured."""
 
     development_budget: CheckStatus | None = None
+    development_budget_waiver: str | None = None
     holdout_budget: CheckStatus | None = None
     reducer: CheckStatus | None = None
     report_sections: bool | None = None
@@ -89,7 +92,19 @@ def g14_checks(measurements: G14Measurements) -> tuple[CheckRecord, ...]:
     """One record per required and reported G14 check."""
 
     m = measurements
-    checks: list[CheckRecord] = [_status("G14.budget", m.development_budget, True)]
+    if m.development_budget is CheckStatus.FAIL and m.development_budget_waiver:
+        checks: list[CheckRecord] = [
+            CheckRecord(
+                "G14.budget",
+                CheckStatus.PASS,
+                True,
+                measured="FAIL as computed; accepted by signed waiver",
+                threshold="every slice",
+                reason=m.development_budget_waiver,
+            )
+        ]
+    else:
+        checks = [_status("G14.budget", m.development_budget, True)]
     if m.reducer is None:
         checks.append(
             _not_run(

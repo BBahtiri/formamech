@@ -20,8 +20,11 @@ from campaigns.dogbone_v1.s14_protocol import (
 from campaigns.dogbone_v1.s14_rehearsal import GATED_SLICES
 from campaigns.dogbone_v1.s14_validate import (
     build_parser,
+    development_waiver,
+    failing_budget_rows,
     holdout_blockers,
     run_development,
+    waiver_covers,
 )
 from piginot.verification import forbidden_wording
 
@@ -114,22 +117,22 @@ def test_sign_off_must_name_the_protocol_digest(tmp_path: Path) -> None:
     )
     signoff = tmp_path / "signoff.json"
     with pytest.raises(PermissionError):
-        load_signed_protocol(protocol, signoff)
+        load_signed_protocol(protocol, signoff, ())
     signoff.write_text(
         json.dumps({"protocol_sha256": "0" * 64, "signed_off_by": "Betim Bahtiri"})
     )
     with pytest.raises(PermissionError):
-        load_signed_protocol(protocol, signoff)
+        load_signed_protocol(protocol, signoff, ())
     digest = text_sha256(protocol)
     signoff.write_text(
         json.dumps({"protocol_sha256": digest, "signed_off_by": "someone"})
     )
     with pytest.raises(PermissionError):
-        load_signed_protocol(protocol, signoff)
+        load_signed_protocol(protocol, signoff, ())
     signoff.write_text(
         json.dumps({"protocol_sha256": digest, "signed_off_by": "Betim Bahtiri"})
     )
-    document, loaded = load_signed_protocol(protocol, signoff)
+    document, loaded = load_signed_protocol(protocol, signoff, ())
     assert loaded == digest and document["protocol_id"] == s14_protocol.PROTOCOL_ID
 
 
@@ -166,7 +169,14 @@ def test_committed_protocol_matches_the_frozen_code_and_rehearsal() -> None:
     document = json.loads(s14_protocol.PROTOCOL_PATH.read_text(encoding="utf-8"))
     rehearsal = s14_protocol.REHEARSAL_PATH.read_bytes()
 
-    assert verify_frozen_files(document) == ()
+    signed, digest = load_signed_protocol()
+    assert digest == text_sha256(s14_protocol.PROTOCOL_PATH)
+    latest = signed["amendments"][-1] if signed["amendments"] else document
+    frozen = (
+        latest.get("evaluation_file_sha256")
+        or document["evaluation_code"]["file_sha256"]
+    )
+    assert verify_frozen_files({"evaluation_code": {"file_sha256": frozen}}) == ()
     assert (
         document["train_rehearsal"]["sha256"] == hashlib.sha256(rehearsal).hexdigest()
     )
@@ -175,3 +185,105 @@ def test_committed_protocol_matches_the_frozen_code_and_rehearsal() -> None:
         == json.loads(rehearsal)["confidence_pilot"]["selected_variant"]
     )
     assert document["status"] == "FROZEN_PENDING_USER_SIGN_OFF"
+
+
+def _amendment(path: Path, base: str, **changes: object) -> Path:
+    document: dict[str, object] = {
+        "base_protocol_sha256": base,
+        "signed_off_by": "Betim Bahtiri",
+        "evaluation_file_sha256": file_digests(),
+        **changes,
+    }
+    path.write_text(json.dumps(document))
+    return path
+
+
+def test_signed_amendments_refreeze_the_evaluation_files(tmp_path: Path) -> None:
+    protocol = tmp_path / "protocol.json"
+    stale = build_protocol(rehearsal_bytes=_rehearsal(), revision="r", created_utc="t")
+    stale["evaluation_code"]["file_sha256"] = {  # type: ignore[index]
+        name: "0" * 64 for name in EVALUATION_FILES
+    }
+    protocol.write_bytes(protocol_bytes(stale))
+    digest = text_sha256(protocol)
+    signoff = tmp_path / "signoff.json"
+    signoff.write_text(
+        json.dumps({"protocol_sha256": digest, "signed_off_by": "Betim Bahtiri"})
+    )
+    with pytest.raises(PermissionError, match="changed after the freeze"):
+        load_signed_protocol(protocol, signoff, ())
+
+    good = _amendment(tmp_path / "a1.json", digest, waivers=[])
+    document, loaded = load_signed_protocol(protocol, signoff, (good,))
+    assert loaded == digest and len(document["amendments"]) == 1  # type: ignore[arg-type]
+    for bad in (
+        _amendment(tmp_path / "b.json", "1" * 64),
+        _amendment(tmp_path / "c.json", digest, signed_off_by="someone"),
+        _amendment(tmp_path / "d.json", digest, evaluation_file_sha256=None),
+    ):
+        with pytest.raises(PermissionError):
+            load_signed_protocol(protocol, signoff, (good, bad))
+
+
+def _development(rows: list[tuple[str, str, str]]) -> dict[str, object]:
+    status = "PASS" if all(r[2] == "PASS" for r in rows) else "FAIL"
+    return {
+        "budget": {
+            "gated_status": status,
+            "gated": [
+                {"slice": s, "quantity": q, "status": st, "statistic": 0.0501}
+                for s, q, st in rows
+            ],
+        },
+        "confidence": {"pooled_spearman": 0.64},
+    }
+
+
+def test_a_waiver_covers_exactly_the_measured_failures() -> None:
+    development = _development(
+        [
+            ("all", "absolute_peak_error", "PASS"),
+            ("W_grip:2", "absolute_peak_error", "FAIL"),
+            ("nominal_axial_strain:2", "absolute_peak_error", "FAIL"),
+        ]
+    )
+    failing = [
+        {"slice": "nominal_axial_strain:2", "quantity": "absolute_peak_error"},
+        {"slice": "W_grip:2", "quantity": "absolute_peak_error"},
+    ]
+    waiver = {"failing": failing}
+    assert failing_budget_rows(development) == (
+        ("W_grip:2", "absolute_peak_error"),
+        ("nominal_axial_strain:2", "absolute_peak_error"),
+    )
+    assert waiver_covers(waiver, development)
+    assert holdout_blockers(development, waiver) == ()
+    assert holdout_blockers(development) == ("G14.budget",)
+    assert not waiver_covers(None, development)
+    assert not waiver_covers({"failing": failing[:1]}, development)
+    assert not waiver_covers({"failing": []}, development)
+    not_run = _development(
+        [
+            ("W_grip:2", "absolute_peak_error", "FAIL"),
+            ("all", "u_relative_l2", "NOT_RUN"),
+        ]
+    )
+    assert not waiver_covers({"failing": failing[1:]}, not_run)
+
+    protocol = {
+        "amendments": [
+            {
+                "waivers": [
+                    {
+                        "check": "G14.budget",
+                        "population": "DEVELOPMENT",
+                        "development_result_sha256": "ab" * 32,
+                        "failing": failing,
+                    }
+                ]
+            }
+        ]
+    }
+    assert development_waiver(protocol, "ab" * 32) is not None
+    assert development_waiver(protocol, "cd" * 32) is None
+    assert development_waiver({"amendments": []}, "ab" * 32) is None

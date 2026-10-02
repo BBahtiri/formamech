@@ -80,3 +80,25 @@ def test_reducer_is_not_run_without_the_family_list() -> None:
     checks = {c.check_id: c for c in g14_checks(replace(_PASSING, reducer=None))}
     assert checks["G14.reducer"].status is CheckStatus.NOT_RUN
     assert "IMPLEMENTATION-v1.0-OSS.md" in (checks["G14.reducer"].reason or "")
+
+
+def test_a_signed_waiver_passes_the_budget_and_keeps_the_computed_result() -> None:
+    reason = "accepted by the decision owner (ADR 0021); computed FAIL on W_grip:2"
+    waived = replace(
+        _PASSING,
+        development_budget=CheckStatus.FAIL,
+        development_budget_waiver=reason,
+    )
+    checks = {c.check_id: c for c in g14_checks(waived)}
+    assert checks["G14.budget"].status is CheckStatus.PASS
+    assert checks["G14.budget"].reason == reason
+    assert "FAIL" in str(checks["G14.budget"].measured)
+    assert g14_report(waived).claim_level is ClaimLevel.HOLDOUT_VERIFIED
+    unwaived = replace(_PASSING, development_budget=CheckStatus.FAIL)
+    assert g14_report(unwaived).claim_level is ClaimLevel.NOT_VERIFIED
+    not_run = replace(
+        _PASSING,
+        development_budget=CheckStatus.NOT_RUN,
+        development_budget_waiver=reason,
+    )
+    assert g14_report(not_run).claim_level is ClaimLevel.NOT_VERIFIED

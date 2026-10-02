@@ -207,16 +207,79 @@ def record_document(record: CaseRecord) -> dict[str, object]:
     }
 
 
-def holdout_blockers(development: dict[str, object]) -> tuple[str, ...]:
+def failing_budget_rows(development: dict[str, object]) -> tuple[tuple[str, str], ...]:
+    """``(slice, quantity)`` of every gated budget row that did not pass."""
+
+    rows = development["budget"]["gated"]  # type: ignore[index]
+    return tuple(
+        sorted(
+            (row["slice"], row["quantity"])
+            for row in rows  # type: ignore[attr-defined]
+            if row["status"] != CheckStatus.PASS.value
+        )
+    )
+
+
+def development_waiver(
+    protocol: dict[str, object], development_sha256: str
+) -> dict[str, object] | None:
+    """The decision owner's signed waiver of the DEVELOPMENT budget, if any.
+
+    A waiver lives in a signed protocol amendment and names the exact
+    DEVELOPMENT result (LF-normalised SHA-256) it accepts.
+    """
+
+    for amendment in protocol.get("amendments", ()):  # type: ignore[attr-defined]
+        for waiver in amendment.get("waivers", ()):
+            if (
+                waiver.get("check") == "G14.budget"
+                and waiver.get("population") == "DEVELOPMENT"
+                and waiver.get("development_result_sha256") == development_sha256
+            ):
+                return dict(waiver)
+    return None
+
+
+def waiver_covers(
+    waiver: dict[str, object] | None, development: dict[str, object]
+) -> bool:
+    """True only if the waiver names exactly the measured failing rows.
+
+    Rows that were not measured (``NOT_RUN`` or ``ERROR``) are never waived.
+    """
+
+    if waiver is None:
+        return False
+    rows = development["budget"]["gated"]  # type: ignore[index]
+    if any(
+        row["status"] not in (CheckStatus.PASS.value, CheckStatus.FAIL.value)
+        for row in rows  # type: ignore[attr-defined]
+    ):
+        return False
+    named = tuple(
+        sorted(
+            (item["slice"], item["quantity"])
+            for item in waiver.get("failing", ())  # type: ignore[attr-defined]
+        )
+    )
+    return bool(named) and named == failing_budget_rows(development)
+
+
+def holdout_blockers(
+    development: dict[str, object], waiver: dict[str, object] | None = None
+) -> tuple[str, ...]:
     """DEVELOPMENT results that keep HOLDOUT closed (ADR 0020, decision 4).
 
     HOLDOUT is consumed only for a candidate whose DEVELOPMENT budget passes
-    on every gated slice and whose pooled Spearman correlation meets the
-    threshold, so a failing candidate leaves the one-time HOLDOUT unspent.
+    on every gated slice, or whose measured budget failures the decision
+    owner accepted in a signed waiver naming exactly those rows (ADR 0021),
+    and whose pooled Spearman correlation meets the threshold.
     """
 
     blockers: list[str] = []
-    if development["budget"]["gated_status"] != CheckStatus.PASS.value:  # type: ignore[index]
+    if development["budget"]["gated_status"] != CheckStatus.PASS.value and not (  # type: ignore[index]
+        waiver_covers(waiver, development)
+    ):
         blockers.append("G14.budget")
     if development["confidence"]["pooled_spearman"] < SPEARMAN_MINIMUM:  # type: ignore[index,operator]
         blockers.append("G14.confidence")
@@ -242,11 +305,13 @@ def run_holdout(
 ) -> dict[str, object]:
     """Consume HOLDOUT once, solve and score it with the frozen code."""
 
-    _, digest = load_signed_protocol()
-    development = json.loads((run_root / DEVELOPMENT_RESULT).read_text("utf-8"))
+    protocol, digest = load_signed_protocol()
+    development_path = run_root / DEVELOPMENT_RESULT
+    development = json.loads(development_path.read_text("utf-8"))
     if development["protocol_sha256"] != digest:
         raise PermissionError("DEVELOPMENT results belong to another protocol")
-    failed = holdout_blockers(development)
+    waiver = development_waiver(protocol, text_sha256(development_path))
+    failed = holdout_blockers(development, waiver)
     if failed:
         raise PermissionError(
             "HOLDOUT stays closed because DEVELOPMENT failed: " + ", ".join(failed)
@@ -329,13 +394,30 @@ def run_gate(
 ) -> dict[str, object]:
     """Assemble every G14 check from the recorded phases."""
 
-    _, digest = load_signed_protocol()
+    protocol, digest = load_signed_protocol()
 
     def load(name: str) -> dict[str, object] | None:
         path = run_root / name
         return json.loads(path.read_text("utf-8")) if path.exists() else None
 
     development = load(DEVELOPMENT_RESULT)
+    waiver_reason = None
+    if development is not None:
+        waiver = development_waiver(
+            protocol, text_sha256(run_root / DEVELOPMENT_RESULT)
+        )
+        if development["budget"]["gated_status"] == CheckStatus.FAIL.value and (  # type: ignore[index]
+            waiver_covers(waiver, development)
+        ):
+            assert waiver is not None
+            waiver_reason = (
+                f"accepted by the decision owner ({waiver['decision_record']}); "
+                "computed FAIL on "
+                + ", ".join(
+                    f"{item['slice']} {item['quantity']} {item['statistic']:.5f}"
+                    for item in waiver["failing"]  # type: ignore[attr-defined]
+                )
+            )
     holdout = load(HOLDOUT_RESULT)
     first = refusal_run()
     second = refusal_run()
@@ -356,6 +438,7 @@ def run_gate(
         spearman_value = development["confidence"]["pooled_spearman"]  # type: ignore[index]
     measurements = G14Measurements(
         development_budget=_status(development),
+        development_budget_waiver=waiver_reason,
         holdout_budget=_status(holdout),
         reducer=None if reducer is None else CheckStatus(reducer),
         report_sections=True,
@@ -438,10 +521,13 @@ __all__ = (
     "GATE_RESULT",
     "HOLDOUT_RESULT",
     "build_parser",
+    "development_waiver",
+    "failing_budget_rows",
     "holdout_blockers",
     "main",
     "record_document",
     "run_development",
     "run_gate",
     "run_holdout",
+    "waiver_covers",
 )
