@@ -165,16 +165,22 @@ def test_canonical_mesh_exposes_no_geometry_algorithm(algorithm_name: str) -> No
     assert not hasattr(CanonicalMesh, algorithm_name)
 
 
-def test_cli_rejects_s5_plus_subcommands(
+def test_cli_campaign_commands_need_a_campaign_plugin(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
+    # S15 adds the campaign commands; the framework still implements none of
+    # them itself, so each one refuses to run without a campaign plugin.
     assert cli.main([]) == 0
 
-    for command in ("simulate", "train", "bundle"):
+    for command in (["simulate"], ["train"], ["bundle"], ["bundle", "build"]):
         with pytest.raises(SystemExit) as exit_info:
-            cli.main([command])
+            cli.main(command)
         assert exit_info.value.code == 2
+    assert "required" in capsys.readouterr().err
 
+    with pytest.raises(SystemExit) as exit_info:
+        cli.main(["mesh"])
+    assert exit_info.value.code == 2
     assert "invalid choice" in capsys.readouterr().err
 
 

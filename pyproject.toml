@@ -33,6 +33,7 @@ fem = [
 geometry = ["meshio>=5.3.5,<6", "numpy>=1.26,<2.3"]
 physics = ["torch>=2.6,<3"]
 ml = ["torch>=2.6,<3", "safetensors>=0.8,<1"]
+runtime = ["numpy>=1.26,<2.3", "torch>=2.6,<3", "safetensors>=0.8,<1"]
 dev = [
   "mkdocs>=1.6,<2",
   "mypy>=1.15,<3",
