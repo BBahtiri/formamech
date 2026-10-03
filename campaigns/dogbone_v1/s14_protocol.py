@@ -54,6 +54,7 @@ from piginot.verification import INDICATOR_VARIANTS
 from piginot.verification.budget import MINIMUM_QUANTILE_CASES, QUANTILE
 
 _ROOT = Path(__file__).resolve().parents[2]
+REPOSITORY_ROOT = _ROOT
 ARTIFACTS = _ROOT / "artifacts" / "campaigns" / "dogbone-v1"
 PROTOCOL_PATH = ARTIFACTS / "S14-PROTOCOL.json"
 SIGNOFF_PATH = ARTIFACTS / "S14-PROTOCOL-SIGNOFF.json"
@@ -76,6 +77,7 @@ EVALUATION_FILES = (
     "src/piginot/verification/budget.py",
     "src/piginot/verification/confidence.py",
     "src/piginot/verification/envelope.py",
+    "src/piginot/verification/families.py",
     "src/piginot/verification/holdout.py",
     "src/piginot/verification/latency.py",
     "src/piginot/verification/reducer.py",
@@ -392,6 +394,7 @@ __all__ = (
     "LATENCY_REPEATS",
     "PROTOCOL_ID",
     "PROTOCOL_PATH",
+    "REPOSITORY_ROOT",
     "REHEARSAL_PATH",
     "SIGNATORY",
     "SIGNOFF_PATH",

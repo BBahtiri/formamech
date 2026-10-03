@@ -401,6 +401,6 @@ the unchanged operator handles a domain with a hole, but its field error
 | `G17.non-dogbone` fails against a genuinely distinct topology | **Not yet measurable** |
 | S11–S12 contingency iteration consumed by schedule pressure without being run | **Not met** |
 
-Nothing invalidates the decision. G14 is not yet passed: `G14.reducer` is
-`NOT_RUN` until the twelve verification families of
-`IMPLEMENTATION-v1.0-OSS.md` are available. Next revisit: at `G17`.
+Nothing invalidates the decision. G14 passes with the claim level
+`HOLDOUT_VERIFIED` (2026-10-03); its reducer runs over the twelve families of
+ADR 0022. Next revisit: at `G17`.

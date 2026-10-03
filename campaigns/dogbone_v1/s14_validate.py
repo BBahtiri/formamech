@@ -55,6 +55,7 @@ from campaigns.dogbone_v1.s14_gate import (
 from campaigns.dogbone_v1.s14_protocol import (
     LATENCY_CASES,
     LATENCY_REPEATS,
+    REPOSITORY_ROOT,
     SIGNOFF_PATH,
     load_signed_protocol,
     text_sha256,
@@ -74,8 +75,12 @@ from campaigns.dogbone_v1.s14_rehearsal import (
 from piginot.doe import EvidenceRole
 from piginot.verification import (
     CheckStatus,
+    ClaimLevel,
     QuantileCurve,
     fit_quantile_curve,
+    inject_failures,
+    read_registered,
+    reduce_registered,
     render_report,
     spearman,
 )
@@ -389,9 +394,35 @@ def _status(document: dict[str, object] | None) -> CheckStatus | None:
     return CheckStatus(document["budget"]["gated_status"])  # type: ignore[index]
 
 
-def run_gate(
-    *, run_root: Path, coverage_percent: float | None, reducer: str | None
-) -> dict[str, object]:
+def family_reduction(root: Path) -> tuple[CheckStatus, dict[str, object]]:
+    """``G14.reducer``: the injected-case test and the twelve recorded families.
+
+    The check passes only if every injected failure gives ``NOT_VERIFIED``
+    and every registered family (ADR 0022) is ``PASS``.
+    """
+
+    evidence = read_registered(root)
+    injection = inject_failures(evidence, evidence_level=ClaimLevel.HOLDOUT_VERIFIED)
+    reduction = reduce_registered(evidence, evidence_level=ClaimLevel.HOLDOUT_VERIFIED)
+    families = {
+        f"{item.family.family_id} {item.family.name} ({item.family.gate_id})": (
+            outcome.status.value
+        )
+        for item, outcome in zip(evidence, reduction.families, strict=True)
+    }
+    passed = injection.passed and reduction.verified
+    return (
+        CheckStatus.PASS if passed else CheckStatus.FAIL,
+        {
+            "injected_cases": injection.cases,
+            "injected_not_verified": injection.not_verified,
+            "control_claim": injection.control_level.value,
+            "families": families,
+        },
+    )
+
+
+def run_gate(*, run_root: Path, coverage_percent: float | None) -> dict[str, object]:
     """Assemble every G14 check from the recorded phases."""
 
     protocol, digest = load_signed_protocol()
@@ -401,6 +432,7 @@ def run_gate(
         return json.loads(path.read_text("utf-8")) if path.exists() else None
 
     development = load(DEVELOPMENT_RESULT)
+    reducer_status, reducer_detail = family_reduction(REPOSITORY_ROOT)
     waiver_reason = None
     if development is not None:
         waiver = development_waiver(
@@ -440,7 +472,8 @@ def run_gate(
         development_budget=_status(development),
         development_budget_waiver=waiver_reason,
         holdout_budget=_status(holdout),
-        reducer=None if reducer is None else CheckStatus(reducer),
+        reducer=reducer_status,
+        reducer_detail=reducer_detail,
         report_sections=True,
         fixture_count=first["fixture_count"],  # type: ignore[arg-type]
         refused_with_expected_code=first["refused_with_expected_code"],  # type: ignore[arg-type]
@@ -484,7 +517,6 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--run-root", required=True, type=Path)
     parser.add_argument("--reveal-root", type=Path)
     parser.add_argument("--coverage-percent", type=float)
-    parser.add_argument("--reducer-status", choices=[s.value for s in CheckStatus])
     return parser
 
 
@@ -507,7 +539,6 @@ def main(arguments: Sequence[str] | None = None) -> int:
         run_gate(
             run_root=options.run_root,
             coverage_percent=options.coverage_percent,
-            reducer=options.reducer_status,
         )
     return 0
 
@@ -522,6 +553,7 @@ __all__ = (
     "HOLDOUT_RESULT",
     "build_parser",
     "development_waiver",
+    "family_reduction",
     "failing_budget_rows",
     "holdout_blockers",
     "main",

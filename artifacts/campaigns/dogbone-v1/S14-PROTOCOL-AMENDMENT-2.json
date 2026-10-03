@@ -1,0 +1,41 @@
+{
+ "amendment_id": "dogbone-v1-s14-protocol-amendment-2",
+ "base_protocol_sha256": "99c27839754fd734fcb19d3b3b6070ad6f2a8347972f830e7e696abc7800e0db",
+ "code_changes": [
+  "piginot.verification.families: the twelve registered families, their reduction and the injected-case test",
+  "s14_validate: G14.reducer is computed from the families instead of being NOT_RUN",
+  "s14_gate: the reducer check records its injected cases and family statuses",
+  "s14_protocol: families.py joins the frozen evaluation files"
+ ],
+ "decision": "Replace the missing IMPLEMENTATION-v1.0-OSS.md ('Start with S15 and replace IMPLEMENTATION-v1.0-OSS.md'); the twelve families of ADR 0022 define G14.reducer.",
+ "decision_record": "docs/adr/0022-replace-implementation-v1.0-oss.md",
+ "evaluation_file_sha256": {
+  "campaigns/dogbone_v1/s14_candidate.py": "db9793549d59226c18c0e8bbc9e5699d3267966e8d89a96d7fad9c926fdfa630",
+  "campaigns/dogbone_v1/s14_envelope.py": "af2e4c5c198563b95ef0a0036b77899ded252da7e662a291e5f097974d34ca57",
+  "campaigns/dogbone_v1/s14_evaluation.py": "1046fd6e0e666cc3abb1c1a9f4af8ccd88d9f6fd376080c145198856c15156a6",
+  "campaigns/dogbone_v1/s14_gate.py": "c433f14490fb8968f9bf14e0c7e471744e1d5c16938e45c6085d552809e3af36",
+  "campaigns/dogbone_v1/s14_protocol.py": "b39ac159f90ccbdf7223abacf3631c31ac698a20783d7975b91a9c11a162cd83",
+  "campaigns/dogbone_v1/s14_reference.py": "84e8d2dd2fd832026f9616459eef04a60c1a80d9dc0fa6212cb29f4c6df0a29f",
+  "campaigns/dogbone_v1/s14_rehearsal.py": "cfc42be5faab073f6cece8bb3e0f0be61158a6013a7d75988663acde717ca7f0",
+  "campaigns/dogbone_v1/s14_validate.py": "567d299b4ae7c24c07396574facc9d842f7ebe046578337480f2d06eafab7c5d",
+  "src/piginot/verification/__init__.py": "8d8f537e703a1f5e043b4724ce7a19cd97528bf0d030e58a0003b58f72983d74",
+  "src/piginot/verification/budget.py": "ae74c43eb2938cc7739ca488e9b4e67ec8c4ff6d8526789e901e242143818de3",
+  "src/piginot/verification/confidence.py": "ab72c326f44a08eea2410737be983463e5af4cfd7abb3a85305635743500a9a7",
+  "src/piginot/verification/envelope.py": "32ca8cddffa6ce11695f65202d6affef4c40a211df6e20d9e3031915f756948e",
+  "src/piginot/verification/families.py": "3324da4cb1896757ad697f35b2cc71acec2efed8b3d405e6a24d601838792fa7",
+  "src/piginot/verification/holdout.py": "7322898849829ba0682058a463e4a16a2fe9bd31e4df208a2ded0d1c18d87d80",
+  "src/piginot/verification/latency.py": "dfdc51ae9d643a1d15c4ad19a2d03e871b2b8554849ade5c2c52985e1cfd93f8",
+  "src/piginot/verification/reducer.py": "592d6867dfc622f8c9b75ffe1786257ee2261b79270e2c0a6801e7f93e282804",
+  "src/piginot/verification/report.py": "626ae05b703f7d911007573568776baaa7831b11f1b45a51ad82ef64e902c7c3",
+  "src/piginot/verification/status.py": "9b04bf534936765dfa82a1ada49d813a8446dac23ca36e68d2e91a6cce085b81"
+ },
+ "recorded_from": "the decision owner's instruction in the S14 session chat",
+ "signed_off_by": "Betim Bahtiri",
+ "signed_off_utc": "2026-10-03T04:55:23Z",
+ "specification": "docs/specs/implementation-v1.0-oss-replacement.md",
+ "unchanged": [
+  "all S14 measurements (DEVELOPMENT, HOLDOUT, refusal, latency, coverage of scoring code)",
+  "tolerances, slices, statistic and the waiver of amendment 1"
+ ],
+ "waivers": []
+}

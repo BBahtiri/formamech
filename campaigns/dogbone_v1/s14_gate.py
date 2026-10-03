@@ -51,6 +51,7 @@ class G14Measurements:
     development_budget_waiver: str | None = None
     holdout_budget: CheckStatus | None = None
     reducer: CheckStatus | None = None
+    reducer_detail: Mapping[str, object] | None = None
     report_sections: bool | None = None
     fixture_count: int | None = None
     refused_with_expected_code: int | None = None
@@ -110,8 +111,18 @@ def g14_checks(measurements: G14Measurements) -> tuple[CheckRecord, ...]:
             _not_run(
                 "G14.reducer",
                 True,
-                "the twelve verification families of IMPLEMENTATION-v1.0-OSS.md "
-                "are not available",
+                "the twelve verification families (ADR 0022) were not evaluated",
+            )
+        )
+    elif m.reducer in (CheckStatus.PASS, CheckStatus.FAIL):
+        checks.append(
+            CheckRecord(
+                "G14.reducer",
+                m.reducer,
+                True,
+                measured=None if m.reducer_detail is None else dict(m.reducer_detail),
+                threshold="every injected failure gives NOT_VERIFIED; "
+                "all twelve families PASS",
             )
         )
     else:

@@ -30,6 +30,16 @@ from piginot.verification.envelope import (
     GeometryOutcome,
     RefusalDecision,
 )
+from piginot.verification.families import (
+    REGISTERED_FAMILIES,
+    FamilyEvidence,
+    GateFamily,
+    InjectionResult,
+    inject_failures,
+    read_family,
+    read_registered,
+    reduce_registered,
+)
 from piginot.verification.holdout import (
     ConsumptionRecord,
     HoldoutAlreadyConsumedError,
@@ -55,6 +65,14 @@ from piginot.verification.report import (
 from piginot.verification.status import CheckStatus, ClaimLevel, worst_status
 
 __all__ = (
+    "REGISTERED_FAMILIES",
+    "FamilyEvidence",
+    "GateFamily",
+    "InjectionResult",
+    "inject_failures",
+    "read_family",
+    "read_registered",
+    "reduce_registered",
     "ALL_CASES_SLICE",
     "INDICATOR_VARIANTS",
     "COMPONENTS",

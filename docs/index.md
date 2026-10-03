@@ -29,7 +29,7 @@ it. Its single registered trial passes every frozen S13 guardrail, the amended G
 and G13 gates pass, and `CP-FREEZE` freezes it for S14. S14 measured it on
 DEVELOPMENT and once on HOLDOUT under a signed protocol: the HOLDOUT error budget
 passes every slice, two DEVELOPMENT peak slices were accepted by the decision owner
-([ADR 0021](adr/0021-s14-development-budget-acceptance.md)), and G14 waits only for
-the reducer families of `IMPLEMENTATION-v1.0-OSS.md`.
+([ADR 0021](adr/0021-s14-development-budget-acceptance.md)), and G14 passes with the claim level `HOLDOUT_VERIFIED`, its reducer running over
+the twelve families of [ADR 0022](adr/0022-replace-implementation-v1.0-oss.md).
 
 Read the [limitations](limitations.md) before relying on future numerical results.

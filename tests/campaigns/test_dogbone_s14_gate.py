@@ -79,7 +79,15 @@ def test_missing_or_failing_required_checks_give_not_verified() -> None:
 def test_reducer_is_not_run_without_the_family_list() -> None:
     checks = {c.check_id: c for c in g14_checks(replace(_PASSING, reducer=None))}
     assert checks["G14.reducer"].status is CheckStatus.NOT_RUN
-    assert "IMPLEMENTATION-v1.0-OSS.md" in (checks["G14.reducer"].reason or "")
+    assert "ADR 0022" in (checks["G14.reducer"].reason or "")
+    detail = {"injected_cases": 48, "injected_not_verified": 48}
+    measured = {
+        c.check_id: c for c in g14_checks(replace(_PASSING, reducer_detail=detail))
+    }
+    assert measured["G14.reducer"].measured == detail
+    failed = g14_report(replace(_PASSING, reducer=CheckStatus.FAIL))
+    assert failed.claim_level is ClaimLevel.NOT_VERIFIED
+    assert "G14.reducer" in failed.sections["failed"]
 
 
 def test_a_signed_waiver_passes_the_budget_and_keeps_the_computed_result() -> None:

@@ -33,8 +33,11 @@ cases the error budget passes every slice (p90 including FEM terms: stress
 field 2.8%, root peak 4.0%, displacement 0.29%); on DEVELOPMENT two peak
 slices exceeded 5% by at most 0.054 points and were accepted by the decision
 owner. Inference is about 1,000x faster than the FEM solver on one thread.
-G14 is not yet passed, because the reducer check waits for the verification
-families of `IMPLEMENTATION-v1.0-OSS.md` (`artifacts/gates/S14.json`). The project does not yet certify or serve a
+G14 passes (`artifacts/gates/S14.json`): every required check passes,
+including the reducer over the twelve verification families that
+[ADR 0022](docs/adr/0022-replace-implementation-v1.0-oss.md) defines in place
+of the unavailable `IMPLEMENTATION-v1.0-OSS.md`, and the claim level is
+`HOLDOUT_VERIFIED`. The project does not yet certify or serve a
 trained neural operator. Read the
 [project limitations](docs/limitations.md) before using its numerical results.
 

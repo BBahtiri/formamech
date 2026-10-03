@@ -147,7 +147,7 @@ def test_step_three_refuses_to_open_development_without_sign_off(
         )
     assert not run_root.exists()
     options = build_parser().parse_args(["gate", "--run-root", str(tmp_path)])
-    assert options.phase == "gate" and options.reducer_status is None
+    assert options.phase == "gate" and options.coverage_percent is None
 
 
 def test_holdout_stays_closed_when_development_fails() -> None:
@@ -287,3 +287,13 @@ def test_a_waiver_covers_exactly_the_measured_failures() -> None:
     assert development_waiver(protocol, "ab" * 32) is not None
     assert development_waiver(protocol, "cd" * 32) is None
     assert development_waiver({"amendments": []}, "ab" * 32) is None
+
+
+def test_the_registered_families_pass_the_reducer_check() -> None:
+    from campaigns.dogbone_v1.s14_validate import family_reduction
+
+    status, detail = family_reduction(s14_protocol.REPOSITORY_ROOT)
+    assert status.value == "PASS"
+    assert detail["injected_cases"] == detail["injected_not_verified"] == 48
+    assert len(detail["families"]) == 12  # type: ignore[arg-type]
+    assert set(detail["families"].values()) == {"PASS"}  # type: ignore[attr-defined]

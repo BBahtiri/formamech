@@ -1,5 +1,5 @@
 {
- "claim_level": "NOT_VERIFIED",
+ "claim_level": "HOLDOUT_VERIFIED",
  "gate_id": "G14",
  "protocol_sha256": "99c27839754fd734fcb19d3b3b6070ad6f2a8347972f830e7e696abc7800e0db",
  "report": {
@@ -14,11 +14,29 @@
    },
    {
     "id": "G14.reducer",
-    "measured": null,
-    "reason": "the twelve verification families of IMPLEMENTATION-v1.0-OSS.md are not available",
+    "measured": {
+     "control_claim": "HOLDOUT_VERIFIED",
+     "families": {
+      "F01 contracts-identity (G2)": "PASS",
+      "F02 content-store (G3)": "PASS",
+      "F03 physics-kernel (G4)": "PASS",
+      "F04 geometry-tags (G5)": "PASS",
+      "F05 morphing-membership (G6)": "PASS",
+      "F06 primary-fem (G7)": "PASS",
+      "F07 fem-verification (G8)": "PASS",
+      "F08 doe-preregistration (G9)": "PASS",
+      "F09 dataset-materialisation (G10)": "PASS",
+      "F10 operator-architecture (G11)": "PASS",
+      "F11 objectives-gradients (G12)": "PASS",
+      "F12 training-selection (G13)": "PASS"
+     },
+     "injected_cases": 48,
+     "injected_not_verified": 48
+    },
+    "reason": null,
     "required": true,
-    "status": "NOT_RUN",
-    "threshold": null
+    "status": "PASS",
+    "threshold": "every injected failure gives NOT_VERIFIED; all twelve families PASS"
    },
    {
     "id": "G14.report-sections",
@@ -90,7 +108,7 @@
    },
    {
     "id": "G14.coverage",
-    "measured": 97.75,
+    "measured": 98.03,
     "reason": null,
     "required": true,
     "status": "PASS",
@@ -113,15 +131,14 @@
     "threshold": "reported (nominal 0.9)"
    }
   ],
-  "claim_level": "NOT_VERIFIED",
+  "claim_level": "HOLDOUT_VERIFIED",
   "sections": {
    "errored": [],
    "failed": [],
-   "not_run": [
-    "G14.reducer"
-   ],
+   "not_run": [],
    "passed": [
     "G14.budget",
+    "G14.reducer",
     "G14.report-sections",
     "G14.refusal",
     "G14.reason-codes",
@@ -149,5 +166,5 @@
   }
  },
  "step": "S14",
- "verdict": "FAIL"
+ "verdict": "PASS"
 }

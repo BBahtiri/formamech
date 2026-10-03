@@ -1,11 +1,11 @@
 # S14 plan — verification, gates, envelope, confidence
 
-- Status: **Steps 1–3 done.** Decisions accepted on 2026-10-02 (ADR 0019);
-  protocol and methods signed off (ADR 0020, `S14-PROTOCOL-SIGNOFF.json`);
-  DEVELOPMENT measured and its two peak-slice exceedances accepted by the
-  decision owner (ADR 0021); HOLDOUT consumed once and passing every budget
-  slice. G14 (`artifacts/gates/S14.json`) is not passed only because
-  `G14.reducer` is `NOT_RUN` (§4c).
+- Status: **Complete — G14 PASS, claim `HOLDOUT_VERIFIED`** (2026-10-03).
+  Decisions accepted (ADR 0019); protocol and methods signed off (ADR 0020);
+  the two DEVELOPMENT peak-slice exceedances accepted by the decision owner
+  (ADR 0021); HOLDOUT consumed once and passing every budget slice; the
+  reducer runs over the twelve families that replace the unavailable
+  `IMPLEMENTATION-v1.0-OSS.md` (ADR 0022, §4c).
 - Date: 2026-10-02
 - Base: `codex/s13-closeout` at `6f2034f` (G13 PASS, `CP-FREEZE` written)
 - Frozen candidate: S13c energy-form operator, run `0ca34e32…`, manifest
@@ -154,19 +154,20 @@ solved with the S10 recipe (median 140 s per solve) and scored once
 | Check | Status |
 | --- | --- |
 | `G14.budget` (DEVELOPMENT) | PASS by the signed waiver of ADR 0021; computed FAIL on two peak slices |
-| `G14.reducer` | **NOT_RUN**: the twelve families of `IMPLEMENTATION-v1.0-OSS.md` are not available |
+| `G14.reducer` | PASS: 48 of 48 injected failures give `NOT_VERIFIED`; all twelve families of ADR 0022 PASS |
 | `G14.report-sections`, `G14.no-certified` | PASS |
 | `G14.refusal`, `G14.reason-codes` | PASS (240/240, 0/844 false refusals, stable over two runs) |
 | `G14.confidence` | PASS (0.641) |
 | `G14.latency` | PASS (measured: 0.109 s median, 1,009x) |
 | `G14.holdout-order` | PASS (consumption record before the reveal) |
-| `G14.coverage` | PASS (97.75% of `piginot.verification`) |
+| `G14.coverage` | PASS (98.03% of `piginot.verification`) |
 | `G14.holdout-budget` (reported) | PASS, so the reachable claim is `HOLDOUT_VERIFIED` |
 | `G14.holdout-calibration` (reported) | 86.8% coverage of the 90% curve |
 
-Verdict: not passed (one required check `NOT_RUN`); claim level `NOT_VERIFIED`.
-Once the reducer families are available and pass, the recorded measurements
-support `HOLDOUT_VERIFIED` without reopening any evidence.
+Verdict: **PASS**; claim level `HOLDOUT_VERIFIED`. The first gate run
+(2026-10-02) recorded `G14.reducer` as `NOT_RUN`; the second (2026-10-03)
+added the families of ADR 0022 through the signed
+`S14-PROTOCOL-AMENDMENT-2.json`, without reopening any evidence.
 
 ## 5. Step 3 — Validate (opens DEVELOPMENT, then HOLDOUT once)
 

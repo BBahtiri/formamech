@@ -185,9 +185,10 @@ cases under a signed protocol (ADRs 0019–0021). Its numbers carry these limits
 - Latency is measured on one Linux CPU thread at the 969 mesh vertices of a
   case, against the S10 P2 solve with 64 load steps; other query sets,
   hardware or solver settings change the ratio.
-- G14 is not passed: `G14.reducer` is `NOT_RUN` until the twelve verification
-  families of `IMPLEMENTATION-v1.0-OSS.md` are available, so the claim level is
-  `NOT_VERIFIED`.
+- G14 passes with the claim level `HOLDOUT_VERIFIED`. Its reducer runs over
+  twelve verification families that the project defined itself (ADR 0022),
+  because `IMPLEMENTATION-v1.0-OSS.md` is not available; they are the upstream
+  gate artifacts, not an independent audit.
 
 The S10 production run recorded zero natural FEM failures. Failed-case visibility is
 therefore exercised by one explicitly non-production canary through the same role
