@@ -339,6 +339,7 @@ def reproduction_check(
     from campaigns.dogbone_v1.s14_candidate import (
         S14Case,
         load_frozen_candidate,
+        score_case,
         served_geometry,
     )
     from piginot.doe import EvidenceRole
@@ -350,6 +351,7 @@ def reproduction_check(
         s10_run_root, development_access_record=rehearsal_root / "no-development.json"
     )
     records: list[dict[str, Any]] = []
+    reported: dict[str, float] = {}
     for verified in source.iter_train_screen():
         if len(records) >= cases:
             break
@@ -376,17 +378,33 @@ def reproduction_check(
             "P_bitwise_equal": bool(torch.equal(vertices.P_served, stress.detach())),
         }
         if with_confidence:
-            cache = np.load(rehearsal_root / "cases" / f"{case.case_id}.npz")
-            reference = torch.from_numpy(cache["patch-mean"])
-            record["indicator_bitwise_equal"] = bool(
-                torch.equal(vertices.confidence_indicator, reference)  # type: ignore[arg-type]
+            assert vertices.confidence_indicator is not None
+            scored = score_case(
+                model,
+                case,
+                verified.request,
+                verified.result,
+                normalization,
+                allowed_roles=frozenset({EvidenceRole.TRAIN}),
             )
+            record["indicator_bitwise_equal"] = bool(
+                torch.equal(
+                    vertices.confidence_indicator, scored.indicators["patch-mean"]
+                )
+            )
+            # The rehearsal cache was written on two threads; report, not gate.
+            cache = np.load(rehearsal_root / "cases" / f"{case.case_id}.npz")
+            difference = vertices.confidence_indicator - torch.from_numpy(
+                cache["patch-mean"]
+            )
+            reported[case.case_id] = float(difference.abs().max())
         records.append(record)
         _progress(f"reproduction {len(records)}/{cases} {case.case_id}")
     if source.development_opened:
         raise RuntimeError("DEVELOPMENT labels opened during S15 validation")
     return {
         "cases": records,
+        "indicator_max_abs_difference_to_s14_rehearsal_cache": reported,
         "passed": all(
             all(value for key, value in record.items() if key != "case_id")
             for record in records
@@ -545,6 +563,10 @@ def run_fresh_install(args: argparse.Namespace) -> int:
     refused_document["inputs"]["L_total"]["value"] = 90.0
     refused_request.write_text(json.dumps(refused_document))
     environment = {"PATH": f"{venv / 'bin'}:/usr/bin:/bin", "HOME": str(clean)}
+    # Same thread settings as this process, so the comparison is like for like.
+    for variable in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
+        if variable in os.environ:
+            environment[variable] = os.environ[variable]
     piginot = str(venv / "bin" / "piginot")
     steps = {
         "bundle verify": [piginot, "bundle", "verify", "bundle"],
@@ -618,6 +640,7 @@ def run_fresh_install(args: argparse.Namespace) -> int:
     installed_from = probe.stdout.splitlines()[0] if probe.stdout else ""
     document = {
         "python": args.python,
+        "threads": environment.get("OMP_NUM_THREADS", "default"),
         "wheel": wheel.name,
         "wheel_sha256": hashlib.sha256(wheel.read_bytes()).hexdigest(),
         "packages": packages,
