@@ -207,6 +207,18 @@ S15 serves that candidate as a bundle ([ADR 0023](adr/0023-s15-bundle-and-cli.md
   the calibrated range are flagged, not extrapolated.
 - The clean install was checked on Linux x86_64 with Python 3.11 only.
 
+S16 checks the gates themselves with twenty mutants
+([ADR 0024](adr/0024-s16-mutation-suite.md)). Its limits:
+
+- Each mutant is one deliberate defect from a fixed list. That every gate
+  catches its listed defect does not show that the gates catch every defect.
+- The detectors run each gate check's procedure on a small fixed fixture. They
+  show that the procedure catches the defect, not that the original campaign
+  evidence would have changed.
+- Thirteen of the twenty mutants are caught only by their primary gate.
+- Secondary detections can change with library versions; the release job
+  reports such changes instead of hiding them.
+
 The S10 production run recorded zero natural FEM failures. Failed-case visibility is
 therefore exercised by one explicitly non-production canary through the same role
 snapshot path; that proves the path represents the controlled failure but is not an

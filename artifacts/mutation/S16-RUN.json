@@ -1,0 +1,5746 @@
+{
+ "comparison": {
+  "added_detectors": [],
+  "mutants": [
+   {
+    "detail": "",
+    "lost_secondary": [],
+    "name": "ANISOTROPIC_SCALING",
+    "new_detections": [],
+    "primary": "G8.seeded-defects",
+    "status": "PASS"
+   },
+   {
+    "detail": "",
+    "lost_secondary": [],
+    "name": "BODY_FORCE_SIGN",
+    "new_detections": [],
+    "primary": "G8.seeded-defects",
+    "status": "PASS"
+   },
+   {
+    "detail": "",
+    "lost_secondary": [],
+    "name": "BOUNDARY_NORMAL",
+    "new_detections": [],
+    "primary": "G8.seeded-defects",
+    "status": "PASS"
+   },
+   {
+    "detail": "",
+    "lost_secondary": [],
+    "name": "CHOOSE_NONRANKED_CHECKPOINT",
+    "new_detections": [],
+    "primary": "G13.selection",
+    "status": "PASS"
+   },
+   {
+    "detail": "",
+    "lost_secondary": [],
+    "name": "CLOSURE_WRONG_ROOT",
+    "new_detections": [],
+    "primary": "G8.seeded-defects",
+    "status": "PASS"
+   },
+   {
+    "detail": "",
+    "lost_secondary": [],
+    "name": "COORDINATE_ANISOTROPY",
+    "new_detections": [],
+    "primary": "G12.anisotropy",
+    "status": "PASS"
+   },
+   {
+    "detail": "",
+    "lost_secondary": [],
+    "name": "DROP_PROJECTION_ERROR",
+    "new_detections": [],
+    "primary": "G10.projection-error",
+    "status": "PASS"
+   },
+   {
+    "detail": "",
+    "lost_secondary": [],
+    "name": "HOLDOUT_ACCESS",
+    "new_detections": [],
+    "primary": "G12.role-isolation",
+    "status": "PASS"
+   },
+   {
+    "detail": "",
+    "lost_secondary": [],
+    "name": "IGNORE_DIRICHLET_LIFTING",
+    "new_detections": [],
+    "primary": "G11.lifting-mutant",
+    "status": "PASS"
+   },
+   {
+    "detail": "",
+    "lost_secondary": [],
+    "name": "INCONSISTENT_TANGENT",
+    "new_detections": [],
+    "primary": "G8.seeded-defects",
+    "status": "PASS"
+   },
+   {
+    "detail": "",
+    "lost_secondary": [],
+    "name": "NODE_SPLIT",
+    "new_detections": [],
+    "primary": "G9.no-node-split",
+    "status": "PASS"
+   },
+   {
+    "detail": "",
+    "lost_secondary": [],
+    "name": "NORMALIZE_ON_ALL_SPLITS",
+    "new_detections": [],
+    "primary": "G10.normalization",
+    "status": "PASS"
+   },
+   {
+    "detail": "",
+    "lost_secondary": [],
+    "name": "PASS_ON_NOT_RUN",
+    "new_detections": [],
+    "primary": "G14.reducer",
+    "status": "PASS"
+   },
+   {
+    "detail": "",
+    "lost_secondary": [],
+    "name": "REVEAL_BEFORE_CONSUME",
+    "new_detections": [],
+    "primary": "G14.holdout-order",
+    "status": "PASS"
+   },
+   {
+    "detail": "",
+    "lost_secondary": [],
+    "name": "SELECT_ON_HOLDOUT",
+    "new_detections": [],
+    "primary": "G13.holdout",
+    "status": "PASS"
+   },
+   {
+    "detail": "",
+    "lost_secondary": [],
+    "name": "SERVE_P_MATERIAL",
+    "new_detections": [],
+    "primary": "G15.substitution",
+    "status": "PASS"
+   },
+   {
+    "detail": "",
+    "lost_secondary": [],
+    "name": "STRESS_NODE_PAIRING",
+    "new_detections": [],
+    "primary": "G10.cross-mesh",
+    "status": "PASS"
+   },
+   {
+    "detail": "",
+    "lost_secondary": [],
+    "name": "TAG_SWAP",
+    "new_detections": [],
+    "primary": "G8.seeded-defects",
+    "status": "PASS"
+   },
+   {
+    "detail": "",
+    "lost_secondary": [],
+    "name": "UNDETECTED_BUNDLE_TAMPER",
+    "new_detections": [],
+    "primary": "G15.manifest",
+    "status": "PASS"
+   },
+   {
+    "detail": "",
+    "lost_secondary": [],
+    "name": "ZERO_MISSING_BUDGET_COMPONENT",
+    "new_detections": [],
+    "primary": "G14.budget",
+    "status": "PASS"
+   }
+  ],
+  "removed_detectors": [],
+  "status": "PASS"
+ },
+ "control_after": [
+  {
+   "check_id": "G4.tangent",
+   "error": null,
+   "measured": {
+    "max_relative_error": 1.7665468384436653e-10
+   },
+   "seconds": 0.006,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G4.closure-residual",
+   "error": null,
+   "measured": {
+    "max_p33_over_e": 1.4210854715202004e-16,
+    "min_f33": 0.8527828901596295
+   },
+   "seconds": 0.001,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G7.loads-fields-store",
+   "error": null,
+   "measured": {
+    "body_force_reaction_error": 4.6363148942665915e-12,
+    "traction_reaction_error": 8.777700788442644e-15
+   },
+   "seconds": 0.15,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G8.patch",
+   "error": null,
+   "measured": {
+    "p1": 1.358866722848499e-15,
+    "p2": 6.360652745248293e-16
+   },
+   "seconds": 0.159,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G8.seeded-defects",
+   "error": null,
+   "measured": {
+    "detected": 6,
+    "missed": []
+   },
+   "seconds": 0.376,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G9.no-node-split",
+   "error": null,
+   "measured": {
+    "split_refused_as_random_node_split": true
+   },
+   "seconds": 0.0,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G10.projection-error",
+   "error": null,
+   "measured": {
+    "bounds": [
+     2.4000000000000004,
+     1.0
+    ],
+    "covered": true
+   },
+   "seconds": 0.0,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G10.cross-mesh",
+   "error": null,
+   "measured": {
+    "left_integral_xx": 3.5,
+    "node_pairing_refused": true,
+    "relative_difference": 0.0
+   },
+   "seconds": 0.0,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G10.normalization",
+   "error": null,
+   "measured": {
+    "mean": 1.4000000000000001,
+    "training_case_ids": [
+     "case-0",
+     "case-1",
+     "case-2"
+    ]
+   },
+   "seconds": 0.011,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G11.lifting",
+   "error": null,
+   "measured": {
+    "control_relative_error": 0.0
+   },
+   "seconds": 0.007,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G11.lifting-mutant",
+   "error": null,
+   "measured": {
+    "control_relative_error": 0.0,
+    "mutant_relative_error": 0.9999998774696726
+   },
+   "seconds": 0.005,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G12.anisotropy",
+   "error": null,
+   "measured": {
+    "relative_change": 0.0,
+    "seeded_mutant_fired": true
+   },
+   "seconds": 0.002,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G12.role-isolation",
+   "error": null,
+   "measured": {
+    "holdout_refused": true,
+    "mutant_matches": true
+   },
+   "seconds": 0.0,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G13.holdout",
+   "error": null,
+   "measured": {
+    "refusals": 2,
+    "required": 2
+   },
+   "seconds": 0.001,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G13.selection",
+   "error": null,
+   "measured": {
+    "ranking_matches": true,
+    "selected_is_first_ranked": true
+   },
+   "seconds": 0.001,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G14.budget",
+   "error": null,
+   "measured": {
+    "statuses": {
+     "all": "NOT_RUN",
+     "s1": "FAIL",
+     "s2": "NOT_RUN"
+    }
+   },
+   "seconds": 0.0,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G14.reducer",
+   "error": null,
+   "measured": {
+    "cases": 48,
+    "control_level": "HOLDOUT_VERIFIED",
+    "not_verified": 48
+   },
+   "seconds": 0.007,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G14.holdout-order",
+   "error": null,
+   "measured": {
+    "foreign_candidate_refused": true,
+    "read_without_record": false,
+    "refused_without_record": true
+   },
+   "seconds": 0.001,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G15.fields",
+   "error": null,
+   "measured": {
+    "finite": true,
+    "jacobian_consistent": true,
+    "loaded_end_error": 0.0
+   },
+   "seconds": 0.528,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G15.substitution",
+   "error": null,
+   "measured": {
+    "authority_mismatch_refused": true,
+    "declared_head_served": true
+   },
+   "seconds": 0.449,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G15.refuse",
+   "error": null,
+   "measured": {
+    "in_envelope": "IN_DOMAIN",
+    "in_envelope_codes": [],
+    "out_of_envelope_codes": [
+     "PARAMETER_OUT_OF_BOUNDS"
+    ]
+   },
+   "seconds": 0.355,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G15.manifest",
+   "error": null,
+   "measured": {
+    "cases": 18,
+    "missed": []
+   },
+   "seconds": 0.014,
+   "status": "PASS"
+  }
+ ],
+ "control_before": [
+  {
+   "check_id": "G4.tangent",
+   "error": null,
+   "measured": {
+    "max_relative_error": 1.7665468384436653e-10
+   },
+   "seconds": 0.007,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G4.closure-residual",
+   "error": null,
+   "measured": {
+    "max_p33_over_e": 1.4210854715202004e-16,
+    "min_f33": 0.8527828901596295
+   },
+   "seconds": 0.002,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G7.loads-fields-store",
+   "error": null,
+   "measured": {
+    "body_force_reaction_error": 4.6363148942665915e-12,
+    "traction_reaction_error": 8.777700788442644e-15
+   },
+   "seconds": 0.177,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G8.patch",
+   "error": null,
+   "measured": {
+    "p1": 1.358866722848499e-15,
+    "p2": 6.360652745248293e-16
+   },
+   "seconds": 0.172,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G8.seeded-defects",
+   "error": null,
+   "measured": {
+    "detected": 6,
+    "missed": []
+   },
+   "seconds": 1.152,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G9.no-node-split",
+   "error": null,
+   "measured": {
+    "split_refused_as_random_node_split": true
+   },
+   "seconds": 0.0,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G10.projection-error",
+   "error": null,
+   "measured": {
+    "bounds": [
+     2.4000000000000004,
+     1.0
+    ],
+    "covered": true
+   },
+   "seconds": 0.001,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G10.cross-mesh",
+   "error": null,
+   "measured": {
+    "left_integral_xx": 3.5,
+    "node_pairing_refused": true,
+    "relative_difference": 0.0
+   },
+   "seconds": 0.0,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G10.normalization",
+   "error": null,
+   "measured": {
+    "mean": 1.4000000000000001,
+    "training_case_ids": [
+     "case-0",
+     "case-1",
+     "case-2"
+    ]
+   },
+   "seconds": 0.027,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G11.lifting",
+   "error": null,
+   "measured": {
+    "control_relative_error": 0.0
+   },
+   "seconds": 0.009,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G11.lifting-mutant",
+   "error": null,
+   "measured": {
+    "control_relative_error": 0.0,
+    "mutant_relative_error": 0.9999998774696726
+   },
+   "seconds": 0.005,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G12.anisotropy",
+   "error": null,
+   "measured": {
+    "relative_change": 0.0,
+    "seeded_mutant_fired": true
+   },
+   "seconds": 0.03,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G12.role-isolation",
+   "error": null,
+   "measured": {
+    "holdout_refused": true,
+    "mutant_matches": true
+   },
+   "seconds": 0.0,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G13.holdout",
+   "error": null,
+   "measured": {
+    "refusals": 2,
+    "required": 2
+   },
+   "seconds": 0.001,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G13.selection",
+   "error": null,
+   "measured": {
+    "ranking_matches": true,
+    "selected_is_first_ranked": true
+   },
+   "seconds": 0.001,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G14.budget",
+   "error": null,
+   "measured": {
+    "statuses": {
+     "all": "NOT_RUN",
+     "s1": "FAIL",
+     "s2": "NOT_RUN"
+    }
+   },
+   "seconds": 0.0,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G14.reducer",
+   "error": null,
+   "measured": {
+    "cases": 48,
+    "control_level": "HOLDOUT_VERIFIED",
+    "not_verified": 48
+   },
+   "seconds": 0.007,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G14.holdout-order",
+   "error": null,
+   "measured": {
+    "foreign_candidate_refused": true,
+    "read_without_record": false,
+    "refused_without_record": true
+   },
+   "seconds": 0.001,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G15.fields",
+   "error": null,
+   "measured": {
+    "finite": true,
+    "jacobian_consistent": true,
+    "loaded_end_error": 0.0
+   },
+   "seconds": 0.79,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G15.substitution",
+   "error": null,
+   "measured": {
+    "authority_mismatch_refused": true,
+    "declared_head_served": true
+   },
+   "seconds": 0.495,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G15.refuse",
+   "error": null,
+   "measured": {
+    "in_envelope": "IN_DOMAIN",
+    "in_envelope_codes": [],
+    "out_of_envelope_codes": [
+     "PARAMETER_OUT_OF_BOUNDS"
+    ]
+   },
+   "seconds": 0.374,
+   "status": "PASS"
+  },
+  {
+   "check_id": "G15.manifest",
+   "error": null,
+   "measured": {
+    "cases": 18,
+    "missed": []
+   },
+   "seconds": 0.014,
+   "status": "PASS"
+  }
+ ],
+ "control_passed": true,
+ "detectors": [
+  "G4.tangent",
+  "G4.closure-residual",
+  "G7.loads-fields-store",
+  "G8.patch",
+  "G8.seeded-defects",
+  "G9.no-node-split",
+  "G10.projection-error",
+  "G10.cross-mesh",
+  "G10.normalization",
+  "G11.lifting",
+  "G11.lifting-mutant",
+  "G12.anisotropy",
+  "G12.role-isolation",
+  "G13.holdout",
+  "G13.selection",
+  "G14.budget",
+  "G14.reducer",
+  "G14.holdout-order",
+  "G15.fields",
+  "G15.substitution",
+  "G15.refuse",
+  "G15.manifest"
+ ],
+ "mutant_count": 20,
+ "mutants": [
+  {
+   "description": "the registered body force enters the weak form with the wrong sign",
+   "edits": [
+    {
+     "new": "return -dot(data.body_force, test)",
+     "old": "return dot(data.body_force, test)",
+     "target": "piginot.fem.binding:_registered_body_force"
+    }
+   ],
+   "fired": [
+    "G7.loads-fields-store",
+    "G8.seeded-defects"
+   ],
+   "name": "BODY_FORCE_SIGN",
+   "primary": "G8.seeded-defects",
+   "primary_fired": true,
+   "results": [
+    {
+     "check_id": "G4.tangent",
+     "error": null,
+     "measured": {
+      "max_relative_error": 1.7665468384436653e-10
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G4.closure-residual",
+     "error": null,
+     "measured": {
+      "max_p33_over_e": 1.4210854715202004e-16,
+      "min_f33": 0.8527828901596295
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G7.loads-fields-store",
+     "error": null,
+     "measured": {
+      "body_force_reaction_error": 2.154065922858348,
+      "traction_reaction_error": 8.777700788442644e-15
+     },
+     "seconds": 0.179,
+     "status": "FAIL"
+    },
+    {
+     "check_id": "G8.patch",
+     "error": null,
+     "measured": {
+      "p1": 1.358866722848499e-15,
+      "p2": 6.360652745248293e-16
+     },
+     "seconds": 0.243,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G8.seeded-defects",
+     "error": null,
+     "measured": {
+      "detected": 5,
+      "missed": [
+       "body-force sign"
+      ]
+     },
+     "seconds": 0.396,
+     "status": "FAIL"
+    },
+    {
+     "check_id": "G9.no-node-split",
+     "error": null,
+     "measured": {
+      "split_refused_as_random_node_split": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.projection-error",
+     "error": null,
+     "measured": {
+      "bounds": [
+       2.4000000000000004,
+       1.0
+      ],
+      "covered": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.cross-mesh",
+     "error": null,
+     "measured": {
+      "left_integral_xx": 3.5,
+      "node_pairing_refused": true,
+      "relative_difference": 0.0
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.normalization",
+     "error": null,
+     "measured": {
+      "mean": 1.4000000000000001,
+      "training_case_ids": [
+       "case-0",
+       "case-1",
+       "case-2"
+      ]
+     },
+     "seconds": 0.011,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting-mutant",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0,
+      "mutant_relative_error": 0.9999998774696726
+     },
+     "seconds": 0.005,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.anisotropy",
+     "error": null,
+     "measured": {
+      "relative_change": 0.0,
+      "seeded_mutant_fired": true
+     },
+     "seconds": 0.002,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.role-isolation",
+     "error": null,
+     "measured": {
+      "holdout_refused": true,
+      "mutant_matches": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.holdout",
+     "error": null,
+     "measured": {
+      "refusals": 2,
+      "required": 2
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.selection",
+     "error": null,
+     "measured": {
+      "ranking_matches": true,
+      "selected_is_first_ranked": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.budget",
+     "error": null,
+     "measured": {
+      "statuses": {
+       "all": "NOT_RUN",
+       "s1": "FAIL",
+       "s2": "NOT_RUN"
+      }
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.reducer",
+     "error": null,
+     "measured": {
+      "cases": 48,
+      "control_level": "HOLDOUT_VERIFIED",
+      "not_verified": 48
+     },
+     "seconds": 0.007,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.holdout-order",
+     "error": null,
+     "measured": {
+      "foreign_candidate_refused": true,
+      "read_without_record": false,
+      "refused_without_record": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.fields",
+     "error": null,
+     "measured": {
+      "finite": true,
+      "jacobian_consistent": true,
+      "loaded_end_error": 0.0
+     },
+     "seconds": 0.432,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.substitution",
+     "error": null,
+     "measured": {
+      "authority_mismatch_refused": true,
+      "declared_head_served": true
+     },
+     "seconds": 0.56,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.refuse",
+     "error": null,
+     "measured": {
+      "in_envelope": "IN_DOMAIN",
+      "in_envelope_codes": [],
+      "out_of_envelope_codes": [
+       "PARAMETER_OUT_OF_BOUNDS"
+      ]
+     },
+     "seconds": 0.35,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.manifest",
+     "error": null,
+     "measured": {
+      "cases": 18,
+      "missed": []
+     },
+     "seconds": 0.013,
+     "status": "PASS"
+    }
+   ],
+   "seconds": 2.215
+  },
+  {
+   "description": "traction-field providers receive the inward normal",
+   "edits": [
+    {
+     "new": "provider.evaluate(points, -normals)",
+     "old": "provider.evaluate(points, normals)",
+     "target": "piginot.fem.binding:_traction_field"
+    }
+   ],
+   "fired": [
+    "G7.loads-fields-store",
+    "G8.seeded-defects"
+   ],
+   "name": "BOUNDARY_NORMAL",
+   "primary": "G8.seeded-defects",
+   "primary_fired": true,
+   "results": [
+    {
+     "check_id": "G4.tangent",
+     "error": null,
+     "measured": {
+      "max_relative_error": 1.7665468384436653e-10
+     },
+     "seconds": 0.005,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G4.closure-residual",
+     "error": null,
+     "measured": {
+      "max_p33_over_e": 1.4210854715202004e-16,
+      "min_f33": 0.8527828901596295
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G7.loads-fields-store",
+     "error": null,
+     "measured": {
+      "body_force_reaction_error": 4.6363148942665915e-12,
+      "traction_reaction_error": 2.0
+     },
+     "seconds": 0.155,
+     "status": "FAIL"
+    },
+    {
+     "check_id": "G8.patch",
+     "error": null,
+     "measured": {
+      "p1": 1.358866722848499e-15,
+      "p2": 6.360652745248293e-16
+     },
+     "seconds": 0.176,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G8.seeded-defects",
+     "error": null,
+     "measured": {
+      "detected": 5,
+      "missed": [
+       "boundary normal"
+      ]
+     },
+     "seconds": 0.357,
+     "status": "FAIL"
+    },
+    {
+     "check_id": "G9.no-node-split",
+     "error": null,
+     "measured": {
+      "split_refused_as_random_node_split": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.projection-error",
+     "error": null,
+     "measured": {
+      "bounds": [
+       2.4000000000000004,
+       1.0
+      ],
+      "covered": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.cross-mesh",
+     "error": null,
+     "measured": {
+      "left_integral_xx": 3.5,
+      "node_pairing_refused": true,
+      "relative_difference": 0.0
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.normalization",
+     "error": null,
+     "measured": {
+      "mean": 1.4000000000000001,
+      "training_case_ids": [
+       "case-0",
+       "case-1",
+       "case-2"
+      ]
+     },
+     "seconds": 0.011,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting-mutant",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0,
+      "mutant_relative_error": 0.9999998774696726
+     },
+     "seconds": 0.005,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.anisotropy",
+     "error": null,
+     "measured": {
+      "relative_change": 0.0,
+      "seeded_mutant_fired": true
+     },
+     "seconds": 0.002,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.role-isolation",
+     "error": null,
+     "measured": {
+      "holdout_refused": true,
+      "mutant_matches": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.holdout",
+     "error": null,
+     "measured": {
+      "refusals": 2,
+      "required": 2
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.selection",
+     "error": null,
+     "measured": {
+      "ranking_matches": true,
+      "selected_is_first_ranked": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.budget",
+     "error": null,
+     "measured": {
+      "statuses": {
+       "all": "NOT_RUN",
+       "s1": "FAIL",
+       "s2": "NOT_RUN"
+      }
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.reducer",
+     "error": null,
+     "measured": {
+      "cases": 48,
+      "control_level": "HOLDOUT_VERIFIED",
+      "not_verified": 48
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.holdout-order",
+     "error": null,
+     "measured": {
+      "foreign_candidate_refused": true,
+      "read_without_record": false,
+      "refused_without_record": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.fields",
+     "error": null,
+     "measured": {
+      "finite": true,
+      "jacobian_consistent": true,
+      "loaded_end_error": 0.0
+     },
+     "seconds": 0.419,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.substitution",
+     "error": null,
+     "measured": {
+      "authority_mismatch_refused": true,
+      "declared_head_served": true
+     },
+     "seconds": 0.475,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.refuse",
+     "error": null,
+     "measured": {
+      "in_envelope": "IN_DOMAIN",
+      "in_envelope_codes": [],
+      "out_of_envelope_codes": [
+       "PARAMETER_OUT_OF_BOUNDS"
+      ]
+     },
+     "seconds": 0.503,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.manifest",
+     "error": null,
+     "measured": {
+      "cases": 18,
+      "missed": []
+     },
+     "seconds": 0.013,
+     "status": "PASS"
+    }
+   ],
+   "seconds": 2.139
+  },
+  {
+   "description": "the left and right boundary tags resolve to each other's facets",
+   "edits": [
+    {
+     "new": "tagged_facets = mesh.semantic_tags[{\"left\": \"right\", \"right\": \"left\"}.get(tag, tag)]",
+     "old": "tagged_facets = mesh.semantic_tags[tag]",
+     "target": "piginot.fem.binding:facets_for_tag"
+    }
+   ],
+   "fired": [
+    "G8.patch",
+    "G8.seeded-defects"
+   ],
+   "name": "TAG_SWAP",
+   "primary": "G8.seeded-defects",
+   "primary_fired": true,
+   "results": [
+    {
+     "check_id": "G4.tangent",
+     "error": null,
+     "measured": {
+      "max_relative_error": 1.7665468384436653e-10
+     },
+     "seconds": 0.005,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G4.closure-residual",
+     "error": null,
+     "measured": {
+      "max_p33_over_e": 1.4210854715202004e-16,
+      "min_f33": 0.8527828901596295
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G7.loads-fields-store",
+     "error": null,
+     "measured": {
+      "body_force_reaction_error": 4.679340547031661e-12,
+      "traction_reaction_error": 1.7382483223964485e-14
+     },
+     "seconds": 0.146,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G8.patch",
+     "error": null,
+     "measured": {
+      "p1": 1.0,
+      "p2": 1.0
+     },
+     "seconds": 0.163,
+     "status": "FAIL"
+    },
+    {
+     "check_id": "G8.seeded-defects",
+     "error": null,
+     "measured": {
+      "detected": 3,
+      "missed": [
+       "boundary normal",
+       "tag swap",
+       "anisotropic scaling"
+      ]
+     },
+     "seconds": 0.377,
+     "status": "FAIL"
+    },
+    {
+     "check_id": "G9.no-node-split",
+     "error": null,
+     "measured": {
+      "split_refused_as_random_node_split": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.projection-error",
+     "error": null,
+     "measured": {
+      "bounds": [
+       2.4000000000000004,
+       1.0
+      ],
+      "covered": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.cross-mesh",
+     "error": null,
+     "measured": {
+      "left_integral_xx": 3.5,
+      "node_pairing_refused": true,
+      "relative_difference": 0.0
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.normalization",
+     "error": null,
+     "measured": {
+      "mean": 1.4000000000000001,
+      "training_case_ids": [
+       "case-0",
+       "case-1",
+       "case-2"
+      ]
+     },
+     "seconds": 0.016,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting-mutant",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0,
+      "mutant_relative_error": 0.9999998774696726
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.anisotropy",
+     "error": null,
+     "measured": {
+      "relative_change": 0.0,
+      "seeded_mutant_fired": true
+     },
+     "seconds": 0.002,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.role-isolation",
+     "error": null,
+     "measured": {
+      "holdout_refused": true,
+      "mutant_matches": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.holdout",
+     "error": null,
+     "measured": {
+      "refusals": 2,
+      "required": 2
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.selection",
+     "error": null,
+     "measured": {
+      "ranking_matches": true,
+      "selected_is_first_ranked": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.budget",
+     "error": null,
+     "measured": {
+      "statuses": {
+       "all": "NOT_RUN",
+       "s1": "FAIL",
+       "s2": "NOT_RUN"
+      }
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.reducer",
+     "error": null,
+     "measured": {
+      "cases": 48,
+      "control_level": "HOLDOUT_VERIFIED",
+      "not_verified": 48
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.holdout-order",
+     "error": null,
+     "measured": {
+      "foreign_candidate_refused": true,
+      "read_without_record": false,
+      "refused_without_record": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.fields",
+     "error": null,
+     "measured": {
+      "finite": true,
+      "jacobian_consistent": true,
+      "loaded_end_error": 0.0
+     },
+     "seconds": 0.448,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.substitution",
+     "error": null,
+     "measured": {
+      "authority_mismatch_refused": true,
+      "declared_head_served": true
+     },
+     "seconds": 0.472,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.refuse",
+     "error": null,
+     "measured": {
+      "in_envelope": "IN_DOMAIN",
+      "in_envelope_codes": [],
+      "out_of_envelope_codes": [
+       "PARAMETER_OUT_OF_BOUNDS"
+      ]
+     },
+     "seconds": 0.355,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.manifest",
+     "error": null,
+     "measured": {
+      "cases": 18,
+      "missed": []
+     },
+     "seconds": 0.016,
+     "status": "PASS"
+    }
+   ],
+   "seconds": 2.024
+  },
+  {
+   "description": "the plane-stress closure returns the negative root",
+   "edits": [
+    {
+     "new": "return -torch.gather(candidates, 0, best).squeeze(0)",
+     "old": "return torch.gather(candidates, 0, best).squeeze(0)",
+     "target": "piginot.physics.plane_stress:_nearest_representable_root"
+    }
+   ],
+   "fired": [
+    "G15.fields",
+    "G15.refuse",
+    "G15.substitution",
+    "G4.closure-residual",
+    "G7.loads-fields-store",
+    "G8.patch",
+    "G8.seeded-defects"
+   ],
+   "name": "CLOSURE_WRONG_ROOT",
+   "primary": "G8.seeded-defects",
+   "primary_fired": true,
+   "results": [
+    {
+     "check_id": "G4.tangent",
+     "error": null,
+     "measured": {
+      "max_relative_error": 1.7665468384436653e-10
+     },
+     "seconds": 0.005,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G4.closure-residual",
+     "error": "piginot.physics.errors.InadmissibleDeformationError: deformation determinant must be finite and > 1e-12",
+     "measured": {},
+     "seconds": 0.001,
+     "status": "ERROR"
+    },
+    {
+     "check_id": "G7.loads-fields-store",
+     "error": "RuntimeError: s16-g7-body-force did not solve: a quadrature point has non-positive deformation Jacobian",
+     "measured": {},
+     "seconds": 0.012,
+     "status": "ERROR"
+    },
+    {
+     "check_id": "G8.patch",
+     "error": "RuntimeError: s16-g8-patch-p1 did not solve: a quadrature point has non-positive deformation Jacobian",
+     "measured": {},
+     "seconds": 0.012,
+     "status": "ERROR"
+    },
+    {
+     "check_id": "G8.seeded-defects",
+     "error": "RuntimeError: tag-swap case did not produce a measurable solve: a quadrature point has non-positive deformation Jacobian",
+     "measured": {},
+     "seconds": 0.011,
+     "status": "ERROR"
+    },
+    {
+     "check_id": "G9.no-node-split",
+     "error": null,
+     "measured": {
+      "split_refused_as_random_node_split": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.projection-error",
+     "error": null,
+     "measured": {
+      "bounds": [
+       2.4000000000000004,
+       1.0
+      ],
+      "covered": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.cross-mesh",
+     "error": null,
+     "measured": {
+      "left_integral_xx": 3.5,
+      "node_pairing_refused": true,
+      "relative_difference": 0.0
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.normalization",
+     "error": null,
+     "measured": {
+      "mean": 1.4000000000000001,
+      "training_case_ids": [
+       "case-0",
+       "case-1",
+       "case-2"
+      ]
+     },
+     "seconds": 0.01,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0
+     },
+     "seconds": 0.007,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting-mutant",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0,
+      "mutant_relative_error": 0.9999998774696726
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.anisotropy",
+     "error": null,
+     "measured": {
+      "relative_change": 0.0,
+      "seeded_mutant_fired": true
+     },
+     "seconds": 0.002,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.role-isolation",
+     "error": null,
+     "measured": {
+      "holdout_refused": true,
+      "mutant_matches": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.holdout",
+     "error": null,
+     "measured": {
+      "refusals": 2,
+      "required": 2
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.selection",
+     "error": null,
+     "measured": {
+      "ranking_matches": true,
+      "selected_is_first_ranked": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.budget",
+     "error": null,
+     "measured": {
+      "statuses": {
+       "all": "NOT_RUN",
+       "s1": "FAIL",
+       "s2": "NOT_RUN"
+      }
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.reducer",
+     "error": null,
+     "measured": {
+      "cases": 48,
+      "control_level": "HOLDOUT_VERIFIED",
+      "not_verified": 48
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.holdout-order",
+     "error": null,
+     "measured": {
+      "foreign_candidate_refused": true,
+      "read_without_record": false,
+      "refused_without_record": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.fields",
+     "error": "piginot.physics.errors.InadmissibleDeformationError: deformation determinant must be finite and > 1e-12",
+     "measured": {},
+     "seconds": 0.423,
+     "status": "ERROR"
+    },
+    {
+     "check_id": "G15.substitution",
+     "error": "piginot.physics.errors.InadmissibleDeformationError: deformation determinant must be finite and > 1e-12",
+     "measured": {},
+     "seconds": 0.554,
+     "status": "ERROR"
+    },
+    {
+     "check_id": "G15.refuse",
+     "error": "piginot.physics.errors.InadmissibleDeformationError: deformation determinant must be finite and > 1e-12",
+     "measured": {},
+     "seconds": 0.353,
+     "status": "ERROR"
+    },
+    {
+     "check_id": "G15.manifest",
+     "error": null,
+     "measured": {
+      "cases": 18,
+      "missed": []
+     },
+     "seconds": 0.012,
+     "status": "PASS"
+    }
+   ],
+   "seconds": 1.42
+  },
+  {
+   "description": "the consistent tangent is scaled by 0.9",
+   "edits": [
+    {
+     "new": "return 0.9 * (material_term + volumetric_term - geometric_term)",
+     "old": "return material_term + volumetric_term - geometric_term",
+     "target": "piginot.physics.neo_hookean:consistent_tangent"
+    }
+   ],
+   "fired": [
+    "G4.tangent",
+    "G8.seeded-defects"
+   ],
+   "name": "INCONSISTENT_TANGENT",
+   "primary": "G8.seeded-defects",
+   "primary_fired": true,
+   "results": [
+    {
+     "check_id": "G4.tangent",
+     "error": null,
+     "measured": {
+      "max_relative_error": 0.10000000001299496
+     },
+     "seconds": 0.005,
+     "status": "FAIL"
+    },
+    {
+     "check_id": "G4.closure-residual",
+     "error": null,
+     "measured": {
+      "max_p33_over_e": 1.4210854715202004e-16,
+      "min_f33": 0.8527828901596295
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G7.loads-fields-store",
+     "error": null,
+     "measured": {
+      "body_force_reaction_error": 1.4130755449231833e-10,
+      "traction_reaction_error": 1.462042161059263e-11
+     },
+     "seconds": 0.449,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G8.patch",
+     "error": null,
+     "measured": {
+      "p1": 8.948281930247031e-13,
+      "p2": 1.889692106497402e-13
+     },
+     "seconds": 0.452,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G8.seeded-defects",
+     "error": null,
+     "measured": {
+      "detected": 5,
+      "missed": [
+       "inconsistent tangent"
+      ]
+     },
+     "seconds": 1.176,
+     "status": "FAIL"
+    },
+    {
+     "check_id": "G9.no-node-split",
+     "error": null,
+     "measured": {
+      "split_refused_as_random_node_split": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.projection-error",
+     "error": null,
+     "measured": {
+      "bounds": [
+       2.4000000000000004,
+       1.0
+      ],
+      "covered": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.cross-mesh",
+     "error": null,
+     "measured": {
+      "left_integral_xx": 3.5,
+      "node_pairing_refused": true,
+      "relative_difference": 0.0
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.normalization",
+     "error": null,
+     "measured": {
+      "mean": 1.4000000000000001,
+      "training_case_ids": [
+       "case-0",
+       "case-1",
+       "case-2"
+      ]
+     },
+     "seconds": 0.012,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0
+     },
+     "seconds": 0.007,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting-mutant",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0,
+      "mutant_relative_error": 0.9999998774696726
+     },
+     "seconds": 0.005,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.anisotropy",
+     "error": null,
+     "measured": {
+      "relative_change": 0.0,
+      "seeded_mutant_fired": true
+     },
+     "seconds": 0.002,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.role-isolation",
+     "error": null,
+     "measured": {
+      "holdout_refused": true,
+      "mutant_matches": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.holdout",
+     "error": null,
+     "measured": {
+      "refusals": 2,
+      "required": 2
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.selection",
+     "error": null,
+     "measured": {
+      "ranking_matches": true,
+      "selected_is_first_ranked": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.budget",
+     "error": null,
+     "measured": {
+      "statuses": {
+       "all": "NOT_RUN",
+       "s1": "FAIL",
+       "s2": "NOT_RUN"
+      }
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.reducer",
+     "error": null,
+     "measured": {
+      "cases": 48,
+      "control_level": "HOLDOUT_VERIFIED",
+      "not_verified": 48
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.holdout-order",
+     "error": null,
+     "measured": {
+      "foreign_candidate_refused": true,
+      "read_without_record": false,
+      "refused_without_record": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.fields",
+     "error": null,
+     "measured": {
+      "finite": true,
+      "jacobian_consistent": true,
+      "loaded_end_error": 0.0
+     },
+     "seconds": 0.438,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.substitution",
+     "error": null,
+     "measured": {
+      "authority_mismatch_refused": true,
+      "declared_head_served": true
+     },
+     "seconds": 0.461,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.refuse",
+     "error": null,
+     "measured": {
+      "in_envelope": "IN_DOMAIN",
+      "in_envelope_codes": [],
+      "out_of_envelope_codes": [
+       "PARAMETER_OUT_OF_BOUNDS"
+      ]
+     },
+     "seconds": 0.378,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.manifest",
+     "error": null,
+     "measured": {
+      "cases": 18,
+      "missed": []
+     },
+     "seconds": 0.012,
+     "status": "PASS"
+    }
+   ],
+   "seconds": 3.41
+  },
+  {
+   "description": "reported solve coordinates are stretched by 1.2 along x",
+   "edits": [
+    {
+     "new": "(1.2 * float(basis.doflocs[0, dof]), float(basis.doflocs[1, dof]))",
+     "old": "(float(basis.doflocs[0, dof]), float(basis.doflocs[1, dof]))",
+     "target": "piginot.fem.backend:_dof_coordinates"
+    }
+   ],
+   "fired": [
+    "G8.patch",
+    "G8.seeded-defects"
+   ],
+   "name": "ANISOTROPIC_SCALING",
+   "primary": "G8.seeded-defects",
+   "primary_fired": true,
+   "results": [
+    {
+     "check_id": "G4.tangent",
+     "error": null,
+     "measured": {
+      "max_relative_error": 1.7665468384436653e-10
+     },
+     "seconds": 0.005,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G4.closure-residual",
+     "error": null,
+     "measured": {
+      "max_p33_over_e": 1.4210854715202004e-16,
+      "min_f33": 0.8527828901596295
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G7.loads-fields-store",
+     "error": null,
+     "measured": {
+      "body_force_reaction_error": 4.6363148942665915e-12,
+      "traction_reaction_error": 8.777700788442644e-15
+     },
+     "seconds": 0.175,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G8.patch",
+     "error": null,
+     "measured": {
+      "p1": 0.16666666666666663,
+      "p2": 0.16666666666666663
+     },
+     "seconds": 0.158,
+     "status": "FAIL"
+    },
+    {
+     "check_id": "G8.seeded-defects",
+     "error": null,
+     "measured": {
+      "detected": 4,
+      "missed": [
+       "tag swap",
+       "anisotropic scaling"
+      ]
+     },
+     "seconds": 0.396,
+     "status": "FAIL"
+    },
+    {
+     "check_id": "G9.no-node-split",
+     "error": null,
+     "measured": {
+      "split_refused_as_random_node_split": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.projection-error",
+     "error": null,
+     "measured": {
+      "bounds": [
+       2.4000000000000004,
+       1.0
+      ],
+      "covered": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.cross-mesh",
+     "error": null,
+     "measured": {
+      "left_integral_xx": 3.5,
+      "node_pairing_refused": true,
+      "relative_difference": 0.0
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.normalization",
+     "error": null,
+     "measured": {
+      "mean": 1.4000000000000001,
+      "training_case_ids": [
+       "case-0",
+       "case-1",
+       "case-2"
+      ]
+     },
+     "seconds": 0.01,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0
+     },
+     "seconds": 0.007,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting-mutant",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0,
+      "mutant_relative_error": 0.9999998774696726
+     },
+     "seconds": 0.005,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.anisotropy",
+     "error": null,
+     "measured": {
+      "relative_change": 0.0,
+      "seeded_mutant_fired": true
+     },
+     "seconds": 0.002,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.role-isolation",
+     "error": null,
+     "measured": {
+      "holdout_refused": true,
+      "mutant_matches": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.holdout",
+     "error": null,
+     "measured": {
+      "refusals": 2,
+      "required": 2
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.selection",
+     "error": null,
+     "measured": {
+      "ranking_matches": true,
+      "selected_is_first_ranked": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.budget",
+     "error": null,
+     "measured": {
+      "statuses": {
+       "all": "NOT_RUN",
+       "s1": "FAIL",
+       "s2": "NOT_RUN"
+      }
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.reducer",
+     "error": null,
+     "measured": {
+      "cases": 48,
+      "control_level": "HOLDOUT_VERIFIED",
+      "not_verified": 48
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.holdout-order",
+     "error": null,
+     "measured": {
+      "foreign_candidate_refused": true,
+      "read_without_record": false,
+      "refused_without_record": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.fields",
+     "error": null,
+     "measured": {
+      "finite": true,
+      "jacobian_consistent": true,
+      "loaded_end_error": 0.0
+     },
+     "seconds": 0.646,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.substitution",
+     "error": null,
+     "measured": {
+      "authority_mismatch_refused": true,
+      "declared_head_served": true
+     },
+     "seconds": 0.453,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.refuse",
+     "error": null,
+     "measured": {
+      "in_envelope": "IN_DOMAIN",
+      "in_envelope_codes": [],
+      "out_of_envelope_codes": [
+       "PARAMETER_OUT_OF_BOUNDS"
+      ]
+     },
+     "seconds": 0.371,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.manifest",
+     "error": null,
+     "measured": {
+      "cases": 18,
+      "missed": []
+     },
+     "seconds": 0.013,
+     "status": "PASS"
+    }
+   ],
+   "seconds": 2.25
+  },
+  {
+   "description": "nodes of one case may carry different evidence roles",
+   "edits": [
+    {
+     "new": "if not observed_roles:",
+     "old": "if len(observed_roles) != 1:",
+     "target": "piginot.doe.roles:CaseRoleRegistry.validate_node_observations"
+    }
+   ],
+   "fired": [
+    "G9.no-node-split"
+   ],
+   "name": "NODE_SPLIT",
+   "primary": "G9.no-node-split",
+   "primary_fired": true,
+   "results": [
+    {
+     "check_id": "G4.tangent",
+     "error": null,
+     "measured": {
+      "max_relative_error": 1.7665468384436653e-10
+     },
+     "seconds": 0.019,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G4.closure-residual",
+     "error": null,
+     "measured": {
+      "max_p33_over_e": 1.4210854715202004e-16,
+      "min_f33": 0.8527828901596295
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G7.loads-fields-store",
+     "error": null,
+     "measured": {
+      "body_force_reaction_error": 4.6363148942665915e-12,
+      "traction_reaction_error": 8.777700788442644e-15
+     },
+     "seconds": 0.17,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G8.patch",
+     "error": null,
+     "measured": {
+      "p1": 1.358866722848499e-15,
+      "p2": 6.360652745248293e-16
+     },
+     "seconds": 0.158,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G8.seeded-defects",
+     "error": null,
+     "measured": {
+      "detected": 6,
+      "missed": []
+     },
+     "seconds": 0.374,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G9.no-node-split",
+     "error": null,
+     "measured": {
+      "split_refused_as_random_node_split": false
+     },
+     "seconds": 0.0,
+     "status": "FAIL"
+    },
+    {
+     "check_id": "G10.projection-error",
+     "error": null,
+     "measured": {
+      "bounds": [
+       2.4000000000000004,
+       1.0
+      ],
+      "covered": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.cross-mesh",
+     "error": null,
+     "measured": {
+      "left_integral_xx": 3.5,
+      "node_pairing_refused": true,
+      "relative_difference": 0.0
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.normalization",
+     "error": null,
+     "measured": {
+      "mean": 1.4000000000000001,
+      "training_case_ids": [
+       "case-0",
+       "case-1",
+       "case-2"
+      ]
+     },
+     "seconds": 0.012,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting-mutant",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0,
+      "mutant_relative_error": 0.9999998774696726
+     },
+     "seconds": 0.005,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.anisotropy",
+     "error": null,
+     "measured": {
+      "relative_change": 0.0,
+      "seeded_mutant_fired": true
+     },
+     "seconds": 0.002,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.role-isolation",
+     "error": null,
+     "measured": {
+      "holdout_refused": true,
+      "mutant_matches": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.holdout",
+     "error": null,
+     "measured": {
+      "refusals": 2,
+      "required": 2
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.selection",
+     "error": null,
+     "measured": {
+      "ranking_matches": true,
+      "selected_is_first_ranked": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.budget",
+     "error": null,
+     "measured": {
+      "statuses": {
+       "all": "NOT_RUN",
+       "s1": "FAIL",
+       "s2": "NOT_RUN"
+      }
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.reducer",
+     "error": null,
+     "measured": {
+      "cases": 48,
+      "control_level": "HOLDOUT_VERIFIED",
+      "not_verified": 48
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.holdout-order",
+     "error": null,
+     "measured": {
+      "foreign_candidate_refused": true,
+      "read_without_record": false,
+      "refused_without_record": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.fields",
+     "error": null,
+     "measured": {
+      "finite": true,
+      "jacobian_consistent": true,
+      "loaded_end_error": 0.0
+     },
+     "seconds": 0.426,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.substitution",
+     "error": null,
+     "measured": {
+      "authority_mismatch_refused": true,
+      "declared_head_served": true
+     },
+     "seconds": 0.568,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.refuse",
+     "error": null,
+     "measured": {
+      "in_envelope": "IN_DOMAIN",
+      "in_envelope_codes": [],
+      "out_of_envelope_codes": [
+       "PARAMETER_OUT_OF_BOUNDS"
+      ]
+     },
+     "seconds": 0.351,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.manifest",
+     "error": null,
+     "measured": {
+      "cases": 18,
+      "missed": []
+     },
+     "seconds": 0.012,
+     "status": "PASS"
+    }
+   ],
+   "seconds": 2.113
+  },
+  {
+   "description": "projected fields carry a zero transfer-error envelope",
+   "edits": [
+    {
+     "new": "0.0 * max(abs(sample[component] - value[component]) for sample in samples)",
+     "old": "max(abs(sample[component] - value[component]) for sample in samples)",
+     "target": "piginot.datasets.projection:_sample_envelope"
+    }
+   ],
+   "fired": [
+    "G10.projection-error"
+   ],
+   "name": "DROP_PROJECTION_ERROR",
+   "primary": "G10.projection-error",
+   "primary_fired": true,
+   "results": [
+    {
+     "check_id": "G4.tangent",
+     "error": null,
+     "measured": {
+      "max_relative_error": 1.7665468384436653e-10
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G4.closure-residual",
+     "error": null,
+     "measured": {
+      "max_p33_over_e": 1.4210854715202004e-16,
+      "min_f33": 0.8527828901596295
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G7.loads-fields-store",
+     "error": null,
+     "measured": {
+      "body_force_reaction_error": 4.6363148942665915e-12,
+      "traction_reaction_error": 8.777700788442644e-15
+     },
+     "seconds": 0.145,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G8.patch",
+     "error": null,
+     "measured": {
+      "p1": 1.358866722848499e-15,
+      "p2": 6.360652745248293e-16
+     },
+     "seconds": 0.158,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G8.seeded-defects",
+     "error": null,
+     "measured": {
+      "detected": 6,
+      "missed": []
+     },
+     "seconds": 0.379,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G9.no-node-split",
+     "error": null,
+     "measured": {
+      "split_refused_as_random_node_split": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.projection-error",
+     "error": null,
+     "measured": {
+      "bounds": [
+       0.0,
+       0.0
+      ],
+      "covered": false
+     },
+     "seconds": 0.0,
+     "status": "FAIL"
+    },
+    {
+     "check_id": "G10.cross-mesh",
+     "error": null,
+     "measured": {
+      "left_integral_xx": 3.5,
+      "node_pairing_refused": true,
+      "relative_difference": 0.0
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.normalization",
+     "error": null,
+     "measured": {
+      "mean": 1.4000000000000001,
+      "training_case_ids": [
+       "case-0",
+       "case-1",
+       "case-2"
+      ]
+     },
+     "seconds": 0.012,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0
+     },
+     "seconds": 0.007,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting-mutant",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0,
+      "mutant_relative_error": 0.9999998774696726
+     },
+     "seconds": 0.005,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.anisotropy",
+     "error": null,
+     "measured": {
+      "relative_change": 0.0,
+      "seeded_mutant_fired": true
+     },
+     "seconds": 0.002,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.role-isolation",
+     "error": null,
+     "measured": {
+      "holdout_refused": true,
+      "mutant_matches": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.holdout",
+     "error": null,
+     "measured": {
+      "refusals": 2,
+      "required": 2
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.selection",
+     "error": null,
+     "measured": {
+      "ranking_matches": true,
+      "selected_is_first_ranked": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.budget",
+     "error": null,
+     "measured": {
+      "statuses": {
+       "all": "NOT_RUN",
+       "s1": "FAIL",
+       "s2": "NOT_RUN"
+      }
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.reducer",
+     "error": null,
+     "measured": {
+      "cases": 48,
+      "control_level": "HOLDOUT_VERIFIED",
+      "not_verified": 48
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.holdout-order",
+     "error": null,
+     "measured": {
+      "foreign_candidate_refused": true,
+      "read_without_record": false,
+      "refused_without_record": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.fields",
+     "error": null,
+     "measured": {
+      "finite": true,
+      "jacobian_consistent": true,
+      "loaded_end_error": 0.0
+     },
+     "seconds": 0.427,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.substitution",
+     "error": null,
+     "measured": {
+      "authority_mismatch_refused": true,
+      "declared_head_served": true
+     },
+     "seconds": 0.5,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.refuse",
+     "error": null,
+     "measured": {
+      "in_envelope": "IN_DOMAIN",
+      "in_envelope_codes": [],
+      "out_of_envelope_codes": [
+       "PARAMETER_OUT_OF_BOUNDS"
+      ]
+     },
+     "seconds": 0.355,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.manifest",
+     "error": null,
+     "measured": {
+      "cases": 18,
+      "missed": []
+     },
+     "seconds": 0.016,
+     "status": "PASS"
+    }
+   ],
+   "seconds": 2.023
+  },
+  {
+   "description": "cross-mesh stress integrals sum samples without their weights",
+   "edits": [
+    {
+     "new": "result[component] += value",
+     "old": "result[component] += weight * value",
+     "target": "piginot.datasets.projection:_physical_integral"
+    }
+   ],
+   "fired": [
+    "G10.cross-mesh"
+   ],
+   "name": "STRESS_NODE_PAIRING",
+   "primary": "G10.cross-mesh",
+   "primary_fired": true,
+   "results": [
+    {
+     "check_id": "G4.tangent",
+     "error": null,
+     "measured": {
+      "max_relative_error": 1.7665468384436653e-10
+     },
+     "seconds": 0.01,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G4.closure-residual",
+     "error": null,
+     "measured": {
+      "max_p33_over_e": 1.4210854715202004e-16,
+      "min_f33": 0.8527828901596295
+     },
+     "seconds": 0.002,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G7.loads-fields-store",
+     "error": null,
+     "measured": {
+      "body_force_reaction_error": 4.6363148942665915e-12,
+      "traction_reaction_error": 8.777700788442644e-15
+     },
+     "seconds": 0.153,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G8.patch",
+     "error": null,
+     "measured": {
+      "p1": 1.358866722848499e-15,
+      "p2": 6.360652745248293e-16
+     },
+     "seconds": 0.174,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G8.seeded-defects",
+     "error": null,
+     "measured": {
+      "detected": 6,
+      "missed": []
+     },
+     "seconds": 0.467,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G9.no-node-split",
+     "error": null,
+     "measured": {
+      "split_refused_as_random_node_split": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.projection-error",
+     "error": null,
+     "measured": {
+      "bounds": [
+       2.4000000000000004,
+       1.0
+      ],
+      "covered": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.cross-mesh",
+     "error": null,
+     "measured": {
+      "left_integral_xx": 7.0,
+      "node_pairing_refused": true,
+      "relative_difference": 0.5
+     },
+     "seconds": 0.0,
+     "status": "FAIL"
+    },
+    {
+     "check_id": "G10.normalization",
+     "error": null,
+     "measured": {
+      "mean": 1.4000000000000001,
+      "training_case_ids": [
+       "case-0",
+       "case-1",
+       "case-2"
+      ]
+     },
+     "seconds": 0.01,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting-mutant",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0,
+      "mutant_relative_error": 0.9999998774696726
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.anisotropy",
+     "error": null,
+     "measured": {
+      "relative_change": 0.0,
+      "seeded_mutant_fired": true
+     },
+     "seconds": 0.002,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.role-isolation",
+     "error": null,
+     "measured": {
+      "holdout_refused": true,
+      "mutant_matches": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.holdout",
+     "error": null,
+     "measured": {
+      "refusals": 2,
+      "required": 2
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.selection",
+     "error": null,
+     "measured": {
+      "ranking_matches": true,
+      "selected_is_first_ranked": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.budget",
+     "error": null,
+     "measured": {
+      "statuses": {
+       "all": "NOT_RUN",
+       "s1": "FAIL",
+       "s2": "NOT_RUN"
+      }
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.reducer",
+     "error": null,
+     "measured": {
+      "cases": 48,
+      "control_level": "HOLDOUT_VERIFIED",
+      "not_verified": 48
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.holdout-order",
+     "error": null,
+     "measured": {
+      "foreign_candidate_refused": true,
+      "read_without_record": false,
+      "refused_without_record": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.fields",
+     "error": null,
+     "measured": {
+      "finite": true,
+      "jacobian_consistent": true,
+      "loaded_end_error": 0.0
+     },
+     "seconds": 0.535,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.substitution",
+     "error": null,
+     "measured": {
+      "authority_mismatch_refused": true,
+      "declared_head_served": true
+     },
+     "seconds": 0.472,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.refuse",
+     "error": null,
+     "measured": {
+      "in_envelope": "IN_DOMAIN",
+      "in_envelope_codes": [],
+      "out_of_envelope_codes": [
+       "PARAMETER_OUT_OF_BOUNDS"
+      ]
+     },
+     "seconds": 0.367,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.manifest",
+     "error": null,
+     "measured": {
+      "cases": 18,
+      "missed": []
+     },
+     "seconds": 0.014,
+     "status": "PASS"
+    }
+   ],
+   "seconds": 2.229
+  },
+  {
+   "description": "the S10 close-out fits normalisation on every role",
+   "edits": [
+    {
+     "new": "training = tuple(records)",
+     "old": "training = tuple(record for record in records if record.role is EvidenceRole.TRAIN)",
+     "target": "campaigns.dogbone_v1.s10_closeout:_normalization_evidence"
+    }
+   ],
+   "fired": [
+    "G10.normalization"
+   ],
+   "name": "NORMALIZE_ON_ALL_SPLITS",
+   "primary": "G10.normalization",
+   "primary_fired": true,
+   "results": [
+    {
+     "check_id": "G4.tangent",
+     "error": null,
+     "measured": {
+      "max_relative_error": 1.7665468384436653e-10
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G4.closure-residual",
+     "error": null,
+     "measured": {
+      "max_p33_over_e": 1.4210854715202004e-16,
+      "min_f33": 0.8527828901596295
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G7.loads-fields-store",
+     "error": null,
+     "measured": {
+      "body_force_reaction_error": 4.6363148942665915e-12,
+      "traction_reaction_error": 8.777700788442644e-15
+     },
+     "seconds": 0.172,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G8.patch",
+     "error": null,
+     "measured": {
+      "p1": 1.358866722848499e-15,
+      "p2": 6.360652745248293e-16
+     },
+     "seconds": 0.2,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G8.seeded-defects",
+     "error": null,
+     "measured": {
+      "detected": 6,
+      "missed": []
+     },
+     "seconds": 0.424,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G9.no-node-split",
+     "error": null,
+     "measured": {
+      "split_refused_as_random_node_split": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.projection-error",
+     "error": null,
+     "measured": {
+      "bounds": [
+       2.4000000000000004,
+       1.0
+      ],
+      "covered": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.cross-mesh",
+     "error": null,
+     "measured": {
+      "left_integral_xx": 3.5,
+      "node_pairing_refused": true,
+      "relative_difference": 0.0
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.normalization",
+     "error": "piginot.datasets.normalization.NormalizationLeakageError: NORMALIZE_ON_ALL_SPLITS: statistics require TRAIN records only",
+     "measured": {},
+     "seconds": 0.006,
+     "status": "ERROR"
+    },
+    {
+     "check_id": "G11.lifting",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting-mutant",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0,
+      "mutant_relative_error": 0.9999998774696726
+     },
+     "seconds": 0.01,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.anisotropy",
+     "error": null,
+     "measured": {
+      "relative_change": 0.0,
+      "seeded_mutant_fired": true
+     },
+     "seconds": 0.002,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.role-isolation",
+     "error": null,
+     "measured": {
+      "holdout_refused": true,
+      "mutant_matches": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.holdout",
+     "error": null,
+     "measured": {
+      "refusals": 2,
+      "required": 2
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.selection",
+     "error": null,
+     "measured": {
+      "ranking_matches": true,
+      "selected_is_first_ranked": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.budget",
+     "error": null,
+     "measured": {
+      "statuses": {
+       "all": "NOT_RUN",
+       "s1": "FAIL",
+       "s2": "NOT_RUN"
+      }
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.reducer",
+     "error": null,
+     "measured": {
+      "cases": 48,
+      "control_level": "HOLDOUT_VERIFIED",
+      "not_verified": 48
+     },
+     "seconds": 0.008,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.holdout-order",
+     "error": null,
+     "measured": {
+      "foreign_candidate_refused": true,
+      "read_without_record": false,
+      "refused_without_record": true
+     },
+     "seconds": 0.002,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.fields",
+     "error": null,
+     "measured": {
+      "finite": true,
+      "jacobian_consistent": true,
+      "loaded_end_error": 0.0
+     },
+     "seconds": 0.437,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.substitution",
+     "error": null,
+     "measured": {
+      "authority_mismatch_refused": true,
+      "declared_head_served": true
+     },
+     "seconds": 0.684,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.refuse",
+     "error": null,
+     "measured": {
+      "in_envelope": "IN_DOMAIN",
+      "in_envelope_codes": [],
+      "out_of_envelope_codes": [
+       "PARAMETER_OUT_OF_BOUNDS"
+      ]
+     },
+     "seconds": 0.428,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.manifest",
+     "error": null,
+     "measured": {
+      "cases": 18,
+      "missed": []
+     },
+     "seconds": 0.015,
+     "status": "PASS"
+    }
+   ],
+   "seconds": 2.403
+  },
+  {
+   "description": "the tension lifting drops the prescribed end displacement",
+   "edits": [
+    {
+     "new": "offset = torch.stack((0.0 * d * xi, torch.zeros_like(eta)), dim=-1)",
+     "old": "offset = torch.stack((d * xi, torch.zeros_like(eta)), dim=-1)",
+     "target": "piginot.operators.energy_operator:AxisAlignedTensionLifting.__call__"
+    }
+   ],
+   "fired": [
+    "G11.lifting",
+    "G11.lifting-mutant",
+    "G15.fields"
+   ],
+   "name": "IGNORE_DIRICHLET_LIFTING",
+   "primary": "G11.lifting-mutant",
+   "primary_fired": true,
+   "results": [
+    {
+     "check_id": "G4.tangent",
+     "error": null,
+     "measured": {
+      "max_relative_error": 1.7665468384436653e-10
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G4.closure-residual",
+     "error": null,
+     "measured": {
+      "max_p33_over_e": 1.4210854715202004e-16,
+      "min_f33": 0.8527828901596295
+     },
+     "seconds": 0.002,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G7.loads-fields-store",
+     "error": null,
+     "measured": {
+      "body_force_reaction_error": 4.6363148942665915e-12,
+      "traction_reaction_error": 8.777700788442644e-15
+     },
+     "seconds": 0.213,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G8.patch",
+     "error": null,
+     "measured": {
+      "p1": 1.358866722848499e-15,
+      "p2": 6.360652745248293e-16
+     },
+     "seconds": 0.194,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G8.seeded-defects",
+     "error": null,
+     "measured": {
+      "detected": 6,
+      "missed": []
+     },
+     "seconds": 0.384,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G9.no-node-split",
+     "error": null,
+     "measured": {
+      "split_refused_as_random_node_split": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.projection-error",
+     "error": null,
+     "measured": {
+      "bounds": [
+       2.4000000000000004,
+       1.0
+      ],
+      "covered": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.cross-mesh",
+     "error": null,
+     "measured": {
+      "left_integral_xx": 3.5,
+      "node_pairing_refused": true,
+      "relative_difference": 0.0
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.normalization",
+     "error": null,
+     "measured": {
+      "mean": 1.4000000000000001,
+      "training_case_ids": [
+       "case-0",
+       "case-1",
+       "case-2"
+      ]
+     },
+     "seconds": 0.013,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting",
+     "error": null,
+     "measured": {
+      "control_relative_error": 1.0
+     },
+     "seconds": 0.007,
+     "status": "FAIL"
+    },
+    {
+     "check_id": "G11.lifting-mutant",
+     "error": null,
+     "measured": {
+      "control_relative_error": 1.0,
+      "mutant_relative_error": 0.9999998774696726
+     },
+     "seconds": 0.006,
+     "status": "FAIL"
+    },
+    {
+     "check_id": "G12.anisotropy",
+     "error": null,
+     "measured": {
+      "relative_change": 0.0,
+      "seeded_mutant_fired": true
+     },
+     "seconds": 0.002,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.role-isolation",
+     "error": null,
+     "measured": {
+      "holdout_refused": true,
+      "mutant_matches": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.holdout",
+     "error": null,
+     "measured": {
+      "refusals": 2,
+      "required": 2
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.selection",
+     "error": null,
+     "measured": {
+      "ranking_matches": true,
+      "selected_is_first_ranked": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.budget",
+     "error": null,
+     "measured": {
+      "statuses": {
+       "all": "NOT_RUN",
+       "s1": "FAIL",
+       "s2": "NOT_RUN"
+      }
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.reducer",
+     "error": null,
+     "measured": {
+      "cases": 48,
+      "control_level": "HOLDOUT_VERIFIED",
+      "not_verified": 48
+     },
+     "seconds": 0.009,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.holdout-order",
+     "error": null,
+     "measured": {
+      "foreign_candidate_refused": true,
+      "read_without_record": false,
+      "refused_without_record": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.fields",
+     "error": null,
+     "measured": {
+      "finite": true,
+      "jacobian_consistent": true,
+      "loaded_end_error": 1.0
+     },
+     "seconds": 0.56,
+     "status": "FAIL"
+    },
+    {
+     "check_id": "G15.substitution",
+     "error": null,
+     "measured": {
+      "authority_mismatch_refused": true,
+      "declared_head_served": true
+     },
+     "seconds": 0.44,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.refuse",
+     "error": null,
+     "measured": {
+      "in_envelope": "IN_DOMAIN",
+      "in_envelope_codes": [],
+      "out_of_envelope_codes": [
+       "PARAMETER_OUT_OF_BOUNDS"
+      ]
+     },
+     "seconds": 0.513,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.manifest",
+     "error": null,
+     "measured": {
+      "cases": 18,
+      "missed": []
+     },
+     "seconds": 0.014,
+     "status": "PASS"
+    }
+   ],
+   "seconds": 2.369
+  },
+  {
+   "description": "the strong residual converts every derivative with the x scale",
+   "edits": [
+    {
+     "new": "gradient[..., column] / conversion.to_mm[0]",
+     "old": "gradient[..., column] / conversion.to_mm[column]",
+     "target": "piginot.objectives.equilibrium:strong_equilibrium_residual"
+    }
+   ],
+   "fired": [
+    "G12.anisotropy"
+   ],
+   "name": "COORDINATE_ANISOTROPY",
+   "primary": "G12.anisotropy",
+   "primary_fired": true,
+   "results": [
+    {
+     "check_id": "G4.tangent",
+     "error": null,
+     "measured": {
+      "max_relative_error": 1.7665468384436653e-10
+     },
+     "seconds": 0.005,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G4.closure-residual",
+     "error": null,
+     "measured": {
+      "max_p33_over_e": 1.4210854715202004e-16,
+      "min_f33": 0.8527828901596295
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G7.loads-fields-store",
+     "error": null,
+     "measured": {
+      "body_force_reaction_error": 4.6363148942665915e-12,
+      "traction_reaction_error": 8.777700788442644e-15
+     },
+     "seconds": 0.155,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G8.patch",
+     "error": null,
+     "measured": {
+      "p1": 1.358866722848499e-15,
+      "p2": 6.360652745248293e-16
+     },
+     "seconds": 0.153,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G8.seeded-defects",
+     "error": null,
+     "measured": {
+      "detected": 6,
+      "missed": []
+     },
+     "seconds": 0.364,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G9.no-node-split",
+     "error": null,
+     "measured": {
+      "split_refused_as_random_node_split": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.projection-error",
+     "error": null,
+     "measured": {
+      "bounds": [
+       2.4000000000000004,
+       1.0
+      ],
+      "covered": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.cross-mesh",
+     "error": null,
+     "measured": {
+      "left_integral_xx": 3.5,
+      "node_pairing_refused": true,
+      "relative_difference": 0.0
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.normalization",
+     "error": null,
+     "measured": {
+      "mean": 1.4000000000000001,
+      "training_case_ids": [
+       "case-0",
+       "case-1",
+       "case-2"
+      ]
+     },
+     "seconds": 0.01,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting-mutant",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0,
+      "mutant_relative_error": 0.9999998774696726
+     },
+     "seconds": 0.005,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.anisotropy",
+     "error": null,
+     "measured": {
+      "relative_change": 7.717436331412898,
+      "seeded_mutant_fired": true
+     },
+     "seconds": 0.002,
+     "status": "FAIL"
+    },
+    {
+     "check_id": "G12.role-isolation",
+     "error": null,
+     "measured": {
+      "holdout_refused": true,
+      "mutant_matches": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.holdout",
+     "error": null,
+     "measured": {
+      "refusals": 2,
+      "required": 2
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.selection",
+     "error": null,
+     "measured": {
+      "ranking_matches": true,
+      "selected_is_first_ranked": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.budget",
+     "error": null,
+     "measured": {
+      "statuses": {
+       "all": "NOT_RUN",
+       "s1": "FAIL",
+       "s2": "NOT_RUN"
+      }
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.reducer",
+     "error": null,
+     "measured": {
+      "cases": 48,
+      "control_level": "HOLDOUT_VERIFIED",
+      "not_verified": 48
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.holdout-order",
+     "error": null,
+     "measured": {
+      "foreign_candidate_refused": true,
+      "read_without_record": false,
+      "refused_without_record": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.fields",
+     "error": null,
+     "measured": {
+      "finite": true,
+      "jacobian_consistent": true,
+      "loaded_end_error": 0.0
+     },
+     "seconds": 0.524,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.substitution",
+     "error": null,
+     "measured": {
+      "authority_mismatch_refused": true,
+      "declared_head_served": true
+     },
+     "seconds": 0.625,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.refuse",
+     "error": null,
+     "measured": {
+      "in_envelope": "IN_DOMAIN",
+      "in_envelope_codes": [],
+      "out_of_envelope_codes": [
+       "PARAMETER_OUT_OF_BOUNDS"
+      ]
+     },
+     "seconds": 0.438,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.manifest",
+     "error": null,
+     "measured": {
+      "cases": 18,
+      "missed": []
+     },
+     "seconds": 0.015,
+     "status": "PASS"
+    }
+   ],
+   "seconds": 2.312
+  },
+  {
+   "description": "an objective accepts HOLDOUT evidence",
+   "edits": [
+    {
+     "new": "if role not in _OBJECTIVE_ROLES | {EvidenceRole.HOLDOUT}:",
+     "old": "if role not in _OBJECTIVE_ROLES:",
+     "target": "piginot.objectives.registry:evaluate_objective"
+    }
+   ],
+   "fired": [
+    "G12.role-isolation"
+   ],
+   "name": "HOLDOUT_ACCESS",
+   "primary": "G12.role-isolation",
+   "primary_fired": true,
+   "results": [
+    {
+     "check_id": "G4.tangent",
+     "error": null,
+     "measured": {
+      "max_relative_error": 1.7665468384436653e-10
+     },
+     "seconds": 0.005,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G4.closure-residual",
+     "error": null,
+     "measured": {
+      "max_p33_over_e": 1.4210854715202004e-16,
+      "min_f33": 0.8527828901596295
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G7.loads-fields-store",
+     "error": null,
+     "measured": {
+      "body_force_reaction_error": 4.6363148942665915e-12,
+      "traction_reaction_error": 8.777700788442644e-15
+     },
+     "seconds": 0.144,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G8.patch",
+     "error": null,
+     "measured": {
+      "p1": 1.358866722848499e-15,
+      "p2": 6.360652745248293e-16
+     },
+     "seconds": 0.155,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G8.seeded-defects",
+     "error": null,
+     "measured": {
+      "detected": 6,
+      "missed": []
+     },
+     "seconds": 0.356,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G9.no-node-split",
+     "error": null,
+     "measured": {
+      "split_refused_as_random_node_split": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.projection-error",
+     "error": null,
+     "measured": {
+      "bounds": [
+       2.4000000000000004,
+       1.0
+      ],
+      "covered": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.cross-mesh",
+     "error": null,
+     "measured": {
+      "left_integral_xx": 3.5,
+      "node_pairing_refused": true,
+      "relative_difference": 0.0
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.normalization",
+     "error": null,
+     "measured": {
+      "mean": 1.4000000000000001,
+      "training_case_ids": [
+       "case-0",
+       "case-1",
+       "case-2"
+      ]
+     },
+     "seconds": 0.009,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting-mutant",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0,
+      "mutant_relative_error": 0.9999998774696726
+     },
+     "seconds": 0.005,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.anisotropy",
+     "error": null,
+     "measured": {
+      "relative_change": 0.0,
+      "seeded_mutant_fired": true
+     },
+     "seconds": 0.002,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.role-isolation",
+     "error": null,
+     "measured": {
+      "holdout_refused": false,
+      "mutant_matches": false
+     },
+     "seconds": 0.0,
+     "status": "FAIL"
+    },
+    {
+     "check_id": "G13.holdout",
+     "error": null,
+     "measured": {
+      "refusals": 2,
+      "required": 2
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.selection",
+     "error": null,
+     "measured": {
+      "ranking_matches": true,
+      "selected_is_first_ranked": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.budget",
+     "error": null,
+     "measured": {
+      "statuses": {
+       "all": "NOT_RUN",
+       "s1": "FAIL",
+       "s2": "NOT_RUN"
+      }
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.reducer",
+     "error": null,
+     "measured": {
+      "cases": 48,
+      "control_level": "HOLDOUT_VERIFIED",
+      "not_verified": 48
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.holdout-order",
+     "error": null,
+     "measured": {
+      "foreign_candidate_refused": true,
+      "read_without_record": false,
+      "refused_without_record": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.fields",
+     "error": null,
+     "measured": {
+      "finite": true,
+      "jacobian_consistent": true,
+      "loaded_end_error": 0.0
+     },
+     "seconds": 0.475,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.substitution",
+     "error": null,
+     "measured": {
+      "authority_mismatch_refused": true,
+      "declared_head_served": true
+     },
+     "seconds": 0.578,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.refuse",
+     "error": null,
+     "measured": {
+      "in_envelope": "IN_DOMAIN",
+      "in_envelope_codes": [],
+      "out_of_envelope_codes": [
+       "PARAMETER_OUT_OF_BOUNDS"
+      ]
+     },
+     "seconds": 0.369,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.manifest",
+     "error": null,
+     "measured": {
+      "cases": 18,
+      "missed": []
+     },
+     "seconds": 0.015,
+     "status": "PASS"
+    }
+   ],
+   "seconds": 2.131
+  },
+  {
+   "description": "checkpoint selection accepts non-TRAIN results",
+   "edits": [
+    {
+     "new": "if result.role is EvidenceRole.LEGACY:",
+     "old": "if result.role is not EvidenceRole.TRAIN:",
+     "target": "piginot.training.selection:_validate_result_matrix"
+    }
+   ],
+   "fired": [
+    "G13.holdout"
+   ],
+   "name": "SELECT_ON_HOLDOUT",
+   "primary": "G13.holdout",
+   "primary_fired": true,
+   "results": [
+    {
+     "check_id": "G4.tangent",
+     "error": null,
+     "measured": {
+      "max_relative_error": 1.7665468384436653e-10
+     },
+     "seconds": 0.005,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G4.closure-residual",
+     "error": null,
+     "measured": {
+      "max_p33_over_e": 1.4210854715202004e-16,
+      "min_f33": 0.8527828901596295
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G7.loads-fields-store",
+     "error": null,
+     "measured": {
+      "body_force_reaction_error": 4.6363148942665915e-12,
+      "traction_reaction_error": 8.777700788442644e-15
+     },
+     "seconds": 0.159,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G8.patch",
+     "error": null,
+     "measured": {
+      "p1": 1.358866722848499e-15,
+      "p2": 6.360652745248293e-16
+     },
+     "seconds": 0.155,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G8.seeded-defects",
+     "error": null,
+     "measured": {
+      "detected": 6,
+      "missed": []
+     },
+     "seconds": 0.367,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G9.no-node-split",
+     "error": null,
+     "measured": {
+      "split_refused_as_random_node_split": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.projection-error",
+     "error": null,
+     "measured": {
+      "bounds": [
+       2.4000000000000004,
+       1.0
+      ],
+      "covered": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.cross-mesh",
+     "error": null,
+     "measured": {
+      "left_integral_xx": 3.5,
+      "node_pairing_refused": true,
+      "relative_difference": 0.0
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.normalization",
+     "error": null,
+     "measured": {
+      "mean": 1.4000000000000001,
+      "training_case_ids": [
+       "case-0",
+       "case-1",
+       "case-2"
+      ]
+     },
+     "seconds": 0.01,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting-mutant",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0,
+      "mutant_relative_error": 0.9999998774696726
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.anisotropy",
+     "error": null,
+     "measured": {
+      "relative_change": 0.0,
+      "seeded_mutant_fired": true
+     },
+     "seconds": 0.002,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.role-isolation",
+     "error": null,
+     "measured": {
+      "holdout_refused": true,
+      "mutant_matches": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.holdout",
+     "error": null,
+     "measured": {
+      "refusals": 1,
+      "required": 2
+     },
+     "seconds": 0.001,
+     "status": "FAIL"
+    },
+    {
+     "check_id": "G13.selection",
+     "error": null,
+     "measured": {
+      "ranking_matches": true,
+      "selected_is_first_ranked": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.budget",
+     "error": null,
+     "measured": {
+      "statuses": {
+       "all": "NOT_RUN",
+       "s1": "FAIL",
+       "s2": "NOT_RUN"
+      }
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.reducer",
+     "error": null,
+     "measured": {
+      "cases": 48,
+      "control_level": "HOLDOUT_VERIFIED",
+      "not_verified": 48
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.holdout-order",
+     "error": null,
+     "measured": {
+      "foreign_candidate_refused": true,
+      "read_without_record": false,
+      "refused_without_record": true
+     },
+     "seconds": 0.004,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.fields",
+     "error": null,
+     "measured": {
+      "finite": true,
+      "jacobian_consistent": true,
+      "loaded_end_error": 0.0
+     },
+     "seconds": 0.429,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.substitution",
+     "error": null,
+     "measured": {
+      "authority_mismatch_refused": true,
+      "declared_head_served": true
+     },
+     "seconds": 0.45,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.refuse",
+     "error": null,
+     "measured": {
+      "in_envelope": "IN_DOMAIN",
+      "in_envelope_codes": [],
+      "out_of_envelope_codes": [
+       "PARAMETER_OUT_OF_BOUNDS"
+      ]
+     },
+     "seconds": 0.351,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.manifest",
+     "error": null,
+     "measured": {
+      "cases": 18,
+      "missed": []
+     },
+     "seconds": 0.013,
+     "status": "PASS"
+    }
+   ],
+   "seconds": 1.968
+  },
+  {
+   "description": "the decision serves the last-ranked eligible checkpoint",
+   "edits": [
+    {
+     "new": "selected_id = self.ranked_eligible_trial_ids[-1]",
+     "old": "selected_id = self.ranked_eligible_trial_ids[0]",
+     "target": "piginot.training.selection:SelectionDecision.selected_result"
+    }
+   ],
+   "fired": [
+    "G13.selection"
+   ],
+   "name": "CHOOSE_NONRANKED_CHECKPOINT",
+   "primary": "G13.selection",
+   "primary_fired": true,
+   "results": [
+    {
+     "check_id": "G4.tangent",
+     "error": null,
+     "measured": {
+      "max_relative_error": 1.7665468384436653e-10
+     },
+     "seconds": 0.005,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G4.closure-residual",
+     "error": null,
+     "measured": {
+      "max_p33_over_e": 1.4210854715202004e-16,
+      "min_f33": 0.8527828901596295
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G7.loads-fields-store",
+     "error": null,
+     "measured": {
+      "body_force_reaction_error": 4.6363148942665915e-12,
+      "traction_reaction_error": 8.777700788442644e-15
+     },
+     "seconds": 0.153,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G8.patch",
+     "error": null,
+     "measured": {
+      "p1": 1.358866722848499e-15,
+      "p2": 6.360652745248293e-16
+     },
+     "seconds": 0.157,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G8.seeded-defects",
+     "error": null,
+     "measured": {
+      "detected": 6,
+      "missed": []
+     },
+     "seconds": 0.385,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G9.no-node-split",
+     "error": null,
+     "measured": {
+      "split_refused_as_random_node_split": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.projection-error",
+     "error": null,
+     "measured": {
+      "bounds": [
+       2.4000000000000004,
+       1.0
+      ],
+      "covered": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.cross-mesh",
+     "error": null,
+     "measured": {
+      "left_integral_xx": 3.5,
+      "node_pairing_refused": true,
+      "relative_difference": 0.0
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.normalization",
+     "error": null,
+     "measured": {
+      "mean": 1.4000000000000001,
+      "training_case_ids": [
+       "case-0",
+       "case-1",
+       "case-2"
+      ]
+     },
+     "seconds": 0.011,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0
+     },
+     "seconds": 0.007,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting-mutant",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0,
+      "mutant_relative_error": 0.9999998774696726
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.anisotropy",
+     "error": null,
+     "measured": {
+      "relative_change": 0.0,
+      "seeded_mutant_fired": true
+     },
+     "seconds": 0.002,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.role-isolation",
+     "error": null,
+     "measured": {
+      "holdout_refused": true,
+      "mutant_matches": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.holdout",
+     "error": null,
+     "measured": {
+      "refusals": 2,
+      "required": 2
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.selection",
+     "error": null,
+     "measured": {
+      "ranking_matches": true,
+      "selected_is_first_ranked": false
+     },
+     "seconds": 0.001,
+     "status": "FAIL"
+    },
+    {
+     "check_id": "G14.budget",
+     "error": null,
+     "measured": {
+      "statuses": {
+       "all": "NOT_RUN",
+       "s1": "FAIL",
+       "s2": "NOT_RUN"
+      }
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.reducer",
+     "error": null,
+     "measured": {
+      "cases": 48,
+      "control_level": "HOLDOUT_VERIFIED",
+      "not_verified": 48
+     },
+     "seconds": 0.009,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.holdout-order",
+     "error": null,
+     "measured": {
+      "foreign_candidate_refused": true,
+      "read_without_record": false,
+      "refused_without_record": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.fields",
+     "error": null,
+     "measured": {
+      "finite": true,
+      "jacobian_consistent": true,
+      "loaded_end_error": 0.0
+     },
+     "seconds": 0.588,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.substitution",
+     "error": null,
+     "measured": {
+      "authority_mismatch_refused": true,
+      "declared_head_served": true
+     },
+     "seconds": 0.512,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.refuse",
+     "error": null,
+     "measured": {
+      "in_envelope": "IN_DOMAIN",
+      "in_envelope_codes": [],
+      "out_of_envelope_codes": [
+       "PARAMETER_OUT_OF_BOUNDS"
+      ]
+     },
+     "seconds": 0.37,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.manifest",
+     "error": null,
+     "measured": {
+      "cases": 18,
+      "missed": []
+     },
+     "seconds": 0.012,
+     "status": "PASS"
+    }
+   ],
+   "seconds": 2.223
+  },
+  {
+   "description": "a missing budget component counts as zero",
+   "edits": [
+    {
+     "new": "            value = 0.0 if value is None else value\n",
+     "old": "            if value is None:\n                return None\n",
+     "target": "piginot.verification.budget:CaseBudgetEntry.total"
+    }
+   ],
+   "fired": [
+    "G14.budget"
+   ],
+   "name": "ZERO_MISSING_BUDGET_COMPONENT",
+   "primary": "G14.budget",
+   "primary_fired": true,
+   "results": [
+    {
+     "check_id": "G4.tangent",
+     "error": null,
+     "measured": {
+      "max_relative_error": 1.7665468384436653e-10
+     },
+     "seconds": 0.005,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G4.closure-residual",
+     "error": null,
+     "measured": {
+      "max_p33_over_e": 1.4210854715202004e-16,
+      "min_f33": 0.8527828901596295
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G7.loads-fields-store",
+     "error": null,
+     "measured": {
+      "body_force_reaction_error": 4.6363148942665915e-12,
+      "traction_reaction_error": 8.777700788442644e-15
+     },
+     "seconds": 0.154,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G8.patch",
+     "error": null,
+     "measured": {
+      "p1": 1.358866722848499e-15,
+      "p2": 6.360652745248293e-16
+     },
+     "seconds": 0.166,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G8.seeded-defects",
+     "error": null,
+     "measured": {
+      "detected": 6,
+      "missed": []
+     },
+     "seconds": 0.374,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G9.no-node-split",
+     "error": null,
+     "measured": {
+      "split_refused_as_random_node_split": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.projection-error",
+     "error": null,
+     "measured": {
+      "bounds": [
+       2.4000000000000004,
+       1.0
+      ],
+      "covered": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.cross-mesh",
+     "error": null,
+     "measured": {
+      "left_integral_xx": 3.5,
+      "node_pairing_refused": true,
+      "relative_difference": 0.0
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.normalization",
+     "error": null,
+     "measured": {
+      "mean": 1.4000000000000001,
+      "training_case_ids": [
+       "case-0",
+       "case-1",
+       "case-2"
+      ]
+     },
+     "seconds": 0.011,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting-mutant",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0,
+      "mutant_relative_error": 0.9999998774696726
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.anisotropy",
+     "error": null,
+     "measured": {
+      "relative_change": 0.0,
+      "seeded_mutant_fired": true
+     },
+     "seconds": 0.002,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.role-isolation",
+     "error": null,
+     "measured": {
+      "holdout_refused": true,
+      "mutant_matches": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.holdout",
+     "error": null,
+     "measured": {
+      "refusals": 2,
+      "required": 2
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.selection",
+     "error": null,
+     "measured": {
+      "ranking_matches": true,
+      "selected_is_first_ranked": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.budget",
+     "error": null,
+     "measured": {
+      "statuses": {
+       "all": "FAIL",
+       "s1": "FAIL",
+       "s2": "NOT_RUN"
+      }
+     },
+     "seconds": 0.0,
+     "status": "FAIL"
+    },
+    {
+     "check_id": "G14.reducer",
+     "error": null,
+     "measured": {
+      "cases": 48,
+      "control_level": "HOLDOUT_VERIFIED",
+      "not_verified": 48
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.holdout-order",
+     "error": null,
+     "measured": {
+      "foreign_candidate_refused": true,
+      "read_without_record": false,
+      "refused_without_record": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.fields",
+     "error": null,
+     "measured": {
+      "finite": true,
+      "jacobian_consistent": true,
+      "loaded_end_error": 0.0
+     },
+     "seconds": 0.425,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.substitution",
+     "error": null,
+     "measured": {
+      "authority_mismatch_refused": true,
+      "declared_head_served": true
+     },
+     "seconds": 0.557,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.refuse",
+     "error": null,
+     "measured": {
+      "in_envelope": "IN_DOMAIN",
+      "in_envelope_codes": [],
+      "out_of_envelope_codes": [
+       "PARAMETER_OUT_OF_BOUNDS"
+      ]
+     },
+     "seconds": 0.362,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.manifest",
+     "error": null,
+     "measured": {
+      "cases": 18,
+      "missed": []
+     },
+     "seconds": 0.013,
+     "status": "PASS"
+    }
+   ],
+   "seconds": 2.095
+  },
+  {
+   "description": "the reducer counts NOT_RUN checks as PASS",
+   "edits": [
+    {
+     "new": "(CheckStatus.PASS if statuses.get(check, CheckStatus.NOT_RUN) is CheckStatus.NOT_RUN else statuses[check]) for check in family.check_ids",
+     "old": "statuses.get(check, CheckStatus.NOT_RUN) for check in family.check_ids",
+     "target": "piginot.verification.reducer:reduce_families"
+    }
+   ],
+   "fired": [
+    "G14.reducer"
+   ],
+   "name": "PASS_ON_NOT_RUN",
+   "primary": "G14.reducer",
+   "primary_fired": true,
+   "results": [
+    {
+     "check_id": "G4.tangent",
+     "error": null,
+     "measured": {
+      "max_relative_error": 1.7665468384436653e-10
+     },
+     "seconds": 0.005,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G4.closure-residual",
+     "error": null,
+     "measured": {
+      "max_p33_over_e": 1.4210854715202004e-16,
+      "min_f33": 0.8527828901596295
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G7.loads-fields-store",
+     "error": null,
+     "measured": {
+      "body_force_reaction_error": 4.6363148942665915e-12,
+      "traction_reaction_error": 8.777700788442644e-15
+     },
+     "seconds": 0.146,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G8.patch",
+     "error": null,
+     "measured": {
+      "p1": 1.358866722848499e-15,
+      "p2": 6.360652745248293e-16
+     },
+     "seconds": 0.155,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G8.seeded-defects",
+     "error": null,
+     "measured": {
+      "detected": 6,
+      "missed": []
+     },
+     "seconds": 0.388,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G9.no-node-split",
+     "error": null,
+     "measured": {
+      "split_refused_as_random_node_split": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.projection-error",
+     "error": null,
+     "measured": {
+      "bounds": [
+       2.4000000000000004,
+       1.0
+      ],
+      "covered": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.cross-mesh",
+     "error": null,
+     "measured": {
+      "left_integral_xx": 3.5,
+      "node_pairing_refused": true,
+      "relative_difference": 0.0
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.normalization",
+     "error": null,
+     "measured": {
+      "mean": 1.4000000000000001,
+      "training_case_ids": [
+       "case-0",
+       "case-1",
+       "case-2"
+      ]
+     },
+     "seconds": 0.019,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting-mutant",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0,
+      "mutant_relative_error": 0.9999998774696726
+     },
+     "seconds": 0.005,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.anisotropy",
+     "error": null,
+     "measured": {
+      "relative_change": 0.0,
+      "seeded_mutant_fired": true
+     },
+     "seconds": 0.002,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.role-isolation",
+     "error": null,
+     "measured": {
+      "holdout_refused": true,
+      "mutant_matches": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.holdout",
+     "error": null,
+     "measured": {
+      "refusals": 2,
+      "required": 2
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.selection",
+     "error": null,
+     "measured": {
+      "ranking_matches": true,
+      "selected_is_first_ranked": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.budget",
+     "error": null,
+     "measured": {
+      "statuses": {
+       "all": "NOT_RUN",
+       "s1": "FAIL",
+       "s2": "NOT_RUN"
+      }
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.reducer",
+     "error": null,
+     "measured": {
+      "cases": 48,
+      "control_level": "HOLDOUT_VERIFIED",
+      "not_verified": 24
+     },
+     "seconds": 0.007,
+     "status": "FAIL"
+    },
+    {
+     "check_id": "G14.holdout-order",
+     "error": null,
+     "measured": {
+      "foreign_candidate_refused": true,
+      "read_without_record": false,
+      "refused_without_record": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.fields",
+     "error": null,
+     "measured": {
+      "finite": true,
+      "jacobian_consistent": true,
+      "loaded_end_error": 0.0
+     },
+     "seconds": 0.514,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.substitution",
+     "error": null,
+     "measured": {
+      "authority_mismatch_refused": true,
+      "declared_head_served": true
+     },
+     "seconds": 0.504,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.refuse",
+     "error": null,
+     "measured": {
+      "in_envelope": "IN_DOMAIN",
+      "in_envelope_codes": [],
+      "out_of_envelope_codes": [
+       "PARAMETER_OUT_OF_BOUNDS"
+      ]
+     },
+     "seconds": 0.447,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.manifest",
+     "error": null,
+     "measured": {
+      "cases": 18,
+      "missed": []
+     },
+     "seconds": 0.013,
+     "status": "PASS"
+    }
+   ],
+   "seconds": 2.217
+  },
+  {
+   "description": "the holdout is read before its consumption record is checked",
+   "edits": [
+    {
+     "new": "    revealed = reader()\n    if not record_path.is_file():",
+     "old": "    if not record_path.is_file():",
+     "target": "piginot.verification.holdout:reveal_after_consumption"
+    },
+    {
+     "new": "    return revealed",
+     "old": "    return reader()",
+     "target": "piginot.verification.holdout:reveal_after_consumption"
+    }
+   ],
+   "fired": [
+    "G14.holdout-order"
+   ],
+   "name": "REVEAL_BEFORE_CONSUME",
+   "primary": "G14.holdout-order",
+   "primary_fired": true,
+   "results": [
+    {
+     "check_id": "G4.tangent",
+     "error": null,
+     "measured": {
+      "max_relative_error": 1.7665468384436653e-10
+     },
+     "seconds": 0.007,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G4.closure-residual",
+     "error": null,
+     "measured": {
+      "max_p33_over_e": 1.4210854715202004e-16,
+      "min_f33": 0.8527828901596295
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G7.loads-fields-store",
+     "error": null,
+     "measured": {
+      "body_force_reaction_error": 4.6363148942665915e-12,
+      "traction_reaction_error": 8.777700788442644e-15
+     },
+     "seconds": 0.191,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G8.patch",
+     "error": null,
+     "measured": {
+      "p1": 1.358866722848499e-15,
+      "p2": 6.360652745248293e-16
+     },
+     "seconds": 0.174,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G8.seeded-defects",
+     "error": null,
+     "measured": {
+      "detected": 6,
+      "missed": []
+     },
+     "seconds": 0.376,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G9.no-node-split",
+     "error": null,
+     "measured": {
+      "split_refused_as_random_node_split": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.projection-error",
+     "error": null,
+     "measured": {
+      "bounds": [
+       2.4000000000000004,
+       1.0
+      ],
+      "covered": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.cross-mesh",
+     "error": null,
+     "measured": {
+      "left_integral_xx": 3.5,
+      "node_pairing_refused": true,
+      "relative_difference": 0.0
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.normalization",
+     "error": null,
+     "measured": {
+      "mean": 1.4000000000000001,
+      "training_case_ids": [
+       "case-0",
+       "case-1",
+       "case-2"
+      ]
+     },
+     "seconds": 0.012,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting-mutant",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0,
+      "mutant_relative_error": 0.9999998774696726
+     },
+     "seconds": 0.005,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.anisotropy",
+     "error": null,
+     "measured": {
+      "relative_change": 0.0,
+      "seeded_mutant_fired": true
+     },
+     "seconds": 0.002,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.role-isolation",
+     "error": null,
+     "measured": {
+      "holdout_refused": true,
+      "mutant_matches": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.holdout",
+     "error": null,
+     "measured": {
+      "refusals": 2,
+      "required": 2
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.selection",
+     "error": null,
+     "measured": {
+      "ranking_matches": true,
+      "selected_is_first_ranked": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.budget",
+     "error": null,
+     "measured": {
+      "statuses": {
+       "all": "NOT_RUN",
+       "s1": "FAIL",
+       "s2": "NOT_RUN"
+      }
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.reducer",
+     "error": null,
+     "measured": {
+      "cases": 48,
+      "control_level": "HOLDOUT_VERIFIED",
+      "not_verified": 48
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.holdout-order",
+     "error": null,
+     "measured": {
+      "foreign_candidate_refused": true,
+      "read_without_record": true,
+      "refused_without_record": true
+     },
+     "seconds": 0.001,
+     "status": "FAIL"
+    },
+    {
+     "check_id": "G15.fields",
+     "error": null,
+     "measured": {
+      "finite": true,
+      "jacobian_consistent": true,
+      "loaded_end_error": 0.0
+     },
+     "seconds": 0.424,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.substitution",
+     "error": null,
+     "measured": {
+      "authority_mismatch_refused": true,
+      "declared_head_served": true
+     },
+     "seconds": 0.454,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.refuse",
+     "error": null,
+     "measured": {
+      "in_envelope": "IN_DOMAIN",
+      "in_envelope_codes": [],
+      "out_of_envelope_codes": [
+       "PARAMETER_OUT_OF_BOUNDS"
+      ]
+     },
+     "seconds": 0.357,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.manifest",
+     "error": null,
+     "measured": {
+      "cases": 18,
+      "missed": []
+     },
+     "seconds": 0.013,
+     "status": "PASS"
+    }
+   ],
+   "seconds": 2.033
+  },
+  {
+   "description": "predict serves the material law in place of the declared stress",
+   "edits": [
+    {
+     "new": "P_served=material_stress,",
+     "old": "P_served=served.stress,",
+     "target": "piginot.bundle.inference:_fields"
+    }
+   ],
+   "fired": [
+    "G15.substitution"
+   ],
+   "name": "SERVE_P_MATERIAL",
+   "primary": "G15.substitution",
+   "primary_fired": true,
+   "results": [
+    {
+     "check_id": "G4.tangent",
+     "error": null,
+     "measured": {
+      "max_relative_error": 1.7665468384436653e-10
+     },
+     "seconds": 0.005,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G4.closure-residual",
+     "error": null,
+     "measured": {
+      "max_p33_over_e": 1.4210854715202004e-16,
+      "min_f33": 0.8527828901596295
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G7.loads-fields-store",
+     "error": null,
+     "measured": {
+      "body_force_reaction_error": 4.6363148942665915e-12,
+      "traction_reaction_error": 8.777700788442644e-15
+     },
+     "seconds": 0.145,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G8.patch",
+     "error": null,
+     "measured": {
+      "p1": 1.358866722848499e-15,
+      "p2": 6.360652745248293e-16
+     },
+     "seconds": 0.158,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G8.seeded-defects",
+     "error": null,
+     "measured": {
+      "detected": 6,
+      "missed": []
+     },
+     "seconds": 0.409,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G9.no-node-split",
+     "error": null,
+     "measured": {
+      "split_refused_as_random_node_split": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.projection-error",
+     "error": null,
+     "measured": {
+      "bounds": [
+       2.4000000000000004,
+       1.0
+      ],
+      "covered": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.cross-mesh",
+     "error": null,
+     "measured": {
+      "left_integral_xx": 3.5,
+      "node_pairing_refused": true,
+      "relative_difference": 0.0
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.normalization",
+     "error": null,
+     "measured": {
+      "mean": 1.4000000000000001,
+      "training_case_ids": [
+       "case-0",
+       "case-1",
+       "case-2"
+      ]
+     },
+     "seconds": 0.014,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting-mutant",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0,
+      "mutant_relative_error": 0.9999998774696726
+     },
+     "seconds": 0.005,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.anisotropy",
+     "error": null,
+     "measured": {
+      "relative_change": 0.0,
+      "seeded_mutant_fired": true
+     },
+     "seconds": 0.002,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.role-isolation",
+     "error": null,
+     "measured": {
+      "holdout_refused": true,
+      "mutant_matches": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.holdout",
+     "error": null,
+     "measured": {
+      "refusals": 2,
+      "required": 2
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.selection",
+     "error": null,
+     "measured": {
+      "ranking_matches": true,
+      "selected_is_first_ranked": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.budget",
+     "error": null,
+     "measured": {
+      "statuses": {
+       "all": "NOT_RUN",
+       "s1": "FAIL",
+       "s2": "NOT_RUN"
+      }
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.reducer",
+     "error": null,
+     "measured": {
+      "cases": 48,
+      "control_level": "HOLDOUT_VERIFIED",
+      "not_verified": 48
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.holdout-order",
+     "error": null,
+     "measured": {
+      "foreign_candidate_refused": true,
+      "read_without_record": false,
+      "refused_without_record": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.fields",
+     "error": null,
+     "measured": {
+      "finite": true,
+      "jacobian_consistent": true,
+      "loaded_end_error": 0.0
+     },
+     "seconds": 0.488,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.substitution",
+     "error": null,
+     "measured": {
+      "authority_mismatch_refused": true,
+      "declared_head_served": false
+     },
+     "seconds": 0.583,
+     "status": "FAIL"
+    },
+    {
+     "check_id": "G15.refuse",
+     "error": null,
+     "measured": {
+      "in_envelope": "IN_DOMAIN",
+      "in_envelope_codes": [],
+      "out_of_envelope_codes": [
+       "PARAMETER_OUT_OF_BOUNDS"
+      ]
+     },
+     "seconds": 0.361,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.manifest",
+     "error": null,
+     "measured": {
+      "cases": 18,
+      "missed": []
+     },
+     "seconds": 0.013,
+     "status": "PASS"
+    }
+   ],
+   "seconds": 2.199
+  },
+  {
+   "description": "bundle verification compares hashes only when sizes differ",
+   "edits": [
+    {
+     "new": "if len(payload) != entry.bytes and sha256_bytes(payload) != entry.sha256:",
+     "old": "if sha256_bytes(payload) != entry.sha256:",
+     "target": "piginot.bundle.manifest:verify_bundle"
+    }
+   ],
+   "fired": [
+    "G15.manifest"
+   ],
+   "name": "UNDETECTED_BUNDLE_TAMPER",
+   "primary": "G15.manifest",
+   "primary_fired": true,
+   "results": [
+    {
+     "check_id": "G4.tangent",
+     "error": null,
+     "measured": {
+      "max_relative_error": 1.7665468384436653e-10
+     },
+     "seconds": 0.005,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G4.closure-residual",
+     "error": null,
+     "measured": {
+      "max_p33_over_e": 1.4210854715202004e-16,
+      "min_f33": 0.8527828901596295
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G7.loads-fields-store",
+     "error": null,
+     "measured": {
+      "body_force_reaction_error": 4.6363148942665915e-12,
+      "traction_reaction_error": 8.777700788442644e-15
+     },
+     "seconds": 0.223,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G8.patch",
+     "error": null,
+     "measured": {
+      "p1": 1.358866722848499e-15,
+      "p2": 6.360652745248293e-16
+     },
+     "seconds": 0.174,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G8.seeded-defects",
+     "error": null,
+     "measured": {
+      "detected": 6,
+      "missed": []
+     },
+     "seconds": 0.38,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G9.no-node-split",
+     "error": null,
+     "measured": {
+      "split_refused_as_random_node_split": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.projection-error",
+     "error": null,
+     "measured": {
+      "bounds": [
+       2.4000000000000004,
+       1.0
+      ],
+      "covered": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.cross-mesh",
+     "error": null,
+     "measured": {
+      "left_integral_xx": 3.5,
+      "node_pairing_refused": true,
+      "relative_difference": 0.0
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G10.normalization",
+     "error": null,
+     "measured": {
+      "mean": 1.4000000000000001,
+      "training_case_ids": [
+       "case-0",
+       "case-1",
+       "case-2"
+      ]
+     },
+     "seconds": 0.01,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0
+     },
+     "seconds": 0.007,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G11.lifting-mutant",
+     "error": null,
+     "measured": {
+      "control_relative_error": 0.0,
+      "mutant_relative_error": 0.9999998774696726
+     },
+     "seconds": 0.005,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.anisotropy",
+     "error": null,
+     "measured": {
+      "relative_change": 0.0,
+      "seeded_mutant_fired": true
+     },
+     "seconds": 0.002,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G12.role-isolation",
+     "error": null,
+     "measured": {
+      "holdout_refused": true,
+      "mutant_matches": true
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.holdout",
+     "error": null,
+     "measured": {
+      "refusals": 2,
+      "required": 2
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G13.selection",
+     "error": null,
+     "measured": {
+      "ranking_matches": true,
+      "selected_is_first_ranked": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.budget",
+     "error": null,
+     "measured": {
+      "statuses": {
+       "all": "NOT_RUN",
+       "s1": "FAIL",
+       "s2": "NOT_RUN"
+      }
+     },
+     "seconds": 0.0,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.reducer",
+     "error": null,
+     "measured": {
+      "cases": 48,
+      "control_level": "HOLDOUT_VERIFIED",
+      "not_verified": 48
+     },
+     "seconds": 0.006,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G14.holdout-order",
+     "error": null,
+     "measured": {
+      "foreign_candidate_refused": true,
+      "read_without_record": false,
+      "refused_without_record": true
+     },
+     "seconds": 0.001,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.fields",
+     "error": null,
+     "measured": {
+      "finite": true,
+      "jacobian_consistent": true,
+      "loaded_end_error": 0.0
+     },
+     "seconds": 0.439,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.substitution",
+     "error": null,
+     "measured": {
+      "authority_mismatch_refused": true,
+      "declared_head_served": true
+     },
+     "seconds": 0.482,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.refuse",
+     "error": null,
+     "measured": {
+      "in_envelope": "IN_DOMAIN",
+      "in_envelope_codes": [],
+      "out_of_envelope_codes": [
+       "PARAMETER_OUT_OF_BOUNDS"
+      ]
+     },
+     "seconds": 0.364,
+     "status": "PASS"
+    },
+    {
+     "check_id": "G15.manifest",
+     "error": null,
+     "measured": {
+      "cases": 18,
+      "missed": [
+       "flip a.json@0",
+       "flip a.json@3",
+       "flip a.json@6",
+       "flip c.txt@0",
+       "flip c.txt@2",
+       "flip c.txt@4",
+       "flip nested/b.bin@0",
+       "flip nested/b.bin@32",
+       "flip nested/b.bin@63"
+      ]
+     },
+     "seconds": 0.013,
+     "status": "FAIL"
+    }
+   ],
+   "seconds": 2.116
+  }
+ ],
+ "primary_fired": 20,
+ "runtime": {
+  "machine": "x86_64",
+  "python": "3.11.15",
+  "threads": 1,
+  "torch": "2.13.0+cu130"
+ },
+ "seconds": 49.231
+}

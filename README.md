@@ -42,7 +42,13 @@ of the unavailable `IMPLEMENTATION-v1.0-OSS.md`, and the claim level is
 [plan and results](docs/campaigns/s15-bundle-plan.md)): it refuses every
 request outside its envelope, reproduces the S14 vertex fields bit for bit, and
 loads and predicts from a clean install with runtime dependencies only. G15
-passes (`artifacts/gates/S15.json`). The project does not certify a trained
+passes (`artifacts/gates/S15.json`). S16 checks the gates with the twenty
+mutants of ADR 0022, each applied as a source edit of the production function
+that holds the defect ([ADR 0024](docs/adr/0024-s16-mutation-suite.md),
+[plan and results](docs/campaigns/s16-mutation-plan.md)): every mutant fires
+its primary gate, the fired-gate signatures are the committed baseline, and a
+release job reports any lost detection. G16 passes (`artifacts/gates/S16.json`).
+The project does not certify a trained
 neural operator. Read the
 [project limitations](docs/limitations.md) before using its numerical results.
 
@@ -77,6 +83,8 @@ pytest tests/operators --cov=src/piginot/operators --cov-fail-under=80
 pytest tests/objectives --cov=src/piginot/objectives --cov-fail-under=85
 pytest tests/training tests/test_s13_anti_scope.py --cov=src/piginot/training --cov-fail-under=80
 pytest tests/verification tests/campaigns/test_dogbone_s14_envelope.py tests/test_s14_anti_scope.py --cov=src/piginot/verification --cov-fail-under=85
+pytest tests/mutation tests/test_s16_anti_scope.py --cov=src/piginot/mutation --cov-fail-under=85
+python -m campaigns.dogbone_v1.s16_mutation run --report mutation-report.json --compare artifacts/mutation/S16-SIGNATURES.json
 pytest tests/bundle tests/store/test_cli.py tests/test_version.py tests/test_s15_anti_scope.py tests/test_s5_anti_scope.py tests/campaigns/test_dogbone_s15_bundle.py --cov=src/piginot/bundle --cov=piginot.cli --cov-branch --cov-fail-under=85
 pip-audit
 ```

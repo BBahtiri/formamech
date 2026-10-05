@@ -33,6 +33,9 @@ passes every slice, two DEVELOPMENT peak slices were accepted by the decision ow
 the twelve families of [ADR 0022](adr/0022-replace-implementation-v1.0-oss.md).
 S15 serves it as a hash-closed [bundle](bundle.md)
 ([ADR 0023](adr/0023-s15-bundle-and-cli.md)) with `load_bundle`, `predict`,
-`inspect` and a campaign-plugin command line; G15 passes.
+`inspect` and a campaign-plugin command line; G15 passes. S16 applies the twenty
+mutants of ADR 0022 as source edits of production code; each fires its primary
+gate and the signatures are a committed baseline
+([ADR 0024](adr/0024-s16-mutation-suite.md)); G16 passes.
 
 Read the [limitations](limitations.md) before relying on future numerical results.

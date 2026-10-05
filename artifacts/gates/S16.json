@@ -1,0 +1,143 @@
+{
+ "branch": "codex/s16-mutation",
+ "checks": [
+  {
+   "comparison": "all",
+   "id": "G16.primary",
+   "measured": {
+    "control_passed": true,
+    "detectors": 22,
+    "matches_adr_0022_table": true,
+    "missed": [],
+    "mutants": 20,
+    "primary_fired": 20
+   },
+   "reason": null,
+   "status": "PASS",
+   "threshold": "20 of 20 mutants fire their named primary gate; the unmutated control passes every detector before and after"
+  },
+  {
+   "comparison": "all",
+   "id": "G16.signatures",
+   "measured": {
+    "baseline": "artifacts/mutation/S16-SIGNATURES.json",
+    "complete_and_sorted": true,
+    "mutants_recorded": 20,
+    "run_matches_baseline": true,
+    "secondary_detections": 13
+   },
+   "reason": null,
+   "status": "PASS",
+   "threshold": "the full sorted fired-gate set of each mutant is recorded and committed as the baseline"
+  },
+  {
+   "comparison": "all",
+   "id": "G16.regression",
+   "measured": {
+    "coverage_regressions": [
+     {
+      "lost_secondary": [
+       "G7.loads-fields-store"
+      ],
+      "mutant": "BODY_FORCE_SIGN",
+      "status": "COVERAGE_REGRESSION"
+     },
+     {
+      "lost_secondary": [
+       "G7.loads-fields-store"
+      ],
+      "mutant": "BOUNDARY_NORMAL",
+      "status": "COVERAGE_REGRESSION"
+     },
+     {
+      "lost_secondary": [
+       "G7.loads-fields-store"
+      ],
+      "mutant": "CLOSURE_WRONG_ROOT",
+      "status": "COVERAGE_REGRESSION"
+     }
+    ],
+    "demonstration_exit_code": 3,
+    "demonstration_removed_detectors": [
+     "G7.loads-fields-store"
+    ],
+    "demonstration_status": "COVERAGE_REGRESSION",
+    "hosted_release_run": "NOT_RUN: runs when a release is published",
+    "primaries_still_fire": true,
+    "workflow": ".github/workflows/mutation.yml",
+    "workflow_compares_baseline_on_release": true
+   },
+   "reason": null,
+   "status": "PASS",
+   "threshold": "a CI job compares signatures per release; losing a secondary detection is reported as a coverage regression even when the primary still fires"
+  },
+  {
+   "comparison": "all",
+   "id": "G16.runtime",
+   "measured": {
+    "ci_job_timeout_minutes": 45,
+    "limit_seconds": 2700,
+    "runtime": {
+     "machine": "x86_64",
+     "python": "3.11.15",
+     "threads": 1,
+     "torch": "2.13.0+cu130"
+    },
+    "suite_seconds": 49.231
+   },
+   "reason": null,
+   "status": "PASS",
+   "threshold": "the full mutation suite completes in under 45 minutes"
+  },
+  {
+   "comparison": "all",
+   "id": "G16.coverage",
+   "measured": {
+    "line_and_branch_coverage_percent": 99.15
+   },
+   "reason": null,
+   "status": "PASS",
+   "threshold": ">= 85% of piginot.mutation"
+  }
+ ],
+ "decision_record": [
+  "docs/adr/0022-replace-implementation-v1.0-oss.md",
+  "docs/adr/0024-s16-mutation-suite.md"
+ ],
+ "evidence": {
+  ".github/workflows/mutation.yml": "8920aabc1a1c2ad54ac115bb5a741136923b81b09870c03cb7f0a86237124cdb",
+  "artifacts/mutation/S16-REGRESSION-DEMO.json": "d9bc426b3cec7f56594b34a9b1c7e60473c84e3948cc840f9a554952dab68ede",
+  "artifacts/mutation/S16-RUN.json": "6eac32f67688798a4fbeba79599f12c1de504688c3625038827351f6a225e679",
+  "artifacts/mutation/S16-SIGNATURES.json": "54621694f1c6d99ad5f87131293b637c77fba73b03923f18b13d7264ae8084c9"
+ },
+ "gate_id": "G16",
+ "implementation_evidence": {
+  "focused_coverage_command": "pytest tests/mutation tests/test_s16_anti_scope.py tests/campaigns/test_dogbone_s16_mutation.py --cov=src/piginot/mutation --cov-branch --cov-fail-under=85",
+  "focused_test_result": "19 passed; total branch coverage 99.15%",
+  "full_test_command": "python -m pytest -q --cov=src/piginot --cov-branch",
+  "full_test_result": "2960 passed, 0 failed, 0 skipped in 52m58s; total branch coverage 91%",
+  "quality_checks": {
+   "mkdocs_strict_build": "PASS",
+   "mypy_strict_src": "PASS",
+   "ruff_check": "PASS",
+   "ruff_format_check": "PASS"
+  }
+ },
+ "implementation_source_revision": "71e88d2b85b0b3ffebf228322c2f450036dbde60",
+ "limitations": [
+  "Detectors run each gate check's procedure on a fixed CI-sized fixture, not on the full campaign evidence the original gate artifacts measured.",
+  "Signatures are deterministic on one machine; a different torch or scikit-fem release may change secondary detections, which the release job then reports.",
+  "The hosted release job has not run yet; the comparison it performs was run locally, including a weakened-detector demonstration.",
+  "G16.runtime measures the mutation suite; the full pytest suite is reported separately."
+ ],
+ "schema_version": "1.0",
+ "scope": {
+  "claim": "Each of the twenty ADR 0022 mutants, applied as a source edit to the production function that holds the defect, fires its named primary gate; the fired-gate signatures are the committed baseline, and a release job reports any lost detection.",
+  "detectors": 22,
+  "development_or_holdout_read": false,
+  "mutants": 20
+ },
+ "step": "S16",
+ "timestamp_utc": "2026-10-05T06:50:03Z",
+ "verdict": "PASS"
+}

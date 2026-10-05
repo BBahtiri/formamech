@@ -1,8 +1,9 @@
 # S16 plan — mutation suite
 
-- Status: **Implemented; validation pending.** Decisions S16-D1 … D5 are the
-  proposed defaults of [ADR 0024](../adr/0024-s16-mutation-suite.md); they await
-  the decision owner's confirmation.
+- Status: **Complete — G16 PASS** (`artifacts/gates/S16.json`). Decisions
+  S16-D1 … D5 are the proposed defaults of
+  [ADR 0024](../adr/0024-s16-mutation-suite.md); they await the decision
+  owner's confirmation.
 - Date: 2026-10-05
 - Base: `codex/s15-bundle` (G15 PASS)
 - Gate: `G16` (`STEPS-v1.0.md` §S16); mutants from
@@ -66,3 +67,30 @@ Each mutant is a source edit of the production function that holds the defect:
 3. Validate: rerun at the committed revision and compare with the baseline;
    rerun without one detector to show a coverage regression; write
    `artifacts/gates/S16.json`.
+
+## 4. Results
+
+Measured at the committed revision on one CPU thread
+(`artifacts/mutation/S16-RUN.json`).
+
+| Check | Result |
+| --- | --- |
+| `G16.primary` | PASS. 20 of 20 mutants fire their primary gate; the unmutated control passes all 22 detectors before and after. |
+| `G16.signatures` | PASS. `artifacts/mutation/S16-SIGNATURES.json` records the sorted fired-gate set of every mutant: 20 primaries and 13 secondary detections. A rerun reproduces it exactly, also under another hash seed. |
+| `G16.regression` | PASS. `.github/workflows/mutation.yml` compares the signatures on every release. Removing one detector (`G7.loads-fields-store`) gives `COVERAGE_REGRESSION`, exit code 3, for `BODY_FORCE_SIGN`, `BOUNDARY_NORMAL` and `CLOSURE_WRONG_ROOT`, while all twenty primaries still fire. The hosted release run happens with the first published release. |
+| `G16.runtime` | PASS. The full mutation suite takes 49 s; the release job's timeout is 45 minutes. |
+| `G16.coverage` | PASS. 99.15% branch coverage of `piginot.mutation`. |
+
+Signatures with secondary detections:
+
+| Mutant | Fired gates |
+| --- | --- |
+| `BODY_FORCE_SIGN` | G7.loads-fields-store, G8.seeded-defects |
+| `BOUNDARY_NORMAL` | G7.loads-fields-store, G8.seeded-defects |
+| `TAG_SWAP` | G8.patch, G8.seeded-defects |
+| `CLOSURE_WRONG_ROOT` | G15.fields, G15.refuse, G15.substitution, G4.closure-residual, G7.loads-fields-store, G8.patch, G8.seeded-defects |
+| `INCONSISTENT_TANGENT` | G4.tangent, G8.seeded-defects |
+| `ANISOTROPIC_SCALING` | G8.patch, G8.seeded-defects |
+| `IGNORE_DIRICHLET_LIFTING` | G11.lifting, G11.lifting-mutant, G15.fields |
+
+The other thirteen mutants fire only their primary gate.
