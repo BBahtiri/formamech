@@ -1,0 +1,105 @@
+{
+  "gate_id": "G6",
+  "step": "S6",
+  "campaign_id": "notched-v1",
+  "commit": "25a89546c0d9b644169fecf1805a65cfd38d780e",
+  "timestamp_utc": "2026-10-05T10:36:28Z",
+  "checks": [
+    {
+      "id": "G6.stress",
+      "status": "PASS",
+      "measured": {
+        "validator": {
+          "attempted": 500,
+          "accepted": 491,
+          "rejected": 9,
+          "rejection_reason_occurrences": {
+            "FEATURE_SIZE_BELOW_MARGIN": 5,
+            "MESH_QUALITY_OUT_OF_BOUNDS": 9
+          },
+          "accepted_violating_validity": 0,
+          "rejected_without_reason": 0,
+          "silent_drops": 0
+        },
+        "membership_and_validator": {
+          "attempted": 500,
+          "accepted": 155,
+          "rejected": 345,
+          "rejection_reason_occurrences": {
+            "PARAMETER_OUT_OF_BOUNDS": 345
+          },
+          "accepted_violating_validity": 0,
+          "rejected_without_reason": 0,
+          "silent_drops": 0
+        }
+      },
+      "threshold": "500-sample boundary-spanning sweep: every accepted instance satisfies all validity criteria; every rejected instance has a recorded reason",
+      "comparison": "all"
+    },
+    {
+      "id": "G6.ledger",
+      "status": "PASS",
+      "measured": {
+        "validator": 0,
+        "membership_and_validator": 0
+      },
+      "threshold": "accepted + rejected = attempted; no silent drops",
+      "comparison": "eq"
+    },
+    {
+      "id": "G6.tags",
+      "status": "PASS",
+      "measured": {
+        "accepted": 500,
+        "tag_mismatches": 0
+      },
+      "threshold": "tag identity preserved across 500 accepted instances",
+      "comparison": "all"
+    },
+    {
+      "id": "G6.determinism",
+      "status": "PASS",
+      "measured": true,
+      "threshold": "identical theta produces a byte-identical canonical mesh",
+      "comparison": "eq"
+    },
+    {
+      "id": "G6.membership",
+      "status": "PASS",
+      "measured": {
+        "labelled_instances": 204,
+        "correct": 204,
+        "accuracy_percent": 100.0,
+        "inclusive_boundary_cases": true,
+        "boundary_adjacent_cases": true
+      },
+      "threshold": "100% correct on a labelled in/out set of at least 200 instances",
+      "comparison": "all"
+    },
+    {
+      "id": "G6.injectivity",
+      "status": "PASS",
+      "measured": {
+        "reason_code": "NONINJECTIVE_MORPH",
+        "tests": "2 passed in 0.84s"
+      },
+      "threshold": "deliberately non-injective maps are rejected with NONINJECTIVE_MORPH",
+      "comparison": "eq"
+    },
+    {
+      "id": "G6.coverage",
+      "status": "PASS",
+      "measured": {
+        "tests": "155 passed in 25.69s",
+        "coverage_percent": 93.32
+      },
+      "threshold": 85.0,
+      "comparison": "gte"
+    }
+  ],
+  "morph_map": "piginot.morphing.BlendedNotchMap",
+  "stress_sweep_seed": "notched-g6-boundary-spanning-sweep-v1",
+  "stress_widening_fraction": 0.25,
+  "verdict": "PASS",
+  "verdict_reason": "every required check PASS"
+}
