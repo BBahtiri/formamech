@@ -168,19 +168,34 @@ def test_entry_point_plugins_and_search_path(
     monkeypatch.setattr(cli, "entry_points", lambda group: [Entry()])
     assert cli.main(["train", "--campaign", "listed"]) == 7
 
-    package = tmp_path / "campaigns" / "toy"
-    package.mkdir(parents=True)
-    (tmp_path / "campaigns" / "__init__.py").write_text("")
-    (package / "__init__.py").write_text("")
-    (package / "cli.py").write_text("COMMANDS = {'pilot': lambda arguments: 5}\n")
-    monkeypatch.setattr(sys, "path", list(sys.path))
-    for name in [
-        m for m in sys.modules if m == "campaigns" or m.startswith("campaigns.")
-    ]:
-        monkeypatch.delitem(sys.modules, name)
-    assert (
-        cli.main(["pilot", "--campaign", "toy", "--campaign-path", str(tmp_path)]) == 5
+    # A module:attribute plugin found through --campaign-path, under a name no
+    # other test imports, removed again so no foreign module stays loaded.
+    (tmp_path / "piginot_toy_plugin_s15.py").write_text(
+        "COMMANDS = {'pilot': lambda arguments: 5}\n"
     )
+    monkeypatch.setattr(sys, "path", list(sys.path))
+    try:
+        assert (
+            cli.main(
+                [
+                    "pilot",
+                    "--campaign",
+                    "piginot_toy_plugin_s15:COMMANDS",
+                    "--campaign-path",
+                    str(tmp_path),
+                ]
+            )
+            == 5
+        )
+    finally:
+        sys.modules.pop("piginot_toy_plugin_s15", None)
+
+
+def test_bare_campaign_names_resolve_to_the_campaign_package(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert cli.main(["family", "compile", "--campaign", "dogbone_v1"]) == 0
+    assert json.loads(capsys.readouterr().out)["recipe_id"]
 
 
 def test_dogbone_plugin_table_and_family_compile(
