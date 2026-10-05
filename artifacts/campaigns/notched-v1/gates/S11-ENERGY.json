@@ -1,0 +1,155 @@
+{
+  "gate_id": "G11",
+  "step": "S11",
+  "campaign_id": "notched-v1",
+  "commit": "6a57057b6ec91066a2bf7513651dff64f44ee54e",
+  "timestamp_utc": "2026-10-05T17:24:01Z",
+  "checks": [
+    {
+      "id": "G11.node-order",
+      "status": "PASS",
+      "measured": 0.0,
+      "threshold": "< 1e-06",
+      "comparison": "lt"
+    },
+    {
+      "id": "G11.query-batch",
+      "status": "PASS",
+      "measured": 0.0,
+      "threshold": "< 1e-06",
+      "comparison": "lt"
+    },
+    {
+      "id": "G11.reachability",
+      "status": "PASS",
+      "measured": {
+        "reachable_parameters": 4,
+        "required_parameters": 4
+      },
+      "threshold": "reachable_parameters == required_parameters > 0",
+      "comparison": "eq"
+    },
+    {
+      "id": "G11.safetensors",
+      "status": "PASS",
+      "measured": true,
+      "threshold": true,
+      "comparison": "eq"
+    },
+    {
+      "id": "G11.heads",
+      "status": "PASS",
+      "measured": {
+        "u_shape_verified": true,
+        "p_shape_verified": true,
+        "displacement_only_output": true,
+        "served_stress_energy_gradient_relative_difference": 3.8656771793824113e-16
+      },
+      "threshold": {
+        "u_shape_verified": true,
+        "p_shape_verified": true,
+        "displacement_only_output": true,
+        "served_stress_energy_gradient_relative_difference": "< 1e-10"
+      },
+      "comparison": "all"
+    },
+    {
+      "id": "G11.lifting",
+      "status": "PASS",
+      "measured": {
+        "parameter_vectors": 64,
+        "points_per_edge": [
+          320,
+          480,
+          4800
+        ],
+        "max_relative_error": 0.0
+      },
+      "threshold": {
+        "parameter_vectors": ">= 64",
+        "points_per_edge": [
+          320,
+          480,
+          4800
+        ],
+        "max_relative_error": "< 1e-12"
+      },
+      "comparison": "all"
+    },
+    {
+      "id": "G11.lifting-mutant",
+      "status": "PASS",
+      "measured": {
+        "control_relative_error": 0.0,
+        "mutant_relative_error": 1.0003551907826842
+      },
+      "threshold": {
+        "control_relative_error": "< 1e-12",
+        "mutant_relative_error": "> 0.001"
+      },
+      "comparison": "all"
+    },
+    {
+      "id": "G11.coverage",
+      "status": "PASS",
+      "measured": 90.4,
+      "threshold": ">= 80.0",
+      "comparison": "gte"
+    }
+  ],
+  "decision_record": "docs/adr/0018-s13c-energy-form-operator.md",
+  "architecture": {
+    "architecture_id": "pi-ginot-energy-parametric-film-v1",
+    "module_digest": "blake2b256:cf4bc980c328150ad56d2a0c9345a0dddefd850b4d194db3cd326d9d0a5bebe3",
+    "conditioning_parameters": [
+      "width",
+      "notch_radius",
+      "notch_depth",
+      "nominal_axial_strain"
+    ]
+  },
+  "measured_checkpoint": {
+    "run_hash": "e5451350d82db80249e19b11479f6101fca87498aa966947f7566e93aa0eab1f",
+    "checkpoint_manifest_hash": "5dbcf8e831244b0324a253d2517a4da1a3ef54b4a85158114450df36e6b585f8",
+    "model_state_hash": "31cb59df56925338f24e2aa68f19c29e98fb18a181a3ad3ae994b540ebb6cc05",
+    "weights_hash": "d2a287cb565f22d668114fd465775dc3bde9c8a62f9f2f41829e273dc220c30e"
+  },
+  "probe": {
+    "train_screen_case_id": "candidate-000025",
+    "query_points": 833,
+    "lifting_parameter_vectors": 64,
+    "interior_draw_seed": 13105
+  },
+  "measurements": {
+    "node_order_relative_change": 0.0,
+    "query_batch_relative_change": 0.0,
+    "reachable_parameter_count": 4,
+    "required_parameter_count": 4,
+    "pickle_refused_before_deserialization": true,
+    "u_shape_verified": true,
+    "p_shape_verified": true,
+    "displacement_only_output": true,
+    "served_stress_energy_gradient_relative_difference": 3.8656771793824113e-16,
+    "lifting_parameter_vector_count": 64,
+    "lifting_points_per_edge": [
+      320,
+      480,
+      4800
+    ],
+    "lifting_max_relative_error": 0.0,
+    "lifting_mutant_control_relative_error": 0.0,
+    "lifting_mutant_relative_error": 1.0003551907826842,
+    "code_coverage_percent": 90.4
+  },
+  "test_evidence": {
+    "command": "pytest tests/operators",
+    "result": "145 passed in 20.44s"
+  },
+  "scope": {
+    "claim": "structural evidence on the registered checkpoint; no accuracy claim",
+    "fem_labels_read": false,
+    "development_or_holdout_read": false
+  },
+  "verdict": "PASS",
+  "verdict_reason": "every required check PASS"
+}
