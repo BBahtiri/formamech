@@ -1,0 +1,115 @@
+{
+  "gate_id": "G13",
+  "step": "S13",
+  "campaign_id": "notched-v1",
+  "commit": "211395663a079d249b1941845eb1eb70dcd089ca",
+  "timestamp_utc": "2026-10-05T19:48:54Z",
+  "checks": [
+    {
+      "id": "G13.determinism",
+      "status": "PASS",
+      "measured": {
+        "probe_run_hash_matches": true,
+        "registered_weights_match_run_root": true,
+        "replay_weights_equal_registered": true
+      },
+      "threshold": "independent replay from the training revision has the registered weights",
+      "comparison": "all"
+    },
+    {
+      "id": "G13.resume",
+      "status": "PASS",
+      "measured": {
+        "interrupted_at_step": 200,
+        "byte_identical_files": {
+          "checkpoint.json": true,
+          "model.safetensors": true,
+          "state.safetensors": true
+        },
+        "registered_state_matches_run_root": true
+      },
+      "threshold": "interrupt at half of the 400-step segment and resume: bitwise identical",
+      "comparison": "all"
+    },
+    {
+      "id": "G13.search-space",
+      "status": "PASS",
+      "measured": {
+        "registered_trials": 1,
+        "out_of_space_refused": 3
+      },
+      "threshold": "every out-of-space trial refuses; the registered trial is authorized",
+      "comparison": "all"
+    },
+    {
+      "id": "G13.holdout",
+      "status": "PASS",
+      "measured": {
+        "production_selection_refusals": 2,
+        "select_on_holdout_mutant_selected_holdout": true,
+        "development_case_refused_by_training_source": true,
+        "g9_holdout_visibility_violations": 0,
+        "screen_used_non_train_evidence": false
+      },
+      "threshold": "HOLDOUT is unreachable from training and selection; the mutant fires",
+      "comparison": "all"
+    },
+    {
+      "id": "G13.identity",
+      "status": "PASS",
+      "measured": {
+        "distinct_run_hashes": 5
+      },
+      "threshold": "data, config, code and profile changes each create a new run_hash",
+      "comparison": "eq"
+    },
+    {
+      "id": "G13.lineage",
+      "status": "PASS",
+      "measured": {
+        "run_hash": true,
+        "checkpoint_manifest_hash": true,
+        "dataset_snapshot_hash": true,
+        "execution_profile_hash": true,
+        "weights_hash": true,
+        "model_state_hash": true,
+        "protocol_hash": true,
+        "training_revision_in_history": true,
+        "evaluator_revision_in_history": true
+      },
+      "threshold": "the selected checkpoint resolves to its data, run, profile, protocol and revisions",
+      "comparison": "all"
+    },
+    {
+      "id": "G13.selection",
+      "status": "PASS",
+      "measured": {
+        "selected_trial_id": "trial-be634c6e366a9a45a28d5e1166bce382e59b03b5853495eeddd1cf6ac4a3dc71",
+        "selected_matches_screen_report": true,
+        "screen_selection_status": "ELIGIBLE",
+        "failed_guardrails": [],
+        "nonranked_mutant_detected": true
+      },
+      "threshold": "the chosen checkpoint is the first ranked eligible trial under the frozen absolute guardrails; the CHOOSE_NONRANKED_CHECKPOINT mutant is detected",
+      "comparison": "all"
+    },
+    {
+      "id": "G13.coverage",
+      "status": "PASS",
+      "measured": 83.36,
+      "threshold": 80.0,
+      "comparison": "gte",
+      "evidence": {
+        "tests": "196 passed in 28.90s"
+      }
+    }
+  ],
+  "evidence": {
+    "protocol_sha256": "554e64097c295c8171e7fc9624a6f7e7483813ee806a63dadcf88cfbc63ea465",
+    "train_screen_sha256": "e5a282ffc1c4cf841c00f80fe493af53fe1310048900aaad0486440b8a5cf8f1",
+    "replay_probe_sha256": "a5deac9621098d2c200a15dbcbe023739d2ff0bc383766c267081a997bfa62db",
+    "g11_sha256": "8ab7499f8d455b998fa15de79b3879b7eb56d7da63b716ed92aa89e7cb3abfdf"
+  },
+  "verdict": "PASS",
+  "verdict_reason": "every required check PASS"
+}
