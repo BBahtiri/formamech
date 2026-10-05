@@ -1,0 +1,162 @@
+{
+  "gate_id": "G9",
+  "step": "S9",
+  "campaign_id": "notched-v1",
+  "commit": "bef7b0e0ea1590129afc5d32339fd95aedf8871a",
+  "timestamp_utc": "2026-10-05T10:19:05Z",
+  "checks": [
+    {
+      "id": "G9.immutable",
+      "status": "PASS",
+      "measured": true,
+      "threshold": true,
+      "comparison": "eq",
+      "evidence": {
+        "command": "pytest tests/doe tests/campaigns/test_notched_s9.py",
+        "result": "495 passed in 434.45s (0:07:14)"
+      }
+    },
+    {
+      "id": "G9.one-role",
+      "status": "PASS",
+      "measured": {
+        "trials": 1000,
+        "violations": 0
+      },
+      "threshold": {
+        "minimum_trials": 1000,
+        "violations": 0
+      },
+      "comparison": "gte trials and eq violations",
+      "evidence": {
+        "command": "pytest tests/doe tests/campaigns/test_notched_s9.py",
+        "result": "495 passed in 434.45s (0:07:14)"
+      }
+    },
+    {
+      "id": "G9.leakage",
+      "status": "PASS",
+      "measured": {
+        "trials": 1000,
+        "violations": 0
+      },
+      "threshold": {
+        "minimum_trials": 1000,
+        "violations": 0
+      },
+      "comparison": "gte trials and eq violations",
+      "evidence": {
+        "command": "pytest tests/doe tests/campaigns/test_notched_s9.py",
+        "result": "495 passed in 434.45s (0:07:14)"
+      }
+    },
+    {
+      "id": "G9.visibility",
+      "status": "PASS",
+      "measured": 0,
+      "threshold": 0,
+      "comparison": "eq"
+    },
+    {
+      "id": "G9.no-node-split",
+      "status": "PASS",
+      "measured": true,
+      "threshold": true,
+      "comparison": "eq",
+      "evidence": {
+        "command": "pytest tests/doe tests/campaigns/test_notched_s9.py",
+        "result": "495 passed in 434.45s (0:07:14)"
+      }
+    },
+    {
+      "id": "G9.commitment-order",
+      "status": "PASS",
+      "measured": {
+        "file_mtime_precedes": true,
+        "git_commit_precedes": true,
+        "reveal_verifies": true
+      },
+      "threshold": {
+        "file_mtime_precedes": true,
+        "git_commit_precedes": true,
+        "reveal_verifies": true
+      },
+      "comparison": "all true"
+    },
+    {
+      "id": "G9.replacement",
+      "status": "PASS",
+      "measured": {
+        "failures_injected": 3,
+        "failures_recorded": 3,
+        "deterministic_rule_matches": true
+      },
+      "threshold": {
+        "failures_injected": ">= 1",
+        "failures_recorded": "equals injected",
+        "deterministic_rule_matches": true
+      },
+      "comparison": "all"
+    },
+    {
+      "id": "G9.coverage",
+      "status": "PASS",
+      "measured": 93.61,
+      "threshold": 90.0,
+      "comparison": "gte",
+      "evidence": {
+        "command": "pytest tests/doe tests/campaigns/test_notched_s9.py",
+        "result": "495 passed in 434.45s (0:07:14)"
+      }
+    }
+  ],
+  "campaign_hash": "6b6995a3381c2c7a63af06617d94969619c8ed4be6d6f94954b0e82613de2bfc",
+  "visibility": {
+    "holdout_role_in_manifest": 0,
+    "holdout_case_ids": 0,
+    "holdout_case_id_strings": 0,
+    "holdout_coordinates": 0,
+    "holdout_leakage_groups": 0
+  },
+  "commitment_order_problem": null,
+  "production_design_policy": {
+    "source": "sealed design regenerated in memory from the restricted reveal",
+    "plan_hash_verified": true,
+    "seed_commitment_verified": true,
+    "population": {
+      "selected_cases": 264,
+      "reserve_cases": 16,
+      "validation_points": 512
+    },
+    "measured": {
+      "empirical_fill_distance": 0.12389213193604132,
+      "minimum_stratum_count": 11,
+      "boundary_coverage": 1.0,
+      "stratum_coverage": 1.0,
+      "interaction_coverage": 1.0,
+      "difficult_region_coverage": 1.0,
+      "uncovered_region_ids": [],
+      "unresolved_region_ids": []
+    },
+    "thresholds": {
+      "minimum_fraction": 1.0,
+      "maximum_fill_distance": 0.1,
+      "minimum_stratum_count": 8
+    },
+    "checks": {
+      "empirical_fill_distance": false,
+      "minimum_stratum_count": true,
+      "stratum_coverage": true,
+      "boundary_coverage": true,
+      "interaction_coverage": true,
+      "difficult_region_coverage": true,
+      "unresolved_requirements": true
+    },
+    "status": "FAIL"
+  },
+  "limitations": [
+    "The sealed production design misses the proposal coverage target on empirical_fill_distance: the measured value is recorded under production_design_policy. The seed is sealed and is not redrawn."
+  ],
+  "verdict": "PASS",
+  "verdict_reason": "every required check PASS"
+}
