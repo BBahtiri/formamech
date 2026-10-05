@@ -22,6 +22,7 @@ from piginot.contracts import (
     strict_json_loads,
 )
 from piginot.doe.envelope import ExecutableEnvelope
+from piginot.morphing.blended_notch import BlendedNotchMap, BlendedNotchParameters
 from piginot.morphing.circular_transition import (
     CircularTransitionMap,
     CircularTransitionParameters,
@@ -115,7 +116,23 @@ def _circular_transition(document: Mapping[str, Any]) -> CircularTransitionMap:
     )
 
 
+def _blended_notch(document: Mapping[str, Any]) -> BlendedNotchMap:
+    reference = document["reference"]
+    return BlendedNotchMap(
+        reference=BlendedNotchParameters(
+            half_length_mm=float(reference["half_length_mm"]),
+            width_mm=float(reference["width_mm"]),
+            notch_radius_mm=float(reference["notch_radius_mm"]),
+            notch_depth_mm=float(reference["notch_depth_mm"]),
+        ),
+        width_parameter=document["width_parameter"],
+        notch_radius_parameter=document["notch_radius_parameter"],
+        notch_depth_parameter=document["notch_depth_parameter"],
+    )
+
+
 MORPH_MAP_DECODERS: Mapping[str, Callable[[Mapping[str, Any]], object]] = {
+    "piginot.morphing.BlendedNotchMap": _blended_notch,
     "piginot.morphing.CircularTransitionMap": _circular_transition,
 }
 

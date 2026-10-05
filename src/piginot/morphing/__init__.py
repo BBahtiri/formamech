@@ -1,5 +1,12 @@
 """Deterministic S6 morphing and family-membership contracts."""
 
+from piginot.morphing.blended_notch import (
+    BlendedNotchMap,
+    BlendedNotchMeshSpec,
+    BlendedNotchParameters,
+    BoundBlendedNotchDeformation,
+    build_blended_notch_reference_mesh,
+)
 from piginot.morphing.circular_transition import (
     BoundCircularTransitionDeformation,
     CircularTransitionMap,
@@ -44,6 +51,10 @@ def __getattr__(name: str) -> object:
 
 
 __all__ = (
+    "BlendedNotchMap",
+    "BlendedNotchMeshSpec",
+    "BlendedNotchParameters",
+    "BoundBlendedNotchDeformation",
     "BoundCircularTransitionDeformation",
     "CircularTransitionMap",
     "CircularTransitionMeshSpec",
@@ -66,6 +77,7 @@ __all__ = (
     "Point",
     "PrimitiveBound",
     "RBFControlPoint",
+    "build_blended_notch_reference_mesh",
     "RBFMap",
     "apply_morph",
     "build_circular_transition_reference_mesh",
