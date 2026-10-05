@@ -25,11 +25,17 @@ lifting and trainer transfer, with a median field error of 5.05%.
    `nominal_axial_strain` 0.10–0.20; the material is the DogBone material
    (E = 760 MPa, ν = 0.23). The quarter model `[0, 25] × [0, W/2]` has the
    DogBone boundary conditions; the notch root lies on the symmetry line.
-2. **One framework addition, no family branch.** `BlendedNotchMap`
+2. **Two framework additions, no family branch.** `BlendedNotchMap`
    (`src/piginot/morphing/blended_notch.py`) is a new morph-map type built like
    the circular transition: a piecewise-linear longitudinal map with its knot
-   at the blend length and a height-ratio scaling. The bundle decoder registry
-   gains one entry for it. Every other framework module is used unchanged.
+   at the blend length and a height-ratio scaling; the bundle decoder registry
+   gains one entry for it. `AbsoluteSelectionGuardrails`
+   (`src/piginot/training/selection.py`) lets a selection policy carry
+   absolute limits instead of the DogBone incumbent (decision 6); the DogBone
+   guardrails, their hashes and the selection code paths are unchanged. The
+   DogBone S10 runner takes the production `run_id` as a parameter so the
+   notched campaign keeps its own ledger identity. Every other framework module
+   is used unchanged.
 3. **The evidence chain is the DogBone chain.** S6 validity sweep and FEM
    pilots, the S9 ceremony with a HOLDOUT commitment and a private reveal, S10
    FEM production, S13 training on TRAIN geometry only, the S14 signed

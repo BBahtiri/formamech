@@ -310,3 +310,43 @@ def test_selection_contracts_are_frozen() -> None:
         selected.results = ()  # type: ignore[misc]
     with pytest.raises(FrozenInstanceError):
         selected.selected_result.lineage.trial_id = "other"  # type: ignore[misc]
+
+
+def test_absolute_guardrails_admit_only_within_every_declared_limit() -> None:
+    from piginot.training import AbsoluteSelectionGuardrails
+
+    guardrails = AbsoluteSelectionGuardrails(0.05, 0.05, 0.02)
+    policy = SelectionPolicy(_space(), guardrails)
+    inside = _metrics(median_abs=0.04, p_relative=0.03, u_relative=0.01)
+    assert guardrails.admits(inside)
+    for change in (
+        {"median_abs": 0.051},
+        {"p_relative": 0.06},
+        {"u_relative": 0.021},
+        {"invalid_collocation_points": 1},
+    ):
+        values = {
+            "median_abs": 0.04,
+            "p_relative": 0.03,
+            "u_relative": 0.01,
+        } | change
+        assert not guardrails.admits(_metrics(**values))  # type: ignore[arg-type]
+    results = tuple(
+        _result(index, metrics=replace(inside, hybrid_loss=float(index)))
+        for index in range(4)
+    )
+    decision = select_checkpoint(results, policy=policy)
+    assert decision.selected_result.trial_id == _space().trial_ids[0]
+    assert policy.policy_hash != _policy().policy_hash
+    with pytest.raises(NoEligibleTrialError):
+        select_checkpoint(
+            tuple(_result(i, metrics=_metrics()) for i in range(4)), policy=policy
+        )
+    with pytest.raises(ContractValidationError, match="positive"):
+        AbsoluteSelectionGuardrails(0.0, 0.05, 0.02)
+    with pytest.raises(ContractValidationError, match="finite"):
+        AbsoluteSelectionGuardrails(float("nan"), 0.05, 0.02)
+    with pytest.raises(TypeError):
+        guardrails.admits(object())  # type: ignore[arg-type]
+    with pytest.raises(ContractValidationError, match="guardrails"):
+        SelectionPolicy(_space(), object())  # type: ignore[arg-type]

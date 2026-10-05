@@ -262,22 +262,67 @@ class SelectionGuardrails:
 
 
 @dataclass(frozen=True, slots=True)
+class AbsoluteSelectionGuardrails:
+    """Preregistered absolute thresholds for a campaign without an incumbent.
+
+    A trial is admitted when no collocation point is folded and its TRAIN-screen
+    medians of the peak, stress-field and displacement errors are at most the
+    declared limits. The limits are part of the selection policy hash.
+    """
+
+    __canonical_namespace__: ClassVar[str] = "piginot.training"
+
+    maximum_median_absolute_peak_error: float
+    maximum_p_relative_l2: float
+    maximum_u_relative_l2: float
+
+    def __post_init__(self) -> None:
+        for name in (
+            "maximum_median_absolute_peak_error",
+            "maximum_p_relative_l2",
+            "maximum_u_relative_l2",
+        ):
+            value = _finite(getattr(self, name), name)
+            if value <= 0.0:
+                raise ContractValidationError(f"{name} must be positive")
+            object.__setattr__(self, name, value)
+
+    def admits(self, metrics: SelectionMetrics) -> bool:
+        """Apply every absolute guardrail without data-dependent relaxation."""
+
+        if type(metrics) is not SelectionMetrics:
+            raise TypeError("metrics must be an exact SelectionMetrics")
+        return (
+            metrics.invalid_collocation_points == 0
+            and metrics.median_absolute_peak_error
+            <= self.maximum_median_absolute_peak_error
+            and metrics.p_relative_l2 <= self.maximum_p_relative_l2
+            and metrics.u_relative_l2 <= self.maximum_u_relative_l2
+        )
+
+
+Guardrails = SelectionGuardrails | AbsoluteSelectionGuardrails
+_GUARDRAIL_TYPES = (SelectionGuardrails, AbsoluteSelectionGuardrails)
+
+
+@dataclass(frozen=True, slots=True)
 class SelectionPolicy:
     """Frozen guardrails bound to one exact preregistered search space."""
 
     __canonical_namespace__: ClassVar[str] = "piginot.training"
 
     search_space: GridSearchSpace
-    guardrails: SelectionGuardrails = field(default_factory=SelectionGuardrails)
+    guardrails: Guardrails = field(default_factory=SelectionGuardrails)
 
     def __post_init__(self) -> None:
         if type(self.search_space) is not GridSearchSpace:
             raise ContractValidationError(
                 "search_space must be an exact GridSearchSpace"
             )
-        if type(self.guardrails) is not SelectionGuardrails:
+        if type(self.guardrails) not in _GUARDRAIL_TYPES:
             raise ContractValidationError(
-                "guardrails must be exact SelectionGuardrails"
+                "guardrails must be exact SelectionGuardrails or "
+                "AbsoluteSelectionGuardrails"
             )
 
     @property
@@ -295,7 +340,7 @@ class SelectionPolicy:
 
 def _rank_eligible(
     results: tuple[TrialResult, ...],
-    guardrails: SelectionGuardrails,
+    guardrails: Guardrails,
 ) -> tuple[TrialResult, ...]:
     return tuple(
         sorted(
@@ -483,6 +528,7 @@ def _choose_nonranked_checkpoint_mutant_for_test(
 
 
 __all__ = (
+    "AbsoluteSelectionGuardrails",
     "CHOOSE_NONRANKED_CHECKPOINT_MUTANT",
     "CheckpointLineage",
     "NoEligibleTrialError",

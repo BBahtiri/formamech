@@ -46,6 +46,7 @@ from piginot.git_environment import isolated_git_environment
 from piginot.store import ObjectStore
 
 RUN_ID = "dogbone-s10-public-production-v1"
+_RUN_ID_PATTERN = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*-s10-public-production-v1\Z")
 SCHEMA_VERSION = "1.0"
 _LEDGER_NAME = "ledger.json"
 _PLAN_NAME = "request-plan.json"
@@ -147,7 +148,9 @@ class ProductionFemRunLedger:
     schema_version: str = SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        if self.run_id != RUN_ID:
+        if not isinstance(self.run_id, str) or not _RUN_ID_PATTERN.fullmatch(
+            self.run_id
+        ):
             raise ProductionFemRunError("unexpected production run_id")
         for label, value in (
             ("campaign_hash", self.campaign_hash),
@@ -326,6 +329,7 @@ def run_public_fem_requests(
     max_new_attempts: int | None = None,
     on_record: Callable[[ProductionFemRunLedger, ProductionFemRunRecord], None]
     | None = None,
+    run_id: str = RUN_ID,
 ) -> ProductionFemRunLedger:
     """Run a plan-bound public FEM campaign with per-case atomic resume."""
 
@@ -349,8 +353,14 @@ def run_public_fem_requests(
     ledger = (
         _load_ledger(path)
         if path.exists()
-        else _new_ledger(request_plan, backend.backend_name, source_revision)
+        else _new_ledger(
+            request_plan, backend.backend_name, source_revision, run_id=run_id
+        )
     )
+    if ledger.run_id != run_id:
+        raise ProductionFemRunError(
+            "cannot resume S10 production run with different run_id"
+        )
     _assert_ledger_matches(
         ledger,
         request_plan=request_plan,
@@ -535,9 +545,11 @@ def _new_ledger(
     request_plan: PublicFemRequestPlan,
     backend_name: str,
     source_revision: str,
+    *,
+    run_id: str = RUN_ID,
 ) -> ProductionFemRunLedger:
     return ProductionFemRunLedger(
-        run_id=RUN_ID,
+        run_id=run_id,
         campaign_hash=request_plan.campaign_hash,
         public_case_manifest_hash=request_plan.public_case_manifest_hash,
         request_plan_hash=request_plan.content_hash,

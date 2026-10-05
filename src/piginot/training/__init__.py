@@ -59,6 +59,7 @@ from piginot.training.search import (
 from piginot.training.selection import (
     CHOOSE_NONRANKED_CHECKPOINT_MUTANT,
     SELECT_ON_HOLDOUT_MUTANT,
+    AbsoluteSelectionGuardrails,
     CheckpointLineage,
     NoEligibleTrialError,
     SelectionDecision,
@@ -79,6 +80,7 @@ from piginot.training.state import (
 )
 
 __all__ = (
+    "AbsoluteSelectionGuardrails",
     "ADAPTIVE_PHYSICS_TERMS",
     "CHOOSE_NONRANKED_CHECKPOINT_MUTANT",
     "COSINE_TAIL_SCHEDULE_ID",
