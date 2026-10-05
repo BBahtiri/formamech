@@ -29,6 +29,7 @@ import platform
 import sys
 import time
 from collections.abc import Callable, Mapping, Sequence
+from concurrent.futures import ProcessPoolExecutor
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any
@@ -1099,7 +1100,12 @@ def s10_request(case: S14Case, profile: ExecutionProfile) -> FemRequest:
 
 
 def run_holdout(
-    *, s10_run_root: Path, checkpoint_path: Path, run_root: Path, reveal_root: Path
+    *,
+    s10_run_root: Path,
+    checkpoint_path: Path,
+    run_root: Path,
+    reveal_root: Path,
+    workers: int = 2,
 ) -> dict[str, object]:
     """Consume HOLDOUT once, solve and score it with the frozen code."""
 
@@ -1149,23 +1155,42 @@ def run_holdout(
     profile = _load_run_execution_profile(s10_run_root)
     records, errors, indicators, seconds_list = [], [], [], []
     directory = run_root / "holdout"
-    for case in holdout_cases(coordinates):
-        request = s10_request(case, profile)
-        if (directory / "cases" / f"{case.case_id}.json").exists() and (
+
+    def cached(case: S14Case) -> bool:
+        return (directory / "cases" / f"{case.case_id}.json").exists() and (
             directory / "cases" / f"{case.case_id}.npz"
-        ).exists():
-            solved = SolvedCase(case, request, None)  # type: ignore[arg-type]
-        else:
-            result, seconds = _solve(request)
-            seconds_list.append(seconds)
-            solved = SolvedCase(case, request, result)
-        record, error, variants = rehearse_case(
-            model, solved, normalization, directory, allowed_roles=_HOLDOUT
-        )
-        records.append(record)
-        errors.append(error)
-        indicators.append(variants)
-        print(f"HOLDOUT {len(records):2d}/64 {record.case_id}", flush=True)
+        ).exists()
+
+    pending = [
+        (case, s10_request(case, profile)) for case in holdout_cases(coordinates)
+    ]
+    # The full S10 solves run ``workers`` at a time; scoring and the coarse
+    # solve of each case follow in order, and every finished case is cached.
+    with ProcessPoolExecutor(max_workers=workers) as pool:
+        for start in range(0, len(pending), workers):
+            chunk = pending[start : start + workers]
+            unsolved = [(case, request) for case, request in chunk if not cached(case)]
+            results = dict(
+                zip(
+                    (case.case_id for case, _ in unsolved),
+                    pool.map(_solve, [request for _, request in unsolved]),
+                    strict=True,
+                )
+            )
+            for case, request in chunk:
+                if case.case_id in results:
+                    result, seconds = results[case.case_id]
+                    seconds_list.append(seconds)
+                    solved = SolvedCase(case, request, result)
+                else:
+                    solved = SolvedCase(case, request, None)  # type: ignore[arg-type]
+                record, error, variants = rehearse_case(
+                    model, solved, normalization, directory, allowed_roles=_HOLDOUT
+                )
+                records.append(record)
+                errors.append(error)
+                indicators.append(variants)
+                print(f"HOLDOUT {len(records):2d}/64 {record.case_id}", flush=True)
     pooled_indicator = torch.cat(tuple(case[variant] for case in indicators))
     pooled_error = torch.cat(tuple(errors))
     report: dict[str, object] = {
