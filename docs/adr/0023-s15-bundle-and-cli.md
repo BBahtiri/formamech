@@ -47,7 +47,8 @@ the required limitation paragraph.
    The bound served is the DEVELOPMENT-calibrated 90% quantile of the pointwise
    in-plane stress error, in MPa, and indicators above the calibrated range are
    flagged `beyond_calibration`. The indicator needs second derivatives at
-   three points per cell, so `predict --no-confidence` serves the fields alone.
+   three points per cell, so `predict --no-confidence` serves the fields alone
+   about ten times faster.
 4. **S15-D4 Claim level.** The bundle carries the G14 claim
    (`HOLDOUT_VERIFIED`); a prediction carries it only when the request is in
    the envelope. A refused request, or a bundle that fails to load, reports
@@ -87,8 +88,8 @@ the required limitation paragraph.
 
 - The DogBone bundle reproduces the S14 vertex displacements, served stresses
   and confidence indicators bit for bit on TRAIN cases.
-- A prediction with confidence takes tens of seconds on a CPU; the fields alone
-  take a fraction of a second.
+- On one CPU thread a DogBone prediction takes 0.44 s for the fields alone and
+  4.9 s with the confidence bound at every vertex.
 - Bundles are directories, not archives. Packing one into a single file is
   left to the release step.
 - Only the energy-form architecture is registered for serving.

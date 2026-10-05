@@ -190,6 +190,23 @@ cases under a signed protocol (ADRs 0019–0021). Its numbers carry these limits
   because `IMPLEMENTATION-v1.0-OSS.md` is not available; they are the upstream
   gate artifacts, not an independent audit.
 
+S15 serves that candidate as a bundle ([ADR 0023](adr/0023-s15-bundle-and-cli.md),
+[guide](bundle.md)). Its limits:
+
+- A bundle proves that its bytes are the ones its manifest lists and that its
+  parts agree. It does not prove that it was built from verified inputs; the
+  DogBone build checks the `CP-FREEZE` weights hash and records the checkpoint
+  identities, and bundle predictions inherit the S14 evidence because they
+  reproduce the S14 serving path bit for bit on TRAIN cases.
+- The bundle serves one family, one material and the 10-20% strain-controlled
+  load of its envelope, on the quarter model. Every other request is refused;
+  so is a prediction whose deformation folds (`det F <= 1e-12`) anywhere it is
+  evaluated.
+- The served confidence bound inherits the S14 indicator's limits: moderate
+  ranking and 86.8% HOLDOUT coverage of a nominal 90% quantile. Indicators above
+  the calibrated range are flagged, not extrapolated.
+- The clean install was checked on Linux x86_64 with Python 3.11 only.
+
 The S10 production run recorded zero natural FEM failures. Failed-case visibility is
 therefore exercised by one explicitly non-production canary through the same role
 snapshot path; that proves the path represents the controlled failure but is not an
@@ -202,6 +219,6 @@ The public commitment proves only that a later reveal matches the committed
 coordinates. It cannot prove that the local holder never saw the
 ignored private reveal. Git also does not preserve historical file mtimes, so live
 ordering must be captured and committed with each artifact batch, while Git first-add
-ancestry is verified separately. The project implements deterministic training and
-one frozen, TRAIN-selected candidate; it does not yet implement certification,
-verified inference or a served bundle.
+ancestry is verified separately. The project implements deterministic training,
+one frozen, TRAIN-selected candidate, its S14 verification and its S15 bundle; it
+does not implement certification.

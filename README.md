@@ -37,8 +37,13 @@ G14 passes (`artifacts/gates/S14.json`): every required check passes,
 including the reducer over the twelve verification families that
 [ADR 0022](docs/adr/0022-replace-implementation-v1.0-oss.md) defines in place
 of the unavailable `IMPLEMENTATION-v1.0-OSS.md`, and the claim level is
-`HOLDOUT_VERIFIED`. The project does not yet certify or serve a
-trained neural operator. Read the
+`HOLDOUT_VERIFIED`. S15 serves the candidate as a hash-closed bundle
+([guide](docs/bundle.md), [ADR 0023](docs/adr/0023-s15-bundle-and-cli.md),
+[plan and results](docs/campaigns/s15-bundle-plan.md)): it refuses every
+request outside its envelope, reproduces the S14 vertex fields bit for bit, and
+loads and predicts from a clean install with runtime dependencies only. G15
+passes (`artifacts/gates/S15.json`). The project does not certify a trained
+neural operator. Read the
 [project limitations](docs/limitations.md) before using its numerical results.
 
 ## Requirements
@@ -72,6 +77,7 @@ pytest tests/operators --cov=src/piginot/operators --cov-fail-under=80
 pytest tests/objectives --cov=src/piginot/objectives --cov-fail-under=85
 pytest tests/training tests/test_s13_anti_scope.py --cov=src/piginot/training --cov-fail-under=80
 pytest tests/verification tests/campaigns/test_dogbone_s14_envelope.py tests/test_s14_anti_scope.py --cov=src/piginot/verification --cov-fail-under=85
+pytest tests/bundle tests/store/test_cli.py tests/test_version.py tests/test_s15_anti_scope.py tests/test_s5_anti_scope.py tests/campaigns/test_dogbone_s15_bundle.py --cov=src/piginot/bundle --cov=piginot.cli --cov-branch --cov-fail-under=85
 pip-audit
 ```
 
@@ -81,10 +87,20 @@ pip-audit
 piginot --version
 piginot store prune --root PATH
 piginot store prune --root PATH --dry-run
+piginot bundle verify BUNDLE
+piginot inspect BUNDLE
+piginot predict BUNDLE --request request.json [--no-confidence]
+piginot <campaign-command> --campaign NAME [-- arguments]
 ```
 
 The prune command opens an existing marked store and removes only PRUNABLE bytes
-while retaining their identities and recipe lineage.
+while retaining their identities and recipe lineage. `bundle verify`, `inspect`
+and `predict` serve a bundle ([guide](docs/bundle.md)); install
+`piginot[runtime]` to serve without the FEM stack. The campaign commands
+(`family compile`, `pilot`, `campaign`, `simulate`, `train`, `verify`,
+`holdout-reveal`, `bundle build`) run a campaign plugin, for example
+`python -m piginot.cli train --campaign dogbone_v1 -- ...` from the repository
+root.
 
 ## Contributing
 

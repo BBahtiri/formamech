@@ -31,5 +31,8 @@ DEVELOPMENT and once on HOLDOUT under a signed protocol: the HOLDOUT error budge
 passes every slice, two DEVELOPMENT peak slices were accepted by the decision owner
 ([ADR 0021](adr/0021-s14-development-budget-acceptance.md)), and G14 passes with the claim level `HOLDOUT_VERIFIED`, its reducer running over
 the twelve families of [ADR 0022](adr/0022-replace-implementation-v1.0-oss.md).
+S15 serves it as a hash-closed [bundle](bundle.md)
+([ADR 0023](adr/0023-s15-bundle-and-cli.md)) with `load_bundle`, `predict`,
+`inspect` and a campaign-plugin command line; G15 passes.
 
 Read the [limitations](limitations.md) before relying on future numerical results.

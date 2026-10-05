@@ -1,0 +1,261 @@
+{
+ "fresh_install": {
+  "blocked_import_prediction_exit_code": 0,
+  "blocked_modules_imported": 0,
+  "exit_codes": {
+   "bundle verify": 0,
+   "inspect": 0,
+   "predict": 0,
+   "predict (refused)": 2
+  },
+  "fem_only_packages_present_transitively": [
+   "sympy"
+  ],
+  "fem_only_packages_required": [],
+  "imported_from_installed_wheel": true,
+  "limitations_present": true,
+  "max_abs_difference_to_repository_environment": {
+   "F33": 0.0,
+   "F_2D": 0.0,
+   "J_3D": 0.0,
+   "P_served": 0.0,
+   "sigma": 0.0,
+   "u": 0.0
+  },
+  "packages": [
+   "cuda-bindings==13.4.3",
+   "cuda-pathfinder==1.8.3",
+   "cuda-toolkit==13.0.3.0",
+   "filelock==4.0.11",
+   "fsspec==2026.9.0",
+   "jinja2==3.1.6",
+   "markupsafe==3.0.4",
+   "mpmath==1.3.0",
+   "networkx==3.6.1",
+   "numpy==2.2.6",
+   "nvidia-cublas==13.1.1.3",
+   "nvidia-cuda-cupti==13.0.85",
+   "nvidia-cuda-nvrtc==13.0.88",
+   "nvidia-cuda-runtime==13.0.96",
+   "nvidia-cudnn-cu13==9.24.0.43",
+   "nvidia-cufft==12.0.0.61",
+   "nvidia-cufile==1.15.1.6",
+   "nvidia-curand==10.4.0.35",
+   "nvidia-cusolver==12.0.4.66",
+   "nvidia-cusparse==12.6.3.3",
+   "nvidia-cusparselt-cu13==0.8.1",
+   "nvidia-nccl-cu13==2.30.7",
+   "nvidia-nvjitlink==13.4.92",
+   "nvidia-nvshmem-cu13==3.4.5",
+   "nvidia-nvtx==13.0.85",
+   "piginot @ file:///home/claude/runs/s15/validate/fresh-install/dist/piginot-0.1.0-py3-none-any.whl",
+   "rfc8785==0.1.4",
+   "safetensors==0.8.0",
+   "setuptools==84.0.0",
+   "sympy==1.14.0",
+   "torch==2.14.1",
+   "triton==3.8.0",
+   "typing-extensions==4.16.0"
+  ],
+  "passed": true,
+  "piginot_imported_from": "/home/claude/runs/s15/validate/fresh-install/venv/lib/python3.11/site-packages/piginot/__init__.py",
+  "prediction_claim_level": "HOLDOUT_VERIFIED",
+  "prediction_has_every_field": true,
+  "prediction_verdict": "IN_DOMAIN",
+  "python": "3.11",
+  "refused_reason_codes": [
+   "PARAMETER_OUT_OF_BOUNDS"
+  ],
+  "runtime_requirements": [
+   "rfc8785<0.2,>=0.1.4",
+   "numpy<2.3,>=1.26; extra == 'runtime'",
+   "safetensors<1,>=0.8; extra == 'runtime'",
+   "torch<3,>=2.6; extra == 'runtime'"
+  ],
+  "threads": "1",
+  "torch": "torch==2.14.1",
+  "wheel": "piginot-0.1.0-py3-none-any.whl",
+  "wheel_sha256": "8fc8a55b5bc8cdbf112d87b8d4d009b790f08375b66fb462a2bcd26d784960cc"
+ },
+ "measurements": {
+  "bundle": "/home/claude/runs/s15/dogbone-v1-bundle",
+  "fields": {
+   "constitutive_gap": 0.0,
+   "fast_fields_equal": true,
+   "finite": true,
+   "passed": true,
+   "present": {
+    "claim_level": true,
+    "confidence_at_queries": true,
+    "confidence_at_vertices": true,
+    "fields_at_queries": true,
+    "fields_at_vertices": true,
+    "identities": true,
+    "in_domain_verdict": true,
+    "limitations": true,
+    "qois": true,
+    "reason_codes": true,
+    "units": true
+   },
+   "qois": [
+    {
+     "location": [
+      18.71522480691238,
+      5.08939548133681
+     ],
+     "name": "root_peak_first_piola_frobenius",
+     "unit": "MPa",
+     "value": 129.40722067272299,
+     "vertex": 679
+    }
+   ],
+   "query_confidence_bound_mpa": [
+    0.9196590726575705,
+    0.9196590726575705,
+    1.5395950672481764,
+    2.403732649575231,
+    0.630613517408208
+   ],
+   "query_count": 5,
+   "seconds_with_confidence": 4.854,
+   "seconds_without_confidence": 0.444,
+   "stress_authority": "constitutive-plane-stress-neo-hookean",
+   "vertex_count": 969
+  },
+  "limitations": {
+   "passed": true,
+   "reports": {
+    "bundle refused (CLI)": true,
+    "bundle report/limitations.json": true,
+    "inspect (CLI)": true,
+    "predict (in domain)": true,
+    "predict (refused, CLI)": true
+   }
+  },
+  "manifest": {
+   "detected": 50,
+   "files_listed": 7,
+   "manifest_sha256": "009db9d379d6f94ccda5395762e22c9c810c466a686626d500f1575d45b1bb4c",
+   "missed": [],
+   "passed": true,
+   "reason_codes": {
+    "BUNDLE_FILE_HASH_MISMATCH": 35,
+    "BUNDLE_FILE_MISSING": 7,
+    "BUNDLE_FILE_SIZE_MISMATCH": 7,
+    "BUNDLE_MANIFEST_HASH_MISMATCH": 2,
+    "BUNDLE_MANIFEST_INVALID": 3,
+    "BUNDLE_MANIFEST_MISSING": 1,
+    "BUNDLE_UNLISTED_FILE": 1,
+    "BUNDLE_UNSAFE_PATH": 1
+   },
+   "tamper_cases": 50
+  },
+  "refusal": {
+   "by_category": {
+    "derived-bound": {
+     "refused": 48,
+     "tested": 48
+    },
+    "guard-band": {
+     "refused": 36,
+     "tested": 36
+    },
+    "material-load": {
+     "refused": 24,
+     "tested": 24
+    },
+    "primitive-bound": {
+     "refused": 60,
+     "tested": 60
+    },
+    "query-containment": {
+     "refused": 36,
+     "tested": 36
+    }
+   },
+   "false_refusals": [],
+   "fixtures_refused_with_expected_code": 204,
+   "fixtures_tested": 204,
+   "in_domain_cases": 844,
+   "mesh_mutation_fixtures_not_applicable": 36,
+   "missed": [],
+   "not_applicable_reason": "bundle requests carry parameters and queries only; the bundle always morphs its own reference mesh, so an explicit mutated mesh cannot be submitted",
+   "passed": true
+  },
+  "reproduction": {
+   "cases": [
+    {
+     "P_bitwise_equal": true,
+     "case_id": "candidate-000238",
+     "indicator_bitwise_equal": true,
+     "mesh_id_equal": true,
+     "u_bitwise_equal": true
+    },
+    {
+     "P_bitwise_equal": true,
+     "case_id": "candidate-000254",
+     "mesh_id_equal": true,
+     "u_bitwise_equal": true
+    },
+    {
+     "P_bitwise_equal": true,
+     "case_id": "candidate-000272",
+     "mesh_id_equal": true,
+     "u_bitwise_equal": true
+    },
+    {
+     "P_bitwise_equal": true,
+     "case_id": "candidate-000319",
+     "mesh_id_equal": true,
+     "u_bitwise_equal": true
+    },
+    {
+     "P_bitwise_equal": true,
+     "case_id": "candidate-000328",
+     "mesh_id_equal": true,
+     "u_bitwise_equal": true
+    },
+    {
+     "P_bitwise_equal": true,
+     "case_id": "candidate-000378",
+     "mesh_id_equal": true,
+     "u_bitwise_equal": true
+    },
+    {
+     "P_bitwise_equal": true,
+     "case_id": "candidate-000444",
+     "mesh_id_equal": true,
+     "u_bitwise_equal": true
+    },
+    {
+     "P_bitwise_equal": true,
+     "case_id": "candidate-000452",
+     "mesh_id_equal": true,
+     "u_bitwise_equal": true
+    }
+   ],
+   "indicator_max_abs_difference_to_s14_rehearsal_cache": {
+    "candidate-000238": 1.3704315460216776e-16
+   },
+   "passed": true
+  },
+  "runtime": {
+   "machine": "x86_64",
+   "python": "3.11.15",
+   "threads": 1,
+   "torch": "2.13.0+cu130"
+  },
+  "substitution": {
+   "architecture_authority": "constitutive-plane-stress-neo-hookean",
+   "constitutive_gap": 0.0,
+   "declared_served_stress": "constitutive-plane-stress-neo-hookean",
+   "mutant_test": "tests/bundle/test_inference.py::test_the_serve_p_material_mutant_is_caught",
+   "p_material_reported_separately": true,
+   "passed": true,
+   "prediction_stress_authority": "constitutive-plane-stress-neo-hookean",
+   "resigned_other_authority_refused_with": [
+    "BUNDLE_STRESS_AUTHORITY_MISMATCH"
+   ]
+  }
+ }
+}

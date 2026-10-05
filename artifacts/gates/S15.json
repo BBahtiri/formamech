@@ -1,0 +1,310 @@
+{
+ "branch": "codex/s15-bundle",
+ "checks": [
+  {
+   "comparison": "all",
+   "id": "G15.fresh-install",
+   "measured": {
+    "blocked_import_prediction_exit_code": 0,
+    "blocked_modules_imported": 0,
+    "exit_codes": {
+     "bundle verify": 0,
+     "inspect": 0,
+     "predict": 0,
+     "predict (refused)": 2
+    },
+    "fem_only_packages_present_transitively": [
+     "sympy"
+    ],
+    "fem_only_packages_required": [],
+    "imported_from_installed_wheel": true,
+    "limitations_present": true,
+    "max_abs_difference_to_repository_environment": {
+     "F33": 0.0,
+     "F_2D": 0.0,
+     "J_3D": 0.0,
+     "P_served": 0.0,
+     "sigma": 0.0,
+     "u": 0.0
+    },
+    "package_count": 33,
+    "passed": true,
+    "piginot_imported_from": "/home/claude/runs/s15/validate/fresh-install/venv/lib/python3.11/site-packages/piginot/__init__.py",
+    "prediction_claim_level": "HOLDOUT_VERIFIED",
+    "prediction_has_every_field": true,
+    "prediction_verdict": "IN_DOMAIN",
+    "python": "3.11",
+    "refused_reason_codes": [
+     "PARAMETER_OUT_OF_BOUNDS"
+    ],
+    "runtime_requirements": [
+     "rfc8785<0.2,>=0.1.4",
+     "numpy<2.3,>=1.26; extra == 'runtime'",
+     "safetensors<1,>=0.8; extra == 'runtime'",
+     "torch<3,>=2.6; extra == 'runtime'"
+    ],
+    "threads": "1",
+    "torch": "torch==2.14.1",
+    "wheel": "piginot-0.1.0-py3-none-any.whl",
+    "wheel_sha256": "8fc8a55b5bc8cdbf112d87b8d4d009b790f08375b66fb462a2bcd26d784960cc"
+   },
+   "reason": null,
+   "status": "PASS",
+   "threshold": "bundle loads and predicts in a clean venv with runtime deps only"
+  },
+  {
+   "comparison": "all",
+   "id": "G15.fields",
+   "measured": {
+    "constitutive_gap": 0.0,
+    "fast_fields_equal": true,
+    "finite": true,
+    "passed": true,
+    "present": {
+     "claim_level": true,
+     "confidence_at_queries": true,
+     "confidence_at_vertices": true,
+     "fields_at_queries": true,
+     "fields_at_vertices": true,
+     "identities": true,
+     "in_domain_verdict": true,
+     "limitations": true,
+     "qois": true,
+     "reason_codes": true,
+     "units": true
+    },
+    "qois": [
+     {
+      "location": [
+       18.71522480691238,
+       5.08939548133681
+      ],
+      "name": "root_peak_first_piola_frobenius",
+      "unit": "MPa",
+      "value": 129.40722067272299,
+      "vertex": 679
+     }
+    ],
+    "query_count": 5,
+    "reproduction": {
+     "cases": [
+      {
+       "P_bitwise_equal": true,
+       "case_id": "candidate-000238",
+       "indicator_bitwise_equal": true,
+       "mesh_id_equal": true,
+       "u_bitwise_equal": true
+      },
+      {
+       "P_bitwise_equal": true,
+       "case_id": "candidate-000254",
+       "mesh_id_equal": true,
+       "u_bitwise_equal": true
+      },
+      {
+       "P_bitwise_equal": true,
+       "case_id": "candidate-000272",
+       "mesh_id_equal": true,
+       "u_bitwise_equal": true
+      },
+      {
+       "P_bitwise_equal": true,
+       "case_id": "candidate-000319",
+       "mesh_id_equal": true,
+       "u_bitwise_equal": true
+      },
+      {
+       "P_bitwise_equal": true,
+       "case_id": "candidate-000328",
+       "mesh_id_equal": true,
+       "u_bitwise_equal": true
+      },
+      {
+       "P_bitwise_equal": true,
+       "case_id": "candidate-000378",
+       "mesh_id_equal": true,
+       "u_bitwise_equal": true
+      },
+      {
+       "P_bitwise_equal": true,
+       "case_id": "candidate-000444",
+       "mesh_id_equal": true,
+       "u_bitwise_equal": true
+      },
+      {
+       "P_bitwise_equal": true,
+       "case_id": "candidate-000452",
+       "mesh_id_equal": true,
+       "u_bitwise_equal": true
+      }
+     ],
+     "indicator_max_abs_difference_to_s14_rehearsal_cache": {
+      "candidate-000238": 1.3704315460216776e-16
+     },
+     "passed": true
+    },
+    "seconds_with_confidence": 4.854,
+    "seconds_without_confidence": 0.444,
+    "stress_authority": "constitutive-plane-stress-neo-hookean",
+    "vertex_count": 969
+   },
+   "reason": null,
+   "status": "PASS",
+   "threshold": "predict returns u, P_served, F_2D, F33, J_3D, sigma, QoIs, units, identities, in-domain verdict, reason codes, claim level, confidence"
+  },
+  {
+   "comparison": "all",
+   "id": "G15.substitution",
+   "measured": {
+    "architecture_authority": "constitutive-plane-stress-neo-hookean",
+    "constitutive_gap": 0.0,
+    "declared_served_stress": "constitutive-plane-stress-neo-hookean",
+    "mutant_test": "tests/bundle/test_inference.py::test_the_serve_p_material_mutant_is_caught",
+    "p_material_reported_separately": true,
+    "passed": true,
+    "prediction_stress_authority": "constitutive-plane-stress-neo-hookean",
+    "resigned_other_authority_refused_with": [
+     "BUNDLE_STRESS_AUTHORITY_MISMATCH"
+    ]
+   },
+   "reason": null,
+   "status": "PASS",
+   "threshold": "P_material is never silently served in place of P_served"
+  },
+  {
+   "comparison": "all",
+   "id": "G15.refuse",
+   "measured": {
+    "by_category": {
+     "derived-bound": {
+      "refused": 48,
+      "tested": 48
+     },
+     "guard-band": {
+      "refused": 36,
+      "tested": 36
+     },
+     "material-load": {
+      "refused": 24,
+      "tested": 24
+     },
+     "primitive-bound": {
+      "refused": 60,
+      "tested": 60
+     },
+     "query-containment": {
+      "refused": 36,
+      "tested": 36
+     }
+    },
+    "false_refusals": [],
+    "fixtures_refused_with_expected_code": 204,
+    "fixtures_tested": 204,
+    "in_domain_cases": 844,
+    "mesh_mutation_fixtures_not_applicable": 36,
+    "missed": [],
+    "not_applicable_reason": "bundle requests carry parameters and queries only; the bundle always morphs its own reference mesh, so an explicit mutated mesh cannot be submitted",
+    "passed": true
+   },
+   "reason": null,
+   "status": "PASS",
+   "threshold": "out-of-envelope requests refuse with a reason code"
+  },
+  {
+   "comparison": "all",
+   "id": "G15.manifest",
+   "measured": {
+    "detected": 50,
+    "files_listed": 7,
+    "manifest_sha256": "009db9d379d6f94ccda5395762e22c9c810c466a686626d500f1575d45b1bb4c",
+    "missed": [],
+    "passed": true,
+    "reason_codes": {
+     "BUNDLE_FILE_HASH_MISMATCH": 35,
+     "BUNDLE_FILE_MISSING": 7,
+     "BUNDLE_FILE_SIZE_MISMATCH": 7,
+     "BUNDLE_MANIFEST_HASH_MISMATCH": 2,
+     "BUNDLE_MANIFEST_INVALID": 3,
+     "BUNDLE_MANIFEST_MISSING": 1,
+     "BUNDLE_UNLISTED_FILE": 1,
+     "BUNDLE_UNSAFE_PATH": 1
+    },
+    "tamper_cases": 50
+   },
+   "reason": null,
+   "status": "PASS",
+   "threshold": "the manifest hash closes over every contained file; tampering with any byte is detected"
+  },
+  {
+   "comparison": "all",
+   "id": "G15.limitations",
+   "measured": {
+    "passed": true,
+    "reports": {
+     "bundle refused (CLI)": true,
+     "bundle report/limitations.json": true,
+     "inspect (CLI)": true,
+     "predict (in domain)": true,
+     "predict (refused, CLI)": true
+    }
+   },
+   "reason": null,
+   "status": "PASS",
+   "threshold": "required limitation paragraph present in every report"
+  },
+  {
+   "comparison": "all",
+   "id": "G15.coverage",
+   "measured": {
+    "line_and_branch_coverage_percent": 98.06
+   },
+   "reason": null,
+   "status": "PASS",
+   "threshold": ">= 85%"
+  }
+ ],
+ "decision_record": [
+  "docs/adr/0023-s15-bundle-and-cli.md"
+ ],
+ "evidence": {
+  "artifacts/campaigns/dogbone-v1/S15-GATE.json": "e14ec33ce1d723e2a84a69788cf5ae9d19048b35caec257df639399a9f261939",
+  "artifacts/campaigns/dogbone-v1/S15-VALIDATION.json": "4cc8739eb71e44b06f784698990a94ce4f7cb9f074e5027041f3eb724bb6f70b"
+ },
+ "gate_id": "G15",
+ "implementation_evidence": {
+  "focused_coverage_command": "pytest tests/bundle tests/store/test_cli.py tests/test_version.py tests/test_s15_anti_scope.py tests/test_s5_anti_scope.py tests/campaigns/test_dogbone_s15_bundle.py --cov=src/piginot/bundle --cov=piginot.cli --cov-branch --cov-fail-under=85",
+  "focused_test_result": "106 passed, 0 skipped (PIGINOT_CP_FREEZE_WEIGHTS set); total branch coverage 98.06%",
+  "full_test_command": "python -m pytest -q --cov=src/piginot --cov-branch",
+  "full_test_result": "2941 passed, 0 failed, 0 skipped in 48m15s; total branch coverage 91%",
+  "measurement_revision": "8997ee8 (src/ and campaigns/ identical to the gate revision; b1c39fb changes only tests/bundle/test_cli.py)",
+  "quality_checks": {
+   "mkdocs_strict_build": "PASS",
+   "mypy_strict_src": "PASS",
+   "ruff_check": "PASS",
+   "ruff_format_check": "PASS"
+  }
+ },
+ "implementation_source_revision": "b1c39fba7744bbbbb31be1a25f89bae9e9eb2b5a",
+ "limitations": [
+  "The bundle serves one family (DogBone v1), one material and the 10-20% strain-controlled load of its ratified envelope; family generality remains for G17.",
+  "Bit-for-bit reproduction of the S14 serving path was checked on eight TRAIN cases (the confidence indicator on one); bundle predictions inherit the S14 evidence through that equality, not through a new measurement.",
+  "The 36 S14 fixtures that submit a mutated mesh have no bundle request form and are not applicable (ADR 0023 decision 8).",
+  "The fresh install used the uv package cache on one Linux x86_64 machine and Python 3.11; torch's own dependencies include sympy, which the inference closure never imports.",
+  "S15-D1 to S15-D5 are proposed defaults awaiting the decision owner's confirmation (ADR 0023)."
+ ],
+ "schema_version": "1.0",
+ "scope": {
+  "bundle": "dogbone-v1-s13c-cp-freeze",
+  "bundle_manifest_sha256": "009db9d379d6f94ccda5395762e22c9c810c466a686626d500f1575d45b1bb4c",
+  "claim": "The DogBone bundle of the frozen S13c candidate loads, verifies every byte, refuses every request outside its envelope, and serves the S14-verified fields bit for bit with their provenance, confidence, claim level and limitations, also from a clean install with runtime dependencies only.",
+  "claim_level_served": "HOLDOUT_VERIFIED",
+  "development_or_holdout_read": false,
+  "evidence_roles": [
+   "TRAIN (reproduction against S14 serving)",
+   "public coordinates only (refusal fixtures, in-domain cases)"
+  ]
+ },
+ "step": "S15",
+ "timestamp_utc": "2026-10-05T05:12:14Z",
+ "verdict": "PASS"
+}
