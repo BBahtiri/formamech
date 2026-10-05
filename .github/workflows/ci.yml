@@ -62,3 +62,27 @@ jobs:
         run: python -m pytest tests/mutation tests/test_s16_anti_scope.py --cov=src/piginot/mutation --cov-fail-under=85
       - name: Audit dependencies
         run: python -m pip_audit
+
+  example1:
+    name: Example 1 (fixed-mesh strain sweep, < 10 minutes)
+    runs-on: ubuntu-latest
+    # The example itself fails when its run exceeds 600 s; the job limit
+    # also covers installing torch.
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - name: Set up Python
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[fem,ml]"
+      - name: Run Example 1 end to end
+        env:
+          OMP_NUM_THREADS: "1"
+          OPENBLAS_NUM_THREADS: "1"
+          MKL_NUM_THREADS: "1"
+        run: python -m examples.fixed_mesh_sweep.sweep --output example1-output
