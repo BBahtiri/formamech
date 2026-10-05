@@ -1,0 +1,182 @@
+{
+ "detectors": [
+  "G4.tangent",
+  "G4.closure-residual",
+  "G7.loads-fields-store",
+  "G8.patch",
+  "G8.seeded-defects",
+  "G9.no-node-split",
+  "G10.projection-error",
+  "G10.cross-mesh",
+  "G10.normalization",
+  "G11.lifting",
+  "G11.lifting-mutant",
+  "G12.anisotropy",
+  "G12.role-isolation",
+  "G13.holdout",
+  "G13.selection",
+  "G14.budget",
+  "G14.reducer",
+  "G14.holdout-order",
+  "G15.fields",
+  "G15.substitution",
+  "G15.refuse",
+  "G15.manifest"
+ ],
+ "mutants": {
+  "ANISOTROPIC_SCALING": {
+   "edits_sha256": "fb2eea5a3ea9c72c120c05c5b3948a3c6b26ca9a8994202d70196e16bfebcb4c",
+   "primary": "G8.seeded-defects",
+   "signature": [
+    "G8.patch",
+    "G8.seeded-defects"
+   ]
+  },
+  "BODY_FORCE_SIGN": {
+   "edits_sha256": "20061ebea39c9674c97a65c5b96c79775ecedb97646bccd54895986e3fe51d50",
+   "primary": "G8.seeded-defects",
+   "signature": [
+    "G7.loads-fields-store",
+    "G8.seeded-defects"
+   ]
+  },
+  "BOUNDARY_NORMAL": {
+   "edits_sha256": "2bae137e6c469b9bfd2c397188b64626bbc3063cf642ff3d87811e221a831775",
+   "primary": "G8.seeded-defects",
+   "signature": [
+    "G7.loads-fields-store",
+    "G8.seeded-defects"
+   ]
+  },
+  "CHOOSE_NONRANKED_CHECKPOINT": {
+   "edits_sha256": "43e39b1cada49f5aa57609acae828b0a3251879d5078182d38d823d8e2aec42a",
+   "primary": "G13.selection",
+   "signature": [
+    "G13.selection"
+   ]
+  },
+  "CLOSURE_WRONG_ROOT": {
+   "edits_sha256": "64d62c240dc8017984df1b989725b13bd9df18d1052f4803883ce5e3c9f39dc9",
+   "primary": "G8.seeded-defects",
+   "signature": [
+    "G15.fields",
+    "G15.refuse",
+    "G15.substitution",
+    "G4.closure-residual",
+    "G7.loads-fields-store",
+    "G8.patch",
+    "G8.seeded-defects"
+   ]
+  },
+  "COORDINATE_ANISOTROPY": {
+   "edits_sha256": "2eae0d87caddb063a845e4430f5646f78165d494ddf4523f7afee3fedc0396d8",
+   "primary": "G12.anisotropy",
+   "signature": [
+    "G12.anisotropy"
+   ]
+  },
+  "DROP_PROJECTION_ERROR": {
+   "edits_sha256": "7fd6d701e67e2e9bfb149c6766de27ddb2f88846fe2b508c2054aa94ef221d0e",
+   "primary": "G10.projection-error",
+   "signature": [
+    "G10.projection-error"
+   ]
+  },
+  "HOLDOUT_ACCESS": {
+   "edits_sha256": "9ea728e7940f52825e34c9540fe0c2f3b280cd976037894ffd98377ec7751143",
+   "primary": "G12.role-isolation",
+   "signature": [
+    "G12.role-isolation"
+   ]
+  },
+  "IGNORE_DIRICHLET_LIFTING": {
+   "edits_sha256": "b621d1b37f56196eb80d67778fc5b167ccfa28f660aa20467c789996ec5ad396",
+   "primary": "G11.lifting-mutant",
+   "signature": [
+    "G11.lifting",
+    "G11.lifting-mutant",
+    "G15.fields"
+   ]
+  },
+  "INCONSISTENT_TANGENT": {
+   "edits_sha256": "5ecb8f55306471f64eb5e041dbb5f73a342315dc2de58d4b1b97f64cf943fa0c",
+   "primary": "G8.seeded-defects",
+   "signature": [
+    "G4.tangent",
+    "G8.seeded-defects"
+   ]
+  },
+  "NODE_SPLIT": {
+   "edits_sha256": "b9c467e9c62a13d9a478a3680c286d44e76b05297b07286496875375804338c3",
+   "primary": "G9.no-node-split",
+   "signature": [
+    "G9.no-node-split"
+   ]
+  },
+  "NORMALIZE_ON_ALL_SPLITS": {
+   "edits_sha256": "8700a1bf3c90e66b91e33f617db32817915cfcd7ec64fc4629a56ba3e127ed6a",
+   "primary": "G10.normalization",
+   "signature": [
+    "G10.normalization"
+   ]
+  },
+  "PASS_ON_NOT_RUN": {
+   "edits_sha256": "06db96b784363871f60d10b7af316762592eb880c4e3c75d3073405851fdebea",
+   "primary": "G14.reducer",
+   "signature": [
+    "G14.reducer"
+   ]
+  },
+  "REVEAL_BEFORE_CONSUME": {
+   "edits_sha256": "c3b860887901f12a87c38a0616adbda676f1cc1d1c421412f2c7b36e553e4719",
+   "primary": "G14.holdout-order",
+   "signature": [
+    "G14.holdout-order"
+   ]
+  },
+  "SELECT_ON_HOLDOUT": {
+   "edits_sha256": "57243c38ab1d761e5f4fc2a45c24ce02146510e90442a24f5288133e25d6520b",
+   "primary": "G13.holdout",
+   "signature": [
+    "G13.holdout"
+   ]
+  },
+  "SERVE_P_MATERIAL": {
+   "edits_sha256": "dc8e5137ee01e5b42bc7e151e59da12de5d0b017dc53d7205f9dffbd496a2462",
+   "primary": "G15.substitution",
+   "signature": [
+    "G15.substitution"
+   ]
+  },
+  "STRESS_NODE_PAIRING": {
+   "edits_sha256": "b1c70861d9468d7037952b5415303f8615b74bd6f586638f300a4a92df3cf6eb",
+   "primary": "G10.cross-mesh",
+   "signature": [
+    "G10.cross-mesh"
+   ]
+  },
+  "TAG_SWAP": {
+   "edits_sha256": "f5e5c245b22246d800ad52d44e701e04b9c5c73d2d7d5a7d05c1e957645ba302",
+   "primary": "G8.seeded-defects",
+   "signature": [
+    "G8.patch",
+    "G8.seeded-defects"
+   ]
+  },
+  "UNDETECTED_BUNDLE_TAMPER": {
+   "edits_sha256": "43835538977d08ca34fb4b9d7fe9c00f35d47d409ffc7a5aae121c3f546e2f0f",
+   "primary": "G15.manifest",
+   "signature": [
+    "G15.manifest"
+   ]
+  },
+  "ZERO_MISSING_BUDGET_COMPONENT": {
+   "edits_sha256": "665c3635f18927084ca84c40a23104f6bae14bfb8518b8270fcd73d8db4d76c6",
+   "primary": "G14.budget",
+   "signature": [
+    "G14.budget"
+   ]
+  }
+ },
+ "schema": "piginot-mutation-signatures-v1"
+}

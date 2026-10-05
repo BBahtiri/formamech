@@ -1,4 +1,12 @@
-"""Executable S8 mutants and the checks that distinguish each defect."""
+"""Executable S8 mutants and the checks that distinguish each defect.
+
+Each detection separates a control from a seeded mutant by one threshold.
+Where the analytic comparison alone does not run the production code path
+that the defect lives in, a production control is added (S16, ADR 0024): a
+small solve through the primary FEM backend whose exact answer is known. A
+detection counts only if the production control also holds, so a real defect
+in that code path makes the detection fail.
+"""
 
 from __future__ import annotations
 
@@ -8,8 +16,9 @@ from functools import lru_cache
 import numpy as np
 import torch
 
-from piginot.contracts import BoundaryConditionSpec, CanonicalQuantity, Unit
+from piginot.contracts import BoundaryConditionSpec, CanonicalQuantity, LoadSpec, Unit
 from piginot.fem.backend import ScikitFemBackend
+from piginot.fem.body_forces import ConstantBodyForce
 from piginot.fem.field_providers import FloatArray
 from piginot.fem.mms_runner import (
     build_mms_problem,
@@ -36,10 +45,22 @@ class SeededDefectDetection:
     mutant_value: float
     threshold: float
     fired_checks: tuple[str, ...]
+    production_check: str = ""
+    production_value: float | None = None
+    production_threshold: float | None = None
+
+    @property
+    def production_holds(self) -> bool:
+        if self.production_value is None or self.production_threshold is None:
+            return True
+        return self.production_value <= self.production_threshold
 
     @property
     def detected(self) -> bool:
-        return self.control_value <= self.threshold < self.mutant_value
+        return (
+            self.control_value <= self.threshold < self.mutant_value
+            and self.production_holds
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -59,14 +80,15 @@ class SeededDefectReport:
 def run_seeded_defect_suite() -> SeededDefectReport:
     """Run six distinct perturbations; no detection result is preassigned."""
 
+    control = _solve_tag_swap_case(swapped=False)
     return SeededDefectReport(
         detections=(
             _body_force_sign_detection(),
             _boundary_normal_detection(),
-            _tag_swap_detection(),
+            _tag_swap_detection(control),
             _closure_root_detection(),
             _tangent_detection(),
-            _anisotropic_scaling_detection(),
+            _anisotropic_scaling_detection(control),
         )
     )
 
@@ -95,6 +117,9 @@ def _body_force_sign_detection() -> SeededDefectDetection:
         mutant,
         1.0e-4,
         ("G8.order-p1", "G8.reaction"),
+        "registered body force balances the clamp reaction",
+        _body_force_reaction_error(),
+        1.0e-8,
     )
 
 
@@ -116,13 +141,18 @@ def _boundary_normal_detection() -> SeededDefectDetection:
         float(np.linalg.norm(mutant_field - expected) / scale),
         1.0e-12,
         ("G8.reaction", "G8.order-p1"),
+        "normal-aware traction balances the clamp reaction",
+        _normal_traction_reaction_error(),
+        1.0e-8,
     )
 
 
-def _tag_swap_detection() -> SeededDefectDetection:
-    gradient = np.asarray(((0.02, 0.0), (0.0, -0.01)), dtype=np.float64)
+_PATCH_GRADIENT = ((0.02, 0.0), (0.0, -0.01))
+
+
+def _tag_swap_detection(control_result: FemResult) -> SeededDefectDetection:
+    gradient = np.asarray(_PATCH_GRADIENT, dtype=np.float64)
     offset = np.zeros(2, dtype=np.float64)
-    control_result = _solve_tag_swap_case(swapped=False)
     mutant_result = _solve_tag_swap_case(swapped=True)
     return SeededDefectDetection(
         "tag swap",
@@ -239,7 +269,7 @@ def _tangent_detection() -> SeededDefectDetection:
     )
 
 
-def _anisotropic_scaling_detection() -> SeededDefectDetection:
+def _anisotropic_scaling_detection(control_result: FemResult) -> SeededDefectDetection:
     coordinates = np.asarray(
         ((0.0, 0.0), (1.0, 0.0), (0.0, 1.0), (0.4, 0.7)),
         dtype=np.float64,
@@ -255,7 +285,94 @@ def _anisotropic_scaling_detection() -> SeededDefectDetection:
         affine_patch_error(mutant_coordinates, displacement, gradient, offset),
         1.0e-12,
         ("G8.patch",),
+        "reported solve coordinates reproduce the affine patch",
+        affine_patch_error(
+            np.asarray(control_result.displacement_dof_coordinates),
+            np.asarray(control_result.displacement),
+            np.asarray(_PATCH_GRADIENT, dtype=np.float64),
+            np.zeros(2, dtype=np.float64),
+        ),
+        1.0e-12,
     )
+
+
+@dataclass(frozen=True, slots=True)
+class _NormalTraction:
+    """Traction ``0.1 (1 + y) N`` along the outward reference normal."""
+
+    provider_id: str = "s8-seeded-normal-traction-v1"
+
+    def evaluate(
+        self, reference_points: FloatArray, outward_reference_normals: FloatArray
+    ) -> FloatArray:
+        magnitude = 0.1 * (1.0 + reference_points[1])
+        return np.asarray(outward_reference_normals * magnitude[None, ...])
+
+
+def _clamped_square_request(
+    request_id: str, *, element_order: int, loads: tuple[LoadSpec, ...], **ids: object
+) -> FemRequest:
+    zero = CanonicalQuantity(0.0, Unit.MM)
+    return FemRequest(
+        request_id=request_id,
+        mesh=unit_square_verification_mesh(1),
+        material=verification_material(),
+        boundary_conditions=(
+            BoundaryConditionSpec(
+                "left_clamp", "left", "dirichlet", ("x", "y"), (zero, zero)
+            ),
+        ),
+        loads=loads,
+        qois=(),
+        config=FemSolverConfig(
+            element_order=element_order,
+            solver_tolerance=1.0e-11,
+            max_newton_iterations=24,
+            load_steps=2,
+        ),
+        execution_profile=verification_execution_profile(),
+        **ids,  # type: ignore[arg-type]
+    )
+
+
+def _reaction(backend: ScikitFemBackend, request: FemRequest) -> tuple[float, float]:
+    attempt = backend.solve_many((request,))[0]
+    if not attempt.success or attempt.result is None:
+        raise RuntimeError(f"{request.request_id} did not solve: {attempt.message}")
+    reaction = attempt.result.reactions["left_clamp"]
+    return float(reaction[0]), float(reaction[1])
+
+
+def _body_force_reaction_error() -> float:
+    """``|R + b A t| / |b A t|`` for a clamped unit square under gravity."""
+
+    provider = ConstantBodyForce((0.0, -0.1))
+    request = _clamped_square_request(
+        "s8-seeded-body-force",
+        element_order=1,
+        loads=(LoadSpec("gravity", "body_force"),),
+        body_force_provider_ids={"gravity": provider.provider_id},
+    )
+    reaction = _reaction(ScikitFemBackend(body_force_providers=(provider,)), request)
+    expected = (0.0, 0.1)  # minus the applied load: b = (0, -0.1), A = t = 1
+    return float(np.hypot(reaction[0] - expected[0], reaction[1] - expected[1]) / 0.1)
+
+
+def _normal_traction_reaction_error() -> float:
+    """Reaction of a clamped square under an outward normal traction on its right."""
+
+    provider = _NormalTraction()
+    request = _clamped_square_request(
+        "s8-seeded-normal-traction",
+        element_order=2,
+        loads=(LoadSpec("edge_field", "traction", "right", ("x", "y")),),
+        traction_field_provider_ids={"edge_field": provider.provider_id},
+    )
+    reaction = _reaction(
+        ScikitFemBackend(traction_field_providers=(provider,)), request
+    )
+    expected = (-0.15, 0.0)  # minus the integral of 0.1 (1 + y) over the edge
+    return float(np.hypot(reaction[0] - expected[0], reaction[1] - expected[1]) / 0.15)
 
 
 def _interior_points() -> FloatArray:
