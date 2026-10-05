@@ -1,0 +1,229 @@
+{
+ "budget": {
+  "claim_population": "HOLDOUT (HOLDOUT_VERIFIED or DEVELOPMENT_VERIFIED when every required check passes)",
+  "components": {
+   "coarse_level": "12 + 12 columns, 8 rows (S10: 24 + 24, 16)",
+   "discretisation": {
+    "absolute_peak_error": "max(2.61 eta_root, 1.97 d_peak)",
+    "p_relative_l2": "max(2.61 eta_all, 1.97 d_P)",
+    "u_relative_l2": "1.97 d_u"
+   },
+   "projection": {
+    "absolute_peak_error": "eta_root",
+    "p_relative_l2": "eta_all",
+    "u_relative_l2": "0 (vertex values are P2 degrees of freedom)"
+   },
+   "recovery_safety_factor": 2.61,
+   "refinement_ratio": 2.0,
+   "richardson_order": 1.0,
+   "richardson_safety_factor": 1.97
+  },
+  "gated_population": "DEVELOPMENT",
+  "gated_slices": [
+   "all",
+   "width:0",
+   "width:1",
+   "width:2",
+   "width:3",
+   "notch_radius:0",
+   "notch_radius:1",
+   "notch_radius:2",
+   "notch_radius:3",
+   "notch_depth:0",
+   "notch_depth:1",
+   "notch_depth:2",
+   "notch_depth:3",
+   "nominal_axial_strain:0",
+   "nominal_axial_strain:1",
+   "nominal_axial_strain:2",
+   "nominal_axial_strain:3"
+  ],
+  "missing_component": "NOT_RUN, never zero",
+  "per_case_total": "surrogate + discretisation + projection",
+  "quantities": {
+   "absolute_peak_error": {
+    "tolerance": 0.05
+   },
+   "p_relative_l2": {
+    "tolerance": 0.05
+   },
+   "u_relative_l2": {
+    "tolerance": 0.02
+   }
+  },
+  "reported_slices": [
+   "net_section_factor:0",
+   "net_section_factor:1",
+   "net_section_factor:2",
+   "net_section_factor:3",
+   "notch_sharpness:0",
+   "notch_sharpness:1",
+   "notch_sharpness:2",
+   "notch_sharpness:3"
+  ],
+  "root_vertices": "the vertices of the notch profile",
+  "slice_statistic": {
+   "interpolation": "linear between order statistics",
+   "minimum_cases_for_quantile": 10,
+   "otherwise": "maximum",
+   "quantile": 0.9
+  }
+ },
+ "campaign_id": "notched-v1",
+ "confidence": {
+  "calibration": {
+   "bins": 20,
+   "coverage_reported_on": "HOLDOUT",
+   "fitted_on": "DEVELOPMENT",
+   "quantile": 0.9
+  },
+  "indicator": "patch-mean",
+  "length_scale_mm": 1.0,
+  "statistic": "Spearman correlation, all DEVELOPMENT vertices pooled",
+  "threshold": 0.6,
+  "train_pilot": {
+   "median_per_case_spearman": {
+    "patch-mean": 0.5654584121971976,
+    "patch-mean-times-h": 0.5275084542671524,
+    "pointwise": 0.3812387226611729
+   },
+   "pooled_spearman": {
+    "patch-mean": 0.6528459663807914,
+    "patch-mean-times-h": 0.634780292657499,
+    "pointwise": 0.4889833864758123
+   }
+  },
+  "variants": [
+   "pointwise",
+   "patch-mean",
+   "patch-mean-times-h"
+  ]
+ },
+ "created_utc": "2026-10-05T21:55:05Z",
+ "decision_records": [
+  "docs/adr/0019-s14-verification-decisions.md",
+  "docs/adr/0020-s14-protocol-methods.md",
+  "docs/adr/0025-s17-examples-and-second-family.md"
+ ],
+ "evaluation_code": {
+  "file_sha256": {
+   "campaigns/dogbone_v1/s13_fem_recovery_reference.py": "18f7bde27436a4ef4fa1a164cd04baba95885b84d71d8ec3c2558bab3b767986",
+   "campaigns/dogbone_v1/s13c_evaluate.py": "7089622624b7192a58652649306c628e06ce334b55f056c82ff57ed96824d14d",
+   "campaigns/dogbone_v1/s14_candidate.py": "db9793549d59226c18c0e8bbc9e5699d3267966e8d89a96d7fad9c926fdfa630",
+   "campaigns/dogbone_v1/s14_envelope.py": "af2e4c5c198563b95ef0a0036b77899ded252da7e662a291e5f097974d34ca57",
+   "campaigns/dogbone_v1/s14_evaluation.py": "1046fd6e0e666cc3abb1c1a9f4af8ccd88d9f6fd376080c145198856c15156a6",
+   "campaigns/dogbone_v1/s14_gate.py": "c433f14490fb8968f9bf14e0c7e471744e1d5c16938e45c6085d552809e3af36",
+   "campaigns/dogbone_v1/s14_reference.py": "84e8d2dd2fd832026f9616459eef04a60c1a80d9dc0fa6212cb29f4c6df0a29f",
+   "campaigns/dogbone_v1/s14_rehearsal.py": "cfc42be5faab073f6cece8bb3e0f0be61158a6013a7d75988663acde717ca7f0",
+   "campaigns/dogbone_v1/s14_validate.py": "567d299b4ae7c24c07396574facc9d842f7ebe046578337480f2d06eafab7c5d",
+   "campaigns/notched_v1/family.py": "88b263b12832f67bbe8c0025da35d05129f151da496fcd9bcc496e5d0ec98289",
+   "campaigns/notched_v1/s13.py": "be4997b9ebbccb2388148e6933ce0b6f50a6e48e811960259de0bdf64215ec14",
+   "campaigns/notched_v1/s13_close.py": "1a674fbf998ec458155d25a2ae9df1791ce5432d15ca3b7ee7362e289130ddb3",
+   "campaigns/notched_v1/s14.py": "fb07247f371af2234bbb3ca0f559125330ee9307b94aea647815540ef067af73",
+   "campaigns/notched_v1/s14_envelope.py": "24a313540d2880a3185b7997e7b0a7927a54cb42465e26498c58187bbfbbf240",
+   "src/piginot/morphing/blended_notch.py": "763b36d6279e98bbe71bdba2a42dc6eb15f6e055980d94296928e14fd4cf3f9c",
+   "src/piginot/verification/__init__.py": "8d8f537e703a1f5e043b4724ce7a19cd97528bf0d030e58a0003b58f72983d74",
+   "src/piginot/verification/budget.py": "ae74c43eb2938cc7739ca488e9b4e67ec8c4ff6d8526789e901e242143818de3",
+   "src/piginot/verification/confidence.py": "ab72c326f44a08eea2410737be983463e5af4cfd7abb3a85305635743500a9a7",
+   "src/piginot/verification/envelope.py": "32ca8cddffa6ce11695f65202d6affef4c40a211df6e20d9e3031915f756948e",
+   "src/piginot/verification/families.py": "3324da4cb1896757ad697f35b2cc71acec2efed8b3d405e6a24d601838792fa7",
+   "src/piginot/verification/holdout.py": "7322898849829ba0682058a463e4a16a2fe9bd31e4df208a2ded0d1c18d87d80",
+   "src/piginot/verification/latency.py": "dfdc51ae9d643a1d15c4ad19a2d03e871b2b8554849ade5c2c52985e1cfd93f8",
+   "src/piginot/verification/reducer.py": "592d6867dfc622f8c9b75ffe1786257ee2261b79270e2c0a6801e7f93e282804",
+   "src/piginot/verification/report.py": "626ae05b703f7d911007573568776baaa7831b11f1b45a51ad82ef64e902c7c3",
+   "src/piginot/verification/status.py": "9b04bf534936765dfa82a1ada49d813a8446dac23ca36e68d2e91a6cce085b81"
+  },
+  "line_endings": "LF-normalised before hashing",
+  "revision": "aeb46b09d41e4c083c26f22b22b53312e11522ba"
+ },
+ "frozen_candidate": {
+  "checkpoint_manifest_hash": "5dbcf8e831244b0324a253d2517a4da1a3ef54b4a85158114450df36e6b585f8",
+  "cp_freeze_sha256": "176b205c296e92b6eadf7e4ddeb52e055db47968386fe57f151403d9e2100a95",
+  "run_hash": "e5451350d82db80249e19b11479f6101fca87498aa966947f7566e93aa0eab1f",
+  "weights_hash": "d2a287cb565f22d668114fd465775dc3bde9c8a62f9f2f41829e273dc220c30e"
+ },
+ "gate": {
+  "claim_ceiling": "HOLDOUT_VERIFIED",
+  "coverage_minimum_percent": 85.0,
+  "families": {
+   "F05": "artifacts/campaigns/notched-v1/gates/S6.json",
+   "F08": "artifacts/campaigns/notched-v1/gates/S9.json",
+   "F09": "artifacts/campaigns/notched-v1/gates/S10.json",
+   "F10": "artifacts/campaigns/notched-v1/gates/S11-ENERGY.json",
+   "F12": "artifacts/campaigns/notched-v1/gates/S13.json"
+  },
+  "reported": [
+   "G14.holdout-budget",
+   "G14.holdout-calibration"
+  ],
+  "required": [
+   "G14.budget",
+   "G14.reducer",
+   "G14.report-sections",
+   "G14.refusal",
+   "G14.reason-codes",
+   "G14.confidence",
+   "G14.latency",
+   "G14.holdout-order",
+   "G14.no-certified",
+   "G14.coverage"
+  ]
+ },
+ "latency": {
+  "cases": "the first 8 DEVELOPMENT cases",
+  "decision": "measured and reported",
+  "repeats": 20,
+  "speedup_target": 100.0,
+  "threads": 1
+ },
+ "out_of_scope": [
+  "retraining or any change to the frozen candidate",
+  "threshold or method changes after DEVELOPMENT is opened",
+  "any claim above HOLDOUT_VERIFIED"
+ ],
+ "populations": {
+  "development": {
+   "access_record": "S14-DEVELOPMENT-ACCESS.json",
+   "count": 64,
+   "opened_only_after": "user sign-off of this protocol",
+   "source": "the 64 active DEVELOPMENT cases of the public manifest with their S10 P2 results"
+  },
+  "holdout": {
+   "campaign_hash": "6b6995a3381c2c7a63af06617d94969619c8ed4be6d6f94954b0e82613de2bfc",
+   "commitment": "501a99792c0c187e21d6201f75c44d2ff725183afa2a75737509bb9a21a0c4bd",
+   "consumption_record": "S14-HOLDOUT-CONSUMED.json",
+   "count": 64,
+   "opened_only_after": "DEVELOPMENT results and calibration are written, the DEVELOPMENT budget passes on every gated slice and the pooled Spearman correlation meets the threshold; otherwise HOLDOUT stays unspent",
+   "order": "consumption record written and fsynced, then the reveal is read and must open the CP-ENVELOPE commitment",
+   "reveal": "pi_ginot_private_reveals/notched-v1/reveal-v1.json",
+   "solver": "unchanged S10 P2 request recipe and execution profile"
+  }
+ },
+ "protocol_id": "notched-v1-s14-protocol-v1",
+ "refusal": {
+  "fixture_counts": {
+   "guard-band": 36,
+   "material-load": 24,
+   "primitive-bound": 72,
+   "query-containment": 48,
+   "topology-tag": 36
+  },
+  "fixture_set_hash": "90302ad133c7c1fdd4c1188c373761c14c2a99572bb04b36c35e45ac52977f2c",
+  "in_domain_count": 700,
+  "maximum_false_refusal_rate": 0.01,
+  "required_refusal": "100% with the expected reason code"
+ },
+ "schema_version": "1.0",
+ "status": "FROZEN_PENDING_USER_SIGN_OFF",
+ "train_rehearsal": {
+  "artifact": "artifacts/campaigns/notched-v1/S14-TRAIN-REHEARSAL.json",
+  "budget_gated_status": "FAIL",
+  "pooled_spearman": {
+   "patch-mean": 0.6528459663807914,
+   "patch-mean-times-h": 0.634780292657499,
+   "pointwise": 0.4889833864758123
+  },
+  "selected_variant": "patch-mean",
+  "sha256": "c66837c6024642789f2b5acd2e2b51c75bab4ecdedc9455796cd833759df370a"
+ }
+}
