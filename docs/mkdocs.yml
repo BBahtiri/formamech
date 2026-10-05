@@ -7,9 +7,49 @@ strict: true
 nav:
   - Home: index.md
   - Limitations: limitations.md
+  - Examples: examples.md
+  - Benchmarks: benchmarks.md
   - Bundles: bundle.md
-  - Campaigns:
-      - S9 Production Campaign Sign-Off: campaigns/s9-production-campaign-signoff.md
+  - Campaign plans:
+      - S9 production campaign sign-off: campaigns/s9-production-campaign-signoff.md
+      - S13c energy-form operator: campaigns/s13c-enhanced-model-plan.md
+      - S14 verification: campaigns/s14-verification-plan.md
+      - S15 bundle and CLI: campaigns/s15-bundle-plan.md
+      - S16 mutation suite: campaigns/s16-mutation-plan.md
+      - S17 examples and second family: campaigns/s17-plan.md
+  - Specifications:
+      - Implementation v1.0 (replacement): specs/implementation-v1.0-oss-replacement.md
+  - Decision records:
+      - Template: adr/0000-template.md
+      - "ADR 0001 — S1 risk spike — GO with contingency": adr/0001-s1-go-with-contingency.md
+      - "ADR 0002 — S8 FEM verification thresholds": adr/0002-fem-thresholds.md
+      - "ADR 0003 — S3 content identity, retention, and crash visibility": adr/0003-s3-content-store-retention.md
+      - "ADR 0004 — S4 physics domain and plane-stress closure": adr/0004-s4-physics-domain-and-plane-stress.md
+      - "ADR 0005 — S5 geometry ingestion contract": adr/0005-s5-geometry-ingestion.md
+      - "ADR 0006 — S6 morphing and family-membership boundary": adr/0006-s6-morphing-membership.md
+      - "ADR 0007 — S7 primary FEM solver boundary": adr/0007-s7-primary-fem.md
+      - "ADR 0008 — S2 canonical identity format v2": adr/0008-s2-canonical-identity-v2.md
+      - "ADR 0009 — S9 preregistration over a sealed audit service": adr/0009-s9-preregistration-over-sealed-audit.md
+      - "ADR 0010 — First S9 production-family decision": adr/0010-s9-first-production-family.md
+      - "ADR 0011 — S10 dataset trust boundaries": adr/0011-s10-dataset-trust-boundaries.md
+      - "ADR 0012 — S11 PI-GINOT operator architecture": adr/0012-s11-operator-architecture.md
+      - "ADR 0013 — S12 nondimensional objective registry": adr/0013-s12-objective-registry.md
+      - "ADR 0014 — S13 orientation recovery during hybrid training": adr/0014-s13-orientation-recovery.md
+      - "ADR 0015 — Diagnose and pilot S13 peak-stress preservation": adr/0015-s13-peak-preservation-pilot.md
+      - "ADR 0016 — Diagnose S13 stress and peak fitting on one TRAIN case": adr/0016-s13-one-case-recovery.md
+      - "ADR 0017 — Proposed joint U/P strong-HYBRID contrast": adr/0017-s13-joint-hybrid-contrast.md
+      - "ADR 0018 — Replace the S13 operator with the energy-form PI-GINOT (S13c)": adr/0018-s13c-energy-form-operator.md
+      - "ADR 0019 — S14 verification decisions — tolerance, slices, refusal fixtures, confidence": adr/0019-s14-verification-decisions.md
+      - "ADR 0020 — S14 protocol methods — FEM reference error, indicator, access and freeze": adr/0020-s14-protocol-methods.md
+      - "ADR 0021 — The decision owner accepts the S14 DEVELOPMENT budget result": adr/0021-s14-development-budget-acceptance.md
+      - "ADR 0022 — Replace the missing sections of IMPLEMENTATION-v1.0-OSS.md": adr/0022-replace-implementation-v1.0-oss.md
+      - "ADR 0023 — S15 bundle format, inference closure and command line": adr/0023-s15-bundle-and-cli.md
+      - "ADR 0024 — S16 mutation suite — source-level mutants, gate detectors and signatures": adr/0024-s16-mutation-suite.md
+      - "ADR 0025 — S17 examples and the centre-notched plate as the second family": adr/0025-s17-examples-and-second-family.md
+      - "ADR 0026 — The served-stress authority": adr/0026-served-stress-authority.md
+      - "ADR 0027 — Soft Dirichlet enforcement is the default; hard lifting only where verified": adr/0027-soft-dirichlet-default.md
+      - "ADR 0028 — A single served architecture in v1": adr/0028-single-architecture-in-v1.md
+      - "ADR 0029 — Independence vectors behind every accuracy claim": adr/0029-independence-vectors.md
 
 theme:
   name: readthedocs

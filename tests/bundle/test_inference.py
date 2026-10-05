@@ -437,3 +437,16 @@ def test_containing_cells_handles_vertices_edges_and_misses() -> None:
     cells = torch.tensor([[0, 1, 2], [1, 3, 2]])
     points = torch.tensor([[0.2, 0.2], [0.5, 0.5], [0.9, 0.9], [2.0, 2.0]])
     assert containing_cells(vertices, cells, points) == [(0,), (0, 1), (1,), (1,)]
+
+
+def test_v1_registers_one_architecture_and_refuses_any_other() -> None:
+    from piginot.operators import ENERGY_ARCHITECTURE_ID
+
+    assert tuple(serving_module.ARCHITECTURES) == (ENERGY_ARCHITECTURE_ID,)
+    with pytest.raises(serving_module.ServingError, match="unregistered architecture"):
+        serving_module.build_serving(
+            "pi-ginot-s11-boundary-cross-attention-v1",
+            {},
+            b"",
+            served_stress="constitutive-plane-stress-neo-hookean",
+        )

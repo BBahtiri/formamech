@@ -1,5 +1,10 @@
 # PI-GINOT
 
+> **Read the [limitations](docs/limitations.md) first.** PI-GINOT verifies
+> neural-operator predictions against FEM solutions of one plane-stress model,
+> inside each bundle's declared envelope; it does not validate them against
+> experiments, and it claims nothing outside that envelope.
+
 PI-GINOT is an early-stage open-source project for verified, problem-specific
 physics-informed neural operators in 2D finite-strain elasticity. The repository
 currently implements the S2 contract layer through the verified S10 DogBone dataset,
