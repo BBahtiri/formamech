@@ -1,0 +1,138 @@
+{
+  "gate_id": "G10",
+  "step": "S10",
+  "campaign_id": "notched-v1",
+  "commit": "5f878437c779a95e224f66d5ef6b6dbe763c11e6",
+  "timestamp_utc": "2026-10-05T21:14:24Z",
+  "checks": [
+    {
+      "id": "G10.traceability",
+      "status": "PASS",
+      "measured": {
+        "samples": 51400,
+        "fem_result_hash": 200,
+        "sampler_stream": 51200,
+        "ambiguous": 0,
+        "cp_manifest_binding_verified": true,
+        "request_plan_binding_verified": true,
+        "fem_result_store_resolution_verified": true
+      },
+      "threshold": {
+        "samples": ">= 1",
+        "exactly_one_trace_per_sample": true,
+        "ambiguous": 0,
+        "cp_manifest_binding_verified": true,
+        "request_plan_binding_verified": true,
+        "fem_result_store_resolution_verified": true
+      },
+      "comparison": "all"
+    },
+    {
+      "id": "G10.projection-error",
+      "status": "PASS",
+      "measured": {
+        "projected_fields": 200,
+        "error_artifacts": 200,
+        "source_verified": 200,
+        "drop_projection_error_mutant_fired": true
+      },
+      "threshold": {
+        "projected_fields": ">= 1",
+        "one_error_artifact_per_field": true,
+        "source_verified_fields": "equals projected_fields",
+        "drop_projection_error_mutant_fired": true
+      },
+      "comparison": "all"
+    },
+    {
+      "id": "G10.cross-mesh",
+      "status": "PASS",
+      "measured": {
+        "physical_integral_comparisons": 199,
+        "source_verified": 199,
+        "stress_node_pairing_mutant_fired": true
+      },
+      "threshold": {
+        "physical_integral_comparisons": ">= 1",
+        "source_verified_comparisons": "equals physical_integral_comparisons",
+        "stress_node_pairing_mutant_fired": true
+      },
+      "comparison": "all"
+    },
+    {
+      "id": "G10.normalization",
+      "status": "PASS",
+      "measured": {
+        "statistics": 135,
+        "non_train_sources": 0,
+        "non_active_sources": 0,
+        "training_snapshot_binding_verified": true,
+        "normalize_on_all_splits_mutant_fired": true
+      },
+      "threshold": {
+        "statistics": ">= 1",
+        "non_train_sources": 0,
+        "non_active_sources": 0,
+        "training_snapshot_binding_verified": true,
+        "normalize_on_all_splits_mutant_fired": true
+      },
+      "comparison": "all"
+    },
+    {
+      "id": "G10.failed-visible",
+      "status": "PASS",
+      "measured": {
+        "failed_fem_cases": 0,
+        "represented_failed_fem_cases": 0,
+        "failure_visibility_canaries": 1,
+        "represented_failure_visibility_canaries": 1
+      },
+      "threshold": {
+        "represented_failed_fem_cases": "equals failed_fem_cases",
+        "failure_visibility_canaries_when_no_failures": ">= 1",
+        "represented_failure_visibility_canaries": "equals failure_visibility_canaries"
+      },
+      "comparison": "all"
+    },
+    {
+      "id": "G10.reproducible",
+      "status": "PASS",
+      "measured": {
+        "replays": 200,
+        "byte_identical": 200,
+        "request_binding_verified": true
+      },
+      "threshold": {
+        "replays": ">= 1",
+        "byte_identical": "equals replays",
+        "request_binding_verified": true
+      },
+      "comparison": "eq"
+    },
+    {
+      "id": "G10.coverage",
+      "status": "PASS",
+      "measured": 85.5,
+      "threshold": 85.0,
+      "comparison": "gte"
+    }
+  ],
+  "closeout_report": "notched-s10-closeout.json",
+  "closeout_report_sha256": "f77e711e8215a2e80b80ea9227e3e49bc9305089b50e29b6591f2dc351b111d7",
+  "run_id": "notched-s10-public-production-v1",
+  "fem_source_revision": "a126e3a431349d16b2fd261c09eaa08d528f6722",
+  "mutation_evidence": {
+    "fired": {
+      "DROP_PROJECTION_ERROR": true,
+      "STRESS_NODE_PAIRING": true,
+      "NORMALIZE_ON_ALL_SPLITS": true
+    },
+    "controls_pass": true
+  },
+  "test_evidence": {
+    "command": "pytest tests/datasets",
+    "result": "173 passed in 7.82s"
+  },
+  "verdict": "PASS",
+  "verdict_reason": "every required check PASS"
+}
