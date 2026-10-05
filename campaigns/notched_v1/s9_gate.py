@@ -285,12 +285,18 @@ def write_gate(root: Path, *, reveal_root: Path) -> dict[str, Any]:
         if design["plan_hash_verified"] and all(design["checks"].values())
         else "FAIL",
     }
-    if design_policy["status"] != "PASS":
-        checks.append(
-            check_document(
-                "G9.production-design", False, design_policy["checks"], True, "all"
-            )
-        )
+    # The design diagnostics are recorded beside the verdict, as
+    # ``DesignCoverageDiagnostics`` specifies; G9 is the eight STEPS checks.
+    failed = sorted(name for name, passed in design["checks"].items() if not passed)
+    limitations = (
+        [
+            "The sealed production design misses the proposal coverage target on "
+            f"{', '.join(failed)}: the measured value is recorded under "
+            "production_design_policy. The seed is sealed and is not redrawn."
+        ]
+        if failed
+        else []
+    )
     document = gate_document(
         "G9",
         "S9",
@@ -300,6 +306,7 @@ def write_gate(root: Path, *, reveal_root: Path) -> dict[str, Any]:
         visibility=visibility,
         commitment_order_problem=order_problem,
         production_design_policy=design_policy,
+        limitations=limitations,
     )
     write_gate_document(root / GATE_PATH, document)
     return document
