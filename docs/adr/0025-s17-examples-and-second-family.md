@@ -1,7 +1,9 @@
 # ADR 0025: S17 examples and the centre-notched plate as the second family
 
 - Status: Accepted in part — decisions 1, 7 and 8 were taken by the decision
-  owner on 2026-10-05; the others are proposed defaults awaiting confirmation
+  owner on 2026-10-05, who also signed off the private-reveal backup (cloud
+  primary and backup, and a copy in `pi_ginot_private_reveals/notched-v1/`);
+  the others are proposed defaults awaiting confirmation
 - Date: 2026-10-05
 - Step: S17 (gate `G17`)
 
@@ -67,8 +69,11 @@ lifting and trainer transfer, with a median field error of 5.05%.
    in CI in under ten minutes.
 10. **Benchmarks and refusals.** A committed benchmark table per family,
     reproduced from pinned seeds by deterministic replay and re-evaluation;
-    the refusal suite is every family's request-form fixtures run through
-    `predict`.
+    the refusal suite is every family's fixtures through its envelope checker
+    and every request-form fixture through `predict`. The notched set has 216
+    fixtures and no derived-bound category, because the family's derived
+    bounds sit on corners of the primitive box and no in-box request violates
+    them.
 11. **ADRs.** ADR 0003 (retention tiers) and ADR 0009 (preregistration over
     sealed audit) already cover two of the six topics; four new ADRs record
     the served-stress authority, the soft-BC default, the single architecture
