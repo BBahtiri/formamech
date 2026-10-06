@@ -1,0 +1,187 @@
+{
+ "amendment_id": "notched-v1-s14-protocol-amendment-1",
+ "base_protocol_sha256": "6d544d829c015172f6b16d5dcc78e19205969c69595223826a513bec4813f307",
+ "code_changes": [],
+ "decision": "The notched DEVELOPMENT budget result is accepted as passing G14.budget and HOLDOUT opens under the unchanged rule ('The error is fine i want to make this as a PASS'; option: accept DEVELOPMENT, open HOLDOUT).",
+ "decision_record": "docs/adr/0030-notched-development-budget-acceptance.md",
+ "evaluation_file_sha256": {
+  "campaigns/dogbone_v1/s13_fem_recovery_reference.py": "18f7bde27436a4ef4fa1a164cd04baba95885b84d71d8ec3c2558bab3b767986",
+  "campaigns/dogbone_v1/s13c_evaluate.py": "7089622624b7192a58652649306c628e06ce334b55f056c82ff57ed96824d14d",
+  "campaigns/dogbone_v1/s14_candidate.py": "db9793549d59226c18c0e8bbc9e5699d3267966e8d89a96d7fad9c926fdfa630",
+  "campaigns/dogbone_v1/s14_envelope.py": "af2e4c5c198563b95ef0a0036b77899ded252da7e662a291e5f097974d34ca57",
+  "campaigns/dogbone_v1/s14_evaluation.py": "1046fd6e0e666cc3abb1c1a9f4af8ccd88d9f6fd376080c145198856c15156a6",
+  "campaigns/dogbone_v1/s14_gate.py": "c433f14490fb8968f9bf14e0c7e471744e1d5c16938e45c6085d552809e3af36",
+  "campaigns/dogbone_v1/s14_reference.py": "84e8d2dd2fd832026f9616459eef04a60c1a80d9dc0fa6212cb29f4c6df0a29f",
+  "campaigns/dogbone_v1/s14_rehearsal.py": "cfc42be5faab073f6cece8bb3e0f0be61158a6013a7d75988663acde717ca7f0",
+  "campaigns/dogbone_v1/s14_validate.py": "567d299b4ae7c24c07396574facc9d842f7ebe046578337480f2d06eafab7c5d",
+  "campaigns/notched_v1/family.py": "88b263b12832f67bbe8c0025da35d05129f151da496fcd9bcc496e5d0ec98289",
+  "campaigns/notched_v1/s13.py": "be4997b9ebbccb2388148e6933ce0b6f50a6e48e811960259de0bdf64215ec14",
+  "campaigns/notched_v1/s13_close.py": "1a674fbf998ec458155d25a2ae9df1791ce5432d15ca3b7ee7362e289130ddb3",
+  "campaigns/notched_v1/s14.py": "fb07247f371af2234bbb3ca0f559125330ee9307b94aea647815540ef067af73",
+  "campaigns/notched_v1/s14_envelope.py": "24a313540d2880a3185b7997e7b0a7927a54cb42465e26498c58187bbfbbf240",
+  "src/piginot/morphing/blended_notch.py": "763b36d6279e98bbe71bdba2a42dc6eb15f6e055980d94296928e14fd4cf3f9c",
+  "src/piginot/verification/__init__.py": "8d8f537e703a1f5e043b4724ce7a19cd97528bf0d030e58a0003b58f72983d74",
+  "src/piginot/verification/budget.py": "ae74c43eb2938cc7739ca488e9b4e67ec8c4ff6d8526789e901e242143818de3",
+  "src/piginot/verification/confidence.py": "ab72c326f44a08eea2410737be983463e5af4cfd7abb3a85305635743500a9a7",
+  "src/piginot/verification/envelope.py": "32ca8cddffa6ce11695f65202d6affef4c40a211df6e20d9e3031915f756948e",
+  "src/piginot/verification/families.py": "3324da4cb1896757ad697f35b2cc71acec2efed8b3d405e6a24d601838792fa7",
+  "src/piginot/verification/holdout.py": "7322898849829ba0682058a463e4a16a2fe9bd31e4df208a2ded0d1c18d87d80",
+  "src/piginot/verification/latency.py": "dfdc51ae9d643a1d15c4ad19a2d03e871b2b8554849ade5c2c52985e1cfd93f8",
+  "src/piginot/verification/reducer.py": "592d6867dfc622f8c9b75ffe1786257ee2261b79270e2c0a6801e7f93e282804",
+  "src/piginot/verification/report.py": "626ae05b703f7d911007573568776baaa7831b11f1b45a51ad82ef64e902c7c3",
+  "src/piginot/verification/status.py": "9b04bf534936765dfa82a1ada49d813a8446dac23ca36e68d2e91a6cce085b81"
+ },
+ "recorded_from": "the decision owner's answers in the S17 session chat, after the DEVELOPMENT result and the G17 result were reported",
+ "signed_off_by": "Betim Bahtiri",
+ "signed_off_utc": "2026-10-06T12:12:59Z",
+ "unchanged": [
+  "tolerances, slices and slice statistic",
+  "the HOLDOUT budget is judged with the unchanged rule and alone sets the claim level",
+  "scoring, FEM reference terms, confidence and latency code",
+  "the frozen candidate (CP-FREEZE)"
+ ],
+ "waivers": [
+  {
+   "check": "G14.budget",
+   "decision_record": "ADR 0030",
+   "development_result": "artifacts/campaigns/notched-v1/S14-DEVELOPMENT.json",
+   "development_result_sha256": "4010542a676d6a6defbafdc6ee9a72b8db7a4197b73da19a3aa88723ed0741b3",
+   "failing": [
+    {
+     "cases": 64,
+     "quantity": "absolute_peak_error",
+     "slice": "all",
+     "statistic": 0.053408836542218036,
+     "tolerance": 0.05
+    },
+    {
+     "cases": 64,
+     "quantity": "p_relative_l2",
+     "slice": "all",
+     "statistic": 0.052362363577965886,
+     "tolerance": 0.05
+    },
+    {
+     "cases": 26,
+     "quantity": "p_relative_l2",
+     "slice": "nominal_axial_strain:0",
+     "statistic": 0.05264417887739217,
+     "tolerance": 0.05
+    },
+    {
+     "cases": 12,
+     "quantity": "absolute_peak_error",
+     "slice": "nominal_axial_strain:1",
+     "statistic": 0.07935365802989786,
+     "tolerance": 0.05
+    },
+    {
+     "cases": 12,
+     "quantity": "p_relative_l2",
+     "slice": "nominal_axial_strain:1",
+     "statistic": 0.06393025596226613,
+     "tolerance": 0.05
+    },
+    {
+     "cases": 24,
+     "quantity": "absolute_peak_error",
+     "slice": "nominal_axial_strain:3",
+     "statistic": 0.0521825502766011,
+     "tolerance": 0.05
+    },
+    {
+     "cases": 24,
+     "quantity": "p_relative_l2",
+     "slice": "nominal_axial_strain:3",
+     "statistic": 0.051237502932069114,
+     "tolerance": 0.05
+    },
+    {
+     "cases": 14,
+     "quantity": "absolute_peak_error",
+     "slice": "notch_depth:0",
+     "statistic": 0.05340883654221803,
+     "tolerance": 0.05
+    },
+    {
+     "cases": 14,
+     "quantity": "p_relative_l2",
+     "slice": "notch_depth:0",
+     "statistic": 0.062273302489738155,
+     "tolerance": 0.05
+    },
+    {
+     "cases": 11,
+     "quantity": "absolute_peak_error",
+     "slice": "notch_depth:1",
+     "statistic": 0.05170027347677289,
+     "tolerance": 0.05
+    },
+    {
+     "cases": 24,
+     "quantity": "absolute_peak_error",
+     "slice": "notch_depth:3",
+     "statistic": 0.057192765322881894,
+     "tolerance": 0.05
+    },
+    {
+     "cases": 24,
+     "quantity": "p_relative_l2",
+     "slice": "notch_depth:3",
+     "statistic": 0.052327882236737136,
+     "tolerance": 0.05
+    },
+    {
+     "cases": 18,
+     "quantity": "absolute_peak_error",
+     "slice": "notch_radius:0",
+     "statistic": 0.0873194344376482,
+     "tolerance": 0.05
+    },
+    {
+     "cases": 18,
+     "quantity": "p_relative_l2",
+     "slice": "notch_radius:0",
+     "statistic": 0.07780211913817,
+     "tolerance": 0.05
+    },
+    {
+     "cases": 8,
+     "quantity": "absolute_peak_error",
+     "slice": "notch_radius:2",
+     "statistic": 0.05170027347677289,
+     "tolerance": 0.05
+    },
+    {
+     "cases": 11,
+     "quantity": "absolute_peak_error",
+     "slice": "width:2",
+     "statistic": 0.05170027347677289,
+     "tolerance": 0.05
+    },
+    {
+     "cases": 11,
+     "quantity": "p_relative_l2",
+     "slice": "width:2",
+     "statistic": 0.05115501948777128,
+     "tolerance": 0.05
+    },
+    {
+     "cases": 15,
+     "quantity": "absolute_peak_error",
+     "slice": "width:3",
+     "statistic": 0.08288859262288785,
+     "tolerance": 0.05
+    },
+    {
+     "cases": 15,
+     "quantity": "p_relative_l2",
+     "slice": "width:3",
+     "statistic": 0.07884602171125187,
+     "tolerance": 0.05
+    }
+   ],
+   "population": "DEVELOPMENT"
+  }
+ ]
+}

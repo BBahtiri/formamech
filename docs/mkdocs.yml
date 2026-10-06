@@ -50,6 +50,7 @@ nav:
       - "ADR 0027 — Soft Dirichlet enforcement is the default; hard lifting only where verified": adr/0027-soft-dirichlet-default.md
       - "ADR 0028 — A single served architecture in v1": adr/0028-single-architecture-in-v1.md
       - "ADR 0029 — Independence vectors behind every accuracy claim": adr/0029-independence-vectors.md
+      - "ADR 0030 — The notched DEVELOPMENT budget acceptance": adr/0030-notched-development-budget-acceptance.md
 
 theme:
   name: readthedocs
