@@ -1,0 +1,191 @@
+{
+  "gate_id": "G18",
+  "step": "S18",
+  "commit": "55edd3cf04a43f217a48ac34163f09f497f26f35",
+  "timestamp_utc": "2026-10-06T16:10:30Z",
+  "checks": [
+    {
+      "id": "G18.all-gates",
+      "status": "PASS",
+      "measured": {
+        "verdicts": {
+          "G0": [
+            "PASS"
+          ],
+          "G1": [
+            "PASS"
+          ],
+          "G2": [
+            "PASS"
+          ],
+          "G3": [
+            "PASS"
+          ],
+          "G4": [
+            "PASS"
+          ],
+          "G5": [
+            "PASS"
+          ],
+          "G6": [
+            "PASS"
+          ],
+          "G7": [
+            "PASS"
+          ],
+          "G8": [
+            "PASS"
+          ],
+          "G9": [
+            "PASS"
+          ],
+          "G10": [
+            "PASS"
+          ],
+          "G12": [
+            "PASS"
+          ],
+          "G13": [
+            "PASS"
+          ],
+          "G14": [
+            "PASS"
+          ],
+          "G15": [
+            "PASS"
+          ],
+          "G16": [
+            "PASS"
+          ],
+          "G17": [
+            "PASS"
+          ],
+          "G11": [
+            "PASS",
+            "PASS"
+          ]
+        },
+        "not_run": [],
+        "accepted_by_decision_owner": [
+          "G14 DogBone DEVELOPMENT budget (ADR 0021)",
+          "G14 notched DEVELOPMENT budget (ADR 0030)",
+          "G17.non-dogbone at DEVELOPMENT_VERIFIED (ADR 0031)"
+        ]
+      },
+      "threshold": "G0\u2013G17 all PASS, or NOT_RUN with a written reason accepted in the release ADR",
+      "comparison": "all"
+    },
+    {
+      "id": "G18.claim-ceiling",
+      "status": "PASS",
+      "measured": {
+        "claim_levels": [
+          "NOT_VERIFIED",
+          "DEVELOPMENT_VERIFIED",
+          "HOLDOUT_VERIFIED"
+        ],
+        "bundles": {
+          "dogbone-v1-s13c-cp-freeze": "HOLDOUT_VERIFIED",
+          "notched-v1-cp-freeze": "DEVELOPMENT_VERIFIED"
+        },
+        "tests": "4 passed in 1.98s"
+      },
+      "threshold": "no shipped bundle claims above HOLDOUT_VERIFIED; SEALED_RELEASE_VERIFIED is not emittable",
+      "comparison": "all"
+    },
+    {
+      "id": "G18.licenses",
+      "status": "PASS",
+      "measured": {
+        "record": "docs/adr/upstream-sources.md",
+        "served_source_recorded": true,
+        "gnot_gino_pointnet_addressed": true,
+        "third_party_modules_tracked": [],
+        "manifest_present": true,
+        "wheel_files": 140,
+        "wheel_outside_package": [],
+        "sdist_files": 143,
+        "sdist_outside_allowed": [],
+        "all_rights_reserved_in_distributions": [],
+        "tests": "4 passed in 0.04s"
+      },
+      "threshold": "every adapted component recorded with source, commit, digest and licence compatibility in docs/adr/upstream-sources.md",
+      "comparison": "all"
+    },
+    {
+      "id": "G18.naming",
+      "status": "PASS",
+      "measured": {
+        "disclaimer_present": true,
+        "architecture_id_in_readme": true,
+        "architecture_id": "pi-ginot-energy-parametric-film-v1",
+        "registered_architectures": [
+          "pi-ginot-energy-parametric-film-v1"
+        ],
+        "bundles": {
+          "dogbone-v1-s13c-cp-freeze": "pi-ginot-energy-parametric-film-v1",
+          "notched-v1-cp-freeze": "pi-ginot-energy-parametric-film-v1"
+        }
+      },
+      "threshold": "README states the name does not claim faithful reproduction of GNOT or GINO and gives the exact architecture_id",
+      "comparison": "all"
+    },
+    {
+      "id": "G18.citation",
+      "status": "PASS",
+      "measured": {
+        "validator": "cffconvert 2.0.0",
+        "result": "Citation metadata are valid according to schema version 1.2.0.",
+        "version_matches": true
+      },
+      "threshold": "CITATION.cff validates",
+      "comparison": "all"
+    },
+    {
+      "id": "G18.install",
+      "status": "NOT_RUN",
+      "reason": "no TestPyPI install evidence at artifacts/release/TESTPYPI-INSTALL.json; run .github/workflows/release.yml with TEST_PYPI_API_TOKEN",
+      "threshold": "install from TestPyPI succeeds on Linux, macOS and Windows",
+      "comparison": "all"
+    },
+    {
+      "id": "G18.lock",
+      "status": "PASS",
+      "measured": {
+        "tool": "uv 0.8.17",
+        "uv_lock_check": true,
+        "header": [
+          "version = 1",
+          "revision = 3"
+        ],
+        "committed": true
+      },
+      "threshold": "lockfile committed and tool-generated (uv lock --check reproduces it)",
+      "comparison": "all"
+    },
+    {
+      "id": "G18.changelog",
+      "status": "FAIL",
+      "measured": {
+        "version": "0.1.0",
+        "changelog_entry": true,
+        "tag": "v0.1.0",
+        "tag_commit": null,
+        "tag_at_or_before_head": false
+      },
+      "threshold": "version tagged, changelog written",
+      "comparison": "all"
+    },
+    {
+      "id": "G18.signoff",
+      "status": "NOT_RUN",
+      "reason": "the decision owner has not yet signed off docs/limitations.md",
+      "threshold": "\u2691 the decision owner confirms every sentence of the shipped limitations.md is true of the code as built",
+      "comparison": "all"
+    }
+  ],
+  "version": "0.1.0",
+  "release_adr": "docs/adr/0032-release-0.1.0.md",
+  "verdict": "FAIL",
+  "verdict_reason": "3 required check(s) not PASS: G18.install, G18.changelog, G18.signoff"
+}
