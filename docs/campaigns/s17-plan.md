@@ -1,10 +1,13 @@
 # S17 plan — examples, benchmarks, docs and the second family
 
-- Status: Complete; G17 fails on `G17.non-dogbone` (the notched bundle is
-  `NOT_VERIFIED`), as ADR 0025 decision 7 foresaw. Decisions 1, 7 and 8 of
+- Status: Complete; G17 PASS, with `G17.non-dogbone` failing as computed and
+  accepted by the decision owner ([ADR 0031](../adr/0031-g17-non-dogbone-acceptance.md)).
+  Decisions 1, 7 and 8 of
   [ADR 0025](../adr/0025-s17-examples-and-second-family.md) were taken by the
-  decision owner; the private-reveal backup was signed off on 2026-10-05 and
-  the notched S14 protocol on 2026-10-06.
+  decision owner; the private-reveal backup was signed off on 2026-10-05, the
+  notched S14 protocol on 2026-10-06, then the DEVELOPMENT budget
+  ([ADR 0030](../adr/0030-notched-development-budget-acceptance.md)) and
+  `G17.non-dogbone` were accepted on 2026-10-06.
 - Date: 2026-10-05
 - Base: `codex/s16-mutation` (G16 PASS)
 - Gate: `G17` (`STEPS-v1.0.md` §S17)
@@ -145,18 +148,19 @@ the surrogate error. Its p90 over all cases, against 5% (stress field), 5%
 
 ### 4.3 G17
 
-G17 fails on one required check (`artifacts/gates/S17.json`):
+G17 passes (`artifacts/gates/S17.json`). One of its seven checks passes only
+through the decision owner's signed acceptance:
 
 | Check | Status | Measured |
 | --- | --- | --- |
 | `G17.example1` | PASS | 128 s end to end; CI job `example1` declared |
 | `G17.example2-3` | PASS | both replays bitwise; re-scoring within 1e-9 |
-| `G17.non-dogbone` | **FAIL** | the notched bundle passes G15 but serves `NOT_VERIFIED`, not `HOLDOUT_VERIFIED`; the framework changes since `8a87cd5` are exactly the five declared files (no family branch) |
+| `G17.non-dogbone` | PASS by acceptance | FAIL as computed: the notched bundle passes G15 but serves `DEVELOPMENT_VERIFIED`, not `HOLDOUT_VERIFIED`. Accepted in `artifacts/gates/S17-ACCEPTANCE.json` ([ADR 0031](../adr/0031-g17-non-dogbone-acceptance.md)), which names that G15 gate and bundle. The framework changes since `8a87cd5` are exactly the five declared files (no family branch) |
 | `G17.refusal` | PASS | 840/840, both bundles |
 | `G17.fixture-names` | PASS | no family vocabulary in `src/` |
 | `G17.docs` | PASS | strict mkdocs build; links and README checks |
 | `G17.adrs` | PASS | the six ADRs exist and are accepted |
 
-Turning `G17.non-dogbone` into a PASS needs a notched v2 campaign (finer
-reference mesh at the notch, then a new S9 ceremony, S10, S13 and S14), not a
-change to the tolerances.
+Reaching `HOLDOUT_VERIFIED` for a second family without an acceptance needs a
+notched v2 campaign: a finer reference mesh at the notch, then a new S9
+ceremony, S10, S13 and S14.

@@ -1,8 +1,8 @@
 {
   "gate_id": "G17",
   "step": "S17",
-  "commit": "d294940759658385ac186c8a4522cace5a1c6c17",
-  "timestamp_utc": "2026-10-06T08:24:29Z",
+  "commit": "6065c65018a0b6f98aa3117d9a74df4d0f67b92e",
+  "timestamp_utc": "2026-10-06T14:29:02Z",
   "checks": [
     {
       "id": "G17.example1",
@@ -52,10 +52,11 @@
     },
     {
       "id": "G17.non-dogbone",
-      "status": "FAIL",
+      "status": "PASS",
       "measured": {
         "notched_g15_verdict": "PASS",
-        "notched_bundle_claim_level": "NOT_VERIFIED",
+        "notched_bundle_claim_level": "DEVELOPMENT_VERIFIED",
+        "notched_bundle_manifest_sha256": "3749f4be4761a55582dd07f90e3cc5950b8231357162366d79dc47463dddcc99",
         "framework_files_changed_since_s16": [
           "src/piginot/bundle/specs.py",
           "src/piginot/morphing/__init__.py",
@@ -63,10 +64,16 @@
           "src/piginot/training/__init__.py",
           "src/piginot/training/selection.py"
         ],
-        "undeclared_framework_changes": []
+        "undeclared_framework_changes": [],
+        "computed": "FAIL"
       },
       "threshold": "the notched bundle passes G15 at HOLDOUT_VERIFIED through the same API; framework changes are only the declared additions (no family branch)",
-      "comparison": "all"
+      "comparison": "all",
+      "evidence": {
+        "acceptance": "artifacts/gates/S17-ACCEPTANCE.json",
+        "acceptance_sha256": "7d720cadfc78a18b30e25de8c90f2722e665473383e253e2403b4af775ec9c8d"
+      },
+      "reason": "FAIL as computed; accepted by the decision owner (ADR 0031) at claim level DEVELOPMENT_VERIFIED"
     },
     {
       "id": "G17.refusal",
@@ -85,7 +92,7 @@
     {
       "id": "G17.fixture-names",
       "status": "PASS",
-      "measured": "1 passed in 0.31s",
+      "measured": "1 passed in 0.04s",
       "threshold": "no family vocabulary in src/",
       "comparison": "eq"
     },
@@ -94,7 +101,7 @@
       "status": "PASS",
       "measured": {
         "mkdocs_strict_build": true,
-        "link_and_readme_checks": "44 passed in 0.05s"
+        "link_and_readme_checks": "46 passed in 0.06s"
       },
       "threshold": "mkdocs builds; internal links resolve; limitations linked above the fold",
       "comparison": "all"
@@ -132,6 +139,6 @@
       "comparison": "all"
     }
   ],
-  "verdict": "FAIL",
-  "verdict_reason": "1 required check(s) not PASS: G17.non-dogbone"
+  "verdict": "PASS",
+  "verdict_reason": "every required check PASS"
 }
