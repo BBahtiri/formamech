@@ -1,0 +1,44 @@
+{
+ "family": "notched-v1",
+ "passed": true,
+ "replay": {
+  "bitwise": true,
+  "byte_identical_files": {
+   "checkpoint.json": true,
+   "model.safetensors": true,
+   "state.safetensors": true
+  },
+  "interrupted_and_resumed_at": 200,
+  "run_hash": "e5451350d82db80249e19b11479f6101fca87498aa966947f7566e93aa0eab1f",
+  "steps": 400,
+  "training_revision": "a126e3a431349d16b2fd261c09eaa08d528f6722"
+ },
+ "rescore": {
+  "committed": {
+   "invalid_collocation_points": 0,
+   "median_absolute_peak_error": 0.012100923340891061,
+   "median_signed_peak_error": -0.0013480111645006922,
+   "p90_absolute_peak_error": 0.03435600351201401,
+   "p_relative_l2": 0.01663450994805711,
+   "u_relative_l2": 0.0016700898813545903
+  },
+  "measured": {
+   "invalid_collocation_points": 0.0,
+   "median_absolute_peak_error": 0.012100923340891061,
+   "median_signed_peak_error": -0.0013480111645006922,
+   "p90_absolute_peak_error": 0.03435600351201401,
+   "p_relative_l2": 0.01663450994805711,
+   "u_relative_l2": 0.0016700898813545903
+  },
+  "relative_difference": {
+   "invalid_collocation_points": 0.0,
+   "median_absolute_peak_error": 0.0,
+   "median_signed_peak_error": 0.0,
+   "p90_absolute_peak_error": 0.0,
+   "p_relative_l2": 0.0,
+   "u_relative_l2": 0.0
+  },
+  "tolerance": 1e-09,
+  "within_tolerance": true
+ }
+}
