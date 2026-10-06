@@ -1,0 +1,3489 @@
+{
+ "budget": {
+  "gated": [
+   {
+    "cases": 64,
+    "quantity": "p_relative_l2",
+    "slice": "all",
+    "statistic": 0.052362363577965886,
+    "status": "FAIL",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 64,
+    "quantity": "absolute_peak_error",
+    "slice": "all",
+    "statistic": 0.053408836542218036,
+    "status": "FAIL",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 64,
+    "quantity": "u_relative_l2",
+    "slice": "all",
+    "statistic": 0.0057875972720792465,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 24,
+    "quantity": "p_relative_l2",
+    "slice": "width:0",
+    "statistic": 0.03448060848225885,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 24,
+    "quantity": "absolute_peak_error",
+    "slice": "width:0",
+    "statistic": 0.0382751420469408,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 24,
+    "quantity": "u_relative_l2",
+    "slice": "width:0",
+    "statistic": 0.004519190844995911,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 14,
+    "quantity": "p_relative_l2",
+    "slice": "width:1",
+    "statistic": 0.04448936402659692,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 14,
+    "quantity": "absolute_peak_error",
+    "slice": "width:1",
+    "statistic": 0.034980064194952545,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 14,
+    "quantity": "u_relative_l2",
+    "slice": "width:1",
+    "statistic": 0.004154080117071187,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 11,
+    "quantity": "p_relative_l2",
+    "slice": "width:2",
+    "statistic": 0.05115501948777128,
+    "status": "FAIL",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 11,
+    "quantity": "absolute_peak_error",
+    "slice": "width:2",
+    "statistic": 0.05170027347677289,
+    "status": "FAIL",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 11,
+    "quantity": "u_relative_l2",
+    "slice": "width:2",
+    "statistic": 0.002893469878595551,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 15,
+    "quantity": "p_relative_l2",
+    "slice": "width:3",
+    "statistic": 0.07884602171125187,
+    "status": "FAIL",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 15,
+    "quantity": "absolute_peak_error",
+    "slice": "width:3",
+    "statistic": 0.08288859262288785,
+    "status": "FAIL",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 15,
+    "quantity": "u_relative_l2",
+    "slice": "width:3",
+    "statistic": 0.007578370009466041,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 18,
+    "quantity": "p_relative_l2",
+    "slice": "notch_radius:0",
+    "statistic": 0.07780211913817,
+    "status": "FAIL",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 18,
+    "quantity": "absolute_peak_error",
+    "slice": "notch_radius:0",
+    "statistic": 0.0873194344376482,
+    "status": "FAIL",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 18,
+    "quantity": "u_relative_l2",
+    "slice": "notch_radius:0",
+    "statistic": 0.006866960885336987,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 22,
+    "quantity": "p_relative_l2",
+    "slice": "notch_radius:1",
+    "statistic": 0.042495093386454644,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 22,
+    "quantity": "absolute_peak_error",
+    "slice": "notch_radius:1",
+    "statistic": 0.043369248752891,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 22,
+    "quantity": "u_relative_l2",
+    "slice": "notch_radius:1",
+    "statistic": 0.005766267200933146,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 8,
+    "quantity": "p_relative_l2",
+    "slice": "notch_radius:2",
+    "statistic": 0.03432715641478879,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 8,
+    "quantity": "absolute_peak_error",
+    "slice": "notch_radius:2",
+    "statistic": 0.05170027347677289,
+    "status": "FAIL",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 8,
+    "quantity": "u_relative_l2",
+    "slice": "notch_radius:2",
+    "statistic": 0.0037962814590304247,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 16,
+    "quantity": "p_relative_l2",
+    "slice": "notch_radius:3",
+    "statistic": 0.026789091006865266,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 16,
+    "quantity": "absolute_peak_error",
+    "slice": "notch_radius:3",
+    "statistic": 0.030198937376240916,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 16,
+    "quantity": "u_relative_l2",
+    "slice": "notch_radius:3",
+    "statistic": 0.0045051481555201615,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 14,
+    "quantity": "p_relative_l2",
+    "slice": "notch_depth:0",
+    "statistic": 0.062273302489738155,
+    "status": "FAIL",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 14,
+    "quantity": "absolute_peak_error",
+    "slice": "notch_depth:0",
+    "statistic": 0.05340883654221803,
+    "status": "FAIL",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 14,
+    "quantity": "u_relative_l2",
+    "slice": "notch_depth:0",
+    "statistic": 0.004289991642249499,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 11,
+    "quantity": "p_relative_l2",
+    "slice": "notch_depth:1",
+    "statistic": 0.0447913061678227,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 11,
+    "quantity": "absolute_peak_error",
+    "slice": "notch_depth:1",
+    "statistic": 0.05170027347677289,
+    "status": "FAIL",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 11,
+    "quantity": "u_relative_l2",
+    "slice": "notch_depth:1",
+    "statistic": 0.0041905584665327044,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 15,
+    "quantity": "p_relative_l2",
+    "slice": "notch_depth:2",
+    "statistic": 0.034061982175923836,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 15,
+    "quantity": "absolute_peak_error",
+    "slice": "notch_depth:2",
+    "statistic": 0.033953813096096845,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 15,
+    "quantity": "u_relative_l2",
+    "slice": "notch_depth:2",
+    "statistic": 0.0031885986638223547,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 24,
+    "quantity": "p_relative_l2",
+    "slice": "notch_depth:3",
+    "statistic": 0.052327882236737136,
+    "status": "FAIL",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 24,
+    "quantity": "absolute_peak_error",
+    "slice": "notch_depth:3",
+    "statistic": 0.057192765322881894,
+    "status": "FAIL",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 24,
+    "quantity": "u_relative_l2",
+    "slice": "notch_depth:3",
+    "statistic": 0.006739059586223723,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 26,
+    "quantity": "p_relative_l2",
+    "slice": "nominal_axial_strain:0",
+    "statistic": 0.05264417887739217,
+    "status": "FAIL",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 26,
+    "quantity": "absolute_peak_error",
+    "slice": "nominal_axial_strain:0",
+    "statistic": 0.0473294542591729,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 26,
+    "quantity": "u_relative_l2",
+    "slice": "nominal_axial_strain:0",
+    "statistic": 0.006135268740414133,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 12,
+    "quantity": "p_relative_l2",
+    "slice": "nominal_axial_strain:1",
+    "statistic": 0.06393025596226613,
+    "status": "FAIL",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 12,
+    "quantity": "absolute_peak_error",
+    "slice": "nominal_axial_strain:1",
+    "statistic": 0.07935365802989786,
+    "status": "FAIL",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 12,
+    "quantity": "u_relative_l2",
+    "slice": "nominal_axial_strain:1",
+    "statistic": 0.00528737411344695,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 2,
+    "quantity": "p_relative_l2",
+    "slice": "nominal_axial_strain:2",
+    "statistic": 0.025984737447650737,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 2,
+    "quantity": "absolute_peak_error",
+    "slice": "nominal_axial_strain:2",
+    "statistic": 0.0217690764126933,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 2,
+    "quantity": "u_relative_l2",
+    "slice": "nominal_axial_strain:2",
+    "statistic": 0.00303939344988653,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 24,
+    "quantity": "p_relative_l2",
+    "slice": "nominal_axial_strain:3",
+    "statistic": 0.051237502932069114,
+    "status": "FAIL",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 24,
+    "quantity": "absolute_peak_error",
+    "slice": "nominal_axial_strain:3",
+    "statistic": 0.0521825502766011,
+    "status": "FAIL",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 24,
+    "quantity": "u_relative_l2",
+    "slice": "nominal_axial_strain:3",
+    "statistic": 0.005249778814285335,
+    "status": "PASS",
+    "tolerance": 0.02
+   }
+  ],
+  "gated_status": "FAIL",
+  "reported": [
+   {
+    "cases": 33,
+    "quantity": "p_relative_l2",
+    "slice": "net_section_factor:0",
+    "statistic": 0.06343656819123576,
+    "status": "FAIL",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 33,
+    "quantity": "absolute_peak_error",
+    "slice": "net_section_factor:0",
+    "statistic": 0.057430309871754875,
+    "status": "FAIL",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 33,
+    "quantity": "u_relative_l2",
+    "slice": "net_section_factor:0",
+    "statistic": 0.0062353000678981516,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 20,
+    "quantity": "p_relative_l2",
+    "slice": "net_section_factor:1",
+    "statistic": 0.05001131577481777,
+    "status": "FAIL",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 20,
+    "quantity": "absolute_peak_error",
+    "slice": "net_section_factor:1",
+    "statistic": 0.04712435822924323,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 20,
+    "quantity": "u_relative_l2",
+    "slice": "net_section_factor:1",
+    "statistic": 0.004441811427819453,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 9,
+    "quantity": "p_relative_l2",
+    "slice": "net_section_factor:2",
+    "statistic": 0.032673887341209434,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 9,
+    "quantity": "absolute_peak_error",
+    "slice": "net_section_factor:2",
+    "statistic": 0.04341848571312472,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 9,
+    "quantity": "u_relative_l2",
+    "slice": "net_section_factor:2",
+    "statistic": 0.005453051075048785,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 2,
+    "quantity": "p_relative_l2",
+    "slice": "net_section_factor:3",
+    "statistic": 0.03308975290982391,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 2,
+    "quantity": "absolute_peak_error",
+    "slice": "net_section_factor:3",
+    "statistic": 0.029168597614957943,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 2,
+    "quantity": "u_relative_l2",
+    "slice": "net_section_factor:3",
+    "statistic": 0.002910622152948888,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 30,
+    "quantity": "p_relative_l2",
+    "slice": "notch_sharpness:0",
+    "statistic": 0.04781848224508675,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 30,
+    "quantity": "absolute_peak_error",
+    "slice": "notch_sharpness:0",
+    "statistic": 0.04601796352343846,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 30,
+    "quantity": "u_relative_l2",
+    "slice": "notch_sharpness:0",
+    "statistic": 0.004408803861676838,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 26,
+    "quantity": "p_relative_l2",
+    "slice": "notch_sharpness:1",
+    "statistic": 0.0469203873219559,
+    "status": "PASS",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 26,
+    "quantity": "absolute_peak_error",
+    "slice": "notch_sharpness:1",
+    "statistic": 0.05201068521931167,
+    "status": "FAIL",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 26,
+    "quantity": "u_relative_l2",
+    "slice": "notch_sharpness:1",
+    "statistic": 0.005714700619101461,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 6,
+    "quantity": "p_relative_l2",
+    "slice": "notch_sharpness:2",
+    "statistic": 0.06326990534483747,
+    "status": "FAIL",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 6,
+    "quantity": "absolute_peak_error",
+    "slice": "notch_sharpness:2",
+    "statistic": 0.059116206466503084,
+    "status": "FAIL",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 6,
+    "quantity": "u_relative_l2",
+    "slice": "notch_sharpness:2",
+    "statistic": 0.010868549554342192,
+    "status": "PASS",
+    "tolerance": 0.02
+   },
+   {
+    "cases": 2,
+    "quantity": "p_relative_l2",
+    "slice": "notch_sharpness:3",
+    "statistic": 0.09038312806523344,
+    "status": "FAIL",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 2,
+    "quantity": "absolute_peak_error",
+    "slice": "notch_sharpness:3",
+    "statistic": 0.09873685006047772,
+    "status": "FAIL",
+    "tolerance": 0.05
+   },
+   {
+    "cases": 2,
+    "quantity": "u_relative_l2",
+    "slice": "notch_sharpness:3",
+    "statistic": 0.008018147416131154,
+    "status": "PASS",
+    "tolerance": 0.02
+   }
+  ]
+ },
+ "campaign_id": "notched-v1",
+ "case_count": 64,
+ "cases": [
+  {
+   "case_id": "candidate-000020",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.007349607385165698,
+     "projection": 0.0028159415268834095
+    },
+    "p_relative_l2": {
+     "discretisation": 0.011054383819159162,
+     "projection": 0.0005394579390747305
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0002822521310126074,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.110152846810526,
+   "reported_slices": [
+    "net_section_factor:0",
+    "notch_sharpness:0"
+   ],
+   "slices": [
+    "all",
+    "width:2",
+    "notch_radius:3",
+    "notch_depth:0",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.01761902490585857,
+    "p_relative_l2": 0.012781056546378955,
+    "u_relative_l2": 0.0018372814062835626
+   },
+   "terms": {
+    "case_id": "candidate-000020",
+    "coarse_p_difference": 0.005611362344750843,
+    "coarse_peak_difference": 0.0017131471152060647,
+    "coarse_u_difference": 0.00014327519340741492,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0005394579390747305,
+    "recovery_root_cells": 0.0028159415268834095
+   }
+  },
+  {
+   "case_id": "candidate-000138",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.022561631638839875,
+     "projection": 0.008644303309900335
+    },
+    "p_relative_l2": {
+     "discretisation": 0.028769731512241346,
+     "projection": 0.002097657108855895
+    },
+    "u_relative_l2": {
+     "discretisation": 0.001359824286584002,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0185529972028446,
+   "reported_slices": [
+    "net_section_factor:1",
+    "notch_sharpness:2"
+   ],
+   "slices": [
+    "all",
+    "width:3",
+    "notch_radius:0",
+    "notch_depth:3",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.027910271517762875,
+    "p_relative_l2": 0.03240251672374023,
+    "u_relative_l2": 0.00950872526775819
+   },
+   "terms": {
+    "case_id": "candidate-000138",
+    "coarse_p_difference": 0.014603924625503221,
+    "coarse_peak_difference": 0.009088610200386095,
+    "coarse_u_difference": 0.0006902661353218284,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.002097657108855895,
+    "recovery_root_cells": 0.008644303309900335
+   }
+  },
+  {
+   "case_id": "candidate-000222",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.00446553908748067,
+     "projection": 0.0015656647426301605
+    },
+    "p_relative_l2": {
+     "discretisation": 0.006363194680263469,
+     "projection": 0.0004234700942366263
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0004735346854424657,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0496358814884577,
+   "reported_slices": [
+    "net_section_factor:0",
+    "notch_sharpness:0"
+   ],
+   "slices": [
+    "all",
+    "width:0",
+    "notch_radius:3",
+    "notch_depth:1",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.0010985117956791761,
+    "p_relative_l2": 0.015896914112524304,
+    "u_relative_l2": 0.0027084677764429668
+   },
+   "terms": {
+    "case_id": "candidate-000222",
+    "coarse_p_difference": 0.0032300480610474463,
+    "coarse_peak_difference": 0.0022667711103962792,
+    "coarse_u_difference": 0.00024037293677282523,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0004234700942366263,
+    "recovery_root_cells": 0.0015656647426301605
+   }
+  },
+  {
+   "case_id": "candidate-000596",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.009197752935247237,
+     "projection": 0.0035240432702096695
+    },
+    "p_relative_l2": {
+     "discretisation": 0.013418709780765262,
+     "projection": 0.0008257483719897471
+    },
+    "u_relative_l2": {
+     "discretisation": 0.000614900686003148,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0682081347439318,
+   "reported_slices": [
+    "net_section_factor:0",
+    "notch_sharpness:0"
+   ],
+   "slices": [
+    "all",
+    "width:2",
+    "notch_radius:1",
+    "notch_depth:1",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.009109010660913712,
+    "p_relative_l2": 0.01321204160707144,
+    "u_relative_l2": 0.001629970696770685
+   },
+   "terms": {
+    "case_id": "candidate-000596",
+    "coarse_p_difference": 0.006811527807495057,
+    "coarse_peak_difference": 0.003978718966910493,
+    "coarse_u_difference": 0.0003121323279203797,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0008257483719897471,
+    "recovery_root_cells": 0.0035240432702096695
+   }
+  },
+  {
+   "case_id": "candidate-000634",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.020234029154297634,
+     "projection": 0.007752501591684918
+    },
+    "p_relative_l2": {
+     "discretisation": 0.0277147441971963,
+     "projection": 0.0014361511669235016
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0007697074353461472,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.045281526368772,
+   "reported_slices": [
+    "net_section_factor:0",
+    "notch_sharpness:0"
+   ],
+   "slices": [
+    "all",
+    "width:3",
+    "notch_radius:1",
+    "notch_depth:1",
+    "nominal_axial_strain:1"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.016587023218102848,
+    "p_relative_l2": 0.015640410803702907,
+    "u_relative_l2": 0.0021177708092912613
+   },
+   "terms": {
+    "case_id": "candidate-000634",
+    "coarse_p_difference": 0.014068398069642793,
+    "coarse_peak_difference": 0.0030683954177796948,
+    "coarse_u_difference": 0.0003907144341858615,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0014361511669235016,
+    "recovery_root_cells": 0.007752501591684918
+   }
+  },
+  {
+   "case_id": "candidate-000755",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.005315105210974566,
+     "projection": 0.002036438778151175
+    },
+    "p_relative_l2": {
+     "discretisation": 0.008402218463535222,
+     "projection": 0.0005328537876084851
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0004514060067870422,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0471838931801503,
+   "reported_slices": [
+    "net_section_factor:0",
+    "notch_sharpness:0"
+   ],
+   "slices": [
+    "all",
+    "width:1",
+    "notch_radius:3",
+    "notch_depth:1",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.01230077872597432,
+    "p_relative_l2": 0.016479107097003138,
+    "u_relative_l2": 0.0037391524597456625
+   },
+   "terms": {
+    "case_id": "candidate-000755",
+    "coarse_p_difference": 0.0042650855144848844,
+    "coarse_peak_difference": 0.0023675357306679303,
+    "coarse_u_difference": 0.0002291401049680417,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0005328537876084851,
+    "recovery_root_cells": 0.002036438778151175
+   }
+  },
+  {
+   "case_id": "candidate-000883",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.009547920208833858,
+     "projection": 0.0031447823861664452
+    },
+    "p_relative_l2": {
+     "discretisation": 0.011874861212491787,
+     "projection": 0.0008582471813238881
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0007970838452140849,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0299262524266157,
+   "reported_slices": [
+    "net_section_factor:1",
+    "notch_sharpness:0"
+   ],
+   "slices": [
+    "all",
+    "width:1",
+    "notch_radius:2",
+    "notch_depth:2",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.011270118871073497,
+    "p_relative_l2": 0.014702078815135133,
+    "u_relative_l2": 0.0019086172500593099
+   },
+   "terms": {
+    "case_id": "candidate-000883",
+    "coarse_p_difference": 0.006027848331214105,
+    "coarse_peak_difference": 0.004846660004484192,
+    "coarse_u_difference": 0.00040461108894115986,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0008582471813238881,
+    "recovery_root_cells": 0.0031447823861664452
+   }
+  },
+  {
+   "case_id": "candidate-000894",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.01316217600735142,
+     "projection": 0.0031350186596829466
+    },
+    "p_relative_l2": {
+     "discretisation": 0.011219296523510296,
+     "projection": 0.0008682305979085153
+    },
+    "u_relative_l2": {
+     "discretisation": 0.001109244833458198,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0238616244057979,
+   "reported_slices": [
+    "net_section_factor:1",
+    "notch_sharpness:1"
+   ],
+   "slices": [
+    "all",
+    "width:0",
+    "notch_radius:1",
+    "notch_depth:2",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.0003395890963627161,
+    "p_relative_l2": 0.01801857616887705,
+    "u_relative_l2": 0.0019559293858400287
+   },
+   "terms": {
+    "case_id": "candidate-000894",
+    "coarse_p_difference": 0.005695074377416394,
+    "coarse_peak_difference": 0.006681307617944883,
+    "coarse_u_difference": 0.0005630684433797959,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0008682305979085153,
+    "recovery_root_cells": 0.0031350186596829466
+   }
+  },
+  {
+   "case_id": "candidate-001280",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.010790727180947252,
+     "projection": 0.001683575374843987
+    },
+    "p_relative_l2": {
+     "discretisation": 0.006400313704802288,
+     "projection": 0.0006009678526610853
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0016042533842221811,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0478828964684264,
+   "reported_slices": [
+    "net_section_factor:3",
+    "notch_sharpness:1"
+   ],
+   "slices": [
+    "all",
+    "width:0",
+    "notch_radius:1",
+    "notch_depth:3",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.0166942950591667,
+    "p_relative_l2": 0.02072149475197474,
+    "u_relative_l2": 0.0010464396006973989
+   },
+   "terms": {
+    "case_id": "candidate-001280",
+    "coarse_p_difference": 0.003248890205483395,
+    "coarse_peak_difference": 0.005477526487790483,
+    "coarse_u_difference": 0.0008143418194021224,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0006009678526610853,
+    "recovery_root_cells": 0.001683575374843987
+   }
+  },
+  {
+   "case_id": "candidate-001377",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.013104940862199235,
+     "projection": 0.005021050138773653
+    },
+    "p_relative_l2": {
+     "discretisation": 0.01849675203680293,
+     "projection": 0.0012851216531759783
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0008849784452189233,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.029224535023248,
+   "reported_slices": [
+    "net_section_factor:0",
+    "notch_sharpness:1"
+   ],
+   "slices": [
+    "all",
+    "width:3",
+    "notch_radius:1",
+    "notch_depth:3",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.02480012510981464,
+    "p_relative_l2": 0.0229009857784034,
+    "u_relative_l2": 0.005011963806327
+   },
+   "terms": {
+    "case_id": "candidate-001377",
+    "coarse_p_difference": 0.00938921423187966,
+    "coarse_peak_difference": 0.005556108869260614,
+    "coarse_u_difference": 0.0004492276371669661,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0012851216531759783,
+    "recovery_root_cells": 0.005021050138773653
+   }
+  },
+  {
+   "case_id": "candidate-001599",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.02067811679484942,
+     "projection": 0.007922650112969127
+    },
+    "p_relative_l2": {
+     "discretisation": 0.02761372833036908,
+     "projection": 0.0010913158648967341
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0004951320363924624,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.1044341325423028,
+   "reported_slices": [
+    "net_section_factor:0",
+    "notch_sharpness:0"
+   ],
+   "slices": [
+    "all",
+    "width:1",
+    "notch_radius:0",
+    "notch_depth:0",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.01678582884302719,
+    "p_relative_l2": 0.022567808784359517,
+    "u_relative_l2": 0.0035738319319351844
+   },
+   "terms": {
+    "case_id": "candidate-001599",
+    "coarse_p_difference": 0.014017120979882782,
+    "coarse_peak_difference": 0.0007091116884087664,
+    "coarse_u_difference": 0.00025133605908246825,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0010913158648967341,
+    "recovery_root_cells": 0.007922650112969127
+   }
+  },
+  {
+   "case_id": "candidate-001608",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.012741721351521912,
+     "projection": 0.004881885575295752
+    },
+    "p_relative_l2": {
+     "discretisation": 0.018310063035043272,
+     "projection": 0.0008932834951995207
+    },
+    "u_relative_l2": {
+     "discretisation": 0.00046053739288946593,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0908179773687563,
+   "reported_slices": [
+    "net_section_factor:0",
+    "notch_sharpness:0"
+   ],
+   "slices": [
+    "all",
+    "width:2",
+    "notch_radius:1",
+    "notch_depth:0",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.01283599785606191,
+    "p_relative_l2": 0.013436355157321996,
+    "u_relative_l2": 0.0024329324857060852
+   },
+   "terms": {
+    "case_id": "candidate-001608",
+    "coarse_p_difference": 0.009294448241138717,
+    "coarse_peak_difference": 0.0025570610917312357,
+    "coarse_u_difference": 0.00023377532633983043,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0008932834951995207,
+    "recovery_root_cells": 0.004881885575295752
+   }
+  },
+  {
+   "case_id": "candidate-001677",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.03934525228918037,
+     "projection": 0.015074809306199376
+    },
+    "p_relative_l2": {
+     "discretisation": 0.04794871428441307,
+     "projection": 0.0023824506064050476
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0013126894939249597,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.058316353400824,
+   "reported_slices": [
+    "net_section_factor:0",
+    "notch_sharpness:1"
+   ],
+   "slices": [
+    "all",
+    "width:3",
+    "notch_radius:0",
+    "notch_depth:1",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.08499151332532245,
+    "p_relative_l2": 0.02990672691787623,
+    "u_relative_l2": 0.004219769492732038
+   },
+   "terms": {
+    "case_id": "candidate-001677",
+    "coarse_p_difference": 0.024339448875336584,
+    "coarse_peak_difference": 0.0008163009677925367,
+    "coarse_u_difference": 0.0006663398446319593,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0023824506064050476,
+    "recovery_root_cells": 0.015074809306199376
+   }
+  },
+  {
+   "case_id": "candidate-001828",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.006242240380366148,
+     "projection": 0.0014494749970856684
+    },
+    "p_relative_l2": {
+     "discretisation": 0.005826780845718877,
+     "projection": 0.0004928566582159138
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0007597421938158079,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0673104091227117,
+   "reported_slices": [
+    "net_section_factor:1",
+    "notch_sharpness:0"
+   ],
+   "slices": [
+    "all",
+    "width:1",
+    "notch_radius:3",
+    "notch_depth:2",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.008384722085120084,
+    "p_relative_l2": 0.014619146411927363,
+    "u_relative_l2": 0.002511139433022632
+   },
+   "terms": {
+    "case_id": "candidate-001828",
+    "coarse_p_difference": 0.002957756774476587,
+    "coarse_peak_difference": 0.0031686499392721565,
+    "coarse_u_difference": 0.0003856559359471106,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0004928566582159138,
+    "recovery_root_cells": 0.0014494749970856684
+   }
+  },
+  {
+   "case_id": "candidate-001918",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.006715839516007839,
+     "projection": 0.002573118588508751
+    },
+    "p_relative_l2": {
+     "discretisation": 0.01043745391622288,
+     "projection": 0.0006724908039205719
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0005008029884544681,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0728674298886796,
+   "reported_slices": [
+    "net_section_factor:0",
+    "notch_sharpness:0"
+   ],
+   "slices": [
+    "all",
+    "width:3",
+    "notch_radius:3",
+    "notch_depth:1",
+    "nominal_axial_strain:2"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.007167002368404772,
+    "p_relative_l2": 0.014874792727507287,
+    "u_relative_l2": 0.001947496664181031
+   },
+   "terms": {
+    "case_id": "candidate-001918",
+    "coarse_p_difference": 0.005298199957473543,
+    "coarse_peak_difference": 0.0027242210310555823,
+    "coarse_u_difference": 0.00025421471495150664,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0006724908039205719,
+    "recovery_root_cells": 0.002573118588508751
+   }
+  },
+  {
+   "case_id": "candidate-001935",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.007540597968669357,
+     "projection": 0.002668990381567734
+    },
+    "p_relative_l2": {
+     "discretisation": 0.010394255785201216,
+     "projection": 0.0007546960327664379
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0006872562476429227,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0644347422557732,
+   "reported_slices": [
+    "net_section_factor:0",
+    "notch_sharpness:0"
+   ],
+   "slices": [
+    "all",
+    "width:3",
+    "notch_radius:2",
+    "notch_depth:2",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.0027441625292262185,
+    "p_relative_l2": 0.015401016345194437,
+    "u_relative_l2": 0.0010061905619604221
+   },
+   "terms": {
+    "case_id": "candidate-001935",
+    "coarse_p_difference": 0.005276271972183359,
+    "coarse_peak_difference": 0.003827714704908303,
+    "coarse_u_difference": 0.0003488610394126511,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0007546960327664379,
+    "recovery_root_cells": 0.002668990381567734
+   }
+  },
+  {
+   "case_id": "candidate-002084",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.013695714938622346,
+     "projection": 0.00524740035962542
+    },
+    "p_relative_l2": {
+     "discretisation": 0.018966411511478595,
+     "projection": 0.0010674502889721057
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0007128832191174621,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0311690554063473,
+   "reported_slices": [
+    "net_section_factor:0",
+    "notch_sharpness:1"
+   ],
+   "slices": [
+    "all",
+    "width:0",
+    "notch_radius:0",
+    "notch_depth:1",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.010312842474582933,
+    "p_relative_l2": 0.01711451770247169,
+    "u_relative_l2": 0.0017396070453980937
+   },
+   "terms": {
+    "case_id": "candidate-002084",
+    "coarse_p_difference": 0.00962762005658812,
+    "coarse_peak_difference": 0.005555803710832622,
+    "coarse_u_difference": 0.0003618696543743463,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0010674502889721057,
+    "recovery_root_cells": 0.00524740035962542
+   }
+  },
+  {
+   "case_id": "candidate-002155",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.020248067643685218,
+     "projection": 0.007757880323251041
+    },
+    "p_relative_l2": {
+     "discretisation": 0.026074962529996505,
+     "projection": 0.0017858843206974917
+    },
+    "u_relative_l2": {
+     "discretisation": 0.001155562790982116,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0403297269901735,
+   "reported_slices": [
+    "net_section_factor:0",
+    "notch_sharpness:2"
+   ],
+   "slices": [
+    "all",
+    "width:3",
+    "notch_radius:0",
+    "notch_depth:3",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.03025015407991786,
+    "p_relative_l2": 0.02496844984084641,
+    "u_relative_l2": 0.005164326731004092
+   },
+   "terms": {
+    "case_id": "candidate-002155",
+    "coarse_p_difference": 0.013236021588830714,
+    "coarse_peak_difference": 0.0076815856275514235,
+    "coarse_u_difference": 0.0005865800969452365,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0017858843206974917,
+    "recovery_root_cells": 0.007757880323251041
+   }
+  },
+  {
+   "case_id": "candidate-002258",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.010597407370982574,
+     "projection": 0.0029344586658682833
+    },
+    "p_relative_l2": {
+     "discretisation": 0.010869424959691386,
+     "projection": 0.0008488274538853857
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0009173285488391928,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.035299798154644,
+   "reported_slices": [
+    "net_section_factor:1",
+    "notch_sharpness:1"
+   ],
+   "slices": [
+    "all",
+    "width:1",
+    "notch_radius:1",
+    "notch_depth:3",
+    "nominal_axial_strain:1"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.003941200402958653,
+    "p_relative_l2": 0.016998520756567975,
+    "u_relative_l2": 0.0020602180812803006
+   },
+   "terms": {
+    "case_id": "candidate-002258",
+    "coarse_p_difference": 0.005517474598828115,
+    "coarse_peak_difference": 0.005379394604559683,
+    "coarse_u_difference": 0.00046564900956304204,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0008488274538853857,
+    "recovery_root_cells": 0.0029344586658682833
+   }
+  },
+  {
+   "case_id": "candidate-002317",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.006030551610365477,
+     "projection": 0.0012420416108497004
+    },
+    "p_relative_l2": {
+     "discretisation": 0.005041714940928885,
+     "projection": 0.0004426845369730227
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0007924586679297556,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0444432385913267,
+   "reported_slices": [
+    "net_section_factor:1",
+    "notch_sharpness:0"
+   ],
+   "slices": [
+    "all",
+    "width:0",
+    "notch_radius:3",
+    "notch_depth:2",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.0044661144747095375,
+    "p_relative_l2": 0.016431520418658516,
+    "u_relative_l2": 0.0021431749317383994
+   },
+   "terms": {
+    "case_id": "candidate-002317",
+    "coarse_p_difference": 0.0025592461629080636,
+    "coarse_peak_difference": 0.00306119371084542,
+    "coarse_u_difference": 0.0004022632832130739,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0004426845369730227,
+    "recovery_root_cells": 0.0012420416108497004
+   }
+  },
+  {
+   "case_id": "candidate-002448",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.006949520650452426,
+     "projection": 0.0026626515902116576
+    },
+    "p_relative_l2": {
+     "discretisation": 0.010632577602030856,
+     "projection": 0.0006072147608786324
+    },
+    "u_relative_l2": {
+     "discretisation": 0.00045063330789521717,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0480163283873434,
+   "reported_slices": [
+    "net_section_factor:0",
+    "notch_sharpness:0"
+   ],
+   "slices": [
+    "all",
+    "width:0",
+    "notch_radius:2",
+    "notch_depth:1",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.007808319389156147,
+    "p_relative_l2": 0.013213703121407228,
+    "u_relative_l2": 0.0019277677681073277
+   },
+   "terms": {
+    "case_id": "candidate-002448",
+    "coarse_p_difference": 0.005397247513721247,
+    "coarse_peak_difference": 0.0028747243488508995,
+    "coarse_u_difference": 0.00022874787202802903,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0006072147608786324,
+    "recovery_root_cells": 0.0026626515902116576
+   }
+  },
+  {
+   "case_id": "candidate-002453",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.02946682232239311,
+     "projection": 0.011289970238464793
+    },
+    "p_relative_l2": {
+     "discretisation": 0.03793584248499909,
+     "projection": 0.0018365501100695407
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0009405777499592353,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0416290082956476,
+   "reported_slices": [
+    "net_section_factor:0",
+    "notch_sharpness:1"
+   ],
+   "slices": [
+    "all",
+    "width:2",
+    "notch_radius:0",
+    "notch_depth:0",
+    "nominal_axial_strain:1"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.041669463752720494,
+    "p_relative_l2": 0.02599070699916235,
+    "u_relative_l2": 0.002405508964167374
+   },
+   "terms": {
+    "case_id": "candidate-002453",
+    "coarse_p_difference": 0.01925677283502492,
+    "coarse_peak_difference": 0.002461808725969841,
+    "coarse_u_difference": 0.0004774506344970738,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0018365501100695407,
+    "recovery_root_cells": 0.011289970238464793
+   }
+  },
+  {
+   "case_id": "candidate-002551",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.003992716998001672,
+     "projection": 0.0015297766275868478
+    },
+    "p_relative_l2": {
+     "discretisation": 0.0063776543914369835,
+     "projection": 0.0003642701091815634
+    },
+    "u_relative_l2": {
+     "discretisation": 0.00030404340485533935,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0623096344404168,
+   "reported_slices": [
+    "net_section_factor:0",
+    "notch_sharpness:0"
+   ],
+   "slices": [
+    "all",
+    "width:0",
+    "notch_radius:3",
+    "notch_depth:0",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.009877890040689952,
+    "p_relative_l2": 0.01492725157293577,
+    "u_relative_l2": 0.0025124090226504798
+   },
+   "terms": {
+    "case_id": "candidate-002551",
+    "coarse_p_difference": 0.0032373880159578595,
+    "coarse_peak_difference": 0.0016180446805506995,
+    "coarse_u_difference": 0.0001543367537336748,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0003642701091815634,
+    "recovery_root_cells": 0.0015297766275868478
+   }
+  },
+  {
+   "case_id": "candidate-002646",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.007751145983407521,
+     "projection": 0.001229177960946522
+    },
+    "p_relative_l2": {
+     "discretisation": 0.004989722033333628,
+     "projection": 0.00048291433582778277
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0011575249639100742,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.056026186891336,
+   "reported_slices": [
+    "net_section_factor:2",
+    "notch_sharpness:0"
+   ],
+   "slices": [
+    "all",
+    "width:0",
+    "notch_radius:3",
+    "notch_depth:3",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.006780156227474712,
+    "p_relative_l2": 0.01908395673108125,
+    "u_relative_l2": 0.002604552093428947
+   },
+   "terms": {
+    "case_id": "candidate-002646",
+    "coarse_p_difference": 0.002532853824027222,
+    "coarse_peak_difference": 0.003934591869750011,
+    "coarse_u_difference": 0.0005875761238122204,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.00048291433582778277,
+    "recovery_root_cells": 0.001229177960946522
+   }
+  },
+  {
+   "case_id": "candidate-002918",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.01661072327119938,
+     "projection": 0.0039175654500601936
+    },
+    "p_relative_l2": {
+     "discretisation": 0.013399192626492985,
+     "projection": 0.0010676696455897774
+    },
+    "u_relative_l2": {
+     "discretisation": 0.001327559814375534,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0349444408608799,
+   "reported_slices": [
+    "net_section_factor:2",
+    "notch_sharpness:2"
+   ],
+   "slices": [
+    "all",
+    "width:1",
+    "notch_radius:0",
+    "notch_depth:3",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.002733269454382138,
+    "p_relative_l2": 0.017147850586560258,
+    "u_relative_l2": 0.00167065510448267
+   },
+   "terms": {
+    "case_id": "candidate-002918",
+    "coarse_p_difference": 0.006801620622585272,
+    "coarse_peak_difference": 0.008431839223959077,
+    "coarse_u_difference": 0.0006738882306474793,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0010676696455897774,
+    "recovery_root_cells": 0.0039175654500601936
+   }
+  },
+  {
+   "case_id": "candidate-003278",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.009723495595018566,
+     "projection": 0.00333155344362849
+    },
+    "p_relative_l2": {
+     "discretisation": 0.012595492154378116,
+     "projection": 0.0009453133709009245
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0008151919740735665,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.037409866499183,
+   "reported_slices": [
+    "net_section_factor:0",
+    "notch_sharpness:1"
+   ],
+   "slices": [
+    "all",
+    "width:3",
+    "notch_radius:2",
+    "notch_depth:3",
+    "nominal_axial_strain:1"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.03625467509969623,
+    "p_relative_l2": 0.0192385611225344,
+    "u_relative_l2": 0.0020461065812123398
+   },
+   "terms": {
+    "case_id": "candidate-003278",
+    "coarse_p_difference": 0.006393650839785846,
+    "coarse_peak_difference": 0.004935784565999272,
+    "coarse_u_difference": 0.0004138030325246531,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0009453133709009245,
+    "recovery_root_cells": 0.00333155344362849
+   }
+  },
+  {
+   "case_id": "candidate-003309",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.008038929432442108,
+     "projection": 0.0013217494543445872
+    },
+    "p_relative_l2": {
+     "discretisation": 0.0054191453327096396,
+     "projection": 0.0005198649122497735
+    },
+    "u_relative_l2": {
+     "discretisation": 0.001052566737260448,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0378641422980017,
+   "reported_slices": [
+    "net_section_factor:2",
+    "notch_sharpness:0"
+   ],
+   "slices": [
+    "all",
+    "width:0",
+    "notch_radius:3",
+    "notch_depth:3",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.007554009885344588,
+    "p_relative_l2": 0.02165443432112038,
+    "u_relative_l2": 0.0035730117855638666
+   },
+   "terms": {
+    "case_id": "candidate-003309",
+    "coarse_p_difference": 0.002750835194268853,
+    "coarse_peak_difference": 0.004080674838803101,
+    "coarse_u_difference": 0.0005342978361728163,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0005198649122497735,
+    "recovery_root_cells": 0.0013217494543445872
+   }
+  },
+  {
+   "case_id": "candidate-003369",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.02375787025591484,
+     "projection": 0.009102632281959708
+    },
+    "p_relative_l2": {
+     "discretisation": 0.03157630869333104,
+     "projection": 0.001429152232721362
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0007700162037789268,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0559197962403088,
+   "reported_slices": [
+    "net_section_factor:0",
+    "notch_sharpness:0"
+   ],
+   "slices": [
+    "all",
+    "width:3",
+    "notch_radius:0",
+    "notch_depth:0",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.021266638633483378,
+    "p_relative_l2": 0.021124981653202455,
+    "u_relative_l2": 0.0017009034735832836
+   },
+   "terms": {
+    "case_id": "candidate-003369",
+    "coarse_p_difference": 0.016028583093061443,
+    "coarse_peak_difference": 0.00017021483692634858,
+    "coarse_u_difference": 0.0003908711694309273,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.001429152232721362,
+    "recovery_root_cells": 0.009102632281959708
+   }
+  },
+  {
+   "case_id": "candidate-003384",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.015617508750763679,
+     "projection": 0.0035924661335478285
+    },
+    "p_relative_l2": {
+     "discretisation": 0.012451623985607178,
+     "projection": 0.0009582056838222542
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0012675247690145113,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0243727856095786,
+   "reported_slices": [
+    "net_section_factor:2",
+    "notch_sharpness:2"
+   ],
+   "slices": [
+    "all",
+    "width:0",
+    "notch_radius:0",
+    "notch_depth:2",
+    "nominal_axial_strain:1"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.006061490718955925,
+    "p_relative_l2": 0.01926405767178,
+    "u_relative_l2": 0.001100711438875241
+   },
+   "terms": {
+    "case_id": "candidate-003384",
+    "coarse_p_difference": 0.0063206213124909535,
+    "coarse_peak_difference": 0.00792766941663131,
+    "coarse_u_difference": 0.0006434135883322393,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0009582056838222542,
+    "recovery_root_cells": 0.0035924661335478285
+   }
+  },
+  {
+   "case_id": "candidate-003583",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.0113437996540021,
+     "projection": 0.00434628339233797
+    },
+    "p_relative_l2": {
+     "discretisation": 0.01599404105298258,
+     "projection": 0.001033914305613361
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0007958802316682224,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0295747856374247,
+   "reported_slices": [
+    "net_section_factor:0",
+    "notch_sharpness:1"
+   ],
+   "slices": [
+    "all",
+    "width:1",
+    "notch_radius:1",
+    "notch_depth:2",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.006686927992688351,
+    "p_relative_l2": 0.01487337036625135,
+    "u_relative_l2": 0.001410270414038293
+   },
+   "terms": {
+    "case_id": "candidate-003583",
+    "coarse_p_difference": 0.008118802564965777,
+    "coarse_peak_difference": 0.00544543818678339,
+    "coarse_u_difference": 0.00040400011759808243,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.001033914305613361,
+    "recovery_root_cells": 0.00434628339233797
+   }
+  },
+  {
+   "case_id": "candidate-003678",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.03543748497322,
+     "projection": 0.013577580449509581
+    },
+    "p_relative_l2": {
+     "discretisation": 0.042460954211227364,
+     "projection": 0.0028594769714606525
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0016678895747475238,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.020866262527754,
+   "reported_slices": [
+    "net_section_factor:0",
+    "notch_sharpness:3"
+   ],
+   "slices": [
+    "all",
+    "width:3",
+    "notch_radius:0",
+    "notch_depth:3",
+    "nominal_axial_strain:1"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.04972178463774813,
+    "p_relative_l2": 0.045062696882545425,
+    "u_relative_l2": 0.006350257841383629
+   },
+   "terms": {
+    "case_id": "candidate-003678",
+    "coarse_p_difference": 0.02155378386356719,
+    "coarse_peak_difference": 0.008258056154671699,
+    "coarse_u_difference": 0.0008466444541865603,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0028594769714606525,
+    "recovery_root_cells": 0.013577580449509581
+   }
+  },
+  {
+   "case_id": "candidate-003737",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.008982099118531244,
+     "projection": 0.00344141728679358
+    },
+    "p_relative_l2": {
+     "discretisation": 0.01347205724461694,
+     "projection": 0.0007995762273065696
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0005375745987729204,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.061176102773216,
+   "reported_slices": [
+    "net_section_factor:0",
+    "notch_sharpness:0"
+   ],
+   "slices": [
+    "all",
+    "width:2",
+    "notch_radius:2",
+    "notch_depth:1",
+    "nominal_axial_strain:1"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.039276757071448065,
+    "p_relative_l2": 0.015384695509738025,
+    "u_relative_l2": 0.0023460109278787304
+   },
+   "terms": {
+    "case_id": "candidate-003737",
+    "coarse_p_difference": 0.006838607738384234,
+    "coarse_peak_difference": 0.003332567858403418,
+    "coarse_u_difference": 0.0002728805069913302,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0007995762273065696,
+    "recovery_root_cells": 0.00344141728679358
+   }
+  },
+  {
+   "case_id": "candidate-003893",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.014446006089567746,
+     "projection": 0.003726732460074117
+    },
+    "p_relative_l2": {
+     "discretisation": 0.013053786267225606,
+     "projection": 0.0009976608094029813
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0011396510393682534,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0295273931904276,
+   "reported_slices": [
+    "net_section_factor:1",
+    "notch_sharpness:1"
+   ],
+   "slices": [
+    "all",
+    "width:0",
+    "notch_radius:0",
+    "notch_depth:3",
+    "nominal_axial_strain:1"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.011322300956638578,
+    "p_relative_l2": 0.01563563364984027,
+    "u_relative_l2": 0.001111075873693519
+   },
+   "terms": {
+    "case_id": "candidate-003893",
+    "coarse_p_difference": 0.006626287445292186,
+    "coarse_peak_difference": 0.007332998015009008,
+    "coarse_u_difference": 0.0005785030656691642,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0009976608094029813,
+    "recovery_root_cells": 0.003726732460074117
+   }
+  },
+  {
+   "case_id": "candidate-003968",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.012897773511926799,
+     "projection": 0.004941675675067739
+    },
+    "p_relative_l2": {
+     "discretisation": 0.018441550233512956,
+     "projection": 0.0009573439506559917
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0005364906120937231,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0741268332063705,
+   "reported_slices": [
+    "net_section_factor:0",
+    "notch_sharpness:0"
+   ],
+   "slices": [
+    "all",
+    "width:2",
+    "notch_radius:1",
+    "notch_depth:1",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.006974223659105134,
+    "p_relative_l2": 0.012163312512793628,
+    "u_relative_l2": 0.0012693229383241072
+   },
+   "terms": {
+    "case_id": "candidate-003968",
+    "coarse_p_difference": 0.00936119301193551,
+    "coarse_peak_difference": 0.0036507222343332025,
+    "coarse_u_difference": 0.0002723302599460523,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0009573439506559917,
+    "recovery_root_cells": 0.004941675675067739
+   }
+  },
+  {
+   "case_id": "candidate-004081",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.010962825525205526,
+     "projection": 0.003000420824648017
+    },
+    "p_relative_l2": {
+     "discretisation": 0.011242766648826709,
+     "projection": 0.0009232944440978553
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0009290667188503229,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0311947556517804,
+   "reported_slices": [
+    "net_section_factor:1",
+    "notch_sharpness:1"
+   ],
+   "slices": [
+    "all",
+    "width:2",
+    "notch_radius:2",
+    "notch_depth:3",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.016448066062563774,
+    "p_relative_l2": 0.019064916101437093,
+    "u_relative_l2": 0.0017959000338069577
+   },
+   "terms": {
+    "case_id": "candidate-004081",
+    "coarse_p_difference": 0.005706988146612543,
+    "coarse_peak_difference": 0.00556488605340382,
+    "coarse_u_difference": 0.00047160747149762585,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0009232944440978553,
+    "recovery_root_cells": 0.003000420824648017
+   }
+  },
+  {
+   "case_id": "candidate-004194",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.005348425910440665,
+     "projection": 0.002049205329670753
+    },
+    "p_relative_l2": {
+     "discretisation": 0.008410511670144364,
+     "projection": 0.0004789682411217237
+    },
+    "u_relative_l2": {
+     "discretisation": 0.00035502340954773567,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0983498959447942,
+   "reported_slices": [
+    "net_section_factor:0",
+    "notch_sharpness:0"
+   ],
+   "slices": [
+    "all",
+    "width:1",
+    "notch_radius:3",
+    "notch_depth:0",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.0003828183637488008,
+    "p_relative_l2": 0.010529316075975346,
+    "u_relative_l2": 0.0010149533785796438
+   },
+   "terms": {
+    "case_id": "candidate-004194",
+    "coarse_p_difference": 0.004269295264032673,
+    "coarse_peak_difference": 0.002032674770587627,
+    "coarse_u_difference": 0.00018021492870443434,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0004789682411217237,
+    "recovery_root_cells": 0.002049205329670753
+   }
+  },
+  {
+   "case_id": "candidate-004272",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.007244090617446413,
+     "projection": 0.0018680411569041522
+    },
+    "p_relative_l2": {
+     "discretisation": 0.007345988218149856,
+     "projection": 0.0006003118316030374
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0007732536185359465,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0697519691310349,
+   "reported_slices": [
+    "net_section_factor:1",
+    "notch_sharpness:0"
+   ],
+   "slices": [
+    "all",
+    "width:2",
+    "notch_radius:3",
+    "notch_depth:3",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.0049714304314463905,
+    "p_relative_l2": 0.015150051700616268,
+    "u_relative_l2": 0.002005412788622081
+   },
+   "terms": {
+    "case_id": "candidate-004272",
+    "coarse_p_difference": 0.0037289280295176937,
+    "coarse_peak_difference": 0.0036772033591098547,
+    "coarse_u_difference": 0.00039251452717560737,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0006003118316030374,
+    "recovery_root_cells": 0.0018680411569041522
+   }
+  },
+  {
+   "case_id": "candidate-004331",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.009899578336505885,
+     "projection": 0.003282248620256053
+    },
+    "p_relative_l2": {
+     "discretisation": 0.01203854112450548,
+     "projection": 0.0008155971613428694
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0007906348583471861,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0516214671764716,
+   "reported_slices": [
+    "net_section_factor:1",
+    "notch_sharpness:1"
+   ],
+   "slices": [
+    "all",
+    "width:1",
+    "notch_radius:1",
+    "notch_depth:2",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.0074834570226451095,
+    "p_relative_l2": 0.012574979528212646,
+    "u_relative_l2": 0.0008491917651287229
+   },
+   "terms": {
+    "case_id": "candidate-004331",
+    "coarse_p_difference": 0.006110934580967249,
+    "coarse_peak_difference": 0.005025166668277099,
+    "coarse_u_difference": 0.000401337491546795,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0008155971613428694,
+    "recovery_root_cells": 0.003282248620256053
+   }
+  },
+  {
+   "case_id": "candidate-004346",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.010436049202709182,
+     "projection": 0.003998486284562905
+    },
+    "p_relative_l2": {
+     "discretisation": 0.014728352852447474,
+     "projection": 0.0010027812038604178
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0007933646095716825,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.059004738149834,
+   "reported_slices": [
+    "net_section_factor:0",
+    "notch_sharpness:1"
+   ],
+   "slices": [
+    "all",
+    "width:2",
+    "notch_radius:1",
+    "notch_depth:2",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.008084580193757974,
+    "p_relative_l2": 0.014219262931287004,
+    "u_relative_l2": 0.0013340104588611286
+   },
+   "terms": {
+    "case_id": "candidate-004346",
+    "coarse_p_difference": 0.007476321244897195,
+    "coarse_peak_difference": 0.0051270105339381086,
+    "coarse_u_difference": 0.0004027231520668439,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0010027812038604178,
+    "recovery_root_cells": 0.003998486284562905
+   }
+  },
+  {
+   "case_id": "candidate-004395",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.012194349260078471,
+     "projection": 0.002123690315893133
+    },
+    "p_relative_l2": {
+     "discretisation": 0.007895785095185407,
+     "projection": 0.0007069639735305109
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0013697744549506642,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0231064766964173,
+   "reported_slices": [
+    "net_section_factor:2",
+    "notch_sharpness:1"
+   ],
+   "slices": [
+    "all",
+    "width:0",
+    "notch_radius:1",
+    "notch_depth:3",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.02479761088381197,
+    "p_relative_l2": 0.019246593603002043,
+    "u_relative_l2": 0.002983747622393416
+   },
+   "terms": {
+    "case_id": "candidate-004395",
+    "coarse_p_difference": 0.004008012738672796,
+    "coarse_peak_difference": 0.006190025005115975,
+    "coarse_u_difference": 0.000695316982208459,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0007069639735305109,
+    "recovery_root_cells": 0.002123690315893133
+   }
+  },
+  {
+   "case_id": "candidate-004798",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.006721699921174057,
+     "projection": 0.002575363954472819
+    },
+    "p_relative_l2": {
+     "discretisation": 0.010472094669815413,
+     "projection": 0.0005485765486572206
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0003368302836411294,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0543553154196685,
+   "reported_slices": [
+    "net_section_factor:0",
+    "notch_sharpness:0"
+   ],
+   "slices": [
+    "all",
+    "width:1",
+    "notch_radius:3",
+    "notch_depth:0",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.01059064659129581,
+    "p_relative_l2": 0.013318006685296205,
+    "u_relative_l2": 0.0022884098501948467
+   },
+   "terms": {
+    "case_id": "candidate-004798",
+    "coarse_p_difference": 0.005315784096353002,
+    "coarse_peak_difference": 0.0021578086098571372,
+    "coarse_u_difference": 0.0001709798394117408,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0005485765486572206,
+    "recovery_root_cells": 0.002575363954472819
+   }
+  },
+  {
+   "case_id": "candidate-005229",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.023536129501544458,
+     "projection": 0.009017674138522782
+    },
+    "p_relative_l2": {
+     "discretisation": 0.02914012753244189,
+     "projection": 0.0019551329822848794
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0013111593228019003,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0254002987814044,
+   "reported_slices": [
+    "net_section_factor:1",
+    "notch_sharpness:3"
+   ],
+   "slices": [
+    "all",
+    "width:2",
+    "notch_radius:0",
+    "notch_depth:3",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.013727522581282996,
+    "p_relative_l2": 0.020059758973044507,
+    "u_relative_l2": 0.001487273423833907
+   },
+   "terms": {
+    "case_id": "candidate-005229",
+    "coarse_p_difference": 0.014791942909868981,
+    "coarse_peak_difference": 0.009715523632571214,
+    "coarse_u_difference": 0.0006655631080212692,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0019551329822848794,
+    "recovery_root_cells": 0.009017674138522782
+   }
+  },
+  {
+   "case_id": "candidate-005336",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.03522314153197532,
+     "projection": 0.013495456525661042
+    },
+    "p_relative_l2": {
+     "discretisation": 0.043402864802413024,
+     "projection": 0.0019276313417403328
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0012042585561821942,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.055315369081897,
+   "reported_slices": [
+    "net_section_factor:0",
+    "notch_sharpness:0"
+   ],
+   "slices": [
+    "all",
+    "width:3",
+    "notch_radius:0",
+    "notch_depth:0",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.0030141943499219248,
+    "p_relative_l2": 0.03142772042093478,
+    "u_relative_l2": 0.005169336673100148
+   },
+   "terms": {
+    "case_id": "candidate-005336",
+    "coarse_p_difference": 0.022031911067214735,
+    "coarse_peak_difference": 0.006208256887776286,
+    "coarse_u_difference": 0.0006112987594833473,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0019276313417403328,
+    "recovery_root_cells": 0.013495456525661042
+   }
+  },
+  {
+   "case_id": "candidate-005536",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.013215159999637396,
+     "projection": 0.0037692934671716776
+    },
+    "p_relative_l2": {
+     "discretisation": 0.013157508700268031,
+     "projection": 0.000918743559397227
+    },
+    "u_relative_l2": {
+     "discretisation": 0.001003991334617234,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0424211994874357,
+   "reported_slices": [
+    "net_section_factor:1",
+    "notch_sharpness:1"
+   ],
+   "slices": [
+    "all",
+    "width:0",
+    "notch_radius:0",
+    "notch_depth:2",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.010624646261467377,
+    "p_relative_l2": 0.014796118820945607,
+    "u_relative_l2": 0.0010774214046562973
+   },
+   "terms": {
+    "case_id": "candidate-005536",
+    "coarse_p_difference": 0.006678938426531995,
+    "coarse_peak_difference": 0.006708203045501217,
+    "coarse_u_difference": 0.0005096402713793066,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.000918743559397227,
+    "recovery_root_cells": 0.0037692934671716776
+   }
+  },
+  {
+   "case_id": "candidate-005679",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.015049219097008818,
+     "projection": 0.0023810030147202836
+    },
+    "p_relative_l2": {
+     "discretisation": 0.008766261772534046,
+     "projection": 0.0007982574370557162
+    },
+    "u_relative_l2": {
+     "discretisation": 0.001808081868635656,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0223582378715128,
+   "reported_slices": [
+    "net_section_factor:3",
+    "notch_sharpness:2"
+   ],
+   "slices": [
+    "all",
+    "width:0",
+    "notch_radius:1",
+    "notch_depth:3",
+    "nominal_axial_strain:1"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.009306824962639012,
+    "p_relative_l2": 0.02352523370023415,
+    "u_relative_l2": 0.0011025402843132318
+   },
+   "terms": {
+    "case_id": "candidate-005679",
+    "coarse_p_difference": 0.004449879072352308,
+    "coarse_peak_difference": 0.007639197511171989,
+    "coarse_u_difference": 0.000917808055145003,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0007982574370557162,
+    "recovery_root_cells": 0.0023810030147202836
+   }
+  },
+  {
+   "case_id": "candidate-005768",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.021147531455152847,
+     "projection": 0.008102502473238639
+    },
+    "p_relative_l2": {
+     "discretisation": 0.02683840951128277,
+     "projection": 0.0017359439249253613
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0012234792010101339,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0185085890865457,
+   "reported_slices": [
+    "net_section_factor:1",
+    "notch_sharpness:2"
+   ],
+   "slices": [
+    "all",
+    "width:1",
+    "notch_radius:0",
+    "notch_depth:2",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.00812347446920014,
+    "p_relative_l2": 0.021309884148281468,
+    "u_relative_l2": 0.002315205830782896
+   },
+   "terms": {
+    "case_id": "candidate-005768",
+    "coarse_p_difference": 0.013623558127554706,
+    "coarse_peak_difference": 0.009679666855569174,
+    "coarse_u_difference": 0.0006210554319848395,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0017359439249253613,
+    "recovery_root_cells": 0.008102502473238639
+   }
+  },
+  {
+   "case_id": "candidate-006009",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.014480714667730673,
+     "projection": 0.004242105643809931
+    },
+    "p_relative_l2": {
+     "discretisation": 0.014868519528867507,
+     "projection": 0.0010241084474696342
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0010279412403410844,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.023729046477813,
+   "reported_slices": [
+    "net_section_factor:1",
+    "notch_sharpness:1"
+   ],
+   "slices": [
+    "all",
+    "width:0",
+    "notch_radius:0",
+    "notch_depth:2",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.02418684426307268,
+    "p_relative_l2": 0.019094750756062963,
+    "u_relative_l2": 0.0020049994861704814
+   },
+   "terms": {
+    "case_id": "candidate-006009",
+    "coarse_p_difference": 0.007547471842064724,
+    "coarse_peak_difference": 0.007350616582604403,
+    "coarse_u_difference": 0.0005217975839294845,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0010241084474696342,
+    "recovery_root_cells": 0.004242105643809931
+   }
+  },
+  {
+   "case_id": "candidate-006120",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.018075271911838605,
+     "projection": 0.006925391537102915
+    },
+    "p_relative_l2": {
+     "discretisation": 0.024127115114799758,
+     "projection": 0.0016982471810915035
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0011203908560961505,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0225135633455051,
+   "reported_slices": [
+    "net_section_factor:0",
+    "notch_sharpness:1"
+   ],
+   "slices": [
+    "all",
+    "width:3",
+    "notch_radius:1",
+    "notch_depth:3",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.004755541674441479,
+    "p_relative_l2": 0.02533255287963824,
+    "u_relative_l2": 0.005798313043372223
+   },
+   "terms": {
+    "case_id": "candidate-006120",
+    "coarse_p_difference": 0.012247266555735917,
+    "coarse_peak_difference": 0.0073057285581090555,
+    "coarse_u_difference": 0.000568726322891447,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0016982471810915035,
+    "recovery_root_cells": 0.006925391537102915
+   }
+  },
+  {
+   "case_id": "candidate-006165",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.013751587098787155,
+     "projection": 0.004816086891036015
+    },
+    "p_relative_l2": {
+     "discretisation": 0.01698949228208068,
+     "projection": 0.0012904251515561411
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0010346316489849845,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.041836583894611,
+   "reported_slices": [
+    "net_section_factor:1",
+    "notch_sharpness:1"
+   ],
+   "slices": [
+    "all",
+    "width:3",
+    "notch_radius:1",
+    "notch_depth:3",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.03614397231045688,
+    "p_relative_l2": 0.022525281215468772,
+    "u_relative_l2": 0.005232457881515319
+   },
+   "terms": {
+    "case_id": "candidate-006165",
+    "coarse_p_difference": 0.008624107757401361,
+    "coarse_peak_difference": 0.0069805010653741905,
+    "coarse_u_difference": 0.0005251937304492307,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0012904251515561411,
+    "recovery_root_cells": 0.004816086891036015
+   }
+  },
+  {
+   "case_id": "candidate-006226",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.012777562315807574,
+     "projection": 0.0028297012608119
+    },
+    "p_relative_l2": {
+     "discretisation": 0.01031030858264986,
+     "projection": 0.0008618084519359837
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0011375746051303136,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0205739215329188,
+   "reported_slices": [
+    "net_section_factor:1",
+    "notch_sharpness:1"
+   ],
+   "slices": [
+    "all",
+    "width:1",
+    "notch_radius:1",
+    "notch_depth:3",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.00837178062867785,
+    "p_relative_l2": 0.01788535859180049,
+    "u_relative_l2": 0.003101428144613486
+   },
+   "terms": {
+    "case_id": "candidate-006226",
+    "coarse_p_difference": 0.005233659179010081,
+    "coarse_peak_difference": 0.006486072241526687,
+    "coarse_u_difference": 0.000577449038137215,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0008618084519359837,
+    "recovery_root_cells": 0.0028297012608119
+   }
+  },
+  {
+   "case_id": "candidate-006313",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.00714650593169193,
+     "projection": 0.0010638052628396796
+    },
+    "p_relative_l2": {
+     "discretisation": 0.004395599651348828,
+     "projection": 0.0004315917407650918
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0011862957009984188,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0479197162526657,
+   "reported_slices": [
+    "net_section_factor:2",
+    "notch_sharpness:0"
+   ],
+   "slices": [
+    "all",
+    "width:0",
+    "notch_radius:3",
+    "notch_depth:3",
+    "nominal_axial_strain:1"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.0007941044165130183,
+    "p_relative_l2": 0.020376061908231023,
+    "u_relative_l2": 0.004266755374050367
+   },
+   "terms": {
+    "case_id": "candidate-006313",
+    "coarse_p_difference": 0.002231268858552705,
+    "coarse_peak_difference": 0.0036276679856304217,
+    "coarse_u_difference": 0.0006021805588824461,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0004315917407650918,
+    "recovery_root_cells": 0.0010638052628396796
+   }
+  },
+  {
+   "case_id": "candidate-006347",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.009907367085919404,
+     "projection": 0.002307999262475701
+    },
+    "p_relative_l2": {
+     "discretisation": 0.008557072976778454,
+     "projection": 0.0006789405403352885
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0009687641241202579,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0349360574889523,
+   "reported_slices": [
+    "net_section_factor:1",
+    "notch_sharpness:1"
+   ],
+   "slices": [
+    "all",
+    "width:0",
+    "notch_radius:1",
+    "notch_depth:2",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.01660890379545958,
+    "p_relative_l2": 0.014554470612201904,
+    "u_relative_l2": 0.0014409043556515922
+   },
+   "terms": {
+    "case_id": "candidate-006347",
+    "coarse_p_difference": 0.004343691866385002,
+    "coarse_peak_difference": 0.005029120348182438,
+    "coarse_u_difference": 0.0004917584386397248,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0006789405403352885,
+    "recovery_root_cells": 0.002307999262475701
+   }
+  },
+  {
+   "case_id": "candidate-006366",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.007027873587306685,
+     "projection": 0.002692671872531297
+    },
+    "p_relative_l2": {
+     "discretisation": 0.010658232126371235,
+     "projection": 0.0005105455873227074
+    },
+    "u_relative_l2": {
+     "discretisation": 0.00026716885466297047,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.1040210114040587,
+   "reported_slices": [
+    "net_section_factor:0",
+    "notch_sharpness:0"
+   ],
+   "slices": [
+    "all",
+    "width:2",
+    "notch_radius:3",
+    "notch_depth:0",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.007596591655689923,
+    "p_relative_l2": 0.010542423490195464,
+    "u_relative_l2": 0.0007769462842538054
+   },
+   "terms": {
+    "case_id": "candidate-006366",
+    "coarse_p_difference": 0.005410270114909257,
+    "coarse_peak_difference": 0.00177627292431013,
+    "coarse_u_difference": 0.00013561870795074642,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0005105455873227074,
+    "recovery_root_cells": 0.002692671872531297
+   }
+  },
+  {
+   "case_id": "candidate-006862",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.00826435113572986,
+     "projection": 0.0021982784953365614
+    },
+    "p_relative_l2": {
+     "discretisation": 0.008507382965474755,
+     "projection": 0.0006767286903889187
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0008036272624290822,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0342697583973721,
+   "reported_slices": [
+    "net_section_factor:1",
+    "notch_sharpness:0"
+   ],
+   "slices": [
+    "all",
+    "width:1",
+    "notch_radius:2",
+    "notch_depth:2",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.00010131678112556892,
+    "p_relative_l2": 0.015116062764858803,
+    "u_relative_l2": 0.001703240166466601
+   },
+   "terms": {
+    "case_id": "candidate-006862",
+    "coarse_p_difference": 0.004318468510393277,
+    "coarse_peak_difference": 0.004195102099355258,
+    "coarse_u_difference": 0.00040793262052237676,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0006767286903889187,
+    "recovery_root_cells": 0.0021982784953365614
+   }
+  },
+  {
+   "case_id": "candidate-006936",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.010737417066271732,
+     "projection": 0.0027554295323375115
+    },
+    "p_relative_l2": {
+     "discretisation": 0.01004663964657556,
+     "projection": 0.0007842758255582747
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0009735902600414039,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0468970681790313,
+   "reported_slices": [
+    "net_section_factor:1",
+    "notch_sharpness:1"
+   ],
+   "slices": [
+    "all",
+    "width:1",
+    "notch_radius:1",
+    "notch_depth:3",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.015902514456852087,
+    "p_relative_l2": 0.014593995790793674,
+    "u_relative_l2": 0.0012429130840963488
+   },
+   "terms": {
+    "case_id": "candidate-006936",
+    "coarse_p_difference": 0.0050998170794799794,
+    "coarse_peak_difference": 0.005450465515873975,
+    "coarse_u_difference": 0.0004942082538281238,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0007842758255582747,
+    "recovery_root_cells": 0.0027554295323375115
+   }
+  },
+  {
+   "case_id": "candidate-007024",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.011027639933828095,
+     "projection": 0.002158718925499967
+    },
+    "p_relative_l2": {
+     "discretisation": 0.007879933613151677,
+     "projection": 0.0006720139780716327
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0012148305394246164,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.038254405702089,
+   "reported_slices": [
+    "net_section_factor:2",
+    "notch_sharpness:1"
+   ],
+   "slices": [
+    "all",
+    "width:0",
+    "notch_radius:1",
+    "notch_depth:3",
+    "nominal_axial_strain:2"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.008582717553365243,
+    "p_relative_l2": 0.017159770380357826,
+    "u_relative_l2": 0.0018245629104619136
+   },
+   "terms": {
+    "case_id": "candidate-007024",
+    "coarse_p_difference": 0.003999966301092222,
+    "coarse_peak_difference": 0.005597786768440658,
+    "coarse_u_difference": 0.0006166652484388916,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0006720139780716327,
+    "recovery_root_cells": 0.002158718925499967
+   }
+  },
+  {
+   "case_id": "candidate-007086",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.009636711229081902,
+     "projection": 0.0015525353909402893
+    },
+    "p_relative_l2": {
+     "discretisation": 0.006164389343748645,
+     "projection": 0.0005859542500797523
+    },
+    "u_relative_l2": {
+     "discretisation": 0.00121352077098209,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0284913929764428,
+   "reported_slices": [
+    "net_section_factor:2",
+    "notch_sharpness:1"
+   ],
+   "slices": [
+    "all",
+    "width:0",
+    "notch_radius:3",
+    "notch_depth:3",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.02512470913028547,
+    "p_relative_l2": 0.019070486385499574,
+    "u_relative_l2": 0.0022052446838751265
+   },
+   "terms": {
+    "case_id": "candidate-007086",
+    "coarse_p_difference": 0.0031291316465729166,
+    "coarse_peak_difference": 0.004891731588366447,
+    "coarse_u_difference": 0.000616000391361467,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0005859542500797523,
+    "recovery_root_cells": 0.0015525353909402893
+   }
+  },
+  {
+   "case_id": "candidate-007243",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.010052153580566787,
+     "projection": 0.0038513998392976194
+    },
+    "p_relative_l2": {
+     "discretisation": 0.01466479856441383,
+     "projection": 0.0007956896309196212
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0005350045242555653,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0358097839299756,
+   "reported_slices": [
+    "net_section_factor:0",
+    "notch_sharpness:0"
+   ],
+   "slices": [
+    "all",
+    "width:0",
+    "notch_radius:1",
+    "notch_depth:0",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.02108909305559357,
+    "p_relative_l2": 0.017837656369929126,
+    "u_relative_l2": 0.0033468196146676597
+   },
+   "terms": {
+    "case_id": "candidate-007243",
+    "coarse_p_difference": 0.007444060184981639,
+    "coarse_peak_difference": 0.004033076969953742,
+    "coarse_u_difference": 0.00027157590063734284,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0007956896309196212,
+    "recovery_root_cells": 0.0038513998392976194
+   }
+  },
+  {
+   "case_id": "candidate-007386",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.008900362257430783,
+     "projection": 0.0034101004817742465
+    },
+    "p_relative_l2": {
+     "discretisation": 0.013480153759953801,
+     "projection": 0.0007205501771360271
+    },
+    "u_relative_l2": {
+     "discretisation": 0.00040462155303235095,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.056973738990221,
+   "reported_slices": [
+    "net_section_factor:0",
+    "notch_sharpness:0"
+   ],
+   "slices": [
+    "all",
+    "width:3",
+    "notch_radius:3",
+    "notch_depth:0",
+    "nominal_axial_strain:0"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.02030283819536912,
+    "p_relative_l2": 0.018930025584742768,
+    "u_relative_l2": 0.003980096235183656
+   },
+   "terms": {
+    "case_id": "candidate-007386",
+    "coarse_p_difference": 0.0068427176446466,
+    "coarse_peak_difference": 0.0021209506823002245,
+    "coarse_u_difference": 0.00020539165128545734,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0007205501771360271,
+    "recovery_root_cells": 0.0034101004817742465
+   }
+  },
+  {
+   "case_id": "candidate-007525",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.01013777188431877,
+     "projection": 0.002354189167512701
+    },
+    "p_relative_l2": {
+     "discretisation": 0.008541706583857202,
+     "projection": 0.0006674276926476931
+    },
+    "u_relative_l2": {
+     "discretisation": 0.001012964799610395,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0495337979272084,
+   "reported_slices": [
+    "net_section_factor:1",
+    "notch_sharpness:1"
+   ],
+   "slices": [
+    "all",
+    "width:0",
+    "notch_radius:1",
+    "notch_depth:2",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.0027564553068558633,
+    "p_relative_l2": 0.015027117841659164,
+    "u_relative_l2": 0.0014813479233267755
+   },
+   "terms": {
+    "case_id": "candidate-007525",
+    "coarse_p_difference": 0.00433589166693259,
+    "coarse_peak_difference": 0.005146077098638969,
+    "coarse_u_difference": 0.0005141953297514695,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0006674276926476931,
+    "recovery_root_cells": 0.002354189167512701
+   }
+  },
+  {
+   "case_id": "candidate-007646",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.011576336244846856,
+     "projection": 0.002096550861175302
+    },
+    "p_relative_l2": {
+     "discretisation": 0.007709721704173028,
+     "projection": 0.0006917343794053009
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0013439305285302982,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0432555995374992,
+   "reported_slices": [
+    "net_section_factor:2",
+    "notch_sharpness:1"
+   ],
+   "slices": [
+    "all",
+    "width:0",
+    "notch_radius:1",
+    "notch_depth:3",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.029745598607102564,
+    "p_relative_l2": 0.017963085070313474,
+    "u_relative_l2": 0.003246261216887826
+   },
+   "terms": {
+    "case_id": "candidate-007646",
+    "coarse_p_difference": 0.0039135643168391005,
+    "coarse_peak_difference": 0.005876312814643074,
+    "coarse_u_difference": 0.0006821982378326387,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0006917343794053009,
+    "recovery_root_cells": 0.002096550861175302
+   }
+  },
+  {
+   "case_id": "candidate-007652",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.019494281938560155,
+     "projection": 0.00746907353967822
+    },
+    "p_relative_l2": {
+     "discretisation": 0.026682488075500124,
+     "projection": 0.0012291873723044124
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0006016685156103818,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0534638773523546,
+   "reported_slices": [
+    "net_section_factor:0",
+    "notch_sharpness:0"
+   ],
+   "slices": [
+    "all",
+    "width:0",
+    "notch_radius:0",
+    "notch_depth:0",
+    "nominal_axial_strain:1"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.0018021991517419894,
+    "p_relative_l2": 0.019522987826777926,
+    "u_relative_l2": 0.00149205940139631
+   },
+   "terms": {
+    "case_id": "candidate-007652",
+    "coarse_p_difference": 0.0135444101906092,
+    "coarse_peak_difference": 0.0036543874715897627,
+    "coarse_u_difference": 0.00030541549015755426,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0012291873723044124,
+    "recovery_root_cells": 0.00746907353967822
+   }
+  },
+  {
+   "case_id": "candidate-008040",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.011063908411911759,
+     "projection": 0.004239045368548567
+    },
+    "p_relative_l2": {
+     "discretisation": 0.016304678152729183,
+     "projection": 0.0008546556142791654
+    },
+    "u_relative_l2": {
+     "discretisation": 0.00046689247920991096,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0721523404634188,
+   "reported_slices": [
+    "net_section_factor:0",
+    "notch_sharpness:0"
+   ],
+   "slices": [
+    "all",
+    "width:3",
+    "notch_radius:2",
+    "notch_depth:0",
+    "nominal_axial_strain:1"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.024984925908217954,
+    "p_relative_l2": 0.017167822647780443,
+    "u_relative_l2": 0.0033293889798205138
+   },
+   "terms": {
+    "case_id": "candidate-008040",
+    "coarse_p_difference": 0.008276486371943748,
+    "coarse_peak_difference": 0.0024103947395534083,
+    "coarse_u_difference": 0.00023700125848218832,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0008546556142791654,
+    "recovery_root_cells": 0.004239045368548567
+   }
+  },
+  {
+   "case_id": "candidate-008173",
+   "components": {
+    "absolute_peak_error": {
+     "discretisation": 0.010658629251428301,
+     "projection": 0.004083765996715824
+    },
+    "p_relative_l2": {
+     "discretisation": 0.015118507774582943,
+     "projection": 0.0008593284118422645
+    },
+    "u_relative_l2": {
+     "discretisation": 0.0006093614584243485,
+     "projection": 0.0
+    }
+   },
+   "minimum_vertex_determinant": 1.0641049130758036,
+   "reported_slices": [
+    "net_section_factor:0",
+    "notch_sharpness:1"
+   ],
+   "slices": [
+    "all",
+    "width:0",
+    "notch_radius:0",
+    "notch_depth:1",
+    "nominal_axial_strain:3"
+   ],
+   "surrogate": {
+    "absolute_peak_error": 0.00971561590976361,
+    "p_relative_l2": 0.012987696835898512,
+    "u_relative_l2": 0.0006277346602695813
+   },
+   "terms": {
+    "case_id": "candidate-008173",
+    "coarse_p_difference": 0.007674369428722306,
+    "coarse_peak_difference": 0.004517195169293751,
+    "coarse_u_difference": 0.0003093205372712429,
+    "coarse_vertex_count": 225,
+    "recovery_all_cells": 0.0008593284118422645,
+    "recovery_root_cells": 0.004083765996715824
+   }
+  }
+ ],
+ "components": {
+  "absolute_peak_error.discretisation": {
+   "maximum": 0.03934525228918037,
+   "median": 0.010876776353076389
+  },
+  "absolute_peak_error.projection": {
+   "maximum": 0.015074809306199376,
+   "median": 0.0033069010319422714
+  },
+  "absolute_peak_error.surrogate": {
+   "maximum": 0.08499151332532245,
+   "median": 0.010095366257636441
+  },
+  "p_relative_l2.discretisation": {
+   "maximum": 0.04794871428441307,
+   "median": 0.012245082555056328
+  },
+  "p_relative_l2.projection": {
+   "maximum": 0.0028594769714606525,
+   "median": 0.0008517415340822755
+  },
+  "p_relative_l2.surrogate": {
+   "maximum": 0.045062696882545425,
+   "median": 0.017153810483459042
+  },
+  "u_relative_l2.discretisation": {
+   "maximum": 0.001808081868635656,
+   "median": 0.0008500852096462449
+  },
+  "u_relative_l2.projection": {
+   "maximum": 0.0,
+   "median": 0.0
+  },
+  "u_relative_l2.surrogate": {
+   "maximum": 0.00950872526775819,
+   "median": 0.0020257596849172104
+  }
+ },
+ "confidence": {
+  "calibration": {
+   "in_sample_coverage": 0.8998349339735895,
+   "quantile": 0.9,
+   "upper_edges": [
+    0.0017335531585337572,
+    0.0022419811599181188,
+    0.002690068667409463,
+    0.0031098151448029267,
+    0.003524881260400408,
+    0.003942799753922747,
+    0.004384810051704121,
+    0.004823241862963243,
+    0.0053045608192885466,
+    0.005858704791734845,
+    0.006421278961271513,
+    0.007080383401392702,
+    0.007819539603486447,
+    0.008681140376756673,
+    0.009694842289141694,
+    0.010998082273841699,
+    0.012699539328485453,
+    0.015188514202070869,
+    0.020116523601475946,
+    0.18505684891347396
+   ],
+   "values": [
+    0.0013738289518307216,
+    0.0015399434833132783,
+    0.00167446826690759,
+    0.0018043808387388943,
+    0.0018804240527572247,
+    0.0019840663255810817,
+    0.0019840663255810817,
+    0.002089895083586313,
+    0.0022319926429616222,
+    0.002318651319675958,
+    0.002503798197729342,
+    0.002596706538727709,
+    0.002752861701804888,
+    0.002952126377568088,
+    0.003123902985071132,
+    0.003458789413101966,
+    0.0038879148942881137,
+    0.004439460706584959,
+    0.005652773198208111,
+    0.011787010444440499
+   ]
+  },
+  "indicator": "patch-mean",
+  "pooled_spearman": 0.6251770902953876,
+  "vertex_count": 53312
+ },
+ "evidence_role": "DEVELOPMENT",
+ "latency": {
+  "case_count": 8,
+  "fem_median_seconds": 99.51657470300052,
+  "fem_reproduces_stored_energy": [
+   true,
+   true,
+   true,
+   true,
+   true,
+   true,
+   true,
+   true
+  ],
+  "fem_seconds": [
+   98.59140518000095,
+   92.20893626100042,
+   96.72790239800088,
+   106.43006668399903,
+   100.44174422600008,
+   96.96995880199938,
+   103.48825458099964,
+   100.6923693789995
+  ],
+  "model_u_and_p_median_seconds": 0.07058140925,
+  "model_u_and_p_p99_seconds": 0.10748024540999998,
+  "model_u_median_seconds": 0.027666947750000004,
+  "query_set": "all mesh vertices of each case (833 points)",
+  "speedup_target": 100.0,
+  "speedup_u_and_p": 1409.9544874559233,
+  "threads": 1
+ },
+ "protocol_sha256": "6d544d829c015172f6b16d5dcc78e19205969c69595223826a513bec4813f307"
+}
