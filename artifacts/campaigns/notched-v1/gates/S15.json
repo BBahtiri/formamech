@@ -2,8 +2,8 @@
   "gate_id": "G15",
   "step": "S15",
   "campaign_id": "notched-v1",
-  "commit": "1e7908b2f00807f8a4c263dfabd79d1b5e47502d",
-  "timestamp_utc": "2026-10-06T08:10:33Z",
+  "commit": "3d5e5c50e5620901b0d071e2b729cd79c646c94c",
+  "timestamp_utc": "2026-10-06T14:26:27Z",
   "checks": [
     {
       "id": "G15.fresh-install",
@@ -32,7 +32,7 @@
           "u": 0.0
         },
         "passed": true,
-        "prediction_claim_level": "NOT_VERIFIED",
+        "prediction_claim_level": "DEVELOPMENT_VERIFIED",
         "prediction_has_every_field": true,
         "prediction_verdict": "IN_DOMAIN",
         "python": "3.11",
@@ -46,7 +46,7 @@
           "torch<3,>=2.6; extra == 'runtime'"
         ],
         "wheel": "piginot-0.1.0-py3-none-any.whl",
-        "wheel_sha256": "6e94c83167381a6b7046cc7c60d619211ea41cfc3ef9b11a4b21ef735ceca8d5",
+        "wheel_sha256": "5211183bb671600befd227bc9e4807c655fa3f84274fa88c082cff9336965833",
         "package_count": 33
       },
       "threshold": "bundle loads and predicts in a clean venv with runtime deps only",
@@ -56,7 +56,7 @@
       "id": "G15.fields",
       "status": "PASS",
       "measured": {
-        "claim_level": "NOT_VERIFIED",
+        "claim_level": "DEVELOPMENT_VERIFIED",
         "fast_fields_equal": true,
         "finite": true,
         "passed": true,
@@ -183,7 +183,7 @@
       "measured": {
         "detected": 50,
         "files_listed": 7,
-        "manifest_sha256": "9b6cc8be68eb989231da8b6f712d1d017487a57f200790561b982fb8f937c921",
+        "manifest_sha256": "3749f4be4761a55582dd07f90e3cc5950b8231357162366d79dc47463dddcc99",
         "missed": [],
         "passed": true,
         "reason_codes": {
@@ -228,14 +228,14 @@
     }
   ],
   "bundle": "notched-v1-cp-freeze",
-  "bundle_manifest_sha256": "9b6cc8be68eb989231da8b6f712d1d017487a57f200790561b982fb8f937c921",
-  "claim_level_served": "NOT_VERIFIED",
+  "bundle_manifest_sha256": "3749f4be4761a55582dd07f90e3cc5950b8231357162366d79dc47463dddcc99",
+  "claim_level_served": "DEVELOPMENT_VERIFIED",
   "evidence": {
-    "artifacts/campaigns/notched-v1/S15-VALIDATION.json": "3eef1343ba795c28f54cc02a24a59d7a1cb45863f793bc41dde9f6946b6f69c5"
+    "artifacts/campaigns/notched-v1/S15-VALIDATION.json": "373cc623113b4390411ad39ee3bf1270c08475e6bd1efc90095fb40372640b59"
   },
   "test_evidence": {
     "command": "pytest tests/bundle tests/test_s15_anti_scope.py",
-    "result": "77 passed in 28.69s"
+    "result": "77 passed in 24.09s"
   },
   "verdict": "PASS",
   "verdict_reason": "every required check PASS"

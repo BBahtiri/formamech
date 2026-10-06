@@ -50,7 +50,7 @@
   "notched-v1": {
    "bundle": {
     "bundle": "notched-v1-cp-freeze",
-    "bundle_manifest_sha256": "9b6cc8be68eb989231da8b6f712d1d017487a57f200790561b982fb8f937c921",
+    "bundle_manifest_sha256": "3749f4be4761a55582dd07f90e3cc5950b8231357162366d79dc47463dddcc99",
     "mesh_mutation_fixtures_without_request_form": 36,
     "missed": [],
     "refused_with_expected_code": 180,

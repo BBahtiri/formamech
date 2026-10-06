@@ -58,7 +58,7 @@
    "typing-extensions==4.16.0"
   ],
   "passed": true,
-  "prediction_claim_level": "NOT_VERIFIED",
+  "prediction_claim_level": "DEVELOPMENT_VERIFIED",
   "prediction_has_every_field": true,
   "prediction_verdict": "IN_DOMAIN",
   "python": "3.11",
@@ -72,13 +72,13 @@
    "torch<3,>=2.6; extra == 'runtime'"
   ],
   "wheel": "piginot-0.1.0-py3-none-any.whl",
-  "wheel_sha256": "6e94c83167381a6b7046cc7c60d619211ea41cfc3ef9b11a4b21ef735ceca8d5"
+  "wheel_sha256": "5211183bb671600befd227bc9e4807c655fa3f84274fa88c082cff9336965833"
  },
  "measurements": {
   "bundle": "/home/claude/runs/s15/notched-v1-bundle",
   "bundle_name": "notched-v1-cp-freeze",
   "fields": {
-   "claim_level": "NOT_VERIFIED",
+   "claim_level": "DEVELOPMENT_VERIFIED",
    "fast_fields_equal": true,
    "finite": true,
    "passed": true,
@@ -124,7 +124,7 @@
   "manifest": {
    "detected": 50,
    "files_listed": 7,
-   "manifest_sha256": "9b6cc8be68eb989231da8b6f712d1d017487a57f200790561b982fb8f937c921",
+   "manifest_sha256": "3749f4be4761a55582dd07f90e3cc5950b8231357162366d79dc47463dddcc99",
    "missed": [],
    "passed": true,
    "reason_codes": {
