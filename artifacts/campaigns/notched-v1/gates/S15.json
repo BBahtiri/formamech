@@ -1,0 +1,242 @@
+{
+  "gate_id": "G15",
+  "step": "S15",
+  "campaign_id": "notched-v1",
+  "commit": "1e7908b2f00807f8a4c263dfabd79d1b5e47502d",
+  "timestamp_utc": "2026-10-06T08:10:33Z",
+  "checks": [
+    {
+      "id": "G15.fresh-install",
+      "status": "PASS",
+      "measured": {
+        "blocked_import_prediction_exit_code": 0,
+        "blocked_modules_imported": 0,
+        "exit_codes": {
+          "bundle verify": 0,
+          "inspect": 0,
+          "predict": 0,
+          "predict (refused)": 2
+        },
+        "fem_only_packages_present_transitively": [
+          "sympy"
+        ],
+        "fem_only_packages_required": [],
+        "imported_from_installed_wheel": true,
+        "limitations_present": true,
+        "max_abs_difference_to_repository_environment": {
+          "F33": 0.0,
+          "F_2D": 0.0,
+          "J_3D": 0.0,
+          "P_served": 0.0,
+          "sigma": 0.0,
+          "u": 0.0
+        },
+        "passed": true,
+        "prediction_claim_level": "NOT_VERIFIED",
+        "prediction_has_every_field": true,
+        "prediction_verdict": "IN_DOMAIN",
+        "python": "3.11",
+        "refused_reason_codes": [
+          "PARAMETER_OUT_OF_BOUNDS"
+        ],
+        "runtime_requirements": [
+          "rfc8785<0.2,>=0.1.4",
+          "numpy<2.3,>=1.26; extra == 'runtime'",
+          "safetensors<1,>=0.8; extra == 'runtime'",
+          "torch<3,>=2.6; extra == 'runtime'"
+        ],
+        "wheel": "piginot-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "6e94c83167381a6b7046cc7c60d619211ea41cfc3ef9b11a4b21ef735ceca8d5",
+        "package_count": 33
+      },
+      "threshold": "bundle loads and predicts in a clean venv with runtime deps only",
+      "comparison": "all"
+    },
+    {
+      "id": "G15.fields",
+      "status": "PASS",
+      "measured": {
+        "claim_level": "NOT_VERIFIED",
+        "fast_fields_equal": true,
+        "finite": true,
+        "passed": true,
+        "present": {
+          "claim_level": true,
+          "confidence_at_queries": true,
+          "confidence_at_vertices": true,
+          "fields_at_queries": true,
+          "fields_at_vertices": true,
+          "identities": true,
+          "in_domain_verdict": true,
+          "limitations": true,
+          "qois": true,
+          "reason_codes": true,
+          "units": true
+        },
+        "qois": [
+          {
+            "location": [
+              0.35355339059327373,
+              8.015597888962231
+            ],
+            "name": "root_peak_first_piola_frobenius",
+            "unit": "MPa",
+            "value": 230.09629792791674,
+            "vertex": 33
+          }
+        ],
+        "query_count": 5,
+        "stress_authority": "constitutive-plane-stress-neo-hookean",
+        "vertex_count": 833,
+        "reproduction": {
+          "cases": [
+            {
+              "P_bitwise_equal": true,
+              "case_id": "candidate-000025",
+              "indicator_bitwise_equal": true,
+              "mesh_id_equal": true,
+              "u_bitwise_equal": true
+            },
+            {
+              "P_bitwise_equal": true,
+              "case_id": "candidate-000153",
+              "mesh_id_equal": true,
+              "u_bitwise_equal": true
+            },
+            {
+              "P_bitwise_equal": true,
+              "case_id": "candidate-000386",
+              "mesh_id_equal": true,
+              "u_bitwise_equal": true
+            },
+            {
+              "P_bitwise_equal": true,
+              "case_id": "candidate-000682",
+              "mesh_id_equal": true,
+              "u_bitwise_equal": true
+            },
+            {
+              "P_bitwise_equal": true,
+              "case_id": "candidate-000733",
+              "mesh_id_equal": true,
+              "u_bitwise_equal": true
+            },
+            {
+              "P_bitwise_equal": true,
+              "case_id": "candidate-000832",
+              "mesh_id_equal": true,
+              "u_bitwise_equal": true
+            },
+            {
+              "P_bitwise_equal": true,
+              "case_id": "candidate-001111",
+              "mesh_id_equal": true,
+              "u_bitwise_equal": true
+            },
+            {
+              "P_bitwise_equal": true,
+              "case_id": "candidate-001370",
+              "mesh_id_equal": true,
+              "u_bitwise_equal": true
+            }
+          ],
+          "passed": true
+        }
+      },
+      "threshold": "predict returns u, P_served, F_2D, F33, J_3D, sigma, QoIs, units, identities, in-domain verdict, reason codes, claim level, confidence",
+      "comparison": "all"
+    },
+    {
+      "id": "G15.substitution",
+      "status": "PASS",
+      "measured": {
+        "architecture_authority": "constitutive-plane-stress-neo-hookean",
+        "declared_served_stress": "constitutive-plane-stress-neo-hookean",
+        "p_material_reported_separately": true,
+        "passed": true,
+        "prediction_stress_authority": "constitutive-plane-stress-neo-hookean",
+        "resigned_other_authority_refused_with": [
+          "BUNDLE_STRESS_AUTHORITY_MISMATCH"
+        ]
+      },
+      "threshold": "P_material is never silently served in place of P_served",
+      "comparison": "all"
+    },
+    {
+      "id": "G15.refuse",
+      "status": "PASS",
+      "measured": {
+        "false_refusals": [],
+        "fixtures_refused_with_expected_code": 180,
+        "fixtures_tested": 180,
+        "in_domain_cases": 700,
+        "mesh_mutation_fixtures_not_applicable": 36,
+        "missed": [],
+        "passed": true
+      },
+      "threshold": "out-of-envelope requests refuse with a reason code",
+      "comparison": "all"
+    },
+    {
+      "id": "G15.manifest",
+      "status": "PASS",
+      "measured": {
+        "detected": 50,
+        "files_listed": 7,
+        "manifest_sha256": "9b6cc8be68eb989231da8b6f712d1d017487a57f200790561b982fb8f937c921",
+        "missed": [],
+        "passed": true,
+        "reason_codes": {
+          "BUNDLE_FILE_HASH_MISMATCH": 35,
+          "BUNDLE_FILE_MISSING": 7,
+          "BUNDLE_FILE_SIZE_MISMATCH": 7,
+          "BUNDLE_MANIFEST_HASH_MISMATCH": 2,
+          "BUNDLE_MANIFEST_INVALID": 3,
+          "BUNDLE_MANIFEST_MISSING": 1,
+          "BUNDLE_UNLISTED_FILE": 1,
+          "BUNDLE_UNSAFE_PATH": 1
+        },
+        "tamper_cases": 50
+      },
+      "threshold": "the manifest hash closes over every contained file; tampering with any byte is detected",
+      "comparison": "all"
+    },
+    {
+      "id": "G15.limitations",
+      "status": "PASS",
+      "measured": {
+        "passed": true,
+        "reports": {
+          "bundle refused (CLI)": true,
+          "bundle report/limitations.json": true,
+          "inspect (CLI)": true,
+          "predict (in domain)": true,
+          "predict (refused, CLI)": true
+        }
+      },
+      "threshold": "required limitation paragraph present in every report",
+      "comparison": "all"
+    },
+    {
+      "id": "G15.coverage",
+      "status": "PASS",
+      "measured": {
+        "line_and_branch_coverage_percent": 97.67
+      },
+      "threshold": ">= 85%",
+      "comparison": "all"
+    }
+  ],
+  "bundle": "notched-v1-cp-freeze",
+  "bundle_manifest_sha256": "9b6cc8be68eb989231da8b6f712d1d017487a57f200790561b982fb8f937c921",
+  "claim_level_served": "NOT_VERIFIED",
+  "evidence": {
+    "artifacts/campaigns/notched-v1/S15-VALIDATION.json": "3eef1343ba795c28f54cc02a24a59d7a1cb45863f793bc41dde9f6946b6f69c5"
+  },
+  "test_evidence": {
+    "command": "pytest tests/bundle tests/test_s15_anti_scope.py",
+    "result": "77 passed in 28.69s"
+  },
+  "verdict": "PASS",
+  "verdict_reason": "every required check PASS"
+}
