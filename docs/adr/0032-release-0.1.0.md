@@ -50,8 +50,13 @@ confirm every sentence is true of the code as built.
    every adapted component. The shipped operators re-implement the author's MIT
    repositories, and no upstream line is copied. The five GINOT-derived spike
    modules are not licensed for redistribution, so they leave the tree. They
-   are pinned and fetched on demand. Rewriting the Git history that still holds
-   them is left to the owner.
+   are pinned and fetched on demand. At the owner's request they were also
+   removed from the whole Git history (`git filter-repo`). Evidence written
+   before the rewrite keeps its original commit ids, which resolve through
+   `artifacts/release/HISTORY-REWRITE.json`. The signed notched S14 protocol
+   freezes `campaigns/notched_v1/s13_close.py`, so that file is not changed:
+   re-running the notched G13 lineage check reports the pre-rewrite revisions
+   as absent. The recorded G13 PASS stands.
 5. **Naming.** The README states that the name PI-GINOT does not claim a
    faithful reproduction of GNOT or GINO, and gives the served
    `architecture_id`, `pi-ginot-energy-parametric-film-v1`.

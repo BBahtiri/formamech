@@ -254,9 +254,14 @@ Release 0.1.0 (S18, [ADR 0032](adr/0032-release-0.1.0.md)) carries these limits:
 - Bundles are not part of the Python distributions; they are distributed
   separately.
 - The S1 spike needs five third-party GINOT modules that this repository does
-  not redistribute. They are fetched from a pinned commit, and the Git history
-  before 0.1.0 still contains them
+  not redistribute. They are fetched from a pinned commit
   ([upstream sources](adr/upstream-sources.md)).
+- The Git history was rewritten on 2026-10-06 to remove those modules from
+  every commit. Evidence written before then names the original commit ids;
+  they resolve through `artifacts/release/HISTORY-REWRITE.json`, and the
+  rewritten commits no longer carry the original commit signatures. Copies of
+  the old history (clones, forks, caches) are outside this repository's
+  control.
 
 The S10 production run recorded zero natural FEM failures. Failed-case visibility is
 therefore exercised by one explicitly non-production canary through the same role

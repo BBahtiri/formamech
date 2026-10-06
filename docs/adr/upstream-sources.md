@@ -83,10 +83,12 @@ PI-GINOT-DogBone implementation for the S1 spike.
 `fetch_upstream` writes nothing unless every file matches its pin. With the
 files fetched, the spike's own digest test passes as before.
 
-These files were committed before 0.1.0, so the Git history up to commit
-`2ea1ed6` still contains them. Removing them from history requires rewriting
-the published repository. That step is the owner's decision and is not part
-of this release.
+The owner had them removed from the whole Git history as well (2026-10-06,
+`git filter-repo --invert-paths`). No commit reaches the five files or their
+blobs. Every commit after `6f5f0cb` was rewritten, and no other file changed.
+`artifacts/release/HISTORY-REWRITE.json` maps the original commit ids, which
+evidence written before the rewrite still names, to the rewritten ones
+(`campaigns/history.py`).
 
 ## 3. Runtime dependencies
 

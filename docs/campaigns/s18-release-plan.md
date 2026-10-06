@@ -36,6 +36,13 @@
   has no licence. They are pinned in `THIRD_PARTY.json`, and
   `python -m experiments.spike.fetch_upstream` fetches them. With the modules
   fetched, the spike's own pin test passes as before.
+- **History.** At the owner's request the five modules were also removed from
+  the whole Git history with `git filter-repo` (243 commits rewritten after
+  `6f5f0cb`; `main` and `codex/s0-foundation` unchanged; trees otherwise
+  byte-identical). `artifacts/release/HISTORY-REWRITE.json` maps the original
+  ids that earlier evidence records, and `campaigns/history.py` resolves them
+  for the G17 S16 base, the benchmark replay and the S13c lineage check. The
+  owner force-pushes the rewritten branches.
 - **Distributions.** The wheel holds `piginot` only. The sdist holds the
   package, licence, README, citation, changelog, `pyproject.toml` and
   `uv.lock`. Hatchling is pinned below 1.30 so both carry metadata 2.4, and

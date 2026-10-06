@@ -62,6 +62,10 @@ record the computed results alongside.
   are pinned in `experiments/spike/upstream_pi_ginot/THIRD_PARTY.json` and
   fetched with `python -m experiments.spike.fetch_upstream`
   ([upstream sources](docs/adr/upstream-sources.md)).
+- The Git history is rewritten to remove the same modules from every commit
+  after `6f5f0cb`. `artifacts/release/HISTORY-REWRITE.json` maps the original
+  commit ids recorded in earlier evidence to the rewritten ones, and
+  `campaigns/history.py` resolves them.
 - `uv.lock` is regenerated; it had not been updated for the S15 `runtime`
   extra.
 - The sdist holds the package, licence, README, citation, changelog,
