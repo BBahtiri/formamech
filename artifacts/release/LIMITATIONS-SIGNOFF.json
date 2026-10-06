@@ -1,0 +1,11 @@
+{
+ "also_decided": "ADR 0023 (S15-D1 to D5), ADR 0024 (S16-D1 to D5) and ADR 0025 decisions 2-6 and 9-11 accepted as implemented",
+ "confirmed": true,
+ "decision": "Every sentence of the shipped docs/limitations.md is true of the code as built (STEPS-v1.0 \u00a7S18 human sign-off).",
+ "limitations_path": "docs/limitations.md",
+ "limitations_sha256": "05a4046a3e06a3375364de08262a4752afe98149f3f76a1f4c786292751b4ee7",
+ "recorded_from": "the decision owner's answer in the S18 session chat ('I confirm, sign off'), after reading the page as sent for review",
+ "release": "0.1.0",
+ "signed_off_by": "Betim Bahtiri",
+ "signed_off_utc": "2026-10-06T16:23:13Z"
+}

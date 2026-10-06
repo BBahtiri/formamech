@@ -1,7 +1,7 @@
 # S18 plan — release 0.1.0
 
-- Status: In progress. G18 waits for the TestPyPI run, the `v0.1.0` tag and
-  the decision owner's sign-off of `limitations.md`.
+- Status: In progress. The decision owner signed off `limitations.md` on
+  2026-10-06. G18 waits for the `v0.1.0` tag and the TestPyPI run.
 - Date: 2026-10-06
 - Base: `codex/s17-examples` (G17 PASS)
 - Gate: `G18` (`STEPS-v1.0.md` §S18, ⚑ human sign-off)
@@ -66,8 +66,8 @@
 
 ## 3. The owner's steps
 
-1. **Sign off `docs/limitations.md`** (⚑): confirm that every sentence is true
-   of the code as built.
+1. ~~Sign off `docs/limitations.md`~~ — done on 2026-10-06
+   (`artifacts/release/LIMITATIONS-SIGNOFF.json`).
 2. **TestPyPI token.** Create a TestPyPI API token and add it to the GitHub
    repository as the Actions secret `TEST_PYPI_API_TOKEN`.
 3. **Push** `codex/s18-release` and the tag `v0.1.0`. The tag starts the

@@ -1,8 +1,8 @@
 # ADR 0032: Release 0.1.0
 
-- Status: Accepted in part. Decisions 1, 4 and 6 were taken by the decision
-  owner on 2026-10-06. Decisions 7 and 10 wait for the owner's actions: the
-  TestPyPI run and the sign-off of `limitations.md`.
+- Status: Accepted. The decision owner took decisions 1, 4 and 6 and signed off
+  `limitations.md` (decision 10) on 2026-10-06. Decision 7 records the
+  TestPyPI run when it happens.
 - Date: 2026-10-06
 - Step: S18 (gate `G18`, ⚑ human sign-off)
 - Plan and results: [S18 release plan](../campaigns/s18-release-plan.md)
@@ -70,21 +70,21 @@ confirm every sentence is true of the code as built.
 9. **Changelog and tag.** `CHANGELOG.md` records 0.1.0. The annotated tag
    `v0.1.0` marks the release commit. The owner pushes it, because the owner
    pushes to GitHub.
-10. **Human sign-off** (pending). The decision owner reads `docs/limitations.md`
-    and confirms that every sentence is true of the code as built. The answer
+10. **Human sign-off** (decided). The decision owner read `docs/limitations.md`
+    and confirmed that every sentence is true of the code as built. The answer
     is recorded in `artifacts/release/LIMITATIONS-SIGNOFF.json`, which names
-    the file's digest. G18 does not pass without it.
+    the file's digest. A later edit of the page needs a new sign-off.
 
-## Decisions still open at release
+## Decisions open before the release
 
 | ADR | State | At release |
 | --- | --- | --- |
 | 0014 (S13 orientation recovery) | Proposed | superseded in practice by ADR 0018; not part of the served path |
 | 0016 (S13 one-case diagnostic) | diagnostic preregistration | historical; no gate depends on it |
 | 0017 (joint-hybrid contrast) | accepted, parked, superseded by ADR 0018 | historical |
-| 0023 (S15 bundle and CLI, S15-D1 … D5) | proposed defaults, implemented | shipped as implemented; confirmation asked at sign-off |
-| 0024 (S16 mutation suite, S16-D1 … D5) | proposed defaults, implemented | shipped as implemented; confirmation asked at sign-off |
-| 0025 decisions 2–6 and 9–11 | proposed defaults, implemented | shipped as implemented; confirmation asked at sign-off |
+| 0023 (S15 bundle and CLI, S15-D1 … D5) | accepted as implemented at the sign-off (2026-10-06) | shipped as implemented |
+| 0024 (S16 mutation suite, S16-D1 … D5) | accepted as implemented at the sign-off (2026-10-06) | shipped as implemented |
+| 0025 decisions 2–6 and 9–11 | accepted as implemented at the sign-off (2026-10-06) | shipped as implemented |
 
 ## Consequences
 

@@ -1,7 +1,7 @@
 # ADR 0024: S16 mutation suite — source-level mutants, gate detectors and signatures
 
-- Status: Proposed — implemented as the defaults below; awaiting the decision
-  owner's confirmation of S16-D1 to S16-D5
+- Status: Accepted — S16-D1 to S16-D5 accepted as implemented by the decision
+  owner on 2026-10-06, at the release sign-off (ADR 0032)
 - Date: 2026-10-05
 - Step: S16 (gate `G16`)
 - Builds on: ADR 0022 (the twenty mutants of §1.13), ADR 0023 (bundle)

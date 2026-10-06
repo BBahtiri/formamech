@@ -1,10 +1,10 @@
 # ADR 0025: S17 examples and the centre-notched plate as the second family
 
-- Status: Accepted in part — decisions 1, 7 and 8 were taken by the decision
-  owner on 2026-10-05, who also signed off the private-reveal backup (cloud
-  primary and backup, and a copy in `pi_ginot_private_reveals/notched-v1/`),
-  and signed off the notched S14 protocol on 2026-10-06; the others are
-  proposed defaults awaiting confirmation
+- Status: Accepted — decisions 1, 7 and 8 were taken by the decision owner on
+  2026-10-05, who also signed off the private-reveal backup (cloud primary and
+  backup, and a copy in `pi_ginot_private_reveals/notched-v1/`) and, on
+  2026-10-06, the notched S14 protocol; decisions 2–6 and 9–11 were accepted
+  as implemented on 2026-10-06, at the release sign-off (ADR 0032)
 - Date: 2026-10-05
 - Step: S17 (gate `G17`)
 

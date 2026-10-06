@@ -1,7 +1,7 @@
 # ADR 0023: S15 bundle format, inference closure and command line
 
-- Status: Proposed — implemented as the defaults below; awaiting the decision
-  owner's confirmation of S15-D1 to S15-D5
+- Status: Accepted — S15-D1 to S15-D5 accepted as implemented by the decision
+  owner on 2026-10-06, at the release sign-off (ADR 0032)
 - Date: 2026-10-03
 - Step: S15 (gate `G15`)
 - Builds on: ADR 0018 (constitutive served stress), ADR 0019 (refusal and
