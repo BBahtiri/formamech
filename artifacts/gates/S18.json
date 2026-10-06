@@ -1,8 +1,8 @@
 {
   "gate_id": "G18",
   "step": "S18",
-  "commit": "55edd3cf04a43f217a48ac34163f09f497f26f35",
-  "timestamp_utc": "2026-10-06T16:10:30Z",
+  "commit": "1c471a8ea52db677c25ba4d1b8c9edfcee5a5222",
+  "timestamp_utc": "2026-10-06T17:18:51Z",
   "checks": [
     {
       "id": "G18.all-gates",
@@ -88,7 +88,7 @@
           "dogbone-v1-s13c-cp-freeze": "HOLDOUT_VERIFIED",
           "notched-v1-cp-freeze": "DEVELOPMENT_VERIFIED"
         },
-        "tests": "4 passed in 1.98s"
+        "tests": "4 passed in 2.16s"
       },
       "threshold": "no shipped bundle claims above HOLDOUT_VERIFIED; SEALED_RELEASE_VERIFIED is not emittable",
       "comparison": "all"
@@ -107,7 +107,7 @@
         "sdist_files": 143,
         "sdist_outside_allowed": [],
         "all_rights_reserved_in_distributions": [],
-        "tests": "4 passed in 0.04s"
+        "tests": "4 passed in 0.03s"
       },
       "threshold": "every adapted component recorded with source, commit, digest and licence compatibility in docs/adr/upstream-sources.md",
       "comparison": "all"
@@ -165,27 +165,35 @@
     },
     {
       "id": "G18.changelog",
-      "status": "FAIL",
+      "status": "PASS",
       "measured": {
         "version": "0.1.0",
         "changelog_entry": true,
         "tag": "v0.1.0",
-        "tag_commit": null,
-        "tag_at_or_before_head": false
+        "tag_commit": "1c471a8ea52db677c25ba4d1b8c9edfcee5a5222",
+        "tag_at_or_before_head": true
       },
       "threshold": "version tagged, changelog written",
       "comparison": "all"
     },
     {
       "id": "G18.signoff",
-      "status": "NOT_RUN",
-      "reason": "the decision owner has not yet signed off docs/limitations.md",
+      "status": "PASS",
+      "measured": {
+        "signed_off_by": "Betim Bahtiri",
+        "signed_off_utc": "2026-10-06T16:23:13Z",
+        "limitations_sha256_signed": "05a4046a3e06a3375364de08262a4752afe98149f3f76a1f4c786292751b4ee7",
+        "limitations_sha256_current": "05a4046a3e06a3375364de08262a4752afe98149f3f76a1f4c786292751b4ee7"
+      },
       "threshold": "\u2691 the decision owner confirms every sentence of the shipped limitations.md is true of the code as built",
-      "comparison": "all"
+      "comparison": "all",
+      "evidence": {
+        "evidence": "artifacts/release/LIMITATIONS-SIGNOFF.json"
+      }
     }
   ],
   "version": "0.1.0",
   "release_adr": "docs/adr/0032-release-0.1.0.md",
   "verdict": "FAIL",
-  "verdict_reason": "3 required check(s) not PASS: G18.install, G18.changelog, G18.signoff"
+  "verdict_reason": "1 required check(s) not PASS: G18.install"
 }
