@@ -40,8 +40,8 @@ remeshing, inferred units, quads, high-order elements, mixed area elements, 3D
 meshes, unclassified facets, duplicate nodes or cells, inverted elements,
 non-manifold edges, and query points outside the mesh when containment is required.
 S6 deforms an existing S5 reference mesh with interpolatory Gaussian RBF maps,
-tensor-product Bernstein FFD maps, or the exact circular-transition profile map used
-by the proposed first production family. It preserves connectivity and accepts a
+tensor-product Bernstein FFD maps, the exact circular-transition profile map of the
+DogBone family, or the blended-notch map of the centre-notched plate. It preserves connectivity and accepts a
 morph only when the declared topology and tags remain unchanged, feature-size and
 mesh-quality bounds pass, and `det(grad(Phi))` is strictly above the configured margin
 at every point of a fixed seven-point, degree-5 triangle rule. This finite check is an
@@ -50,7 +50,7 @@ or of the Jacobian sign between quadrature points. A later cross-mesh comparison
 not call an RBF/FFD pullback verified solely because an S6 report passed. The circular
 transition map separately exposes an analytic inverse and positive piecewise
 determinant; that family-specific property does not strengthen the generic RBF/FFD
-claim. S6 does not heal or remesh failed instances.
+claim, and the blended-notch map is accepted only by the finite check above. S6 does not heal or remesh failed instances.
 
 Family membership enforces exact named canonical quantities, inclusive primitive and
 derived bounds, the reference mesh identity, and a hashed validity policy. S9 samples
@@ -98,13 +98,10 @@ production dataset is now materialized: 344 successful FEM cases, 88,064
 collocation points, 344 projected fields, 343 physical-integral comparisons and
 256 TRAIN-normalized samples. Normalization statistics retain the exact TRAIN
 snapshot identity and require every input record to resolve to its successful FEM
-result. G10 is PASS and S11 may begin from the exact committed report, but no S11
-training or accuracy evidence exists yet. Every later artifact batch must prove
-CP-ENVELOPE ancestry and live file ordering. The absence of family-specific words
-and branches in `src/`
-addresses only `G17.fixture-names`; `G17.non-dogbone` remains `NOT_RUN` because the
-circular-transition provider currently has one campaign consumer and no
-distinct-topology example has reached a verified bundle through the same API.
+result. G10 is PASS. Every later artifact batch must prove CP-ENVELOPE ancestry
+and live file ordering. The absence of family-specific words and branches in `src/`
+addresses only `G17.fixture-names`; it does not show that a second family verifies
+(see S17 below).
 
 The public DogBone FEM solvability pilot covers 12 preselected geometry sentinels at
 one fixed material/load point. Its 12 successful solves support local campaign-cost
@@ -132,9 +129,9 @@ The later four-candidate contingency is also limited: it used 192 TRAIN-fit and 
 TRAIN-screen cases, not HOLDOUT, and its registered fallback kept DEVELOPMENT
 unopened. Candidate C materially improved all stress metrics but exceeded the 2%
 displacement-regression guardrail, so the baseline remains authoritative for S12.
-The independent `P_predicted` head is the sole served-stress path; its constitutive,
-angular and traction-free terms are now registered by S12, subject to the finite
-verification scope below. Hard distance lifting is unavailable without separate
+In the S11 operator the independent `P_predicted` head is the stress output; its
+constitutive, angular and traction-free terms are registered by S12, subject to the
+finite verification scope below. No bundle serves the S11 operator (ADR 0028). Hard distance lifting is unavailable without separate
 full-range refinement evidence. The safetensors loader rejects pickle and validates
 metadata, schema and exact byte layout before materialization, but it does not
 authenticate learned tensor values.
@@ -198,14 +195,14 @@ S15 serves that candidate as a bundle ([ADR 0023](adr/0023-s15-bundle-and-cli.md
   DogBone build checks the `CP-FREEZE` weights hash and records the checkpoint
   identities, and bundle predictions inherit the S14 evidence because they
   reproduce the S14 serving path bit for bit on TRAIN cases.
-- The bundle serves one family, one material and the 10-20% strain-controlled
+- Each bundle serves one family, one material and the 10-20% strain-controlled
   load of its envelope, on the quarter model. Every other request is refused;
   so is a prediction whose deformation folds (`det F <= 1e-12`) anywhere it is
   evaluated.
 - The served confidence bound inherits the S14 indicator's limits: moderate
   ranking and 86.8% HOLDOUT coverage of a nominal 90% quantile. Indicators above
   the calibrated range are flagged, not extrapolated.
-- The clean install was checked on Linux x86_64 with Python 3.11 only.
+- The S15 clean install was checked on Linux x86_64 with Python 3.11 only.
 
 S16 checks the gates themselves with twenty mutants
 ([ADR 0024](adr/0024-s16-mutation-suite.md)). Its limits:
@@ -246,6 +243,21 @@ S17 adds a second family, the centre-notched plate
 - Example 1 is a teaching example on a coarse mesh with one geometry; its
   held-out strains lie inside its training range.
 
+Release 0.1.0 (S18, [ADR 0032](adr/0032-release-0.1.0.md)) carries these limits:
+
+- G18 requires the TestPyPI release to install and pass a smoke test on Linux,
+  macOS and Windows with Python 3.11. Other platforms, and installs with Python
+  3.12 or 3.13, are not checked by the release. The release is on TestPyPI, not
+  PyPI.
+- The smoke test checks the installed package, its version, its console
+  script, its claim ceiling and one refusal. It does not serve a bundle.
+- Bundles are not part of the Python distributions; they are distributed
+  separately.
+- The S1 spike needs five third-party GINOT modules that this repository does
+  not redistribute. They are fetched from a pinned commit, and the Git history
+  before 0.1.0 still contains them
+  ([upstream sources](adr/upstream-sources.md)).
+
 The S10 production run recorded zero natural FEM failures. Failed-case visibility is
 therefore exercised by one explicitly non-production canary through the same role
 snapshot path; that proves the path represents the controlled failure but is not an
@@ -259,5 +271,5 @@ coordinates. It cannot prove that the local holder never saw the
 ignored private reveal. Git also does not preserve historical file mtimes, so live
 ordering must be captured and committed with each artifact batch, while Git first-add
 ancestry is verified separately. The project implements deterministic training,
-one frozen, TRAIN-selected candidate, its S14 verification and its S15 bundle; it
-does not implement certification.
+one frozen, TRAIN-selected candidate per campaign, their S14 verification and their
+S15 bundles; it does not implement certification.
