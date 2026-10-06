@@ -14,7 +14,12 @@ evidence is missing:
   the pinned seeds and TRAIN-screen re-scoring within tolerance);
 - ``G17.non-dogbone``: the notched-plate bundle passed G15 at
   ``HOLDOUT_VERIFIED`` through the same bundle API, and the framework changes
-  since the S16 base are exactly the declared additions of ADR 0025;
+  since the S16 base are exactly the declared additions of ADR 0025. A lower
+  served claim level passes only through the decision owner's signed
+  acceptance (``artifacts/gates/S17-ACCEPTANCE.json``, ADR 0031) naming that
+  claim level, that G15 gate and that bundle; the check then records the
+  computed FAIL beside the acceptance. Undeclared framework changes are never
+  accepted;
 - ``G17.refusal``: every fixture of both families was refused with its
   expected reason code, through the checker and through ``predict``;
 - ``G17.fixture-names``: the source-name scan passes;
@@ -25,6 +30,7 @@ evidence is missing:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import subprocess
 import sys
@@ -41,6 +47,9 @@ from piginot.git_environment import isolated_git_environment
 
 REPOSITORY = Path(__file__).resolve().parents[1]
 GATE_PATH = Path("artifacts/gates/S17.json")
+ACCEPTANCE_PATH = Path("artifacts/gates/S17-ACCEPTANCE.json")
+NOTCHED_G15_PATH = Path("artifacts/campaigns/notched-v1/gates/S15.json")
+SIGNATORY = "Betim Bahtiri"
 S16_BASE = "8a87cd5"
 DECLARED_FRAMEWORK_CHANGES = frozenset(
     {
@@ -131,8 +140,41 @@ def examples23() -> dict[str, Any]:
     )
 
 
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+
+
+def acceptance_covers(
+    acceptance: dict[str, Any] | None,
+    measured: dict[str, Any],
+    gate_sha256: str | None,
+) -> bool:
+    """True only if a signed acceptance names exactly this computed shortfall.
+
+    The acceptance must be signed by the decision owner, name the check, the
+    served claim level, the notched G15 gate (LF-normalised SHA-256) and the
+    bundle manifest it accepts. A failing G15 and undeclared framework changes
+    are never accepted.
+    """
+
+    if acceptance is None or gate_sha256 is None:
+        return False
+    return (
+        acceptance.get("check") == "G17.non-dogbone"
+        and acceptance.get("signed_off_by") == SIGNATORY
+        and measured["notched_g15_verdict"] == "PASS"
+        and not measured["undeclared_framework_changes"]
+        and acceptance.get("accepted_claim_level")
+        == measured["notched_bundle_claim_level"]
+        and acceptance.get("notched_g15_sha256") == gate_sha256
+        and acceptance.get("bundle_manifest_sha256")
+        == measured["notched_bundle_manifest_sha256"]
+    )
+
+
 def non_dogbone() -> dict[str, Any]:
-    gate = _load(REPOSITORY / "artifacts/campaigns/notched-v1/gates/S15.json") or {}
+    gate_path = REPOSITORY / NOTCHED_G15_PATH
+    gate = _load(gate_path) or {}
     changed = subprocess.run(
         [
             "git",
@@ -150,9 +192,10 @@ def non_dogbone() -> dict[str, Any]:
         text=True,
         check=True,
     ).stdout.split()
-    measured = {
+    measured: dict[str, Any] = {
         "notched_g15_verdict": gate.get("verdict"),
         "notched_bundle_claim_level": gate.get("claim_level_served"),
+        "notched_bundle_manifest_sha256": gate.get("bundle_manifest_sha256"),
         "framework_files_changed_since_s16": sorted(changed),
         "undeclared_framework_changes": sorted(
             set(changed) - DECLARED_FRAMEWORK_CHANGES
@@ -163,14 +206,32 @@ def non_dogbone() -> dict[str, Any]:
         and gate.get("claim_level_served") == "HOLDOUT_VERIFIED"
         and not measured["undeclared_framework_changes"]
     )
-    return check_document(
-        "G17.non-dogbone",
-        passed,
-        measured,
+    threshold = (
         "the notched bundle passes G15 at HOLDOUT_VERIFIED through the same API; "
-        "framework changes are only the declared additions (no family branch)",
-        "all",
+        "framework changes are only the declared additions (no family branch)"
     )
+    if passed:
+        return check_document("G17.non-dogbone", True, measured, threshold, "all")
+    acceptance = _load(REPOSITORY / ACCEPTANCE_PATH)
+    gate_sha256 = _sha256(gate_path) if gate_path.is_file() else None
+    if not acceptance_covers(acceptance, measured, gate_sha256):
+        return check_document("G17.non-dogbone", False, measured, threshold, "all")
+    assert acceptance is not None
+    document = check_document(
+        "G17.non-dogbone",
+        True,
+        {**measured, "computed": "FAIL"},
+        threshold,
+        "all",
+        acceptance=ACCEPTANCE_PATH.as_posix(),
+        acceptance_sha256=_sha256(REPOSITORY / ACCEPTANCE_PATH),
+    )
+    document["reason"] = (
+        "FAIL as computed; accepted by the decision owner "
+        f"({acceptance['decision_record']}) at claim level "
+        f"{acceptance['accepted_claim_level']}"
+    )
+    return document
 
 
 def refusal(path: Path) -> dict[str, Any]:
