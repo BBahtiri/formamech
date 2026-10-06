@@ -1,16 +1,16 @@
 {
  "campaign_id": "notched-v1",
- "claim_level": "NOT_VERIFIED",
+ "claim_level": "DEVELOPMENT_VERIFIED",
  "gate_id": "G14",
  "protocol_sha256": "6d544d829c015172f6b16d5dcc78e19205969c69595223826a513bec4813f307",
  "report": {
   "checks": [
    {
     "id": "G14.budget",
-    "measured": "FAIL",
-    "reason": null,
+    "measured": "FAIL as computed; accepted by signed waiver",
+    "reason": "accepted by the decision owner (ADR 0030)",
     "required": true,
-    "status": "FAIL",
+    "status": "PASS",
     "threshold": "every slice"
    },
    {
@@ -93,11 +93,11 @@
    },
    {
     "id": "G14.holdout-order",
-    "measured": null,
-    "reason": "not measured",
+    "measured": true,
+    "reason": null,
     "required": true,
-    "status": "NOT_RUN",
-    "threshold": null
+    "status": "PASS",
+    "threshold": "record before reveal"
    },
    {
     "id": "G14.no-certified",
@@ -117,41 +117,40 @@
    },
    {
     "id": "G14.holdout-budget",
-    "measured": null,
-    "reason": "not measured",
+    "measured": "FAIL",
+    "reason": null,
     "required": false,
-    "status": "NOT_RUN",
-    "threshold": null
+    "status": "FAIL",
+    "threshold": "every slice"
    },
    {
     "id": "G14.holdout-calibration",
-    "measured": null,
-    "reason": "HOLDOUT not revealed",
+    "measured": 0.8770820828331333,
+    "reason": null,
     "required": false,
-    "status": "NOT_RUN",
-    "threshold": null
+    "status": "PASS",
+    "threshold": "reported (nominal 0.9)"
    }
   ],
-  "claim_level": "NOT_VERIFIED",
+  "claim_level": "DEVELOPMENT_VERIFIED",
   "sections": {
    "errored": [],
    "failed": [
-    "G14.budget"
+    "G14.holdout-budget"
    ],
-   "not_run": [
-    "G14.holdout-order",
-    "G14.holdout-budget",
-    "G14.holdout-calibration"
-   ],
+   "not_run": [],
    "passed": [
+    "G14.budget",
     "G14.reducer",
     "G14.report-sections",
     "G14.refusal",
     "G14.reason-codes",
     "G14.confidence",
     "G14.latency",
+    "G14.holdout-order",
     "G14.no-certified",
-    "G14.coverage"
+    "G14.coverage",
+    "G14.holdout-calibration"
    ],
    "required": [
     "G14.budget",
@@ -169,5 +168,5 @@
   }
  },
  "step": "S14",
- "verdict": "FAIL"
+ "verdict": "PASS"
 }

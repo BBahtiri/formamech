@@ -2,16 +2,16 @@
   "gate_id": "G14",
   "step": "S14",
   "campaign_id": "notched-v1",
-  "commit": "d9d4da6b93c31a9c8de6ba48b5f523c0f40d4a66",
-  "timestamp_utc": "2026-10-06T07:27:46Z",
+  "commit": "13633acbb60c7469e0df88b3b4d2ba91149f2230",
+  "timestamp_utc": "2026-10-06T13:56:13Z",
   "checks": [
     {
       "id": "G14.budget",
-      "status": "FAIL",
+      "status": "PASS",
       "required": true,
-      "measured": "FAIL",
+      "measured": "FAIL as computed; accepted by signed waiver",
       "threshold": "every slice",
-      "reason": null
+      "reason": "accepted by the decision owner (ADR 0030)"
     },
     {
       "id": "G14.reducer",
@@ -93,11 +93,11 @@
     },
     {
       "id": "G14.holdout-order",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "required": true,
-      "measured": null,
-      "threshold": null,
-      "reason": "not measured"
+      "measured": true,
+      "threshold": "record before reveal",
+      "reason": null
     },
     {
       "id": "G14.no-certified",
@@ -119,31 +119,32 @@
   "reported_checks": [
     {
       "id": "G14.holdout-budget",
-      "status": "NOT_RUN",
+      "status": "FAIL",
       "required": false,
-      "measured": null,
-      "threshold": null,
-      "reason": "not measured"
+      "measured": "FAIL",
+      "threshold": "every slice",
+      "reason": null
     },
     {
       "id": "G14.holdout-calibration",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "required": false,
-      "measured": null,
-      "threshold": null,
-      "reason": "HOLDOUT not revealed"
+      "measured": 0.8770820828331333,
+      "threshold": "reported (nominal 0.9)",
+      "reason": null
     }
   ],
-  "claim_level": "NOT_VERIFIED",
+  "claim_level": "DEVELOPMENT_VERIFIED",
   "protocol_sha256": "6d544d829c015172f6b16d5dcc78e19205969c69595223826a513bec4813f307",
   "test_evidence": {
     "command": "pytest tests/verification",
-    "result": "48 passed in 14.84s"
+    "result": "48 passed in 2.69s"
   },
   "evidence": {
     "S14-DEVELOPMENT.json": "4010542a676d6a6defbafdc6ee9a72b8db7a4197b73da19a3aa88723ed0741b3",
-    "S14-GATE.json": "b51755e50938d19e8bdbc4e2a6c32200bb5135951bbeffd47c9457b18558de89"
+    "S14-HOLDOUT.json": "500d4d63bdbe9772e3b8d9ffc6be4abb8347dea4184306a418ada227ca7b54d1",
+    "S14-GATE.json": "ff7f80effc4aadebbc45dcf01f7f9b814f774a5cea339cee252f45881f1989c8"
   },
-  "verdict": "FAIL",
-  "verdict_reason": "2 required check(s) not PASS: G14.budget, G14.holdout-order"
+  "verdict": "PASS",
+  "verdict_reason": "every required check PASS"
 }
