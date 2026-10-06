@@ -250,10 +250,64 @@ def verification_report(run_root: Path) -> dict[str, Any]:
     }
 
 
-def limitation_items(run_root: Path) -> tuple[dict[str, str], ...]:
-    holdout = json.loads((run_root / s14.HOLDOUT_RESULT).read_text("utf-8"))
-    coverage = holdout["confidence"]["calibration_coverage"]
+def _verification_limitations(run_root: Path) -> tuple[dict[str, str], ...]:
+    """What the S14 evidence does and does not show, as measured."""
+
+    holdout_path = run_root / s14.HOLDOUT_RESULT
+    if holdout_path.is_file():
+        holdout = json.loads(holdout_path.read_text("utf-8"))
+        coverage = holdout["confidence"]["calibration_coverage"]
+        return (
+            {
+                "id": "finite-sampling",
+                "statement": "The HOLDOUT budget was checked on a finite sample of "
+                "64 cases; it is evidence, not a uniform error bound.",
+            },
+            {
+                "id": "confidence-calibration",
+                "statement": "The confidence bound is the DEVELOPMENT-calibrated 90% "
+                "quantile of the pointwise in-plane stress error given the "
+                "equilibrium-residual indicator; its HOLDOUT coverage was "
+                f"{coverage:.1%}.",
+            },
+        )
+    development = json.loads((run_root / s14.DEVELOPMENT_RESULT).read_text("utf-8"))
+    rows = {
+        row["quantity"]: row["statistic"]
+        for row in development["budget"]["gated"]
+        if row["slice"] == "all"
+    }
+    failed = sum(row["status"] == "FAIL" for row in development["budget"]["gated"])
     return (
+        {
+            "id": "not-verified",
+            "statement": "NOT_VERIFIED: the S14 DEVELOPMENT budget failed "
+            f"({failed} of {len(development['budget']['gated'])} gated rows; "
+            f"all-cases p90 stress field {rows['p_relative_l2']:.2%}, peak "
+            f"{rows['absolute_peak_error']:.2%}, displacement "
+            f"{rows['u_relative_l2']:.2%} against 5%, 5% and 2%), so HOLDOUT was "
+            "never opened. The predictions carry no verified error claim.",
+        },
+        {
+            "id": "finite-sampling",
+            "statement": "The DEVELOPMENT budget was measured on a finite sample of "
+            f"{development['case_count']} cases; it is evidence, not a uniform "
+            "error bound.",
+        },
+        {
+            "id": "confidence-calibration",
+            "statement": "The confidence bound is the DEVELOPMENT-calibrated 90% "
+            "quantile of the pointwise in-plane stress error given the "
+            "equilibrium-residual indicator; its in-sample DEVELOPMENT coverage was "
+            f"{development['confidence']['calibration']['in_sample_coverage']:.1%} "
+            "and it has no HOLDOUT coverage measurement.",
+        },
+    )
+
+
+def limitation_items(run_root: Path) -> tuple[dict[str, str], ...]:
+    return (
+        *_verification_limitations(run_root),
         {
             "id": "numerical-verification-only",
             "statement": "Predictions are verified against FEM solutions of the same "
@@ -264,11 +318,6 @@ def limitation_items(run_root: Path) -> tuple[dict[str, str], ...]:
             "statement": "Only requests inside the sealed envelope "
             "notched-v1-strain-controlled-10-20-v1 are served; everything else is "
             "refused with a reason code.",
-        },
-        {
-            "id": "finite-sampling",
-            "statement": "The HOLDOUT budget was checked on a finite sample of 64 "
-            "cases; it is evidence, not a uniform error bound.",
         },
         {
             "id": "material-and-load",
@@ -285,7 +334,7 @@ def limitation_items(run_root: Path) -> tuple[dict[str, str], ...]:
         },
         {
             "id": "peak-is-recovered",
-            "statement": "The peak QoI was verified against an L2-recovered P2 FEM "
+            "statement": "The peak QoI is scored against an L2-recovered P2 FEM "
             "stress at the notch-profile vertices; it is mesh- and recovery-dependent "
             "and not a certified physical maximum.",
         },
@@ -294,12 +343,6 @@ def limitation_items(run_root: Path) -> tuple[dict[str, str], ...]:
             "statement": "The sealed design's empirical fill distance (0.124) exceeds "
             "the proposal's 0.10 target; every stratum, boundary, interaction and "
             "difficult-region quota was met.",
-        },
-        {
-            "id": "confidence-calibration",
-            "statement": "The confidence bound is the DEVELOPMENT-calibrated 90% "
-            "quantile of the pointwise in-plane stress error given the "
-            f"equilibrium-residual indicator; its HOLDOUT coverage was {coverage:.1%}.",
         },
     )
 
