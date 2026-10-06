@@ -1,0 +1,149 @@
+{
+  "gate_id": "G14",
+  "step": "S14",
+  "campaign_id": "notched-v1",
+  "commit": "d9d4da6b93c31a9c8de6ba48b5f523c0f40d4a66",
+  "timestamp_utc": "2026-10-06T07:27:46Z",
+  "checks": [
+    {
+      "id": "G14.budget",
+      "status": "FAIL",
+      "required": true,
+      "measured": "FAIL",
+      "threshold": "every slice",
+      "reason": null
+    },
+    {
+      "id": "G14.reducer",
+      "status": "PASS",
+      "required": true,
+      "measured": {
+        "injected_cases": 48,
+        "injected_not_verified": 48,
+        "control_claim": "HOLDOUT_VERIFIED",
+        "families": {
+          "F01 contracts-identity (artifacts/gates/S2.json)": "PASS",
+          "F02 content-store (artifacts/gates/S3.json)": "PASS",
+          "F03 physics-kernel (artifacts/gates/S4.json)": "PASS",
+          "F04 geometry-tags (artifacts/gates/S5.json)": "PASS",
+          "F05 morphing-membership (artifacts/campaigns/notched-v1/gates/S6.json)": "PASS",
+          "F06 primary-fem (artifacts/gates/S7.json)": "PASS",
+          "F07 fem-verification (artifacts/gates/S8.json)": "PASS",
+          "F08 doe-preregistration (artifacts/campaigns/notched-v1/gates/S9.json)": "PASS",
+          "F09 dataset-materialisation (artifacts/campaigns/notched-v1/gates/S10.json)": "PASS",
+          "F10 operator-architecture (artifacts/campaigns/notched-v1/gates/S11-ENERGY.json)": "PASS",
+          "F11 objectives-gradients (artifacts/gates/S12.json)": "PASS",
+          "F12 training-selection (artifacts/campaigns/notched-v1/gates/S13.json)": "PASS"
+        }
+      },
+      "threshold": "every injected failure gives NOT_VERIFIED; all twelve families PASS",
+      "reason": null
+    },
+    {
+      "id": "G14.report-sections",
+      "status": "PASS",
+      "required": true,
+      "measured": true,
+      "threshold": "all six sections",
+      "reason": null
+    },
+    {
+      "id": "G14.refusal",
+      "status": "PASS",
+      "required": true,
+      "measured": {
+        "fixtures": 216,
+        "refused_with_expected_code": 216,
+        "false_refusal_rate": 0.0
+      },
+      "threshold": {
+        "fixtures": ">= 200",
+        "refused": "100%",
+        "false_refusal_rate": "<= 0.01"
+      },
+      "reason": null
+    },
+    {
+      "id": "G14.reason-codes",
+      "status": "PASS",
+      "required": true,
+      "measured": true,
+      "threshold": "identical across runs",
+      "reason": null
+    },
+    {
+      "id": "G14.confidence",
+      "status": "PASS",
+      "required": true,
+      "measured": 0.6251770902953876,
+      "threshold": ">= 0.6",
+      "reason": null
+    },
+    {
+      "id": "G14.latency",
+      "status": "PASS",
+      "required": true,
+      "measured": {
+        "median_seconds": 0.07058140925,
+        "p99_seconds": 0.10748024540999998,
+        "speedup": 1409.9544874559233
+      },
+      "threshold": "median, p99 and speed-up measured on one thread; speed-up target 100x reported",
+      "reason": null
+    },
+    {
+      "id": "G14.holdout-order",
+      "status": "NOT_RUN",
+      "required": true,
+      "measured": null,
+      "threshold": null,
+      "reason": "not measured"
+    },
+    {
+      "id": "G14.no-certified",
+      "status": "PASS",
+      "required": true,
+      "measured": true,
+      "threshold": "no forbidden claim wording",
+      "reason": null
+    },
+    {
+      "id": "G14.coverage",
+      "status": "PASS",
+      "required": true,
+      "measured": 91.38,
+      "threshold": ">= 85.0",
+      "reason": null
+    }
+  ],
+  "reported_checks": [
+    {
+      "id": "G14.holdout-budget",
+      "status": "NOT_RUN",
+      "required": false,
+      "measured": null,
+      "threshold": null,
+      "reason": "not measured"
+    },
+    {
+      "id": "G14.holdout-calibration",
+      "status": "NOT_RUN",
+      "required": false,
+      "measured": null,
+      "threshold": null,
+      "reason": "HOLDOUT not revealed"
+    }
+  ],
+  "claim_level": "NOT_VERIFIED",
+  "protocol_sha256": "6d544d829c015172f6b16d5dcc78e19205969c69595223826a513bec4813f307",
+  "test_evidence": {
+    "command": "pytest tests/verification",
+    "result": "48 passed in 14.84s"
+  },
+  "evidence": {
+    "S14-DEVELOPMENT.json": "4010542a676d6a6defbafdc6ee9a72b8db7a4197b73da19a3aa88723ed0741b3",
+    "S14-GATE.json": "b51755e50938d19e8bdbc4e2a6c32200bb5135951bbeffd47c9457b18558de89"
+  },
+  "verdict": "FAIL",
+  "verdict_reason": "2 required check(s) not PASS: G14.budget, G14.holdout-order"
+}

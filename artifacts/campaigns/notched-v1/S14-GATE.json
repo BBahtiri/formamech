@@ -1,0 +1,173 @@
+{
+ "campaign_id": "notched-v1",
+ "claim_level": "NOT_VERIFIED",
+ "gate_id": "G14",
+ "protocol_sha256": "6d544d829c015172f6b16d5dcc78e19205969c69595223826a513bec4813f307",
+ "report": {
+  "checks": [
+   {
+    "id": "G14.budget",
+    "measured": "FAIL",
+    "reason": null,
+    "required": true,
+    "status": "FAIL",
+    "threshold": "every slice"
+   },
+   {
+    "id": "G14.reducer",
+    "measured": {
+     "control_claim": "HOLDOUT_VERIFIED",
+     "families": {
+      "F01 contracts-identity (artifacts/gates/S2.json)": "PASS",
+      "F02 content-store (artifacts/gates/S3.json)": "PASS",
+      "F03 physics-kernel (artifacts/gates/S4.json)": "PASS",
+      "F04 geometry-tags (artifacts/gates/S5.json)": "PASS",
+      "F05 morphing-membership (artifacts/campaigns/notched-v1/gates/S6.json)": "PASS",
+      "F06 primary-fem (artifacts/gates/S7.json)": "PASS",
+      "F07 fem-verification (artifacts/gates/S8.json)": "PASS",
+      "F08 doe-preregistration (artifacts/campaigns/notched-v1/gates/S9.json)": "PASS",
+      "F09 dataset-materialisation (artifacts/campaigns/notched-v1/gates/S10.json)": "PASS",
+      "F10 operator-architecture (artifacts/campaigns/notched-v1/gates/S11-ENERGY.json)": "PASS",
+      "F11 objectives-gradients (artifacts/gates/S12.json)": "PASS",
+      "F12 training-selection (artifacts/campaigns/notched-v1/gates/S13.json)": "PASS"
+     },
+     "injected_cases": 48,
+     "injected_not_verified": 48
+    },
+    "reason": null,
+    "required": true,
+    "status": "PASS",
+    "threshold": "every injected failure gives NOT_VERIFIED; all twelve families PASS"
+   },
+   {
+    "id": "G14.report-sections",
+    "measured": true,
+    "reason": null,
+    "required": true,
+    "status": "PASS",
+    "threshold": "all six sections"
+   },
+   {
+    "id": "G14.refusal",
+    "measured": {
+     "false_refusal_rate": 0.0,
+     "fixtures": 216,
+     "refused_with_expected_code": 216
+    },
+    "reason": null,
+    "required": true,
+    "status": "PASS",
+    "threshold": {
+     "false_refusal_rate": "<= 0.01",
+     "fixtures": ">= 200",
+     "refused": "100%"
+    }
+   },
+   {
+    "id": "G14.reason-codes",
+    "measured": true,
+    "reason": null,
+    "required": true,
+    "status": "PASS",
+    "threshold": "identical across runs"
+   },
+   {
+    "id": "G14.confidence",
+    "measured": 0.6251770902953876,
+    "reason": null,
+    "required": true,
+    "status": "PASS",
+    "threshold": ">= 0.6"
+   },
+   {
+    "id": "G14.latency",
+    "measured": {
+     "median_seconds": 0.07058140925,
+     "p99_seconds": 0.10748024540999998,
+     "speedup": 1409.9544874559233
+    },
+    "reason": null,
+    "required": true,
+    "status": "PASS",
+    "threshold": "median, p99 and speed-up measured on one thread; speed-up target 100x reported"
+   },
+   {
+    "id": "G14.holdout-order",
+    "measured": null,
+    "reason": "not measured",
+    "required": true,
+    "status": "NOT_RUN",
+    "threshold": null
+   },
+   {
+    "id": "G14.no-certified",
+    "measured": true,
+    "reason": null,
+    "required": true,
+    "status": "PASS",
+    "threshold": "no forbidden claim wording"
+   },
+   {
+    "id": "G14.coverage",
+    "measured": 91.38,
+    "reason": null,
+    "required": true,
+    "status": "PASS",
+    "threshold": ">= 85.0"
+   },
+   {
+    "id": "G14.holdout-budget",
+    "measured": null,
+    "reason": "not measured",
+    "required": false,
+    "status": "NOT_RUN",
+    "threshold": null
+   },
+   {
+    "id": "G14.holdout-calibration",
+    "measured": null,
+    "reason": "HOLDOUT not revealed",
+    "required": false,
+    "status": "NOT_RUN",
+    "threshold": null
+   }
+  ],
+  "claim_level": "NOT_VERIFIED",
+  "sections": {
+   "errored": [],
+   "failed": [
+    "G14.budget"
+   ],
+   "not_run": [
+    "G14.holdout-order",
+    "G14.holdout-budget",
+    "G14.holdout-calibration"
+   ],
+   "passed": [
+    "G14.reducer",
+    "G14.report-sections",
+    "G14.refusal",
+    "G14.reason-codes",
+    "G14.confidence",
+    "G14.latency",
+    "G14.no-certified",
+    "G14.coverage"
+   ],
+   "required": [
+    "G14.budget",
+    "G14.reducer",
+    "G14.report-sections",
+    "G14.refusal",
+    "G14.reason-codes",
+    "G14.confidence",
+    "G14.latency",
+    "G14.holdout-order",
+    "G14.no-certified",
+    "G14.coverage"
+   ],
+   "skipped": []
+  }
+ },
+ "step": "S14",
+ "verdict": "FAIL"
+}
