@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling>=1.27"]
+requires = ["hatchling>=1.27,<1.30"]
 build-backend = "hatchling.build"
 
 [project]
@@ -20,6 +20,10 @@ classifiers = [
   "Programming Language :: Python :: 3.13",
 ]
 dependencies = ["rfc8785>=0.1.4,<0.2"]
+
+[project.urls]
+Repository = "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework"
+Documentation = "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/tree/main/docs"
 
 [project.optional-dependencies]
 fem = [

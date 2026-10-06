@@ -986,6 +986,11 @@ ml = [
 physics = [
     { name = "torch" },
 ]
+runtime = [
+    { name = "numpy" },
+    { name = "safetensors" },
+    { name = "torch" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -994,6 +999,7 @@ requires-dist = [
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.15,<3" },
     { name = "numpy", marker = "extra == 'fem'", specifier = ">=1.26,<2.3" },
     { name = "numpy", marker = "extra == 'geometry'", specifier = ">=1.26,<2.3" },
+    { name = "numpy", marker = "extra == 'runtime'", specifier = ">=1.26,<2.3" },
     { name = "pip-audit", marker = "extra == 'dev'", specifier = ">=2.8,<3" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.1,<5" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3,<10" },
@@ -1001,6 +1007,7 @@ requires-dist = [
     { name = "rfc8785", specifier = ">=0.1.4,<0.2" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.9,<1" },
     { name = "safetensors", marker = "extra == 'ml'", specifier = ">=0.8,<1" },
+    { name = "safetensors", marker = "extra == 'runtime'", specifier = ">=0.8,<1" },
     { name = "scikit-fem", marker = "extra == 'fem'", specifier = ">=11,<13" },
     { name = "scipy", marker = "extra == 'fem'", specifier = ">=1.12,<2" },
     { name = "setuptools", marker = "extra == 'dev'", specifier = ">=83" },
@@ -1008,8 +1015,9 @@ requires-dist = [
     { name = "torch", marker = "extra == 'fem'", specifier = ">=2.6,<3" },
     { name = "torch", marker = "extra == 'ml'", specifier = ">=2.6,<3" },
     { name = "torch", marker = "extra == 'physics'", specifier = ">=2.6,<3" },
+    { name = "torch", marker = "extra == 'runtime'", specifier = ">=2.6,<3" },
 ]
-provides-extras = ["fem", "geometry", "physics", "ml", "dev"]
+provides-extras = ["fem", "geometry", "physics", "ml", "runtime", "dev"]
 
 [[package]]
 name = "pip"

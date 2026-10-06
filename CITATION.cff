@@ -3,9 +3,57 @@ message: "If you use PI-GINOT, please cite the software using this metadata."
 title: "PI-GINOT"
 type: software
 version: 0.1.0
+date-released: "2026-10-06"
 authors:
-  - name: "PI-GINOT contributors"
+  - family-names: "Bahtiri"
+    given-names: "Betim"
 license: MIT
+repository-code: "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework"
 abstract: >-
   An open-source project for verified, problem-specific physics-informed neural
-  operators in 2D finite-strain elasticity.
+  operators in 2D finite-strain elasticity. Every served prediction carries a
+  claim level that is no stronger than its recorded verification evidence.
+keywords:
+  - neural operator
+  - physics-informed machine learning
+  - finite-strain elasticity
+  - verification
+references:
+  - type: software
+    title: "PI-GINOT"
+    authors:
+      - family-names: "Bahtiri"
+        given-names: "Betim"
+    repository-code: "https://github.com/BBahtiri/PI-GINOT"
+    commit: "12c9c1c7a13eaabcc2a289a886c34858d0330bad"
+    license: MIT
+    notes: "Energy-form operator re-implemented as pi-ginot-energy-parametric-film-v1."
+  - type: software
+    title: "PI-GINOT-DogBone"
+    authors:
+      - family-names: "Bahtiri"
+        given-names: "Betim"
+    repository-code: "https://github.com/BBahtiri/PI-GINOT-DogBone"
+    commit: "9f6794141beca9d3e66433465c3b07039a7e41d2"
+    license: MIT
+    notes: "Source of the S11 operator design and of the DogBone family ranges."
+  - type: article
+    title: "Geometry-Informed Neural Operator Transformer"
+    authors:
+      - family-names: "Liu"
+        given-names: "Qibang"
+      - family-names: "Zhong"
+        given-names: "Vincient"
+      - family-names: "Meidani"
+        given-names: "Hadi"
+      - family-names: "Abueidda"
+        given-names: "Diab"
+      - family-names: "Koric"
+        given-names: "Seid"
+      - family-names: "Geubelle"
+        given-names: "Philippe"
+    identifiers:
+      - type: other
+        value: "arXiv:2504.19452"
+    url: "https://arxiv.org/abs/2504.19452"
+    notes: "Design lineage of the PI-GINOT operators; no GINOT code is distributed."
