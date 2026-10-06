@@ -53,6 +53,16 @@ that holds the defect ([ADR 0024](docs/adr/0024-s16-mutation-suite.md),
 [plan and results](docs/campaigns/s16-mutation-plan.md)): every mutant fires
 its primary gate, the fired-gate signatures are the committed baseline, and a
 release job reports any lost detection. G16 passes (`artifacts/gates/S16.json`).
+S17 adds three [examples](docs/examples.md), committed
+[benchmarks](docs/benchmarks.md) that reproduce from pinned seeds, a refusal
+suite over both families (840/840 refused with the expected reason code) and
+the documentation site ([ADR 0025](docs/adr/0025-s17-examples-and-second-family.md),
+[plan and results](docs/campaigns/s17-plan.md)). The second family, a
+centre-notched plate, ran the whole evidence chain through the same framework
+calls but **misses the S14 tolerances**: its DEVELOPMENT budget fails
+(all-cases p90 stress field 5.24%, peak 5.34% against 5%), so its HOLDOUT was
+never opened and its bundle serves `NOT_VERIFIED`. G17 therefore fails on
+`G17.non-dogbone`; every other G17 check passes.
 The project does not certify a trained
 neural operator. Read the
 [project limitations](docs/limitations.md) before using its numerical results.

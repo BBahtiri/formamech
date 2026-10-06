@@ -41,6 +41,9 @@ def _family(name: str, holdout: dict[str, Any] | None) -> dict[str, Any]:
         "development": development,
         "holdout": holdout,
         "claim_level": "NOT_VERIFIED" if holdout is None else "HOLDOUT_VERIFIED",
+        "development_budget_decision": None
+        if holdout is None
+        else "accepted by the decision owner (ADR 0000)",
     }
 
 
@@ -54,3 +57,4 @@ def test_render_reports_an_unopened_holdout_without_numbers() -> None:
     assert "HOLDOUT was not opened" in text
     assert "HOLDOUT calibration coverage of the 90% confidence bound: 87.00%" in text
     assert "Claim level: `NOT_VERIFIED`." in text
+    assert text.count("DEVELOPMENT budget: accepted by the decision owner") == 1

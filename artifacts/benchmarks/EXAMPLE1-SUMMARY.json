@@ -1,0 +1,52 @@
+{
+ "bundle_manifest_sha256": "f519fba16249788cbb088c9de4f6f163be093b727ffd363336c63bed5c0a0941",
+ "calibration_in_sample_coverage": 0.8948148148148148,
+ "held_out_errors": {
+  "0.11": {
+   "absolute_peak_error": 0.009395064928304159,
+   "p_relative_l2": 0.013374775363608354,
+   "u_relative_l2": 0.0013659701903161437
+  },
+  "0.15": {
+   "absolute_peak_error": 0.004142585999788931,
+   "p_relative_l2": 0.011180383717729133,
+   "u_relative_l2": 0.0009120522445270305
+  },
+  "0.19": {
+   "absolute_peak_error": 0.0006642193459962239,
+   "p_relative_l2": 0.010663612584393972,
+   "u_relative_l2": 0.000659385063870438
+  }
+ },
+ "mesh": {
+  "cells": 384,
+  "vertices": 225
+ },
+ "passed": true,
+ "refused_reason_codes": [
+  "PARAMETER_OUT_OF_BOUNDS"
+ ],
+ "refused_verdict": "REFUSED",
+ "served_claim_level": "NOT_VERIFIED",
+ "served_qois": [
+  {
+   "location": [
+    0.0,
+    8.5
+   ],
+   "name": "notch_peak_first_piola_frobenius",
+   "unit": "MPa",
+   "value": 209.58508308770666,
+   "vertex": 8
+  }
+ ],
+ "served_verdict": "IN_DOMAIN",
+ "steps": 600,
+ "time_budget_seconds": 600.0,
+ "timings_seconds": {
+  "fem_seconds": 75.19339072599905,
+  "total": 128.3996364270006,
+  "training_seconds": 51.01401846800036,
+  "verification_and_bundle_seconds": 2.1621599449990754
+ }
+}

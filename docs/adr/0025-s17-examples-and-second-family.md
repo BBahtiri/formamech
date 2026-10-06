@@ -2,8 +2,9 @@
 
 - Status: Accepted in part — decisions 1, 7 and 8 were taken by the decision
   owner on 2026-10-05, who also signed off the private-reveal backup (cloud
-  primary and backup, and a copy in `pi_ginot_private_reveals/notched-v1/`);
-  the others are proposed defaults awaiting confirmation
+  primary and backup, and a copy in `pi_ginot_private_reveals/notched-v1/`),
+  and signed off the notched S14 protocol on 2026-10-06; the others are
+  proposed defaults awaiting confirmation
 - Date: 2026-10-05
 - Step: S17 (gate `G17`)
 
@@ -78,3 +79,19 @@ lifting and trainer transfer, with a median field error of 5.05%.
     sealed audit) already cover two of the six topics; four new ADRs record
     the served-stress authority, the soft-BC default, the single architecture
     in v1 and the independence vectors.
+
+## Outcome (2026-10-06)
+
+Decision 7 applied. The notched plate misses the S14 tolerances on TRAIN
+(rehearsal all-cases p90: stress field 5.32%, peak 6.11%) and on DEVELOPMENT
+(5.24%, 5.34%; 19 of 51 gated rows fail, worst on the sharpest notches and the
+widest plates). The decision owner signed off the protocol knowing the
+rehearsal result. Under that protocol HOLDOUT stays closed after a failing
+DEVELOPMENT, so the notched reveal is unread and the HOLDOUT unspent. G14
+fails with claim level `NOT_VERIFIED`; the bundle passes G15 and serves
+`NOT_VERIFIED` through the same API, and `G17.non-dogbone` fails.
+
+About half of each case's budget is the FEM discretisation term of the
+24 + 24 × 16 reference mesh, so a notched v2 needs a finer reference mesh at
+the notch as well as a stronger surrogate. The framework changes since the S16
+base are exactly the additions of decision 2.

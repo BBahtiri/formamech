@@ -219,6 +219,27 @@ S16 checks the gates themselves with twenty mutants
 - Secondary detections can change with library versions; the release job
   reports such changes instead of hiding them.
 
+S17 adds a second family, the centre-notched plate
+([ADR 0025](adr/0025-s17-examples-and-second-family.md),
+[results](campaigns/s17-plan.md#4-results)). Its limits:
+
+- **The notched bundle is `NOT_VERIFIED`.** Its S14 DEVELOPMENT budget fails
+  (all-cases p90: stress field 5.24%, peak 5.34% against 5%; up to 8.7% on the
+  sharpest notches and the widest plates), so HOLDOUT was never opened and its
+  predictions carry no verified error claim. The bundle exists to show the
+  same API and refusals on a second family, not to serve accurate notch
+  stresses.
+- About half of each notched case's budget is the FEM discretisation term of
+  the 24 + 24 × 16 reference mesh, so a better surrogate alone would not pass
+  the tolerances.
+- The notched confidence bound is calibrated on DEVELOPMENT only (90.0%
+  in-sample coverage) and has no HOLDOUT coverage measurement.
+- The benchmark reproductions replay the first 400 of 2,400 optimizer steps
+  and re-score TRAIN-screen cases; they do not re-measure DEVELOPMENT or
+  HOLDOUT.
+- Example 1 is a teaching example on a coarse mesh with one geometry; its
+  held-out strains lie inside its training range.
+
 The S10 production run recorded zero natural FEM failures. Failed-case visibility is
 therefore exercised by one explicitly non-production canary through the same role
 snapshot path; that proves the path represents the controlled failure but is not an

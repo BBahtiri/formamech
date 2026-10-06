@@ -1,0 +1,186 @@
+{
+ "families": [
+  {
+   "claim_level": "HOLDOUT_VERIFIED",
+   "development": {
+    "cases": 64,
+    "fem_median_seconds": 109.90592941449995,
+    "gated_status": "FAIL",
+    "latency_u_and_p_median_seconds": 0.10888460200000001,
+    "p90_including_fem_terms": {
+     "absolute_peak_error": 0.04054520809164782,
+     "p_relative_l2": 0.025809478228301545,
+     "u_relative_l2": 0.002133839893205539
+    },
+    "pooled_spearman": 0.6407982295212862,
+    "speedup": 1009.3799067612879
+   },
+   "development_budget_decision": "accepted by the decision owner (ADR 0021); computed FAIL on W_grip:2 absolute_peak_error 0.05004, nominal_axial_strain:2 absolute_peak_error 0.05054",
+   "family": "dogbone-v1",
+   "holdout": {
+    "calibration_coverage": 0.8680179308565531,
+    "cases": 64,
+    "gated_status": "PASS",
+    "p90_including_fem_terms": {
+     "absolute_peak_error": 0.04022710157648954,
+     "p_relative_l2": 0.027539857575950275,
+     "u_relative_l2": 0.002943109436897604
+    },
+    "pooled_spearman": 0.6202171787913155
+   },
+   "sources": {
+    "gate": "artifacts/gates/S14.json",
+    "screen": "artifacts/campaigns/dogbone-v1/S13C-TRAIN-SCREEN.json"
+   },
+   "train_rehearsal": {
+    "cases": 64,
+    "gated_status": "FAIL",
+    "p90_including_fem_terms": {
+     "absolute_peak_error": 0.03537227896934727,
+     "p_relative_l2": 0.025931502663911674,
+     "u_relative_l2": 0.0030307158918285327
+    }
+   },
+   "train_screen": {
+    "cases": 64,
+    "invalid_collocation_points": 0,
+    "median_absolute_peak_error": 0.008276482387183988,
+    "median_signed_peak_error": -0.002881034836475323,
+    "p90_absolute_peak_error": 0.01693238563180227,
+    "p_relative_l2": 0.009086612004752744,
+    "u_relative_l2": 0.0008139931276587309
+   }
+  },
+  {
+   "claim_level": "NOT_VERIFIED",
+   "development": {
+    "cases": 64,
+    "fem_median_seconds": 99.51657470300052,
+    "gated_status": "FAIL",
+    "latency_u_and_p_median_seconds": 0.07058140925,
+    "p90_including_fem_terms": {
+     "absolute_peak_error": 0.053408836542218036,
+     "p_relative_l2": 0.052362363577965886,
+     "u_relative_l2": 0.0057875972720792465
+    },
+    "pooled_spearman": 0.6251770902953876,
+    "speedup": 1409.9544874559233
+   },
+   "development_budget_decision": null,
+   "family": "notched-v1",
+   "holdout": null,
+   "sources": {
+    "gate": "artifacts/campaigns/notched-v1/gates/S14.json",
+    "screen": "artifacts/campaigns/notched-v1/S13-TRAIN-SCREEN.json"
+   },
+   "train_rehearsal": {
+    "cases": 32,
+    "gated_status": "FAIL",
+    "p90_including_fem_terms": {
+     "absolute_peak_error": 0.0611270552291132,
+     "p_relative_l2": 0.05322871103827574,
+     "u_relative_l2": 0.0036850337122246875
+    }
+   },
+   "train_screen": {
+    "cases": 32,
+    "invalid_collocation_points": 0,
+    "median_absolute_peak_error": 0.012100923340891061,
+    "median_signed_peak_error": -0.0013480111645006922,
+    "p90_absolute_peak_error": 0.03435600351201401,
+    "p_relative_l2": 0.01663450994805711,
+    "u_relative_l2": 0.0016700898813545903
+   }
+  }
+ ],
+ "reproduction": {
+  "dogbone-v1": {
+   "family": "dogbone-v1",
+   "passed": true,
+   "replay": {
+    "bitwise": true,
+    "byte_identical_files": {
+     "checkpoint.json": true,
+     "model.safetensors": true,
+     "state.safetensors": true
+    },
+    "interrupted_and_resumed_at": 200,
+    "run_hash": "0ca34e327d9220ccb6030c4f669fac028938beb086fb17e49818815e8dcbce43",
+    "steps": 400,
+    "training_revision": "8736c1aae93ebe0db91e678e605c0c1bec8a8300"
+   },
+   "rescore": {
+    "committed": {
+     "invalid_collocation_points": 0,
+     "median_absolute_peak_error": 0.008276482387183988,
+     "median_signed_peak_error": -0.002881034836475323,
+     "p90_absolute_peak_error": 0.01693238563180227,
+     "p_relative_l2": 0.009086612004752744,
+     "u_relative_l2": 0.0008139931276587309
+    },
+    "measured": {
+     "invalid_collocation_points": 0.0,
+     "median_absolute_peak_error": 0.008276482387184099,
+     "median_signed_peak_error": -0.002881034836475323,
+     "p90_absolute_peak_error": 0.01693238563180227,
+     "p_relative_l2": 0.009086612004752737,
+     "u_relative_l2": 0.0008139931276587278
+    },
+    "relative_difference": {
+     "invalid_collocation_points": 0.0,
+     "median_absolute_peak_error": 1.3414189418735678e-14,
+     "median_signed_peak_error": 0.0,
+     "p90_absolute_peak_error": 0.0,
+     "p_relative_l2": 7.636392860482924e-16,
+     "u_relative_l2": 3.729473849111128e-15
+    },
+    "tolerance": 1e-09,
+    "within_tolerance": true
+   }
+  },
+  "notched-v1": {
+   "family": "notched-v1",
+   "passed": true,
+   "replay": {
+    "bitwise": true,
+    "byte_identical_files": {
+     "checkpoint.json": true,
+     "model.safetensors": true,
+     "state.safetensors": true
+    },
+    "interrupted_and_resumed_at": 200,
+    "run_hash": "e5451350d82db80249e19b11479f6101fca87498aa966947f7566e93aa0eab1f",
+    "steps": 400,
+    "training_revision": "a126e3a431349d16b2fd261c09eaa08d528f6722"
+   },
+   "rescore": {
+    "committed": {
+     "invalid_collocation_points": 0,
+     "median_absolute_peak_error": 0.012100923340891061,
+     "median_signed_peak_error": -0.0013480111645006922,
+     "p90_absolute_peak_error": 0.03435600351201401,
+     "p_relative_l2": 0.01663450994805711,
+     "u_relative_l2": 0.0016700898813545903
+    },
+    "measured": {
+     "invalid_collocation_points": 0.0,
+     "median_absolute_peak_error": 0.012100923340891061,
+     "median_signed_peak_error": -0.0013480111645006922,
+     "p90_absolute_peak_error": 0.03435600351201401,
+     "p_relative_l2": 0.01663450994805711,
+     "u_relative_l2": 0.0016700898813545903
+    },
+    "relative_difference": {
+     "invalid_collocation_points": 0.0,
+     "median_absolute_peak_error": 0.0,
+     "median_signed_peak_error": 0.0,
+     "p90_absolute_peak_error": 0.0,
+     "p_relative_l2": 0.0,
+     "u_relative_l2": 0.0
+    },
+    "tolerance": 1e-09,
+    "within_tolerance": true
+   }
+  }
+ }
+}
