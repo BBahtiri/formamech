@@ -33,6 +33,8 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
+from campaigns.history import resolve_revision
+
 REPOSITORY = Path(__file__).resolve().parents[1]
 OUTPUT = Path("artifacts/benchmarks")
 TABLE_PATH = OUTPUT / "BENCHMARKS.json"
@@ -290,9 +292,11 @@ def _replay(
         text=True,
         check=True,
     ).stdout.strip()
-    if head != binding.implementation_revision:
+    expected = resolve_revision(binding.implementation_revision, worktree)
+    if head != expected:
         raise RuntimeError(
-            f"the replay checkout is at {head}, not {binding.implementation_revision}"
+            f"the replay checkout is at {head}, not {expected} "
+            f"(recorded as {binding.implementation_revision})"
         )
     run_root = scratch / f"replay-{family}"
     command = [sys.executable, "-m", FAMILIES[family]["train_module"]]

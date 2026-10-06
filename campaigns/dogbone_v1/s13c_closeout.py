@@ -43,6 +43,7 @@ from campaigns.dogbone_v1.s13c_trial import (
     RUN_BINDING_NAME,
     load_committed_s13c_protocol,
 )
+from campaigns.history import UnknownRevisionError, resolve_revision
 from piginot.contracts import strict_json_loads
 from piginot.doe import EvidenceRole
 from piginot.git_environment import isolated_git_environment
@@ -327,6 +328,10 @@ def _identity_check(run_root: Path) -> dict[str, object]:
 
 
 def _is_ancestor(revision: str) -> bool:
+    try:
+        revision = resolve_revision(revision, _ROOT)
+    except UnknownRevisionError:
+        return False
     completed = subprocess.run(
         ("git", "merge-base", "--is-ancestor", revision, "HEAD"),
         cwd=_ROOT,

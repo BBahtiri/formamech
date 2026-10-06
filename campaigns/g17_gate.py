@@ -38,6 +38,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+from campaigns.history import resolve_revision
 from campaigns.notched_v1.gate_io import (
     check_document,
     gate_document,
@@ -182,7 +183,7 @@ def non_dogbone() -> dict[str, Any]:
             str(REPOSITORY),
             "diff",
             "--name-only",
-            S16_BASE,
+            resolve_revision(S16_BASE),
             "HEAD",
             "--",
             "src",
