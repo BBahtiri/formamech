@@ -6,14 +6,20 @@
 > experiments, and it claims nothing outside that envelope.
 
 PI-GINOT is an early-stage open-source project for verified, problem-specific
-physics-informed neural operators in 2D finite-strain elasticity. The repository
-currently implements the S2 contract layer through the verified S10 DogBone dataset,
-S11 PI-GINOT operator architecture, and
-[S12 nondimensional objective registry](docs/adr/0013-s12-objective-registry.md).
-The mandatory pre-S12 architecture screen trained four diagnostic candidates under
-a fixed TRAIN-only protocol and formally fell back to the S11 baseline. S12 is now
-complete and G12 is PASS: 89 focused tests pass with 92.99% branch coverage, while
-the full suite records 1,928 passed and 2 skipped.
+physics-informed neural operators in 2D finite-strain elasticity. Release 0.1.0
+completes the STEPS-v1.0 plan (S0–S18). It ships contracts and a content store,
+a plane-stress physics kernel and FEM solver with their verification, geometry
+morphing, preregistered datasets, the energy-form operator, deterministic
+training, verification with claim levels, hash-closed bundles with a command
+line, a mutation suite, examples and benchmarks. Two families have bundles: the
+DogBone (`HOLDOUT_VERIFIED`) and a centre-notched plate (`DEVELOPMENT_VERIFIED`).
+The history below records how each step was reached.
+
+The S11 PI-GINOT operator architecture and the
+[S12 nondimensional objective registry](docs/adr/0013-s12-objective-registry.md)
+came first. The mandatory pre-S12 architecture screen trained four diagnostic
+candidates under a fixed TRAIN-only protocol and formally fell back to the S11
+baseline; G12 passed.
 
 S13 training is complete. The six registered S13 hybrid fine-tunes of the
 S11 operator and the S13b peak pilot failed the frozen TRAIN-screen guardrails
@@ -67,6 +73,10 @@ field 5.24%, peak 5.34%, accepted by the decision owner
 `DEVELOPMENT_VERIFIED`, not `HOLDOUT_VERIFIED`. G17 passes with
 `G17.non-dogbone` failing as computed and accepted by the decision owner
 ([ADR 0031](docs/adr/0031-g17-non-dogbone-acceptance.md)).
+Release 0.1.0 (S18) is recorded in the [changelog](CHANGELOG.md) and
+[ADR 0032](docs/adr/0032-release-0.1.0.md): the upstream sources and licences
+are [recorded](docs/adr/upstream-sources.md), and the decision owner signed off
+the limitations page.
 The project does not certify a trained
 neural operator. Read the
 [project limitations](docs/limitations.md) before using its numerical results.
