@@ -1,0 +1,7 @@
+{
+ "campaign_id": "notched-v1",
+ "candidate_run_hash": "e5451350d82db80249e19b11479f6101fca87498aa966947f7566e93aa0eab1f",
+ "consumed_utc": "2026-10-06T12:13:35Z",
+ "freeze_record_sha256": "176b205c296e92b6eadf7e4ddeb52e055db47968386fe57f151403d9e2100a95",
+ "purpose": "S14 HOLDOUT evaluation under protocol 6d544d829c015172f6b16d5dcc78e19205969c69595223826a513bec4813f307"
+}
