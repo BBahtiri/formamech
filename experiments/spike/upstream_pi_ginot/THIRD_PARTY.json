@@ -1,0 +1,55 @@
+{
+ "purpose": "Third-party GINOT-derived modules needed only by the quarantined S1 spike. Not redistributed by this repository from release 0.1.0 on (ADR 0032); fetch them with `python -m experiments.spike.fetch_upstream`.",
+ "upstream_repository": "BBahtiri/PI-GINOT-DogBone",
+ "upstream_commit": "9f6794141beca9d3e66433465c3b07039a7e41d2",
+ "digest": "SHA-256 of the file with CRLF normalised to LF",
+ "original_source": {
+  "project": "GINOT (Geometry-Informed Neural Operator Transformer)",
+  "repository": "https://github.com/QibangLiu/GINOT",
+  "paper": "Q. Liu, V. Zhong, H. Meidani, D. Abueidda, S. Koric, P. Geubelle, arXiv:2504.19452",
+  "licence": "none found (no LICENSE file on the default branch, checked 2026-10-06)"
+ },
+ "record": "docs/adr/upstream-sources.md",
+ "files": [
+  {
+   "path": "models/modules/__init__.py",
+   "upstream_path": "models/modules/__init__.py",
+   "sha256": "c684199acfc7d30c6e49e75e4cf30c9e0cde8b24c9f36d4b1136418b9e918584",
+   "bytes": 57,
+   "origin": "GINOT (Qibang Liu), package marker: '# GINOT core modules (copied from GINOT/models/modules/)'",
+   "licence_status": "no licence (GINOT repository has no licence file)"
+  },
+  {
+   "path": "models/modules/point_encoding.py",
+   "upstream_path": "models/modules/point_encoding.py",
+   "sha256": "7a2823e8641869279d89b33f7e213893524a7bdebb931195f883925b6600db28",
+   "bytes": 14238,
+   "origin": "GINOT (Qibang Liu); header: 'Copyright © Qibang Liu 2025. All Rights Reserved.'; 'Modified based on' openai/shap-e shap_e/models/nn/ops.py (MIT, OpenAI 2023)",
+   "licence_status": "All Rights Reserved; no licence"
+  },
+  {
+   "path": "models/modules/point_position_embedding.py",
+   "upstream_path": "models/modules/point_position_embedding.py",
+   "sha256": "e253bb32ceeab2c37358a75f773785955ffb13b8e1596d77d4ebf7f9ad1d7df0",
+   "bytes": 2534,
+   "origin": "GINOT (Qibang Liu); header: 'Copyright © Qibang Liu 2025. All Rights Reserved.'; 'Based on' openai/shap-e shap_e/models/nn/encoding.py (MIT, OpenAI 2023)",
+   "licence_status": "All Rights Reserved; no licence"
+  },
+  {
+   "path": "models/modules/pointnet2_utils.py",
+   "upstream_path": "models/modules/pointnet2_utils.py",
+   "sha256": "ff191b5f3046792d73675bb75fe4a604e31c07756f6bf44c1e9abd36d5f98a22",
+   "bytes": 17904,
+   "origin": "GINOT (Qibang Liu), author header; 'Modified base on' openai/shap-e pointnet2_utils.py (MIT, OpenAI 2023), 'Originaly based on' yanx27/Pointnet_Pointnet2_pytorch models/pointnet2_utils.py (MIT, Copyright (c) 2019 benny)",
+   "licence_status": "derived from MIT code, modified in GINOT, which has no licence"
+  },
+  {
+   "path": "models/modules/transformer.py",
+   "upstream_path": "models/modules/transformer.py",
+   "sha256": "a329673ffeb93229b8005ef46862b101ba5ad512163c6026956437996428368f",
+   "bytes": 4607,
+   "origin": "GINOT (Qibang Liu), copied with the package (no header)",
+   "licence_status": "no licence (GINOT repository has no licence file)"
+  }
+ ]
+}

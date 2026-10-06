@@ -13,3 +13,5 @@ build/
 dist/
 htmlcov/
 site/
+# Third-party GINOT modules of the S1 spike: fetched, never committed (ADR 0032)
+experiments/spike/upstream_pi_ginot/models/modules/

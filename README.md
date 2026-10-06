@@ -71,6 +71,24 @@ The project does not certify a trained
 neural operator. Read the
 [project limitations](docs/limitations.md) before using its numerical results.
 
+## Name and architecture
+
+The name PI-GINOT does not claim a faithful reproduction of GNOT or GINO, nor
+of GINOT. It names this project's own physics-informed operator, which
+re-implements the design of the author's PI-GINOT repositories in the
+contract style of this package. Both published bundles serve exactly one
+architecture:
+
+```text
+architecture_id: pi-ginot-energy-parametric-film-v1
+```
+
+This is the energy-form operator in `src/piginot/operators/energy_operator.py`
+([ADR 0018](docs/adr/0018-s13c-energy-form-operator.md),
+[ADR 0028](docs/adr/0028-single-architecture-in-v1.md)). Its sources,
+commits, digests and licences are recorded in
+[upstream sources](docs/adr/upstream-sources.md).
+
 ## Requirements
 
 - Python 3.11, 3.12, or 3.13
@@ -136,4 +154,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Participation is governed by the
 
 ## License
 
-PI-GINOT is licensed under the [MIT License](LICENSE).
+PI-GINOT is licensed under the [MIT License](LICENSE). Every component adapted
+from other work, and its licence, is recorded in
+[upstream sources](docs/adr/upstream-sources.md).

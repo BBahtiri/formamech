@@ -1,9 +1,11 @@
 """Mixed (u, P) S1 adapter around the exact pinned PI-GINOT implementation.
 
 The upstream sources are vendored byte-for-byte (apart from platform newline
-normalisation) under experiments/spike/upstream_pi_ginot. This module adds
-only the direct first-Piola head required by S1. Displacement continues through
-the unmodified upstream PI_GINOT.forward path.
+normalisation) under experiments/spike/upstream_pi_ginot, except the
+third-party GINOT ``models/modules`` package, which is not redistributed and is
+fetched from the pinned commit with ``python -m experiments.spike.fetch_upstream``
+(ADR 0032). This module adds only the direct first-Piola head required by S1.
+Displacement continues through the unmodified upstream PI_GINOT.forward path.
 """
 
 from __future__ import annotations
