@@ -139,9 +139,8 @@ rather than stop at TRAIN-only evidence or rework the campaign first.
 - **Documentation**: the strict mkdocs build and the link check pass. The
   limitations page gains the S17 limits, and the README summarises S17 under
   the limitations banner.
-- **Tests**: the full suite passed on 2026-10-05 (3,036 passed, 1 skipped,
-  branch coverage 91%); the tests added since (benchmark rendering, notched
-  bundle limitations) pass.
+- **Tests**: the full suite passes at the S17 close (3,039 passed, 1 skipped,
+  branch coverage of `src/piginot` 91%).
 
 ### 4.3 G17
 
