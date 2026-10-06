@@ -1,0 +1,15 @@
+{
+ "accepted_records": [
+  "artifacts/campaigns/notched-v1/S14-PROTOCOL.json",
+  "artifacts/campaigns/notched-v1/S14-TRAIN-REHEARSAL.json",
+  "docs/adr/0025-s17-examples-and-second-family.md"
+ ],
+ "decision": "Sign off S14-PROTOCOL.json as frozen with the S14 tolerances unchanged; open DEVELOPMENT",
+ "holdout_rule": "HOLDOUT is consumed only if the DEVELOPMENT budget and confidence pass",
+ "known_at_sign_off": "the TRAIN rehearsal misses the tolerances (all-cases p90: P 5.32%, peak 6.11%; 20 of 51 gated rows fail); a failing DEVELOPMENT keeps HOLDOUT unspent and the bundle NOT_VERIFIED",
+ "protocol_id": "notched-v1-s14-protocol-v1",
+ "protocol_sha256": "6d544d829c015172f6b16d5dcc78e19205969c69595223826a513bec4813f307",
+ "recorded_from": "the decision owner's answer in the S17 session chat (option: sign off, run DEVELOPMENT)",
+ "signed_off_by": "Betim Bahtiri",
+ "signed_off_utc": "2026-10-06T04:24:06Z"
+}
