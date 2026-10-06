@@ -223,17 +223,23 @@ S17 adds a second family, the centre-notched plate
 ([ADR 0025](adr/0025-s17-examples-and-second-family.md),
 [results](campaigns/s17-plan.md#4-results)). Its limits:
 
-- **The notched bundle is `NOT_VERIFIED`.** Its S14 DEVELOPMENT budget fails
-  (all-cases p90: stress field 5.24%, peak 5.34% against 5%; up to 8.7% on the
-  sharpest notches and the widest plates), so HOLDOUT was never opened and its
-  predictions carry no verified error claim. The bundle exists to show the
-  same API and refusals on a second family, not to serve accurate notch
-  stresses.
+- **The notched bundle is `DEVELOPMENT_VERIFIED`, not `HOLDOUT_VERIFIED`.**
+  Its S14 DEVELOPMENT budget failed as computed (all-cases p90: stress field
+  5.24%, peak 5.34% against 5%) and was accepted by the decision owner after
+  the result was seen ([ADR 0030](adr/0030-notched-development-budget-acceptance.md)).
+  Its HOLDOUT budget, judged by the unchanged rule, fails: 6.01% and 6.40%,
+  up to 10.7% on single slices, worst on the sharpest notches and the widest
+  plates. Its predictions are not verified to the S14 tolerances on unseen
+  cases.
+- `G17.non-dogbone` computes FAIL and passes only through the decision owner's
+  acceptance ([ADR 0031](adr/0031-g17-non-dogbone-acceptance.md)); G17's PASS
+  rests on that acceptance for this check.
 - About half of each notched case's budget is the FEM discretisation term of
   the 24 + 24 × 16 reference mesh, so a better surrogate alone would not pass
   the tolerances.
-- The notched confidence bound is calibrated on DEVELOPMENT only (90.0%
-  in-sample coverage) and has no HOLDOUT coverage measurement.
+- The notched confidence indicator ranks errors weakly (pooled Spearman 0.609
+  on HOLDOUT); its DEVELOPMENT-calibrated 90% bound covers 87.7% of HOLDOUT
+  vertices.
 - The benchmark reproductions replay the first 400 of 2,400 optimizer steps
   and re-score TRAIN-screen cases; they do not re-measure DEVELOPMENT or
   HOLDOUT.

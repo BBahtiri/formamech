@@ -21,8 +21,10 @@ coordinate; the private reveal lives outside Git
 | `CP-FREEZE.json` | S13 | the frozen candidate |
 | `S14-TRAIN-REHEARSAL.json` | S14 | the TRAIN-only rehearsal |
 | `S14-PROTOCOL.json`, `S14-PROTOCOL-SIGNOFF.json` | S14 | the frozen protocol and its sign-off |
-| `S14-DEVELOPMENT-ACCESS.json`, `S14-DEVELOPMENT.json` | S14 | the DEVELOPMENT opening record and result (budget FAIL) |
-| `S14-GATE.json` | S14 | the G14 report (FAIL, claim `NOT_VERIFIED`) |
+| `S14-DEVELOPMENT-ACCESS.json`, `S14-DEVELOPMENT.json` | S14 | the DEVELOPMENT opening record and result (budget FAIL as computed) |
+| `S14-PROTOCOL-AMENDMENT-1.json` | S14 | the decision owner's signed waiver of the DEVELOPMENT budget (ADR 0030) |
+| `S14-HOLDOUT-CONSUMED.json`, `S14-HOLDOUT.json` | S14 | the HOLDOUT consumption record and result (budget FAIL) |
+| `S14-GATE.json` | S14 | the G14 report (PASS, claim `DEVELOPMENT_VERIFIED`) |
 | `S15-VALIDATION.json` | S15 | the G15 measurements of the bundle |
 | `gates/` | S6–S15 | the campaign-scoped gate artifacts (G6, G9, G10, G11, G13, G14, G15) |
 
@@ -30,7 +32,6 @@ The framework gates G2–G5, G7, G8 and G12 are shared with the DogBone campaign
 (`artifacts/gates/`); the S14 reducer reads the campaign-scoped artifacts for
 the other five families (`campaigns.notched_v1.s14.CAMPAIGN_FAMILIES`).
 
-There is no `S14-HOLDOUT.json`. The DEVELOPMENT budget failed, so under the
-signed protocol HOLDOUT was never opened, no consumption record exists and the
-notched reveal is unread. The bundle built from `CP-FREEZE` serves
-`NOT_VERIFIED` (G15 PASS); see the [S17 results](../../../docs/campaigns/s17-plan.md#4-results).
+HOLDOUT was consumed once, after the signed waiver was committed. Its budget
+fails under the unchanged rule, so the bundle built from `CP-FREEZE` serves
+`DEVELOPMENT_VERIFIED` (G15 PASS); see the [S17 results](../../../docs/campaigns/s17-plan.md#4-results).

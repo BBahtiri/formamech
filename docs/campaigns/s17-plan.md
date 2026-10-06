@@ -67,10 +67,11 @@ a parameter.
 
 ### 4.1 The notched-plate campaign
 
-The notched plate ran the full evidence chain through the framework APIs. It
-**misses the S14 tolerances**, so its bundle serves `NOT_VERIFIED` and
-`G17.non-dogbone` fails, as ADR 0025 decision 7 foresaw. Its HOLDOUT was never
-opened.
+The notched plate ran the full evidence chain through the framework APIs but
+**misses the S14 tolerances on DEVELOPMENT and on HOLDOUT**. The decision
+owner accepted the DEVELOPMENT budget ([ADR 0030](../adr/0030-notched-development-budget-acceptance.md)),
+which opened HOLDOUT under the unchanged rule. HOLDOUT failed, so G14 passes
+at `DEVELOPMENT_VERIFIED` and the bundle serves that level.
 
 | Step | Gate | Result |
 | --- | --- | --- |
@@ -79,8 +80,8 @@ opened.
 | S10 | G10 PASS | 200/200 FEM cases, no failure; 200 byte-identical replays; mutants fire; coverage 85.5% |
 | S11 | G11-ENERGY PASS | exact lifting over 64 vectors; coverage 90.4% |
 | S13 | G13 PASS | one registered trial, 2,400 steps; replay bitwise; TRAIN screen ELIGIBLE |
-| S14 | G14 **FAIL**, `NOT_VERIFIED` | DEVELOPMENT budget fails; HOLDOUT stays closed |
-| S15 | G15 PASS | bundle `notched-v1-cp-freeze` serves `NOT_VERIFIED` through the same API |
+| S14 | G14 PASS, `DEVELOPMENT_VERIFIED` | DEVELOPMENT budget FAIL as computed, accepted by signed waiver (ADR 0030); HOLDOUT budget FAIL |
+| S15 | G15 PASS | bundle `notched-v1-cp-freeze` serves `DEVELOPMENT_VERIFIED` through the same API |
 
 TRAIN screen of the frozen candidate (32 cases, surrogate error only): median
 peak 1.21% (p90 3.44%), stress field 1.66%, displacement 0.17%, no folded
@@ -93,31 +94,31 @@ the surrogate error. Its p90 over all cases, against 5% (stress field), 5%
 | Population | Stress field | Peak | Displacement | Gated rows failing |
 | --- | --- | --- | --- | --- |
 | TRAIN rehearsal (32 cases) | 5.32% | 6.11% | 0.37% | 20 of 51 |
-| DEVELOPMENT (64 cases) | 5.24% | 5.34% | 0.58% | 19 of 51 |
-| HOLDOUT | not opened | — | — | — |
+| DEVELOPMENT (64 cases) | 5.24% | 5.34% | 0.58% | 19 of 51 (accepted, ADR 0030) |
+| HOLDOUT (64 cases) | 6.01% | 6.40% | 0.53% | 22 of 51 |
 
-- **Where it fails.** The widest plates (width bin 3: stress field 7.9%, peak
-  8.3%) and the sharpest notches (radius bin 0: 7.8%, 8.7%). The narrow
-  plates and the blunt notches pass (for example radius bin 3: 2.7%, 3.0%).
+- **Where it fails.** The sharpest notches (radius bin 0, HOLDOUT: stress
+  field 7.4%, peak 9.9%), the widest plates (width bin 3: 7.4%, 9.7%) and the
+  two small strain strata (6 cases each, up to 10.7%). The narrow plates and
+  the blunter notches pass (for example width bin 0: 3.9%, 3.8%).
 - **Why a better surrogate alone would not close the gap.** The FEM
-  discretisation term is about as large as the surrogate error: on
-  DEVELOPMENT its median is 1.22% for the stress field and 1.09% for the
-  peak, against surrogate medians of 1.72% and 1.01%. Its maximum reaches
-  4.8% and 3.9%. A notched v2 needs a finer FEM mesh at the notch as well as
-  a stronger surrogate.
+  discretisation term is about as large as the surrogate error: on HOLDOUT its
+  median is 1.34% for the stress field and 1.08% for the peak, against
+  surrogate medians of 1.71% and 1.28%; its maximum reaches 5.4% and 4.8%. A
+  notched v2 needs a finer FEM mesh at the notch as well as a stronger
+  surrogate.
 - **What passes.** Refusals 216/216 with no false refusal over 700 in-domain
-  requests; pooled Spearman of the confidence indicator 0.625 (threshold
-  0.6); u-and-P inference 1,410× faster than FEM on one thread; the
-  twelve-family reducer; coverage 91.4%.
-- **HOLDOUT.** The protocol opens HOLDOUT only after a passing DEVELOPMENT.
-  The holdout phase refused with `HOLDOUT stays closed because DEVELOPMENT
-  failed: G14.budget` before writing a consumption record or reading the
-  reveal. The sealed reveal in `pi_ginot_private_reveals/notched-v1/` is
-  unread and the notched HOLDOUT is unspent.
-
-The decision owner signed off the protocol (`S14-PROTOCOL-SIGNOFF.json`)
-knowing the TRAIN-rehearsal shortfall, and chose to measure DEVELOPMENT
-rather than stop at TRAIN-only evidence or rework the campaign first.
+  requests; pooled Spearman of the confidence indicator 0.625 on DEVELOPMENT
+  and 0.609 on HOLDOUT (threshold 0.6); the DEVELOPMENT-calibrated 90% bound
+  covers 87.7% of HOLDOUT vertices; u-and-P inference 1,410× faster than FEM
+  on one thread; the twelve-family reducer; coverage 91.4%.
+- **Order of decisions.** The decision owner signed off the protocol
+  (`S14-PROTOCOL-SIGNOFF.json`) knowing the TRAIN-rehearsal shortfall. After
+  DEVELOPMENT failed, HOLDOUT first stayed closed (the holdout phase refused
+  before any consumption record). The decision owner then accepted the
+  DEVELOPMENT result (`S14-PROTOCOL-AMENDMENT-1.json`, committed before the
+  consumption record `S14-HOLDOUT-CONSUMED.json`), and HOLDOUT was consumed
+  once.
 
 ### 4.2 Examples, benchmarks, refusals, documentation
 

@@ -82,14 +82,17 @@ lifting and trainer transfer, with a median field error of 5.05%.
 
 ## Outcome (2026-10-06)
 
-Decision 7 applied. The notched plate misses the S14 tolerances on TRAIN
-(rehearsal all-cases p90: stress field 5.32%, peak 6.11%) and on DEVELOPMENT
-(5.24%, 5.34%; 19 of 51 gated rows fail, worst on the sharpest notches and the
-widest plates). The decision owner signed off the protocol knowing the
-rehearsal result. Under that protocol HOLDOUT stays closed after a failing
-DEVELOPMENT, so the notched reveal is unread and the HOLDOUT unspent. G14
-fails with claim level `NOT_VERIFIED`; the bundle passes G15 and serves
-`NOT_VERIFIED` through the same API, and `G17.non-dogbone` fails.
+Decision 7 applied, then the decision owner accepted the results. The notched
+plate misses the S14 tolerances on TRAIN (rehearsal all-cases p90: stress
+field 5.32%, peak 6.11%) and on DEVELOPMENT (5.24%, 5.34%; 19 of 51 gated rows
+fail). The decision owner signed off the protocol knowing the rehearsal
+result, then accepted the DEVELOPMENT budget in a signed waiver
+([ADR 0030](0030-notched-development-budget-acceptance.md)), which opened
+HOLDOUT under the unchanged rule. HOLDOUT fails (6.01%, 6.40%; 22 of 51 rows),
+so G14 passes at `DEVELOPMENT_VERIFIED` and the bundle passes G15 at that
+level. `G17.non-dogbone` computes FAIL and the decision owner accepted it
+([ADR 0031](0031-g17-non-dogbone-acceptance.md)), so G17 passes on that
+acceptance.
 
 About half of each case's budget is the FEM discretisation term of the
 24 + 24 × 16 reference mesh, so a notched v2 needs a finer reference mesh at

@@ -1,0 +1,40 @@
+{
+ "acceptance_id": "s17-g17-non-dogbone-acceptance-1",
+ "accepted_claim_level": "DEVELOPMENT_VERIFIED",
+ "bundle": "notched-v1-cp-freeze",
+ "bundle_manifest_sha256": "3749f4be4761a55582dd07f90e3cc5950b8231357162366d79dc47463dddcc99",
+ "check": "G17.non-dogbone",
+ "decision": "G17.non-dogbone is accepted at DEVELOPMENT_VERIFIED ('The error is fine i want to make this as a PASS'; option: accept at G17).",
+ "decision_record": "ADR 0031",
+ "measured": {
+  "development_all_cases_p90": {
+   "absolute_peak_error": 0.053408836542218036,
+   "p_relative_l2": 0.052362363577965886,
+   "u_relative_l2": 0.0057875972720792465
+  },
+  "development_failing_rows": 19,
+  "gated_rows": 51,
+  "holdout_all_cases_p90": {
+   "absolute_peak_error": 0.0639829885363549,
+   "p_relative_l2": 0.060105319192263515,
+   "u_relative_l2": 0.005345332223220588
+  },
+  "holdout_failing_rows": 22,
+  "tolerances": {
+   "absolute_peak_error": 0.05,
+   "p_relative_l2": 0.05,
+   "u_relative_l2": 0.02
+  }
+ },
+ "not_accepted": [
+  "a failing G15",
+  "framework changes outside the declared additions of ADR 0025",
+  "any other bundle or G15 gate"
+ ],
+ "notched_g15_gate": "artifacts/campaigns/notched-v1/gates/S15.json",
+ "notched_g15_sha256": "fd89470f67c992e8651bb5bfde8941056848253b85d4ccec9b567bfbe6bece1c",
+ "recorded_from": "the decision owner's answer in the S17 session chat, after the HOLDOUT result was reported",
+ "required_claim_level": "HOLDOUT_VERIFIED",
+ "signed_off_by": "Betim Bahtiri",
+ "signed_off_utc": "2026-10-06T14:28:32Z"
+}

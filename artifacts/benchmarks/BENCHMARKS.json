@@ -52,7 +52,7 @@
    }
   },
   {
-   "claim_level": "NOT_VERIFIED",
+   "claim_level": "DEVELOPMENT_VERIFIED",
    "development": {
     "cases": 64,
     "fem_median_seconds": 99.51657470300052,
@@ -66,11 +66,21 @@
     "pooled_spearman": 0.6251770902953876,
     "speedup": 1409.9544874559233
    },
-   "development_budget_decision": null,
+   "development_budget_decision": "accepted by the decision owner (ADR 0030)",
    "family": "notched-v1",
-   "holdout": null,
+   "holdout": {
+    "calibration_coverage": 0.8770820828331333,
+    "cases": 64,
+    "gated_status": "FAIL",
+    "p90_including_fem_terms": {
+     "absolute_peak_error": 0.0639829885363549,
+     "p_relative_l2": 0.060105319192263515,
+     "u_relative_l2": 0.005345332223220588
+    },
+    "pooled_spearman": 0.6089046933011668
+   },
    "sources": {
-    "gate": "artifacts/campaigns/notched-v1/gates/S14.json",
+    "gate": "artifacts/campaigns/notched-v1/S14-GATE.json",
     "screen": "artifacts/campaigns/notched-v1/S13-TRAIN-SCREEN.json"
    },
    "train_rehearsal": {

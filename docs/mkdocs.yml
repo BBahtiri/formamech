@@ -51,6 +51,7 @@ nav:
       - "ADR 0028 — A single served architecture in v1": adr/0028-single-architecture-in-v1.md
       - "ADR 0029 — Independence vectors behind every accuracy claim": adr/0029-independence-vectors.md
       - "ADR 0030 — The notched DEVELOPMENT budget acceptance": adr/0030-notched-development-budget-acceptance.md
+      - "ADR 0031 — G17.non-dogbone accepted at DEVELOPMENT_VERIFIED": adr/0031-g17-non-dogbone-acceptance.md
 
 theme:
   name: readthedocs

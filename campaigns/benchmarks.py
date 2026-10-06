@@ -64,7 +64,7 @@ FAMILIES: dict[str, dict[str, str]] = {
         "rehearsal": "S14-TRAIN-REHEARSAL.json",
         "development": "S14-DEVELOPMENT.json",
         "holdout": "S14-HOLDOUT.json",
-        "gate": "artifacts/campaigns/notched-v1/gates/S14.json",
+        "gate": "artifacts/campaigns/notched-v1/S14-GATE.json",
         "bundle_gate": "artifacts/campaigns/notched-v1/gates/S15.json",
         "train_module": "campaigns.notched_v1.s13",
     },

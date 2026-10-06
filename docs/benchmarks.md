@@ -19,16 +19,18 @@ HOLDOUT calibration coverage of the 90% confidence bound: 86.80%. Latency (u and
 
 ## notched-v1
 
-Claim level: `NOT_VERIFIED`.
+Claim level: `DEVELOPMENT_VERIFIED`.
 
 | Population | Stress field | Peak | Displacement | Spearman | Budget |
 | --- | --- | --- | --- | --- | --- |
 | TRAIN-screen (32 cases, surrogate medians) | 1.66% | 1.21% | 0.17% | — | — |
 | TRAIN rehearsal (32 cases, p90 with FEM terms) | 5.32% | 6.11% | 0.37% | — | FAIL |
 | DEVELOPMENT (64 cases, p90 with FEM terms) | 5.24% | 5.34% | 0.58% | 0.625 | FAIL |
-| HOLDOUT | not opened: DEVELOPMENT failed the gated budget, so HOLDOUT stays unspent | — | — | — | — |
+| HOLDOUT (64 cases, p90 with FEM terms) | 6.01% | 6.40% | 0.53% | 0.609 | FAIL |
 
-HOLDOUT was not opened, so the confidence bound has no HOLDOUT calibration measurement. Latency (u and P at every vertex, one thread): 0.071 s against 99.5 s for FEM, a speed-up of 1410x.
+DEVELOPMENT budget: accepted by the decision owner (ADR 0030).
+
+HOLDOUT calibration coverage of the 90% confidence bound: 87.71%. Latency (u and P at every vertex, one thread): 0.071 s against 99.5 s for FEM, a speed-up of 1410x.
 
 ## Reproduction
 

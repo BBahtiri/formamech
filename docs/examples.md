@@ -61,9 +61,10 @@ python -m campaigns.notched_v1.s13 train --run-root TRAINING
 python -m campaigns.notched_v1.s14 development --s10-run-root RUN --training-run-root TRAINING --run-root S14
 ```
 
-The notched plate misses the S14 tolerances: its DEVELOPMENT budget fails
-(all-cases p90: stress field 5.24%, peak 5.34% against 5%), so HOLDOUT stays
-closed and its bundle serves `NOT_VERIFIED` through the same API as the
-DogBone ([results](campaigns/s17-plan.md#4-results)). The
-[benchmarks](benchmarks.md) page gives the measured numbers of both campaigns
-and how they are reproduced.
+The notched plate misses the S14 tolerances on DEVELOPMENT (all-cases p90:
+stress field 5.24%, peak 5.34%, accepted by the decision owner in
+[ADR 0030](adr/0030-notched-development-budget-acceptance.md)) and on HOLDOUT
+(6.01%, 6.40% against 5%), so its bundle serves `DEVELOPMENT_VERIFIED`
+through the same API as the DogBone ([results](campaigns/s17-plan.md#4-results)).
+The [benchmarks](benchmarks.md) page gives the measured numbers of both
+campaigns and how they are reproduced.
