@@ -1,0 +1,137 @@
+{
+  "gate_id": "G17",
+  "step": "S17",
+  "commit": "d294940759658385ac186c8a4522cace5a1c6c17",
+  "timestamp_utc": "2026-10-06T08:24:29Z",
+  "checks": [
+    {
+      "id": "G17.example1",
+      "status": "PASS",
+      "measured": {
+        "summary_passed": true,
+        "total_seconds": 128.3996364270006,
+        "held_out_errors": {
+          "0.11": {
+            "absolute_peak_error": 0.009395064928304159,
+            "p_relative_l2": 0.013374775363608354,
+            "u_relative_l2": 0.0013659701903161437
+          },
+          "0.15": {
+            "absolute_peak_error": 0.004142585999788931,
+            "p_relative_l2": 0.011180383717729133,
+            "u_relative_l2": 0.0009120522445270305
+          },
+          "0.19": {
+            "absolute_peak_error": 0.0006642193459962239,
+            "p_relative_l2": 0.010663612584393972,
+            "u_relative_l2": 0.000659385063870438
+          }
+        },
+        "ci_job_declared": true
+      },
+      "threshold": "end to end on CPU in under 600 s; CI job",
+      "comparison": "all"
+    },
+    {
+      "id": "G17.example2-3",
+      "status": "PASS",
+      "measured": {
+        "dogbone-v1": {
+          "replay_bitwise": true,
+          "rescore_within_tolerance": true,
+          "max_relative_difference": 1.3414189418735678e-14
+        },
+        "notched-v1": {
+          "replay_bitwise": true,
+          "rescore_within_tolerance": true,
+          "max_relative_difference": 0.0
+        }
+      },
+      "threshold": "both benchmarks reproduce from pinned seeds (bitwise replay; TRAIN-screen metrics within 1e-9)",
+      "comparison": "all"
+    },
+    {
+      "id": "G17.non-dogbone",
+      "status": "FAIL",
+      "measured": {
+        "notched_g15_verdict": "PASS",
+        "notched_bundle_claim_level": "NOT_VERIFIED",
+        "framework_files_changed_since_s16": [
+          "src/piginot/bundle/specs.py",
+          "src/piginot/morphing/__init__.py",
+          "src/piginot/morphing/blended_notch.py",
+          "src/piginot/training/__init__.py",
+          "src/piginot/training/selection.py"
+        ],
+        "undeclared_framework_changes": []
+      },
+      "threshold": "the notched bundle passes G15 at HOLDOUT_VERIFIED through the same API; framework changes are only the declared additions (no family branch)",
+      "comparison": "all"
+    },
+    {
+      "id": "G17.refusal",
+      "status": "PASS",
+      "measured": {
+        "cases": 840,
+        "missed": 0,
+        "bundles_run": [
+          "dogbone-v1",
+          "notched-v1"
+        ]
+      },
+      "threshold": "every refusal case of both families returns its expected reason code",
+      "comparison": "all"
+    },
+    {
+      "id": "G17.fixture-names",
+      "status": "PASS",
+      "measured": "1 passed in 0.31s",
+      "threshold": "no family vocabulary in src/",
+      "comparison": "eq"
+    },
+    {
+      "id": "G17.docs",
+      "status": "PASS",
+      "measured": {
+        "mkdocs_strict_build": true,
+        "link_and_readme_checks": "44 passed in 0.05s"
+      },
+      "threshold": "mkdocs builds; internal links resolve; limitations linked above the fold",
+      "comparison": "all"
+    },
+    {
+      "id": "G17.adrs",
+      "status": "PASS",
+      "measured": {
+        "served-stress authority": {
+          "path": "docs/adr/0026-served-stress-authority.md",
+          "accepted": true
+        },
+        "soft-BC default": {
+          "path": "docs/adr/0027-soft-dirichlet-default.md",
+          "accepted": true
+        },
+        "single architecture in v1": {
+          "path": "docs/adr/0028-single-architecture-in-v1.md",
+          "accepted": true
+        },
+        "preregistration over sealed audit": {
+          "path": "docs/adr/0009-s9-preregistration-over-sealed-audit.md",
+          "accepted": true
+        },
+        "retention tiers": {
+          "path": "docs/adr/0003-s3-content-store-retention.md",
+          "accepted": true
+        },
+        "independence vectors": {
+          "path": "docs/adr/0029-independence-vectors.md",
+          "accepted": true
+        }
+      },
+      "threshold": "six ADRs written and accepted",
+      "comparison": "all"
+    }
+  ],
+  "verdict": "FAIL",
+  "verdict_reason": "1 required check(s) not PASS: G17.non-dogbone"
+}

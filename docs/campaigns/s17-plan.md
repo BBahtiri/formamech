@@ -142,3 +142,21 @@ rather than stop at TRAIN-only evidence or rework the campaign first.
 - **Tests**: the full suite passed on 2026-10-05 (3,036 passed, 1 skipped,
   branch coverage 91%); the tests added since (benchmark rendering, notched
   bundle limitations) pass.
+
+### 4.3 G17
+
+G17 fails on one required check (`artifacts/gates/S17.json`):
+
+| Check | Status | Measured |
+| --- | --- | --- |
+| `G17.example1` | PASS | 128 s end to end; CI job `example1` declared |
+| `G17.example2-3` | PASS | both replays bitwise; re-scoring within 1e-9 |
+| `G17.non-dogbone` | **FAIL** | the notched bundle passes G15 but serves `NOT_VERIFIED`, not `HOLDOUT_VERIFIED`; the framework changes since `8a87cd5` are exactly the five declared files (no family branch) |
+| `G17.refusal` | PASS | 840/840, both bundles |
+| `G17.fixture-names` | PASS | no family vocabulary in `src/` |
+| `G17.docs` | PASS | strict mkdocs build; links and README checks |
+| `G17.adrs` | PASS | the six ADRs exist and are accepted |
+
+Turning `G17.non-dogbone` into a PASS needs a notched v2 campaign (finer
+reference mesh at the notch, then a new S9 ceremony, S10, S13 and S14), not a
+change to the tolerances.
