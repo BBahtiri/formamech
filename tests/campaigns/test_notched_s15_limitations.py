@@ -35,7 +35,8 @@ def _development(run_root: Path) -> None:
                     "u_relative_l2": 0.004,
                 },
                 TOLERANCE,
-            )
+            ),
+            "gated_status": "FAIL",
         },
         "confidence": {"calibration": {"in_sample_coverage": 0.9}},
     }
@@ -54,11 +55,46 @@ def test_unopened_holdout_is_stated_as_not_verified(tmp_path: Path) -> None:
     assert "HOLDOUT coverage was" not in items["confidence-calibration"]
 
 
+def _holdout(run_root: Path, statistics: dict[str, float]) -> None:
+    gated = _gated(statistics, TOLERANCE)
+    document = {
+        "budget": {
+            "gated": gated,
+            "gated_status": "FAIL"
+            if any(row["status"] == "FAIL" for row in gated)
+            else "PASS",
+        },
+        "confidence": {"calibration_coverage": 0.871},
+    }
+    (run_root / s14.HOLDOUT_RESULT).write_text(json.dumps(document))
+
+
 def test_opened_holdout_reports_its_coverage(tmp_path: Path) -> None:
     _development(tmp_path)
-    holdout = {"confidence": {"calibration_coverage": 0.871}}
-    (tmp_path / s14.HOLDOUT_RESULT).write_text(json.dumps(holdout))
+    _holdout(
+        tmp_path,
+        {"p_relative_l2": 0.03, "absolute_peak_error": 0.04, "u_relative_l2": 0.003},
+    )
     items = {item["id"]: item["statement"] for item in limitation_items(tmp_path)}
     assert "not-verified" not in items
+    assert "holdout-budget-failed" not in items
     assert "HOLDOUT coverage was 87.1%" in items["confidence-calibration"]
     assert "HOLDOUT budget was checked" in items["finite-sampling"]
+    assert "ADR 0030" in items["development-budget-accepted"]
+    assert "2 of 3 gated rows fail" in items["development-budget-accepted"]
+
+
+def test_failed_holdout_is_stated_with_its_numbers(tmp_path: Path) -> None:
+    _development(tmp_path)
+    _holdout(
+        tmp_path,
+        {
+            "p_relative_l2": 0.0601,
+            "absolute_peak_error": 0.064,
+            "u_relative_l2": 0.0053,
+        },
+    )
+    items = {item["id"]: item["statement"] for item in limitation_items(tmp_path)}
+    statement = items["holdout-budget-failed"]
+    assert "stress field 6.01%, peak 6.40%, displacement 0.53%" in statement
+    assert "at most DEVELOPMENT_VERIFIED" in statement

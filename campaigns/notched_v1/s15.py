@@ -250,14 +250,57 @@ def verification_report(run_root: Path) -> dict[str, Any]:
     }
 
 
+def _all_cases(result: dict[str, Any]) -> tuple[dict[str, float], int, int]:
+    """All-cases p90 per quantity, failing gated rows, gated rows."""
+
+    rows = result["budget"]["gated"]
+    return (
+        {row["quantity"]: row["statistic"] for row in rows if row["slice"] == "all"},
+        sum(row["status"] == "FAIL" for row in rows),
+        len(rows),
+    )
+
+
+def _budget_statement(result: dict[str, Any]) -> str:
+    values, failed, total = _all_cases(result)
+    return (
+        f"{failed} of {total} gated rows fail; all-cases p90 stress field "
+        f"{values['p_relative_l2']:.2%}, peak {values['absolute_peak_error']:.2%}, "
+        f"displacement {values['u_relative_l2']:.2%} against 5%, 5% and 2%"
+    )
+
+
 def _verification_limitations(run_root: Path) -> tuple[dict[str, str], ...]:
     """What the S14 evidence does and does not show, as measured."""
 
     holdout_path = run_root / s14.HOLDOUT_RESULT
     if holdout_path.is_file():
         holdout = json.loads(holdout_path.read_text("utf-8"))
+        development = json.loads((run_root / s14.DEVELOPMENT_RESULT).read_text("utf-8"))
         coverage = holdout["confidence"]["calibration_coverage"]
+        items: list[dict[str, str]] = []
+        if development["budget"]["gated_status"] != "PASS":
+            items.append(
+                {
+                    "id": "development-budget-accepted",
+                    "statement": "The S14 DEVELOPMENT budget failed as computed ("
+                    f"{_budget_statement(development)}); the decision owner "
+                    "accepted it as passing in a signed waiver (ADR 0030), which "
+                    "opened HOLDOUT.",
+                }
+            )
+        if holdout["budget"]["gated_status"] != "PASS":
+            items.append(
+                {
+                    "id": "holdout-budget-failed",
+                    "statement": "The S14 HOLDOUT budget failed ("
+                    f"{_budget_statement(holdout)}), so the claim level is at most "
+                    "DEVELOPMENT_VERIFIED: the predictions are not verified to the "
+                    "S14 tolerances on unseen cases.",
+                }
+            )
         return (
+            *items,
             {
                 "id": "finite-sampling",
                 "statement": "The HOLDOUT budget was checked on a finite sample of "
