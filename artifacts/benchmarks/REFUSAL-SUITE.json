@@ -1,0 +1,91 @@
+{
+ "bundles_run": [
+  "dogbone-v1",
+  "notched-v1"
+ ],
+ "cases": 840,
+ "families": {
+  "dogbone-v1": {
+   "bundle": {
+    "bundle": "dogbone-v1-s13c-cp-freeze",
+    "bundle_manifest_sha256": "009db9d379d6f94ccda5395762e22c9c810c466a686626d500f1575d45b1bb4c",
+    "mesh_mutation_fixtures_without_request_form": 36,
+    "missed": [],
+    "refused_with_expected_code": 204,
+    "request_form_fixtures": 204
+   },
+   "checker": {
+    "by_category": {
+     "derived-bound": {
+      "passed": 48,
+      "tested": 48
+     },
+     "guard-band": {
+      "passed": 36,
+      "tested": 36
+     },
+     "material-load": {
+      "passed": 24,
+      "tested": 24
+     },
+     "primitive-bound": {
+      "passed": 60,
+      "tested": 60
+     },
+     "query-containment": {
+      "passed": 36,
+      "tested": 36
+     },
+     "topology-tag": {
+      "passed": 36,
+      "tested": 36
+     }
+    },
+    "fixture_set_hash": "5fa367dc1519bb3fd26968f23eef45d75ce76ae827b249a5066989e9aea659d6",
+    "fixtures": 240,
+    "missed": [],
+    "refused_with_expected_code": 240
+   }
+  },
+  "notched-v1": {
+   "bundle": {
+    "bundle": "notched-v1-cp-freeze",
+    "bundle_manifest_sha256": "9b6cc8be68eb989231da8b6f712d1d017487a57f200790561b982fb8f937c921",
+    "mesh_mutation_fixtures_without_request_form": 36,
+    "missed": [],
+    "refused_with_expected_code": 180,
+    "request_form_fixtures": 180
+   },
+   "checker": {
+    "by_category": {
+     "guard-band": {
+      "passed": 36,
+      "tested": 36
+     },
+     "material-load": {
+      "passed": 24,
+      "tested": 24
+     },
+     "primitive-bound": {
+      "passed": 72,
+      "tested": 72
+     },
+     "query-containment": {
+      "passed": 48,
+      "tested": 48
+     },
+     "topology-tag": {
+      "passed": 36,
+      "tested": 36
+     }
+    },
+    "fixture_set_hash": "90302ad133c7c1fdd4c1188c373761c14c2a99572bb04b36c35e45ac52977f2c",
+    "fixtures": 216,
+    "missed": [],
+    "refused_with_expected_code": 216
+   }
+  }
+ },
+ "missed": 0,
+ "passed": true
+}
