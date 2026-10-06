@@ -1,0 +1,44 @@
+{
+ "family": "dogbone-v1",
+ "passed": true,
+ "replay": {
+  "bitwise": true,
+  "byte_identical_files": {
+   "checkpoint.json": true,
+   "model.safetensors": true,
+   "state.safetensors": true
+  },
+  "interrupted_and_resumed_at": 200,
+  "run_hash": "0ca34e327d9220ccb6030c4f669fac028938beb086fb17e49818815e8dcbce43",
+  "steps": 400,
+  "training_revision": "8736c1aae93ebe0db91e678e605c0c1bec8a8300"
+ },
+ "rescore": {
+  "committed": {
+   "invalid_collocation_points": 0,
+   "median_absolute_peak_error": 0.008276482387183988,
+   "median_signed_peak_error": -0.002881034836475323,
+   "p90_absolute_peak_error": 0.01693238563180227,
+   "p_relative_l2": 0.009086612004752744,
+   "u_relative_l2": 0.0008139931276587309
+  },
+  "measured": {
+   "invalid_collocation_points": 0.0,
+   "median_absolute_peak_error": 0.008276482387184099,
+   "median_signed_peak_error": -0.002881034836475323,
+   "p90_absolute_peak_error": 0.01693238563180227,
+   "p_relative_l2": 0.009086612004752737,
+   "u_relative_l2": 0.0008139931276587278
+  },
+  "relative_difference": {
+   "invalid_collocation_points": 0.0,
+   "median_absolute_peak_error": 1.3414189418735678e-14,
+   "median_signed_peak_error": 0.0,
+   "p90_absolute_peak_error": 0.0,
+   "p_relative_l2": 7.636392860482924e-16,
+   "u_relative_l2": 3.729473849111128e-15
+  },
+  "tolerance": 1e-09,
+  "within_tolerance": true
+ }
+}
