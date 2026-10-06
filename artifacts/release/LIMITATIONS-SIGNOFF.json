@@ -3,9 +3,14 @@
  "confirmed": true,
  "decision": "Every sentence of the shipped docs/limitations.md is true of the code as built (STEPS-v1.0 \u00a7S18 human sign-off).",
  "limitations_path": "docs/limitations.md",
- "limitations_sha256": "05a4046a3e06a3375364de08262a4752afe98149f3f76a1f4c786292751b4ee7",
- "recorded_from": "the decision owner's answer in the S18 session chat ('I confirm, sign off'), after reading the page as sent for review",
+ "limitations_sha256": "6bc67348e857c69078eab37d0d35b463ece38f7ec23a0e8a9f543e419cf2f626",
+ "recorded_from": "the decision owner's answer in the S18 session chat ('Yes, renew sign-off') after the history rewrite changed one bullet of the page",
  "release": "0.1.0",
  "signed_off_by": "Betim Bahtiri",
- "signed_off_utc": "2026-10-06T16:23:13Z"
+ "signed_off_utc": "2026-10-06T17:43:12Z",
+ "supersedes": {
+  "change": "the bullet on the S1 spike's GINOT modules now records the history rewrite",
+  "limitations_sha256": "05a4046a3e06a3375364de08262a4752afe98149f3f76a1f4c786292751b4ee7",
+  "signed_off_utc": "2026-10-06T16:23:13Z"
+ }
 }
