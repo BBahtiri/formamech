@@ -51,6 +51,7 @@ FAMILIES: dict[str, dict[str, str]] = {
     "dogbone-v1": {
         "artifacts": "artifacts/campaigns/dogbone-v1",
         "screen": "S13C-TRAIN-SCREEN.json",
+        "rehearsal": "S14-TRAIN-REHEARSAL.json",
         "development": "S14-DEVELOPMENT.json",
         "holdout": "S14-HOLDOUT.json",
         "gate": "artifacts/gates/S14.json",
@@ -60,6 +61,7 @@ FAMILIES: dict[str, dict[str, str]] = {
     "notched-v1": {
         "artifacts": "artifacts/campaigns/notched-v1",
         "screen": "S13-TRAIN-SCREEN.json",
+        "rehearsal": "S14-TRAIN-REHEARSAL.json",
         "development": "S14-DEVELOPMENT.json",
         "holdout": "S14-HOLDOUT.json",
         "gate": "artifacts/campaigns/notched-v1/gates/S14.json",
@@ -83,7 +85,11 @@ def _all_rows(result: Mapping[str, Any]) -> dict[str, float]:
 
 
 def family_table(family: str) -> dict[str, Any]:
-    """The benchmark row set of one family from its committed artifacts."""
+    """The benchmark row set of one family from its committed artifacts.
+
+    HOLDOUT is ``None`` when it was never opened (the protocol keeps it
+    unspent when DEVELOPMENT fails); the row then says so instead of a number.
+    """
 
     spec = FAMILIES[family]
     artifacts = REPOSITORY / spec["artifacts"]
@@ -91,8 +97,10 @@ def family_table(family: str) -> dict[str, Any]:
     metrics = {
         k: v for k, v in screen["trial_result"]["metrics"].items() if k in METRICS
     }
+    rehearsal = _load(artifacts / spec["rehearsal"])
     development = _load(artifacts / spec["development"])
-    holdout = _load(artifacts / spec["holdout"])
+    holdout_path = artifacts / spec["holdout"]
+    holdout = _load(holdout_path) if holdout_path.is_file() else None
     gate = _load(REPOSITORY / spec["gate"])
     latency = development["latency"]
     return {
@@ -100,6 +108,11 @@ def family_table(family: str) -> dict[str, Any]:
         "train_screen": {
             "cases": screen.get("screen_diagnostics", {}).get("case_count"),
             **metrics,
+        },
+        "train_rehearsal": {
+            "cases": rehearsal["case_count"],
+            "p90_including_fem_terms": _all_rows(rehearsal),
+            "gated_status": rehearsal["budget"]["gated_status"],
         },
         "development": {
             "cases": development["case_count"],
@@ -110,7 +123,9 @@ def family_table(family: str) -> dict[str, Any]:
             "fem_median_seconds": latency["fem_median_seconds"],
             "speedup": latency["speedup_u_and_p"],
         },
-        "holdout": {
+        "holdout": None
+        if holdout is None
+        else {
             "cases": holdout["case_count"],
             "p90_including_fem_terms": _all_rows(holdout),
             "gated_status": holdout["budget"]["gated_status"],
@@ -142,8 +157,9 @@ def render(table: Mapping[str, Any]) -> str:
         "",
     ]
     for row in table["families"]:
-        screen, development, holdout = (
+        screen, rehearsal, development, holdout = (
             row["train_screen"],
+            row["train_rehearsal"],
             row["development"],
             row["holdout"],
         )
@@ -159,19 +175,38 @@ def render(table: Mapping[str, Any]) -> str:
             f"{_percent(screen['median_absolute_peak_error'])} | "
             f"{_percent(screen['u_relative_l2'])} | — | — |",
         ]
-        for name, population in (("DEVELOPMENT", development), ("HOLDOUT", holdout)):
+        populations = (
+            ("TRAIN rehearsal", rehearsal),
+            ("DEVELOPMENT", development),
+            ("HOLDOUT", holdout),
+        )
+        for name, population in populations:
+            if population is None:
+                lines.append(
+                    f"| {name} | not opened: DEVELOPMENT failed the gated budget, "
+                    "so HOLDOUT stays unspent | — | — | — | — |"
+                )
+                continue
             p90 = population["p90_including_fem_terms"]
+            spearman = population.get("pooled_spearman")
             lines.append(
                 f"| {name} ({population['cases']} cases, p90 with FEM terms) | "
                 f"{_percent(p90['p_relative_l2'])} | "
                 f"{_percent(p90['absolute_peak_error'])} | "
                 f"{_percent(p90['u_relative_l2'])} | "
-                f"{population['pooled_spearman']:.3f} | {population['gated_status']} |"
+                f"{'—' if spearman is None else f'{spearman:.3f}'} | "
+                f"{population['gated_status']} |"
             )
+        coverage = (
+            "HOLDOUT was not opened, so the confidence bound has no HOLDOUT "
+            "calibration measurement. "
+            if holdout is None
+            else "HOLDOUT calibration coverage of the 90% confidence bound: "
+            f"{_percent(holdout['calibration_coverage'])}. "
+        )
         lines += [
             "",
-            f"HOLDOUT calibration coverage of the 90% confidence bound: "
-            f"{_percent(holdout['calibration_coverage'])}. Latency (u and P at every "
+            f"{coverage}Latency (u and P at every "
             f"vertex, one thread): {development['latency_u_and_p_median_seconds']:.3f} s "
             f"against {development['fem_median_seconds']:.1f} s for FEM, a speed-up of "
             f"{development['speedup']:.0f}x.",
