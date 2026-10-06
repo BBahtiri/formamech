@@ -1,8 +1,8 @@
 {
   "gate_id": "G18",
   "step": "S18",
-  "commit": "1c471a8ea52db677c25ba4d1b8c9edfcee5a5222",
-  "timestamp_utc": "2026-10-06T17:18:51Z",
+  "commit": "9837f23db57eea5cac6c724f574e4a90b0af7857",
+  "timestamp_utc": "2026-10-06T18:33:13Z",
   "checks": [
     {
       "id": "G18.all-gates",
@@ -88,7 +88,7 @@
           "dogbone-v1-s13c-cp-freeze": "HOLDOUT_VERIFIED",
           "notched-v1-cp-freeze": "DEVELOPMENT_VERIFIED"
         },
-        "tests": "4 passed in 2.16s"
+        "tests": "4 passed in 2.39s"
       },
       "threshold": "no shipped bundle claims above HOLDOUT_VERIFIED; SEALED_RELEASE_VERIFIED is not emittable",
       "comparison": "all"
@@ -107,7 +107,7 @@
         "sdist_files": 143,
         "sdist_outside_allowed": [],
         "all_rights_reserved_in_distributions": [],
-        "tests": "4 passed in 0.03s"
+        "tests": "4 passed in 0.07s"
       },
       "threshold": "every adapted component recorded with source, commit, digest and licence compatibility in docs/adr/upstream-sources.md",
       "comparison": "all"
@@ -170,7 +170,7 @@
         "version": "0.1.0",
         "changelog_entry": true,
         "tag": "v0.1.0",
-        "tag_commit": "1c471a8ea52db677c25ba4d1b8c9edfcee5a5222",
+        "tag_commit": "9837f23db57eea5cac6c724f574e4a90b0af7857",
         "tag_at_or_before_head": true
       },
       "threshold": "version tagged, changelog written",
@@ -181,9 +181,9 @@
       "status": "PASS",
       "measured": {
         "signed_off_by": "Betim Bahtiri",
-        "signed_off_utc": "2026-10-06T16:23:13Z",
-        "limitations_sha256_signed": "05a4046a3e06a3375364de08262a4752afe98149f3f76a1f4c786292751b4ee7",
-        "limitations_sha256_current": "05a4046a3e06a3375364de08262a4752afe98149f3f76a1f4c786292751b4ee7"
+        "signed_off_utc": "2026-10-06T17:43:12Z",
+        "limitations_sha256_signed": "6bc67348e857c69078eab37d0d35b463ece38f7ec23a0e8a9f543e419cf2f626",
+        "limitations_sha256_current": "6bc67348e857c69078eab37d0d35b463ece38f7ec23a0e8a9f543e419cf2f626"
       },
       "threshold": "\u2691 the decision owner confirms every sentence of the shipped limitations.md is true of the code as built",
       "comparison": "all",
