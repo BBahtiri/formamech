@@ -44,6 +44,10 @@ The first public release. It completes the STEPS-v1.0 plan (S0–S18). Read
 - **Release** (S18): the upstream-sources record, claim-ceiling tests, a
   validated `CITATION.cff`, a TestPyPI publish-and-install workflow for Linux,
   macOS and Windows, and the G18 gate.
+- **Bundles and user guide**: both trained bundles under `bundles/`, with
+  example requests, and a [user guide](docs/user-guide.md) covering
+  prediction, the end-to-end example and building a model for a new
+  geometry.
 
 ### Verification results
 
@@ -70,5 +74,10 @@ record the computed results alongside.
   extra.
 - The sdist holds the package, licence, README, citation, changelog,
   `pyproject.toml` and `uv.lock` only.
+
+### Removed
+
+- The agent prompts (`AGENT-PROMPT-*.md`) and the S1 coding review
+  (`S1-iteration8-review.md`) are no longer tracked.
 
 [0.1.0]: https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/releases/tag/v0.1.0
