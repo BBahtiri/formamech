@@ -1,0 +1,1 @@
+{"$type":"piginot.morphing.BlendedNotchMap","notch_depth_parameter":"notch_depth","notch_radius_parameter":"notch_radius","reference":{"$type":"piginot.morphing.BlendedNotchParameters","half_length_mm":25,"notch_depth_mm":3,"notch_radius_mm":5,"width_mm":23},"width_parameter":"width"}

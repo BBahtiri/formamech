@@ -1,0 +1,1 @@
+{"$type":"piginot.morphing.CircularTransitionMap","inner_width_parameter":"W_gauge","minimum_inner_length_mm":2,"outer_width_parameter":"W_grip","reference":{"$type":"piginot.morphing.CircularTransitionParameters","inner_width_mm":10,"outer_width_mm":20,"total_length_mm":54,"transition_radius_mm":12},"total_length_parameter":"L_total","transition_radius_parameter":"R_fillet"}

@@ -1,0 +1,10 @@
+{
+  "inputs": {
+    "width": {"value": 22.0, "unit": "mm"},
+    "notch_radius": {"value": 4.0, "unit": "mm"},
+    "notch_depth": {"value": 3.0, "unit": "mm"},
+    "elastic_modulus": {"value": 760.0, "unit": "MPa"},
+    "poisson_ratio": {"value": 0.23, "unit": "1"},
+    "nominal_axial_strain": {"value": 0.30, "unit": "1"}
+  }
+}

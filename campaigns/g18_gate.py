@@ -2,7 +2,7 @@
 
 Usage::
 
-    python -m campaigns.g18_gate --bundle DOGBONE_BUNDLE --bundle NOTCHED_BUNDLE
+    python -m campaigns.g18_gate [--bundle BUNDLE ...]   # default: bundles/*/
 
 Every check reads its evidence and fails (never passes by default) when the
 evidence is missing:
@@ -459,8 +459,14 @@ def signoff() -> dict[str, Any]:
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m campaigns.g18_gate")
-    parser.add_argument("--bundle", type=Path, action="append", required=True)
+    parser.add_argument("--bundle", type=Path, action="append")
     arguments = parser.parse_args(argv)
+    if not arguments.bundle:
+        arguments.bundle = sorted(
+            path
+            for path in (REPOSITORY / "bundles").glob("*/")
+            if (path / "bundle.json").is_file()
+        )
     checks = [
         all_gates(),
         claim_ceiling(arguments.bundle),
