@@ -104,8 +104,8 @@ Interim G18 (`artifacts/gates/S18.json`), with tag `v0.1.0` at `12b3138` on the 
 | `G18.changelog` | PASS | `CHANGELOG.md` 0.1.0; tag `v0.1.0` at `12b3138` |
 | `G18.signoff` | PASS | Betim Bahtiri, `limitations.md` sha256 `6bc67348…` (renewed after the history rewrite) |
 
-The full test suite passes at the tagged commit of the rewritten history:
-3,070 passed, 1 skipped, branch coverage of `src/piginot` 91%. G17 re-run on
+The full test suite passes at the tagged commit `12b3138` of the rewritten
+history: 3,075 passed, 1 skipped, branch coverage of `src/piginot` 91%. G17 re-run on
 the rewritten history still passes, with the same five framework files
 changed since the resolved S16 base. The S1 spike tests that do not need the
 GINOT modules pass without them (12). With the modules fetched, the spike's
