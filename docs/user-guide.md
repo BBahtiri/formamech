@@ -168,7 +168,7 @@ with open("bundles/requests/notched-in-domain.json", encoding="utf-8") as handle
 prediction = predict(bundle, inputs, queries)
 
 print(prediction.verdict.value, prediction.claim_level.value)
-result = prediction.document()          # the same dictionary as prediction.json
+result = prediction.document()  # the same dictionary as prediction.json
 print(result["qois"][0]["value"], "MPa")
 ```
 
@@ -189,7 +189,9 @@ cells = np.array(result["mesh"]["cells"])
 stress = np.linalg.norm(np.array(result["vertices"]["P_served"]), axis=(1, 2))
 
 figure, axes = plt.subplots(figsize=(8, 4))
-image = axes.tripcolor(mtri.Triangulation(xy[:, 0], xy[:, 1], cells), stress, shading="gouraud")
+image = axes.tripcolor(
+    mtri.Triangulation(xy[:, 0], xy[:, 1], cells), stress, shading="gouraud"
+)
 figure.colorbar(image, label="|P_served| (MPa)")
 axes.set_aspect("equal")
 figure.savefig("prediction.png", dpi=150, bbox_inches="tight")
