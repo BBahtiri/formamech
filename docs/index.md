@@ -1,5 +1,12 @@
 # PI-GINOT
 
+**Start here:** the [user guide](user-guide.md) shows how to predict with the
+shipped bundles, run the end-to-end example, and build a model for your own
+geometry. The [limitations](limitations.md) say what the numbers do and do not
+mean.
+
+## Project history
+
 PI-GINOT currently includes immutable unit-safe contracts, a local content-addressed
 store with explicit retention, and a verified compressible Neo-Hookean physics kernel
 with differentiable plane-stress closure. It also includes strict tagged 2D triangle

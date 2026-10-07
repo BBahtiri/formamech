@@ -6,6 +6,7 @@ strict: true
 
 nav:
   - Home: index.md
+  - User guide: user-guide.md
   - Limitations: limitations.md
   - Examples: examples.md
   - Benchmarks: benchmarks.md

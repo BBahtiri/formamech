@@ -5,6 +5,27 @@
 > inside each bundle's declared envelope; it does not validate them against
 > experiments, and it claims nothing outside that envelope.
 
+## Quick start
+
+Predict the stress field of a notched plate with a shipped bundle (Python 3.11–3.13):
+
+```text
+git clone --branch v0.1.0 https://github.com/BBahtiri/PI-GINOT-Agentic-Framework.git
+cd PI-GINOT-Agentic-Framework
+python -m pip install -e ".[runtime]"
+piginot predict bundles/notched-v1-cp-freeze --request bundles/requests/notched-in-domain.json --output prediction.json
+```
+
+The [user guide](docs/user-guide.md) covers three ways to use the software:
+
+- predict with the two shipped [bundles](bundles/README.md);
+- train a small model end to end in about two minutes;
+- build a verified model for your own geometry.
+
+It also explains the claim levels and refusals.
+
+## About
+
 PI-GINOT is an early-stage open-source project for verified, problem-specific
 physics-informed neural operators in 2D finite-strain elasticity. Release 0.1.0
 completes the STEPS-v1.0 plan (S0–S18). It ships contracts and a content store,
