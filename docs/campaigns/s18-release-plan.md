@@ -65,6 +65,10 @@
   on Linux, macOS and Windows. On each it runs `scripts/release_smoke.py`,
   which checks the installed location, the version, the console script, the
   claim ceiling and a refusal.
+- **Bundles and user guide.** Both bundles ship under `bundles/` with
+  example requests (`tests/test_shipped_bundles.py`), and the
+  [user guide](../user-guide.md) explains prediction, Example 1 and new
+  families. The agent prompts and the S1 coding review are no longer tracked.
 - **Changelog and limitations.** `CHANGELOG.md` records 0.1.0. The
   limitations page drops statements that were no longer true of the code as
   built. These were: S11 "may begin", `G17.non-dogbone` "NOT_RUN", "the
@@ -85,19 +89,19 @@
 
 ## 4. Results
 
-Interim G18 (`artifacts/gates/S18.json`), with tag `v0.1.0` at `9837f23` on the rewritten history:
+Interim G18 (`artifacts/gates/S18.json`), with tag `v0.1.0` at `12b3138` on the rewritten history:
 8 of 9 checks pass. `G18.install` is `NOT_RUN` until the TestPyPI run.
 
 | Check | Status | Measured |
 | --- | --- | --- |
 | `G18.all-gates` | PASS | G0–G17 `PASS`, no `NOT_RUN`; three passes by recorded acceptance (ADRs 0021, 0030, 0031) |
-| `G18.claim-ceiling` | PASS | levels stop at `HOLDOUT_VERIFIED`; `dogbone-v1-s13c-cp-freeze` `HOLDOUT_VERIFIED`, `notched-v1-cp-freeze` `DEVELOPMENT_VERIFIED` |
+| `G18.claim-ceiling` | PASS | levels stop at `HOLDOUT_VERIFIED`; the bundles in `bundles/`: `dogbone-v1-s13c-cp-freeze` `HOLDOUT_VERIFIED`, `notched-v1-cp-freeze` `DEVELOPMENT_VERIFIED` |
 | `G18.licenses` | PASS | record complete; GINOT modules untracked; wheel 140 files (`piginot` only), sdist 143 files (allowed set only); no "All Rights Reserved" text |
 | `G18.naming` | PASS | disclaimer and `pi-ginot-energy-parametric-film-v1` in the README; the only registered and served architecture |
 | `G18.citation` | PASS | cffconvert 2.0.0: valid for schema 1.2.0; version 0.1.0 |
 | `G18.install` | NOT_RUN | waits for the TestPyPI workflow |
 | `G18.lock` | PASS | `uv lock --check` (uv 0.8.17) |
-| `G18.changelog` | PASS | `CHANGELOG.md` 0.1.0; tag `v0.1.0` at `9837f23` |
+| `G18.changelog` | PASS | `CHANGELOG.md` 0.1.0; tag `v0.1.0` at `12b3138` |
 | `G18.signoff` | PASS | Betim Bahtiri, `limitations.md` sha256 `6bc67348…` (renewed after the history rewrite) |
 
 The full test suite passes at the tagged commit of the rewritten history:

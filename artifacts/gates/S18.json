@@ -1,8 +1,8 @@
 {
   "gate_id": "G18",
   "step": "S18",
-  "commit": "9837f23db57eea5cac6c724f574e4a90b0af7857",
-  "timestamp_utc": "2026-10-06T18:33:13Z",
+  "commit": "12b3138c31542f8780059b774db6cc0ab20312f9",
+  "timestamp_utc": "2026-10-07T09:39:12Z",
   "checks": [
     {
       "id": "G18.all-gates",
@@ -88,7 +88,7 @@
           "dogbone-v1-s13c-cp-freeze": "HOLDOUT_VERIFIED",
           "notched-v1-cp-freeze": "DEVELOPMENT_VERIFIED"
         },
-        "tests": "4 passed in 2.39s"
+        "tests": "4 passed in 2.03s"
       },
       "threshold": "no shipped bundle claims above HOLDOUT_VERIFIED; SEALED_RELEASE_VERIFIED is not emittable",
       "comparison": "all"
@@ -107,7 +107,7 @@
         "sdist_files": 143,
         "sdist_outside_allowed": [],
         "all_rights_reserved_in_distributions": [],
-        "tests": "4 passed in 0.07s"
+        "tests": "4 passed in 0.04s"
       },
       "threshold": "every adapted component recorded with source, commit, digest and licence compatibility in docs/adr/upstream-sources.md",
       "comparison": "all"
@@ -170,7 +170,7 @@
         "version": "0.1.0",
         "changelog_entry": true,
         "tag": "v0.1.0",
-        "tag_commit": "9837f23db57eea5cac6c724f574e4a90b0af7857",
+        "tag_commit": "12b3138c31542f8780059b774db6cc0ab20312f9",
         "tag_at_or_before_head": true
       },
       "threshold": "version tagged, changelog written",
