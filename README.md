@@ -10,8 +10,8 @@
 Predict the stress field of a notched plate with a shipped bundle (Python 3.11–3.13):
 
 ```text
-git clone --branch v0.1.0 https://github.com/BBahtiri/PI-GINOT-Agentic-Framework.git
-cd PI-GINOT-Agentic-Framework
+git clone --branch v0.1.0 https://github.com/BBahtiri/verified-neural-operators.git
+cd verified-neural-operators
 python -m pip install -e ".[runtime]"
 piginot predict bundles/notched-v1-cp-freeze --request bundles/requests/notched-in-domain.json --output prediction.json
 ```
@@ -103,6 +103,9 @@ neural operator. Read the
 [project limitations](docs/limitations.md) before using its numerical results.
 
 ## Name and architecture
+
+The repository is named `verified-neural-operators`. The project, the Python
+package and the command keep the name PI-GINOT (`piginot`).
 
 The name PI-GINOT does not claim a faithful reproduction of GNOT or GINO, nor
 of GINOT. It names this project's own physics-informed operator, which

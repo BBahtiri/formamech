@@ -79,6 +79,15 @@ confirm every sentence is true of the code as built.
     and confirmed that every sentence is true of the code as built. The answer
     is recorded in `artifacts/release/LIMITATIONS-SIGNOFF.json`, which names
     the file's digest. A later edit of the page needs a new sign-off.
+11. **Repository** (decided 2026-10-09). The release is published from a new
+    repository, `github.com/BBahtiri/verified-neural-operators`, which holds
+    only the rewritten history. `README.md`, the user guide, `CITATION.cff`,
+    `pyproject.toml` and `CHANGELOG.md` name it, and the tag `v0.1.0` moves
+    to the commit that does. The project, the package and the command keep
+    the name PI-GINOT (`piginot`). The S0–S8 gate records link to CI runs of
+    the former repository, `BBahtiri/PI-GINOT-Agentic-Framework`. Recorded
+    evidence is not edited; the per-job results are in the records
+    themselves.
 
 ## Decisions open before the release
 

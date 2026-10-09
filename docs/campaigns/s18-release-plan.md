@@ -89,7 +89,7 @@
 
 ## 4. Results
 
-Interim G18 (`artifacts/gates/S18.json`), with tag `v0.1.0` at `12b3138` on the rewritten history:
+Interim G18 (`artifacts/gates/S18.json`), with tag `v0.1.0` on the release commit of the new repository (ADR 0032, decision 11):
 8 of 9 checks pass. `G18.install` is `NOT_RUN` until the TestPyPI run.
 
 | Check | Status | Measured |
@@ -101,11 +101,10 @@ Interim G18 (`artifacts/gates/S18.json`), with tag `v0.1.0` at `12b3138` on the 
 | `G18.citation` | PASS | cffconvert 2.0.0: valid for schema 1.2.0; version 0.1.0 |
 | `G18.install` | NOT_RUN | waits for the TestPyPI workflow |
 | `G18.lock` | PASS | `uv lock --check` (uv 0.8.17) |
-| `G18.changelog` | PASS | `CHANGELOG.md` 0.1.0; tag `v0.1.0` at `12b3138` |
+| `G18.changelog` | PASS | `CHANGELOG.md` 0.1.0; tag `v0.1.0` on the release commit |
 | `G18.signoff` | PASS | Betim Bahtiri, `limitations.md` sha256 `6bc67348…` (renewed after the history rewrite) |
 
-The full test suite passes at the tagged commit `12b3138` of the rewritten
-history: 3,075 passed, 1 skipped, branch coverage of `src/piginot` 91%. G17 re-run on
+The full test suite passes at the tagged release commit: 3,075 passed, 1 skipped, branch coverage of `src/piginot` 91%. G17 re-run on
 the rewritten history still passes, with the same five framework files
 changed since the resolved S16 base. The S1 spike tests that do not need the
 GINOT modules pass without them (12). With the modules fetched, the spike's

@@ -22,8 +22,8 @@ classifiers = [
 dependencies = ["rfc8785>=0.1.4,<0.2"]
 
 [project.urls]
-Repository = "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework"
-Documentation = "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/tree/main/docs"
+Repository = "https://github.com/BBahtiri/verified-neural-operators"
+Documentation = "https://github.com/BBahtiri/verified-neural-operators/tree/main/docs"
 
 [project.optional-dependencies]
 fem = [

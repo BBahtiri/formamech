@@ -70,6 +70,11 @@ record the computed results alongside.
   after `6f5f0cb`. `artifacts/release/HISTORY-REWRITE.json` maps the original
   commit ids recorded in earlier evidence to the rewritten ones, and
   `campaigns/history.py` resolves them.
+- The repository moved to `github.com/BBahtiri/verified-neural-operators`
+  with the rewritten history. The project, the package and the command keep
+  the name PI-GINOT (`piginot`). The S0–S8 gate records link to CI runs of
+  the former repository, `BBahtiri/PI-GINOT-Agentic-Framework`; recorded
+  evidence is not edited.
 - `uv.lock` is regenerated; it had not been updated for the S15 `runtime`
   extra.
 - The sdist holds the package, licence, README, citation, changelog,
@@ -80,4 +85,4 @@ record the computed results alongside.
 - The agent prompts (`AGENT-PROMPT-*.md`) and the S1 coding review
   (`S1-iteration8-review.md`) are no longer tracked.
 
-[0.1.0]: https://github.com/BBahtiri/PI-GINOT-Agentic-Framework/releases/tag/v0.1.0
+[0.1.0]: https://github.com/BBahtiri/verified-neural-operators/releases/tag/v0.1.0

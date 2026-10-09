@@ -8,7 +8,7 @@ authors:
   - family-names: "Bahtiri"
     given-names: "Betim"
 license: MIT
-repository-code: "https://github.com/BBahtiri/PI-GINOT-Agentic-Framework"
+repository-code: "https://github.com/BBahtiri/verified-neural-operators"
 abstract: >-
   An open-source project for verified, problem-specific physics-informed neural
   operators in 2D finite-strain elasticity. Every served prediction carries a

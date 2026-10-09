@@ -19,8 +19,8 @@ You need Python 3.11, 3.12 or 3.13, and Git. Install from the repository; it
 also holds the bundles.
 
 ```text
-git clone --branch v0.1.0 https://github.com/BBahtiri/PI-GINOT-Agentic-Framework.git
-cd PI-GINOT-Agentic-Framework
+git clone --branch v0.1.0 https://github.com/BBahtiri/verified-neural-operators.git
+cd verified-neural-operators
 python -m venv .venv
 ```
 
