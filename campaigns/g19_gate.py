@@ -19,6 +19,9 @@ Checks (``STEPS-v2.0.md`` §S19):
 - ``G19.bundles``: both shipped bundles load with their recorded manifests and
   claim levels, and serve the example requests byte-identically twice and
   against the golden recorded for this execution profile;
+- ``G19.resume``: a clean-checkout S13c run stopped at 200 and resumed to 400
+  is byte-identical to a straight 0 -> 400 run on the same execution profile
+  (ADR 0100 decision 5); the registered probe hash is reported alongside;
 - ``G19.s13c-rescore`` and ``G19.resume`` need the ignored S10 run root and the
   registered S13c run. Without them they are ``NOT_RUN`` and block the gate.
 
@@ -26,7 +29,9 @@ Run from the repository root::
 
     python -m campaigns.g19_gate --write
     python -m campaigns.g19_gate --write \\
-        --s13c-evaluation rescore.json --replay-checkpoint <run>/checkpoint-step-0400
+        --s13c-evaluation rescore.json \\
+        --replay-checkpoint <replay>/checkpoint-step-0400 \\
+        --straight-checkpoint <straight>/checkpoint-step-0400
 """
 
 from __future__ import annotations
@@ -510,28 +515,88 @@ def check_rescore(root: Path, evaluation: Path | None) -> dict[str, Any]:
     )
 
 
-def check_resume(root: Path, checkpoint: Path | None) -> dict[str, Any]:
-    probe = json.loads((root / PROBE_PATH).read_text("utf-8"))
-    threshold = {
-        "step": probe["target_step"],
-        "model_state_hash": probe["registered_model_state_hash"],
-        "procedure": "clean checkout; stop after 200; resume to 400",
+def _checkpoint_files(checkpoint: Path) -> dict[str, str]:
+    return {
+        path.name: hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in sorted(checkpoint.iterdir())
+        if path.is_file()
     }
-    if checkpoint is None:
+
+
+def check_resume(
+    root: Path, replay: Path | None, straight: Path | None = None
+) -> dict[str, Any]:
+    """Interrupted-and-resumed equals uninterrupted, byte for byte (ADR 0100 §5).
+
+    Trained weights depend on the CPU instruction set (AVX2 and AVX512 diverge),
+    so the check is made on the profile that runs it. The registered replay
+    probe (Linux, AVX512) is compared alongside and reported, not required.
+    """
+
+    from piginot.training.checkpoint import TrainingCheckpointManifest
+
+    probe = json.loads((root / PROBE_PATH).read_text("utf-8"))
+    target = int(probe["target_step"])
+    threshold = {
+        "procedure": "clean checkout; stop after 200; resume to 400; and a "
+        "straight 0 -> 400 run on the same profile",
+        "step": target,
+        "resumed_equals_straight": "every checkpoint file byte-identical",
+        "registered_model_state_hash": "reported, required only on the "
+        "registered profile (ADR 0100 decision 5)",
+    }
+    if replay is None or straight is None:
         return not_run(
             "G19.resume",
             "needs the ignored S10 run root (run campaigns.dogbone_v1.s13c_trial "
-            "locally, pass --replay-checkpoint)",
+            "locally, pass --replay-checkpoint and --straight-checkpoint)",
             threshold,
         )
-    manifest = json.loads((checkpoint / "checkpoint.json").read_text("utf-8"))
+    manifests = {
+        name: TrainingCheckpointManifest.from_bytes(
+            (path / "checkpoint.json").read_bytes()
+        )
+        for name, path in (("replay", replay), ("straight", straight))
+    }
+    files = {
+        "replay": _checkpoint_files(replay),
+        "straight": _checkpoint_files(straight),
+    }
+    interrupted = (replay.parent / f"checkpoint-step-{target // 2:04d}").is_dir()
+    registered = probe["registered_model_state_hash"]
     measured = {
-        "step": manifest.get("step"),
-        "model_state_hash": manifest.get("model_state_hash"),
+        "replay": {
+            "step": manifests["replay"].step,
+            "model_state_hash": manifests["replay"].model_state_hash,
+            "manifest_hash": manifests["replay"].manifest_hash,
+            "run_hash": manifests["replay"].run_hash,
+            "interrupted_at": target // 2 if interrupted else None,
+        },
+        "straight": {
+            "step": manifests["straight"].step,
+            "model_state_hash": manifests["straight"].model_state_hash,
+            "manifest_hash": manifests["straight"].manifest_hash,
+            "run_hash": manifests["straight"].run_hash,
+        },
+        "byte_identical_files": {
+            name: files["replay"].get(name) == digest
+            for name, digest in files["straight"].items()
+        },
+        "file_sets_equal": sorted(files["replay"]) == sorted(files["straight"]),
+        "registered_profile_comparison": {
+            "registered_model_state_hash": registered,
+            "matches_registered": manifests["replay"].model_state_hash == registered,
+            "expected_to_match": False,
+            "reason": "the registered probe ran on Linux/AVX512; trained weights "
+            "depend on the CPU instruction set",
+        },
     }
     passed = (
-        measured["step"] == probe["target_step"]
-        and measured["model_state_hash"] == probe["registered_model_state_hash"]
+        interrupted
+        and manifests["replay"].step == target
+        and manifests["straight"].step == target
+        and measured["file_sets_equal"]
+        and all(measured["byte_identical_files"].values())
     )
     return check_document("G19.resume", passed, measured, threshold, "all")
 
@@ -541,6 +606,7 @@ def build_gate(
     *,
     s13c_evaluation: Path | None = None,
     replay_checkpoint: Path | None = None,
+    straight_checkpoint: Path | None = None,
     record: bool = False,
     runner: Runner = _run,
 ) -> dict[str, Any]:
@@ -558,7 +624,7 @@ def build_gate(
         check_manifests(root, runner),
         check_bundles(root, served, profile),
         check_rescore(root, s13c_evaluation),
-        check_resume(root, replay_checkpoint),
+        check_resume(root, replay_checkpoint, straight_checkpoint),
     ]
     blockers = [check["id"] for check in checks if check["status"] != "PASS"]
     return {
@@ -585,6 +651,7 @@ def main(arguments: Sequence[str] | None = None) -> int:
     parser.add_argument("--record-golden", action="store_true")
     parser.add_argument("--s13c-evaluation", type=Path)
     parser.add_argument("--replay-checkpoint", type=Path)
+    parser.add_argument("--straight-checkpoint", type=Path)
     parser.add_argument(
         "--record-coverage",
         nargs=3,
@@ -600,6 +667,7 @@ def main(arguments: Sequence[str] | None = None) -> int:
         REPOSITORY,
         s13c_evaluation=options.s13c_evaluation,
         replay_checkpoint=options.replay_checkpoint,
+        straight_checkpoint=options.straight_checkpoint,
         record=options.record_golden,
     )
     if options.write:

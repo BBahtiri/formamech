@@ -60,25 +60,51 @@ def test_missing_evidence_is_not_run_never_pass(tmp_path: Path) -> None:
     probe.write_text(
         json.dumps({"target_step": 400, "registered_model_state_hash": "a" * 64})
     )
-    assert gate.check_resume(tmp_path, None)["status"] == "NOT_RUN"
+    assert gate.check_resume(tmp_path, None, None)["status"] == "NOT_RUN"
 
 
-def test_resume_compares_the_model_state_hash(tmp_path: Path) -> None:
+def _checkpoint(directory: Path, step: int, weights: bytes) -> Path:
+    directory.mkdir(parents=True)
+    (directory / "model.safetensors").write_bytes(weights)
+    (directory / "checkpoint.json").write_bytes(f"{step}".encode())
+    return directory
+
+
+def test_resume_needs_both_runs_and_equal_bytes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from piginot.training import checkpoint as module
+
+    class Stub:
+        def __init__(self, payload: bytes) -> None:
+            self.step = int(payload.decode())
+            self.model_state_hash = "m" * 64
+            self.manifest_hash = "h" * 64
+            self.run_hash = "r" * 64
+
+    monkeypatch.setattr(
+        module.TrainingCheckpointManifest,
+        "from_bytes",
+        classmethod(lambda cls, b: Stub(b)),
+    )
     probe = tmp_path / gate.PROBE_PATH
     probe.parent.mkdir(parents=True)
     probe.write_text(
         json.dumps({"target_step": 400, "registered_model_state_hash": "a" * 64})
     )
-    checkpoint = tmp_path / "checkpoint-step-0400"
-    checkpoint.mkdir()
-    (checkpoint / "checkpoint.json").write_text(
-        json.dumps({"step": 400, "model_state_hash": "a" * 64})
-    )
-    assert gate.check_resume(tmp_path, checkpoint)["status"] == "PASS"
-    (checkpoint / "checkpoint.json").write_text(
-        json.dumps({"step": 400, "model_state_hash": "b" * 64})
-    )
-    assert gate.check_resume(tmp_path, checkpoint)["status"] == "FAIL"
+    replay = _checkpoint(tmp_path / "replay" / "checkpoint-step-0400", 400, b"w")
+    straight = _checkpoint(tmp_path / "straight" / "checkpoint-step-0400", 400, b"w")
+    assert gate.check_resume(tmp_path, replay, None)["status"] == "NOT_RUN"
+    # not interrupted: no step-200 checkpoint beside the replay
+    assert gate.check_resume(tmp_path, replay, straight)["status"] == "FAIL"
+    (tmp_path / "replay" / "checkpoint-step-0200").mkdir()
+    result = gate.check_resume(tmp_path, replay, straight)
+    assert result["status"] == "PASS"
+    comparison = result["measured"]["registered_profile_comparison"]
+    assert comparison["matches_registered"] is False
+    assert comparison["expected_to_match"] is False
+    (straight / "model.safetensors").write_bytes(b"x")
+    assert gate.check_resume(tmp_path, replay, straight)["status"] == "FAIL"
 
 
 def test_rescore_ignores_only_the_evaluator_revision(tmp_path: Path) -> None:

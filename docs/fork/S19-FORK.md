@@ -28,75 +28,80 @@ one core and branch coverage slows the slowest fixtures about eightfold.
 `src/`, `tests/` and `campaigns/` are identical between `12b3138`, where S18
 measured 91% branch coverage, and the base.
 
-## Checks to run on your machine
+## Checks run on the owner's machine (WSL2 Ubuntu)
 
-Three G19 checks need either a multi-core machine or data that is not in Git.
-Until they run, G19 is `FAIL` with `NOT_RUN`, never `PASS`. All commands are
-PowerShell, from `C:\Users\betim\Documents\Data_Science`.
+Three G19 checks need a multi-core machine or data that is not in Git. They
+run under **WSL2 Ubuntu**, not native Windows: on Windows the pinned S13c
+initial weights do not reproduce and ten more tests fail for platform reasons
+(ADR 0100, findings). Until they run, G19 is `FAIL` with `NOT_RUN`.
 
-### 0. Fetch the S19 bundle
+Recorded on 10 Oct 2026 (Lunar Lake, Linux, Python 3.11.15, torch
+2.13.0+cu130, AVX2):
 
-```powershell
-cd pi_ginot_large
-git fetch ..\vno-s19.bundle "+refs/heads/codex/s19-fork-baseline:refs/heads/codex/s19-fork-baseline" "+refs/tags/v0.2.0-base:refs/tags/v0.2.0-base" "+refs/tags/s19-cloud:refs/tags/s19-cloud"
-git rev-parse "v0.2.0-base^{commit}"     # 399a14659cec...
-cd ..
-git clone --no-local --branch v0.2.0-base pi_ginot_large vno-base      # clean base, for checks 1 and 3
-git clone --no-local --branch codex/s19-fork-baseline pi_ginot_large vno-s19
-```
+| Check | Result |
+| --- | --- |
+| `G19.coverage` | 3,075 passed, 1 skipped, 0 failed; branch coverage 91.44% |
+| `G19.s13c-rescore` | re-score of the registered checkpoint completed (`selected`) |
+| `G19.resume` | stopped at 200, resumed to 400 = straight to 400: model state `9492c444…`, manifest `d9568fc8…` |
 
-### 1. `G19.coverage` — full suite with branch coverage (about 1 h)
+### Setup (bash, once)
 
-```powershell
-cd vno-base
-uv sync --frozen --all-extras
-uv run python -m pytest -q -p no:cacheprovider --cov=src/piginot --cov-report=json:..\s19-coverage.json 2>&1 | Tee-Object ..\s19-coverage.log
-cd ..\vno-s19
-uv sync --frozen --all-extras
-uv run python -m campaigns.g19_gate --record-coverage ..\vno-base ..\s19-coverage.json ..\s19-coverage.log
-```
-
-### 2. `G19.s13c-rescore` — re-score the registered checkpoint (about 12 min)
-
-```powershell
+```bash
+sudo apt-get update && sudo apt-get install -y git libglu1-mesa libxcursor1 libxft2 libxinerama1 libxrender1 libgl1
+command -v uv || { curl -LsSf https://astral.sh/uv/install.sh | sh; source ~/.local/bin/env; }
+D=/mnt/c/Users/betim/Documents/Data_Science
+S10=$D/pi_ginot_large_s10/.piginot-runs/dogbone-s10-public-production-v1-b29c4af-d3ede9186f33
+S13C=$D/pi_ginot_large_s13b_enhanced/.piginot-runs/s13c-registered-8736c1a/checkpoint-step-2400
+mkdir -p ~/s19 && cd ~/s19
+git clone --branch codex/s18-release "$D/vno-s18.bundle" vno-s19
 cd vno-s19
-uv run python -m campaigns.dogbone_v1.s13c_evaluate `
-  --s10-run-root <...\pi_ginot_large_s10\.piginot-runs\dogbone-s10-public-production-v1-b29c4af-d3ede9186f33> `
-  --checkpoint-path <...\.piginot-runs\s13c-registered-8736c1a\checkpoint-step-2400> `
-  > ..\s19-rescore.json
+git fetch "$D/vno-s19.bundle" "+refs/heads/codex/s19-fork-baseline:refs/heads/codex/s19-fork-baseline" "+refs/tags/v0.2.0-base:refs/tags/v0.2.0-base" "+refs/tags/s19-cloud:refs/tags/s19-cloud"
+git switch codex/s19-fork-baseline
+cd ~/s19 && git clone --no-local --branch v0.2.0-base vno-s19 vno-base
+for d in vno-s19 vno-base; do git -C $d remote remove origin; git -C $d config user.name "Betim Bahtiri"; git -C $d config user.email "betimbahtiri@outlook.de"; done
 ```
 
-### 3. `G19.resume` — interrupted and resumed replay to step 400
+### 1. `G19.coverage`
 
-Needs a CPU whose torch dispatches AVX2 or AVX512 (the pinned initial-weights
-hash), and a clean checkout, because the revision is bound into `run_hash`.
-The run root must be a new folder outside the repository.
-
-```powershell
-cd vno-base
-uv sync --frozen --all-extras
-uv run python -m campaigns.dogbone_v1.s13c_trial --s10-run-root <S10 run root> --run-root ..\s19-replay --segment-steps 200 --stop-after 200
-uv run python -m campaigns.dogbone_v1.s13c_trial --s10-run-root <S10 run root> --run-root ..\s19-replay --segment-steps 200 --stop-after 400
+```bash
+cd ~/s19/vno-base && uv sync --frozen --all-extras --python 3.11
+uv run --frozen python -m pytest -q -p no:cacheprovider --cov=src/piginot --cov-report=json:$HOME/s19/s19-coverage.json 2>&1 | tee ~/s19/s19-coverage.log
+cd ~/s19/vno-s19 && uv sync --frozen --all-extras --python 3.11
+uv run --frozen python -m campaigns.g19_gate --record-coverage ../vno-base ../s19-coverage.json ../s19-coverage.log
 ```
 
-The second command resumes from `checkpoint-step-0200`. The gate compares the
-model-state hash of `checkpoint-step-0400` with the registered replay probe
-(`e45edbdc…`).
+### 2. `G19.s13c-rescore`
+
+```bash
+cd ~/s19/vno-s19
+uv run --frozen python -m campaigns.dogbone_v1.s13c_evaluate --s10-run-root "$S10" --checkpoint-path "$S13C" > ../s19-rescore.json
+```
+
+### 3. `G19.resume`
+
+```bash
+cd ~/s19/vno-base
+uv run --frozen python -m campaigns.dogbone_v1.s13c_trial --s10-run-root "$S10" --run-root ~/s19/s19-replay   --segment-steps 200 --stop-after 200
+uv run --frozen python -m campaigns.dogbone_v1.s13c_trial --s10-run-root "$S10" --run-root ~/s19/s19-replay   --segment-steps 200 --stop-after 400
+uv run --frozen python -m campaigns.dogbone_v1.s13c_trial --s10-run-root "$S10" --run-root ~/s19/s19-straight --segment-steps 400 --stop-after 400
+```
 
 ### 4. Gate
 
-```powershell
-cd vno-s19
-uv run python -m campaigns.g19_gate --record-golden --write `
-  --s13c-evaluation ..\s19-rescore.json --replay-checkpoint ..\s19-replay\checkpoint-step-0400
+```bash
+cd ~/s19/vno-s19
+uv run --frozen python -m campaigns.g19_gate --record-golden --write \
+  --s13c-evaluation ../s19-rescore.json \
+  --replay-checkpoint ~/s19/s19-replay/checkpoint-step-0400 \
+  --straight-checkpoint ~/s19/s19-straight/checkpoint-step-0400
 git add artifacts/fork artifacts/gates/S19.json
-git commit -m "chore(S19): G19 with the local coverage, rescore and replay checks"
-git bundle create ..\vno-s19-local.bundle codex/s19-fork-baseline ^s19-cloud
+git commit -m "chore(S19): G19 with the WSL coverage, rescore and replay checks"
+git bundle create ~/s19/vno-s19-local.bundle codex/s19-fork-baseline ^s19-cloud-2
+cp ~/s19/vno-s19-local.bundle "$D/"
 ```
 
-`--record-golden` adds the example-output digests of your execution profile
-(Windows, your CPU) next to the cloud profile's, on first use. Send
-`vno-s19-local.bundle` back, or the four files.
+`--record-golden` adds the example-output digests of the Linux/AVX2 profile
+next to the cloud's Linux/AVX512 golden.
 
 ## Comparing the bytes of the source and the fork
 
@@ -106,4 +111,6 @@ uv run python ..\vno-s19\scripts\verify_fork.py manifest --root . --include arti
 uv run python ..\vno-s19\scripts\verify_fork.py compare ..\source-manifest.json ..\vno-s19\artifacts\fork\S19-BASE-MANIFEST.json
 ```
 
-Run it on the `codex/s18-release` checkout; it prints `identical`.
+Run it on the `codex/s18-release` checkout; it prints `identical`. (On a
+native Windows checkout use `-c core.autocrlf=false` when cloning, so text files
+keep their committed line endings.)

@@ -1,6 +1,7 @@
 # ADR 0100: A standalone fork for the S19+ line
 
-- Status: Proposed — decision 1–4 need the decision owner's sign-off
+- Status: Proposed — decisions 1–4 need the decision owner's sign-off;
+  decision 5 accepted by the decision owner on 2026-10-10
 - Date: 2026-10-10
 - Step: S19 (gate `G19`)
 - Plan: `STEPS-v2.0.md` §S19, and the implementation plan
@@ -35,21 +36,63 @@ repository have already collided once: test subprocesses that inherited
 4. **Merge-back.** Work returns to the shared repository once, as a Git
    bundle, through a single decision record signed by the decision owner. This
    line never pushes, never adds a remote and never closes `G18.install`.
+5. **`G19.resume` is judged on the profile that runs it** (accepted by the
+   decision owner on 2026-10-10). The check passes when a clean-checkout S13c
+   run stopped at step 200 and resumed to 400 is byte-identical, file for
+   file, to a straight 0 → 400 run on the same execution profile. The
+   registered replay probe hash `e45edbdc…` (Linux, AVX512) is reported beside
+   it and is required only on that profile. The first wording in
+   `STEPS-v2.0.md` ("reproduces the registered hash") demanded cross-CPU bit
+   identity, which the hardware does not provide (see findings below); resume
+   correctness is what the check is for, and it is not weakened.
 
 ## G19 checks that need data outside Git
 
 Three baseline checks cannot run in the one-core cloud workspace. Coverage
-(`G19.coverage`) needs a multi-core machine. Two more need the ignored S10 run root and the registered S13c run
-directory, which are not in Git:
+(`G19.coverage`) needs a multi-core machine. Two more need the ignored S10 run
+root and the registered S13c run directory, which are not in Git:
 
 - `G19.s13c-rescore`: the registered checkpoint re-scores
   `S13C-TRAIN-SCREEN.json` exactly, apart from the evaluator revision;
 - `G19.resume`: a clean-checkout S13c training run stopped after step 200 and
-  resumed to 400 reproduces the registered step-400 model-state hash.
+  resumed to 400 equals a straight run to 400 on the same profile (decision 5).
 
 Where that data is absent they are `NOT_RUN`, and `NOT_RUN` is never `PASS`,
 so G19 stays open until they run on a machine that has the data. The commands
 are in [S19-FORK.md](../fork/S19-FORK.md).
+
+## Findings from the local G19 runs (2026-10-10)
+
+The owner ran the three local checks on a Lunar Lake laptop (8 threads),
+first on native Windows and then under WSL2 Ubuntu.
+
+1. **Linux (WSL2), Python 3.11.15, torch 2.13.0+cu130, AVX2:** full suite at
+   the base tree 3,075 passed, 1 skipped, 0 failed; branch coverage 91.44%.
+   The pinned S13c initial weights reproduce. Resume is bit-exact: stopped at
+   200 and resumed to 400 equals straight 0 → 400 (model-state hash
+   `9492c444…`, manifest `d9568fc8…`). The trained weights differ from the
+   registered AVX512 probe (`e45edbdc…`): AVX2 and AVX512 kernels round
+   differently during training. The S13c note that a new run needs "AVX2 or
+   AVX512" is true for the initial weights only.
+2. **Native Windows, Python 3.12, torch 2.13.0+cpu, AVX2:** 11 failed, 3,063
+   passed, 2 skipped. None is a defect of `src/piginot`:
+   - six S13c tests: the initial weights differ from the pin on Windows'
+     `torch+cpu` build, so S13c training cannot run there;
+   - two tests expect POSIX file mode `0o600` for private files; Windows has
+     no POSIX modes, so the owner-only guarantee is not enforced there;
+   - one test starts Python without `SYSTEMROOT`, so Windows sockets (and
+     torch) cannot initialise: a test bug;
+   - two runtime tree-hash tests: `os.stat` and `os.fstat` report different
+     file identities on Windows: a portability bug in campaign code;
+   - symlink tests need Developer Mode or an administrator shell.
+3. **Identity gap.** `ExecutionProfile` binds versions, threads, device, dtype
+   and seed, but not the operating system or CPU instruction set, so runs on
+   AVX2 and AVX512 at one revision share a `run_hash` and differ in weights.
+
+Findings 2 and 3 are S20 work items: Windows portability (explicit skips with
+reasons, the two real fixes, a `.python-version` pin to 3.11) and run binding
+version 2 with `os` and `cpu_capability` (additive; v1 hashes stay
+verifiable). G19 is evaluated on WSL2 Linux.
 
 ## Consequences
 
