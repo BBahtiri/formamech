@@ -38,7 +38,7 @@ PowerShell, from `C:\Users\betim\Documents\Data_Science`.
 
 ```powershell
 cd pi_ginot_large
-git fetch ..\vno-s19.bundle "+refs/heads/codex/s19-fork-baseline:refs/heads/codex/s19-fork-baseline" "+refs/tags/v0.2.0-base:refs/tags/v0.2.0-base"
+git fetch ..\vno-s19.bundle "+refs/heads/codex/s19-fork-baseline:refs/heads/codex/s19-fork-baseline" "+refs/tags/v0.2.0-base:refs/tags/v0.2.0-base" "+refs/tags/s19-cloud:refs/tags/s19-cloud"
 git rev-parse "v0.2.0-base^{commit}"     # 399a14659cec...
 cd ..
 git clone --no-local --branch v0.2.0-base pi_ginot_large vno-base      # clean base, for checks 1 and 3
@@ -91,7 +91,7 @@ uv run python -m campaigns.g19_gate --record-golden --write `
   --s13c-evaluation ..\s19-rescore.json --replay-checkpoint ..\s19-replay\checkpoint-step-0400
 git add artifacts/fork artifacts/gates/S19.json
 git commit -m "chore(S19): G19 with the local coverage, rescore and replay checks"
-git bundle create ..\vno-s19-local.bundle codex/s19-fork-baseline ^<HEAD of the cloud bundle>
+git bundle create ..\vno-s19-local.bundle codex/s19-fork-baseline ^s19-cloud
 ```
 
 `--record-golden` adds the example-output digests of your execution profile
