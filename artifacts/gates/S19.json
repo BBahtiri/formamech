@@ -1,15 +1,15 @@
 {
   "gate_id": "G19",
   "step": "S19",
-  "commit": "2bfdea9e2d292e20c1c0affe86d0ebcee798021c",
-  "timestamp_utc": "2026-10-10T13:21:49Z",
+  "commit": "8e4b4bb031f7e3925b7961d05cc1721a056d7350",
+  "timestamp_utc": "2026-10-10T20:44:25Z",
   "fork_base": "399a14659cec6812e24980ece8f81ab2d94a4753",
   "execution_profile": {
     "python": "3.11.15",
     "system": "Linux",
     "machine": "x86_64",
     "torch": "2.13.0+cu130",
-    "cpu_capability": "AVX512"
+    "cpu_capability": "AVX2"
   },
   "checks": [
     {
@@ -116,16 +116,36 @@
     },
     {
       "id": "G19.coverage",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "measured": {
-        "reason": "artifacts/fork/S19-COVERAGE.json not recorded (run the full suite with coverage on a multi-core machine, see docs/fork/S19-FORK.md)"
+        "schema_version": "1.0",
+        "tree": "4985578321cc54de0306fc5bb25d5e7992ecfb6c",
+        "commit": "399a14659cec6812e24980ece8f81ab2d94a4753",
+        "clean": true,
+        "coverage_percent": 91.44,
+        "branch_coverage": true,
+        "passed": 3075,
+        "failed": 0,
+        "skipped": 1,
+        "errors": 0,
+        "summary": "3075 passed, 1 skipped in 2577.96s (0:42:57)",
+        "execution_profile": {
+          "python": "3.11.15",
+          "system": "Linux",
+          "machine": "x86_64",
+          "torch": "2.13.0+cu130",
+          "cpu_capability": "AVX2"
+        }
       },
       "threshold": {
         "branch_coverage_percent_at_least": 90.5,
         "package": "src/piginot",
         "tree_of": "399a14659cec6812e24980ece8f81ab2d94a4753"
       },
-      "comparison": "all"
+      "comparison": "all",
+      "evidence": {
+        "evidence": "artifacts/fork/S19-COVERAGE.json"
+      }
     },
     {
       "id": "G19.manifests",
@@ -163,12 +183,12 @@
         "outputs": {
           "dogbone-v1-s13c-cp-freeze/dogbone-in-domain.json": {
             "verdict": "IN_DOMAIN",
-            "sha256": "80a6337b8c047f9d51a669d8a0f27050b658484434641de5099db3b80cdbfd58",
+            "sha256": "c11c5d1e7af3e3d006c35080893a9e5644bb35731f1f9e877ca9e74f68af6200",
             "repeat_identical": true
           },
           "notched-v1-cp-freeze/notched-in-domain.json": {
             "verdict": "IN_DOMAIN",
-            "sha256": "f321ba32de3274a76feb2d2db528cd292e444ec87ca85b84d549580ad3f8bc15",
+            "sha256": "9eb1ac08ae7a1c3f3b06c14995a7db064ab8b2f39ed20850f08d62062d4a3728",
             "repeat_identical": true
           },
           "notched-v1-cp-freeze/notched-out-of-envelope.json": {
@@ -182,7 +202,7 @@
           "system": "Linux",
           "machine": "x86_64",
           "torch": "2.13.0+cu130",
-          "cpu_capability": "AVX512"
+          "cpu_capability": "AVX2"
         },
         "golden_for_profile": true,
         "golden_match": true
@@ -195,28 +215,85 @@
     },
     {
       "id": "G19.s13c-rescore",
-      "status": "NOT_RUN",
+      "status": "FAIL",
       "measured": {
-        "reason": "needs the ignored S10 run root and the registered S13c checkpoint (run campaigns.dogbone_v1.s13c_evaluate locally, pass --s13c-evaluation)"
+        "differing_fields": [
+          "$type",
+          "checkpoint_manifest_hash",
+          "checkpoint_step",
+          "comparison",
+          "cp_freeze_status",
+          "evidence_role",
+          "execution_profile_hash",
+          "failed_guardrails",
+          "g13_status",
+          "invalid_collocation_case_count",
+          "lineage",
+          "metrics",
+          "minimum_interior_collocation_determinant",
+          "non_train_evidence_used",
+          "protocol_hash",
+          "role",
+          "run_hash",
+          "schema_version",
+          "screen_diagnostics",
+          "selected_checkpoint",
+          "selection_status",
+          "step",
+          "training_revision",
+          "training_summary",
+          "trial_result"
+        ],
+        "evaluator_revision": null
       },
       "threshold": "the registered checkpoint re-scores artifacts/campaigns/dogbone-v1/S13C-TRAIN-SCREEN.json exactly, apart from the evaluator revision",
-      "comparison": "all"
+      "comparison": "all",
+      "evidence": {
+        "evidence": "s19-rescore.json"
+      }
     },
     {
       "id": "G19.resume",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "measured": {
-        "reason": "needs the ignored S10 run root (run campaigns.dogbone_v1.s13c_trial locally, pass --replay-checkpoint)"
+        "replay": {
+          "step": 400,
+          "model_state_hash": "9492c444ebd97e7b461a40dbd88f5cd4b681b599a043cfb3446f8b491dad9e52",
+          "manifest_hash": "d9568fc837ce4487a595b37414a8b482c477f354c1d2c82770a01b2f0239062d",
+          "run_hash": "eb3c5e155d027e6892438fbb57bff786c744419048a11dfef1fd601ae90e5c29",
+          "interrupted_at": 200
+        },
+        "straight": {
+          "step": 400,
+          "model_state_hash": "9492c444ebd97e7b461a40dbd88f5cd4b681b599a043cfb3446f8b491dad9e52",
+          "manifest_hash": "d9568fc837ce4487a595b37414a8b482c477f354c1d2c82770a01b2f0239062d",
+          "run_hash": "eb3c5e155d027e6892438fbb57bff786c744419048a11dfef1fd601ae90e5c29"
+        },
+        "byte_identical_files": {
+          "adaptive.json": true,
+          "checkpoint.json": true,
+          "model.safetensors": true,
+          "optimizer.json": true,
+          "state.safetensors": true
+        },
+        "file_sets_equal": true,
+        "registered_profile_comparison": {
+          "registered_model_state_hash": "e45edbdc6cd47a0ef754b97a0c7613c5703cdecfafcc9edebb4777c6d1e259f8",
+          "matches_registered": false,
+          "expected_to_match": false,
+          "reason": "the registered probe ran on Linux/AVX512; trained weights depend on the CPU instruction set"
+        }
       },
       "threshold": {
+        "procedure": "clean checkout; stop after 200; resume to 400; and a straight 0 -> 400 run on the same profile",
         "step": 400,
-        "model_state_hash": "e45edbdc6cd47a0ef754b97a0c7613c5703cdecfafcc9edebb4777c6d1e259f8",
-        "procedure": "clean checkout; stop after 200; resume to 400"
+        "resumed_equals_straight": "every checkpoint file byte-identical",
+        "registered_model_state_hash": "reported, required only on the registered profile (ADR 0100 decision 5)"
       },
       "comparison": "all"
     }
   ],
   "decision_record": "docs/adr/0100-s19-fork-for-the-s19-line.md",
   "verdict": "FAIL",
-  "verdict_reason": "3 required check(s) not PASS: G19.coverage, G19.s13c-rescore, G19.resume"
+  "verdict_reason": "1 required check(s) not PASS: G19.s13c-rescore"
 }

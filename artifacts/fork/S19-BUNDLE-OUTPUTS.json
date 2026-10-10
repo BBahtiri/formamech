@@ -1,5 +1,10 @@
 {
   "profiles": {
+    "AVX2|x86_64|3.11.15|Linux|2.13.0+cu130": {
+      "dogbone-v1-s13c-cp-freeze/dogbone-in-domain.json": "c11c5d1e7af3e3d006c35080893a9e5644bb35731f1f9e877ca9e74f68af6200",
+      "notched-v1-cp-freeze/notched-in-domain.json": "9eb1ac08ae7a1c3f3b06c14995a7db064ab8b2f39ed20850f08d62062d4a3728",
+      "notched-v1-cp-freeze/notched-out-of-envelope.json": "0af48ba02271b278b676fcc896a0c7a39797095c0aba96be52fed6ec73d0b040"
+    },
     "AVX512|x86_64|3.11.15|Linux|2.13.0+cu130": {
       "dogbone-v1-s13c-cp-freeze/dogbone-in-domain.json": "80a6337b8c047f9d51a669d8a0f27050b658484434641de5099db3b80cdbfd58",
       "notched-v1-cp-freeze/notched-in-domain.json": "f321ba32de3274a76feb2d2db528cd292e444ec87ca85b84d549580ad3f8bc15",
@@ -7,6 +12,16 @@
     }
   },
   "recorded": {
+    "AVX2|x86_64|3.11.15|Linux|2.13.0+cu130": {
+      "commit": "8e4b4bb031f7e3925b7961d05cc1721a056d7350",
+      "profile": {
+        "cpu_capability": "AVX2",
+        "machine": "x86_64",
+        "python": "3.11.15",
+        "system": "Linux",
+        "torch": "2.13.0+cu130"
+      }
+    },
     "AVX512|x86_64|3.11.15|Linux|2.13.0+cu130": {
       "commit": "8003bd6558a3970db25ee93ee2b4334da6da1eee",
       "profile": {
