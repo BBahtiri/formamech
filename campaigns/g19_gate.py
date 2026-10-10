@@ -73,6 +73,16 @@ MANIFEST_INCLUDE = ("artifacts", "bundles")
 S18_SUITE = {"passed": 3075, "coverage_percent": 90.5}
 SCREEN_PATH = Path("artifacts/campaigns/dogbone-v1/S13C-TRAIN-SCREEN.json")
 PROBE_PATH = Path("artifacts/campaigns/dogbone-v1/S13C-G13-REPLAY-PROBE.json")
+# ADR 0100 decision 6: exact on the registered profile, else numeric leaves
+# within this relative tolerance and every other leaf exact.
+REGISTERED_PROFILE = {
+    "system": "Linux",
+    "machine": "x86_64",
+    "python": "3.11.15",
+    "torch": "2.13.0+cu130",
+    "cpu_capability": "AVX512",
+}
+RESCORE_RELATIVE_TOLERANCE = 1e-10
 EXAMPLES = (
     ("dogbone-v1-s13c-cp-freeze", "dogbone-in-domain.json"),
     ("notched-v1-cp-freeze", "notched-in-domain.json"),
@@ -518,17 +528,29 @@ def _relative(left: object, right: object) -> float | None:
     return None
 
 
-def check_rescore(root: Path, evaluation: Path | None) -> dict[str, Any]:
-    """The printed ``TrialResult`` equals the recorded ``trial_result`` exactly.
+def check_rescore(
+    root: Path,
+    evaluation: Path | None,
+    profile: Mapping[str, str] | None = None,
+) -> dict[str, Any]:
+    """The printed ``TrialResult`` equals the recorded ``trial_result``.
 
     ``campaigns.dogbone_v1.s13c_evaluate`` prints the canonical ``TrialResult``
     (lineage, metrics, role) and then ``selected`` or the failed guardrails.
     ``S13C-TRAIN-SCREEN.json`` holds the same object as its ``trial_result``.
+    On the registered profile every leaf must match exactly; elsewhere numeric
+    leaves may differ by ``RESCORE_RELATIVE_TOLERANCE`` (ADR 0100 decision 6).
     """
 
+    registered = profile is not None and all(
+        profile.get(key) == value for key, value in REGISTERED_PROFILE.items()
+    )
     threshold = {
         "compared": f"printed TrialResult vs {SCREEN_PATH.as_posix()} trial_result",
-        "equality": "exact (every leaf)",
+        "non_numeric_leaves": "exact (hashes, role, lineage)",
+        "numeric_leaves": "exact on the registered profile, else relative "
+        f"difference <= {RESCORE_RELATIVE_TOLERANCE:g} (ADR 0100 decision 6)",
+        "registered_profile": REGISTERED_PROFILE,
         "decision": "selected, and the recorded selection_status is ELIGIBLE",
     }
     if evaluation is None:
@@ -550,12 +572,21 @@ def check_rescore(root: Path, evaluation: Path | None) -> dict[str, Any]:
         if value is not None
     ]
     decision = decisions[0] if decisions else None
+    non_numeric = [
+        path for path, left, right in differences if _relative(left, right) is None
+    ]
+    largest = max(relatives) if relatives else 0.0
+    tolerance = 0.0 if registered else RESCORE_RELATIVE_TOLERANCE
     measured = {
+        "profile": dict(profile) if profile is not None else None,
+        "registered_profile": registered,
+        "tolerance_applied": tolerance,
+        "non_numeric_differences": non_numeric,
         "decision": decision,
         "recorded_selection_status": recorded.get("selection_status"),
         "difference_count": len(differences),
         "numeric_difference_count": len(relatives),
-        "max_relative_numeric_difference": max(relatives) if relatives else 0.0,
+        "max_relative_numeric_difference": largest,
         "differences": [
             {"path": path, "recorded": plain(left), "rescored": plain(right)}
             for path, left, right in differences[:25]
@@ -563,7 +594,8 @@ def check_rescore(root: Path, evaluation: Path | None) -> dict[str, Any]:
     }
     passed = (
         result is not None
-        and not differences
+        and not non_numeric
+        and largest <= tolerance
         and decision == "selected"
         and recorded.get("selection_status") == "ELIGIBLE"
     )
@@ -685,7 +717,7 @@ def build_gate(
         check_coverage(root),
         check_manifests(root, runner),
         check_bundles(root, served, profile),
-        check_rescore(root, s13c_evaluation),
+        check_rescore(root, s13c_evaluation, profile),
         check_resume(root, replay_checkpoint, straight_checkpoint),
     ]
     blockers = [check["id"] for check in checks if check["status"] != "PASS"]

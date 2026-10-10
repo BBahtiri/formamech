@@ -135,6 +135,25 @@ def test_rescore_compares_the_trial_result_exactly(tmp_path: Path) -> None:
     assert result["measured"]["differences"][0]["path"] == ".metrics.p_l2"
     assert 0 < result["measured"]["max_relative_numeric_difference"] < 1e-7
 
+    # ADR 0100 decision 6: last-digit drift passes off the registered profile only
+    rounding = {
+        **trial,
+        "metrics": {"p_l2": 0.00910000000000091, "peak": [0.0083, 0.0169]},
+    }
+    evaluation.write_text(json.dumps(rounding) + "\nselected\n")
+    other = {**gate.REGISTERED_PROFILE, "cpu_capability": "AVX2"}
+    assert gate.check_rescore(tmp_path, evaluation, other)["status"] == "PASS"
+    registered = dict(gate.REGISTERED_PROFILE)
+    assert gate.check_rescore(tmp_path, evaluation, registered)["status"] == "FAIL"
+    assert gate.check_rescore(tmp_path, evaluation, other)["measured"][
+        "tolerance_applied"
+    ] == pytest.approx(1e-10)
+    evaluation.write_text(json.dumps(drifted) + "\nselected\n")
+    assert gate.check_rescore(tmp_path, evaluation, other)["status"] == "FAIL"
+    foreign = {**trial, "lineage": {"run_hash": "x", "model_state_hash": "m"}}
+    evaluation.write_text(json.dumps(foreign) + "\nselected\n")
+    assert gate.check_rescore(tmp_path, evaluation, other)["status"] == "FAIL"
+
     evaluation.write_text(json.dumps(trial) + "\nNoEligibleTrialError: peak\n")
     assert gate.check_rescore(tmp_path, evaluation)["status"] == "FAIL"
     evaluation.write_text("selected\n")

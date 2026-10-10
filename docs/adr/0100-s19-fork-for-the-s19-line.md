@@ -1,7 +1,8 @@
 # ADR 0100: A standalone fork for the S19+ line
 
 - Status: Proposed — decisions 1–4 need the decision owner's sign-off;
-  decision 5 accepted by the decision owner on 2026-10-10
+  decision 5 accepted by the decision owner on 2026-10-10; decision 6 takes
+  effect with the owner's G19 commit that cites it
 - Date: 2026-10-10
 - Step: S19 (gate `G19`)
 - Plan: `STEPS-v2.0.md` §S19, and the implementation plan
@@ -45,6 +46,16 @@ repository have already collided once: test subprocesses that inherited
    `STEPS-v2.0.md` ("reproduces the registered hash") demanded cross-CPU bit
    identity, which the hardware does not provide (see findings below); resume
    correctness is what the check is for, and it is not weakened.
+6. **`G19.s13c-rescore` tolerates last-digit rounding off the registered
+   profile.** On the registered profile (Linux x86_64, Python 3.11.15, torch
+   2.13.0+cu130, AVX512) the re-scored `TrialResult` must equal the recorded
+   `trial_result` exactly. On any other profile every non-numeric leaf (all
+   lineage hashes, the role) must still match exactly, the selection must be
+   `selected` / `ELIGIBLE`, and numeric leaves may differ by a relative
+   1 × 10⁻¹⁰ at most. The owner's AVX2 re-score differed in two metrics by at
+   most 1.0 × 10⁻¹³ (`median_absolute_peak_error` 0.008276482387183988 vs
+   0.00827648238718316; `p_relative_l2` 0.009086612004752744 vs
+   0.009086612004752748), the summation-order effect of AVX2 against AVX512.
 
 ## G19 checks that need data outside Git
 
