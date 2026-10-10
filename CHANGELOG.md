@@ -4,6 +4,16 @@ All notable changes to this project are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - 0.2.0.dev0
+
+Development line S19–S26 (`STEPS-v2.0.md`), forked from `v0.1.0`.
+
+### Added
+
+- **Fork and baseline lock** (S19): a standalone fork of `v0.1.0` (ADR 0100),
+  the fork manifest tool `scripts/verify_fork.py`, gate `G19`
+  (`campaigns/g19_gate.py`) and the baseline records in `artifacts/fork/`.
+
 ## [0.1.0] - 2026-10-06
 
 The first public release. It completes the STEPS-v1.0 plan (S0–S18). Read
