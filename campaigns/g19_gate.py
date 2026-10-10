@@ -73,7 +73,6 @@ MANIFEST_INCLUDE = ("artifacts", "bundles")
 S18_SUITE = {"passed": 3075, "coverage_percent": 90.5}
 SCREEN_PATH = Path("artifacts/campaigns/dogbone-v1/S13C-TRAIN-SCREEN.json")
 PROBE_PATH = Path("artifacts/campaigns/dogbone-v1/S13C-G13-REPLAY-PROBE.json")
-RESCORE_IGNORED = frozenset({"evaluator_revision"})
 EXAMPLES = (
     ("dogbone-v1-s13c-cp-freeze", "dogbone-in-domain.json"),
     ("notched-v1-cp-freeze", "notched-in-domain.json"),
@@ -480,11 +479,58 @@ def record_coverage(
     return document
 
 
+def _differences(
+    recorded: object, current: object, path: str = ""
+) -> list[tuple[str, object, object]]:
+    """Every leaf where two JSON documents differ, with its path."""
+
+    if isinstance(recorded, dict) and isinstance(current, dict):
+        return [
+            difference
+            for key in sorted(set(recorded) | set(current))
+            for difference in _differences(
+                recorded.get(key), current.get(key), f"{path}.{key}"
+            )
+        ]
+    if (
+        isinstance(recorded, list)
+        and isinstance(current, list)
+        and len(recorded) == len(current)
+    ):
+        return [
+            difference
+            for index, (left, right) in enumerate(zip(recorded, current, strict=True))
+            for difference in _differences(left, right, f"{path}[{index}]")
+        ]
+    return [] if recorded == current else [(path, recorded, current)]
+
+
+def _relative(left: object, right: object) -> float | None:
+    numbers = (int, float)
+    if (
+        isinstance(left, numbers)
+        and isinstance(right, numbers)
+        and not isinstance(left, bool)
+        and not isinstance(right, bool)
+    ):
+        scale = max(abs(float(left)), abs(float(right)), 1e-300)
+        return abs(float(left) - float(right)) / scale
+    return None
+
+
 def check_rescore(root: Path, evaluation: Path | None) -> dict[str, Any]:
-    threshold = (
-        f"the registered checkpoint re-scores {SCREEN_PATH.as_posix()} exactly, "
-        "apart from the evaluator revision"
-    )
+    """The printed ``TrialResult`` equals the recorded ``trial_result`` exactly.
+
+    ``campaigns.dogbone_v1.s13c_evaluate`` prints the canonical ``TrialResult``
+    (lineage, metrics, role) and then ``selected`` or the failed guardrails.
+    ``S13C-TRAIN-SCREEN.json`` holds the same object as its ``trial_result``.
+    """
+
+    threshold = {
+        "compared": f"printed TrialResult vs {SCREEN_PATH.as_posix()} trial_result",
+        "equality": "exact (every leaf)",
+        "decision": "selected, and the recorded selection_status is ELIGIBLE",
+    }
     if evaluation is None:
         return not_run(
             "G19.s13c-rescore",
@@ -493,22 +539,38 @@ def check_rescore(root: Path, evaluation: Path | None) -> dict[str, Any]:
             threshold,
         )
     recorded = json.loads((root / SCREEN_PATH).read_text("utf-8"))
-    lines = [
-        line for line in read_text_any(evaluation).splitlines() if line.startswith("{")
+    lines = [line.strip() for line in read_text_any(evaluation).splitlines()]
+    payloads = [line for line in lines if line.startswith("{")]
+    decisions = [line for line in lines if line and not line.startswith("{")]
+    result = json.loads(payloads[0]) if payloads else None
+    differences = _differences(recorded["trial_result"], result)
+    relatives = [
+        value
+        for value in (_relative(left, right) for _, left, right in differences)
+        if value is not None
     ]
-    result = json.loads(lines[0])
-    differing = sorted(
-        key
-        for key in set(recorded) | set(result)
-        if key not in RESCORE_IGNORED and recorded.get(key) != result.get(key)
+    decision = decisions[0] if decisions else None
+    measured = {
+        "decision": decision,
+        "recorded_selection_status": recorded.get("selection_status"),
+        "difference_count": len(differences),
+        "numeric_difference_count": len(relatives),
+        "max_relative_numeric_difference": max(relatives) if relatives else 0.0,
+        "differences": [
+            {"path": path, "recorded": plain(left), "rescored": plain(right)}
+            for path, left, right in differences[:25]
+        ],
+    }
+    passed = (
+        result is not None
+        and not differences
+        and decision == "selected"
+        and recorded.get("selection_status") == "ELIGIBLE"
     )
     return check_document(
         "G19.s13c-rescore",
-        not differing,
-        {
-            "differing_fields": differing,
-            "evaluator_revision": result.get("evaluator_revision"),
-        },
+        passed,
+        measured,
         threshold,
         "all",
         evidence=evaluation.name,

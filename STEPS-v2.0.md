@@ -58,7 +58,7 @@ Evaluated by `python -m campaigns.g19_gate --write`.
 | `G19.coverage` | branch coverage of `src/piginot` ≥ 90.5% (S18 recorded 91% to the integer) |
 | `G19.manifests` | `bundles/` and `artifacts/` equal the base, in Git and byte for byte (BLAKE2b) |
 | `G19.bundles` | both bundles load with recorded manifests and claim levels; examples served byte-identically twice and against the golden of this execution profile |
-| `G19.s13c-rescore` | the registered S13c checkpoint re-scores `S13C-TRAIN-SCREEN.json` exactly, apart from the evaluator revision |
+| `G19.s13c-rescore` | the `TrialResult` printed by re-scoring the registered S13c checkpoint equals the `trial_result` recorded in `S13C-TRAIN-SCREEN.json`, every leaf exactly, and the selection is `selected` / `ELIGIBLE` |
 | `G19.resume` | clean-checkout S13c training stopped at 200 and resumed to 400 is byte-identical (every checkpoint file) to a straight 0 → 400 run on the same execution profile; the registered probe hash (Linux/AVX512) is reported, and required only on that profile (ADR 0100 decision 5) |
 
 Anti-scope: no source change besides the version, docs, the fork script and the

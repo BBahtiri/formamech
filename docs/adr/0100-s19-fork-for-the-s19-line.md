@@ -52,8 +52,11 @@ Three baseline checks cannot run in the one-core cloud workspace. Coverage
 (`G19.coverage`) needs a multi-core machine. Two more need the ignored S10 run
 root and the registered S13c run directory, which are not in Git:
 
-- `G19.s13c-rescore`: the registered checkpoint re-scores
-  `S13C-TRAIN-SCREEN.json` exactly, apart from the evaluator revision;
+- `G19.s13c-rescore`: re-scoring the registered checkpoint prints a
+  `TrialResult` equal, leaf for leaf, to the `trial_result` recorded in
+  `S13C-TRAIN-SCREEN.json`, and the selection stays `ELIGIBLE`. (The first
+  gate version compared that output with the whole report document, which
+  can never match; corrected on 2026-10-10 before G19 closed.)
 - `G19.resume`: a clean-checkout S13c training run stopped after step 200 and
   resumed to 400 equals a straight run to 400 on the same profile (decision 5).
 

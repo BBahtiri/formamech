@@ -107,19 +107,38 @@ def test_resume_needs_both_runs_and_equal_bytes(
     assert gate.check_resume(tmp_path, replay, straight)["status"] == "FAIL"
 
 
-def test_rescore_ignores_only_the_evaluator_revision(tmp_path: Path) -> None:
-    recorded = {"evaluator_revision": "old", "run_hash": "r", "metrics": [1, 2]}
+def test_rescore_compares_the_trial_result_exactly(tmp_path: Path) -> None:
+    trial = {
+        "$type": "piginot.training.TrialResult",
+        "lineage": {"run_hash": "r", "model_state_hash": "m"},
+        "metrics": {"p_l2": 0.0091, "peak": [0.0083, 0.0169]},
+        "role": "TRAIN",
+    }
+    recorded = {
+        "evaluator_revision": "old",
+        "selection_status": "ELIGIBLE",
+        "trial_result": trial,
+    }
     screen = tmp_path / gate.SCREEN_PATH
     screen.parent.mkdir(parents=True)
     screen.write_text(json.dumps(recorded))
     evaluation = tmp_path / "rescore.json"
-    same = {**recorded, "evaluator_revision": "new"}
-    evaluation.write_text(json.dumps(same) + "\nselected\n", encoding="utf-16")
-    assert gate.check_rescore(tmp_path, evaluation)["status"] == "PASS"
-    evaluation.write_text(json.dumps({**same, "metrics": [1, 3]}) + "\n")
+    evaluation.write_text(json.dumps(trial) + "\nselected\n", encoding="utf-16")
+    result = gate.check_rescore(tmp_path, evaluation)
+    assert result["status"] == "PASS"
+    assert result["measured"]["difference_count"] == 0
+
+    drifted = {**trial, "metrics": {"p_l2": 0.0091000001, "peak": [0.0083, 0.0169]}}
+    evaluation.write_text(json.dumps(drifted) + "\nselected\n")
     result = gate.check_rescore(tmp_path, evaluation)
     assert result["status"] == "FAIL"
-    assert result["measured"]["differing_fields"] == ["metrics"]
+    assert result["measured"]["differences"][0]["path"] == ".metrics.p_l2"
+    assert 0 < result["measured"]["max_relative_numeric_difference"] < 1e-7
+
+    evaluation.write_text(json.dumps(trial) + "\nNoEligibleTrialError: peak\n")
+    assert gate.check_rescore(tmp_path, evaluation)["status"] == "FAIL"
+    evaluation.write_text("selected\n")
+    assert gate.check_rescore(tmp_path, evaluation)["status"] == "FAIL"
 
 
 @pytest.mark.parametrize("encoding", ["utf-8", "utf-8-sig", "utf-16"])
