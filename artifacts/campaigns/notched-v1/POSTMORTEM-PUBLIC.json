@@ -1,0 +1,1307 @@
+{
+  "diagnostics": {
+    "D1": {
+      "DEVELOPMENT": {
+        "absolute_peak_error": {
+          "failing_slices": {
+            "surrogate_only": [],
+            "total": [
+              "all",
+              "nominal_axial_strain:1",
+              "nominal_axial_strain:3",
+              "notch_depth:0",
+              "notch_depth:1",
+              "notch_depth:3",
+              "notch_radius:0",
+              "notch_radius:2",
+              "width:2",
+              "width:3"
+            ],
+            "without_discretisation": [
+              "nominal_axial_strain:1",
+              "notch_radius:0",
+              "width:3"
+            ]
+          },
+          "median_share": {
+            "discretisation": 0.43736004416670393,
+            "projection": 0.1348460683034901,
+            "surrogate": 0.4193326985540293
+          },
+          "slices": {
+            "all": {
+              "cases": 64,
+              "discretisation_only": 0.02213740158373377,
+              "surrogate_only": 0.03009878743807327,
+              "total": 0.053408836542218036,
+              "without_discretisation": 0.037571996530517196,
+              "without_projection": 0.04757465054139996
+            },
+            "nominal_axial_strain:0": {
+              "cases": 26,
+              "discretisation_only": 0.021854581546996363,
+              "surrogate_only": 0.024798867996813304,
+              "total": 0.0473294542591729,
+              "without_discretisation": 0.029125062577735453,
+              "without_projection": 0.0384524474063503
+            },
+            "nominal_axial_strain:1": {
+              "cases": 12,
+              "discretisation_only": 0.028543543005583566,
+              "surrogate_only": 0.04143019308459325,
+              "total": 0.07935365802989786,
+              "without_discretisation": 0.051935308027890925,
+              "without_projection": 0.06884854308660018
+            },
+            "nominal_axial_strain:2": {
+              "cases": 2,
+              "discretisation_only": 0.011027639933828095,
+              "surrogate_only": 0.008582717553365243,
+              "total": 0.0217690764126933,
+              "without_discretisation": 0.01074143647886521,
+              "without_projection": 0.019610357487193336
+            },
+            "nominal_axial_strain:3": {
+              "cases": 24,
+              "discretisation_only": 0.020549102049500157,
+              "surrogate_only": 0.03009878743807327,
+              "total": 0.0521825502766011,
+              "without_discretisation": 0.03615826892270158,
+              "without_projection": 0.04732347204205564
+            },
+            "notch_depth:0": {
+              "cases": 14,
+              "discretisation_only": 0.027754136702449632,
+              "surrogate_only": 0.023869439725797584,
+              "total": 0.05340883654221803,
+              "without_discretisation": 0.03002568102384012,
+              "without_projection": 0.042988356987147924
+            },
+            "notch_depth:1": {
+              "cases": 11,
+              "discretisation_only": 0.020234029154297634,
+              "surrogate_only": 0.039276757071448065,
+              "total": 0.05170027347677289,
+              "without_discretisation": 0.04271817435824164,
+              "without_projection": 0.04825885618997931
+            },
+            "notch_depth:2": {
+              "cases": 15,
+              "discretisation_only": 0.015162791117550476,
+              "surrogate_only": 0.014473389825705146,
+              "total": 0.033953813096096845,
+              "without_discretisation": 0.01784053261173668,
+              "without_projection": 0.028169111907163383
+            },
+            "notch_depth:3": {
+              "cases": 24,
+              "discretisation_only": 0.021867562440293475,
+              "surrogate_only": 0.03437582684129517,
+              "total": 0.057192765322881894,
+              "without_discretisation": 0.03911277030127797,
+              "without_projection": 0.05029900003239513
+            },
+            "notch_radius:0": {
+              "cases": 18,
+              "discretisation_only": 0.03528744456434872,
+              "surrogate_only": 0.04408516001822879,
+              "total": 0.0873194344376482,
+              "without_discretisation": 0.05606141332000702,
+              "without_projection": 0.07534318113586998
+            },
+            "notch_radius:1": {
+              "cases": 22,
+              "discretisation_only": 0.014919455897186655,
+              "surrogate_only": 0.024799873687214372,
+              "total": 0.043369248752891,
+              "without_discretisation": 0.029531187843699982,
+              "without_projection": 0.03781375538920153
+            },
+            "notch_radius:2": {
+              "cases": 8,
+              "discretisation_only": 0.011063908411911759,
+              "surrogate_only": 0.039276757071448065,
+              "total": 0.05170027347677289,
+              "without_discretisation": 0.04271817435824164,
+              "without_projection": 0.04825885618997931
+            },
+            "notch_radius:3": {
+              "cases": 16,
+              "discretisation_only": 0.008469645844936445,
+              "surrogate_only": 0.018960931550613846,
+              "total": 0.030198937376240916,
+              "without_discretisation": 0.022073952554942673,
+              "without_projection": 0.027085916371912086
+            },
+            "width:0": {
+              "cases": 24,
+              "discretisation_only": 0.014878667768225374,
+              "surrogate_only": 0.02461438089759018,
+              "total": 0.0382751420469408,
+              "without_discretisation": 0.026848084196161297,
+              "without_projection": 0.03632279820853351
+            },
+            "width:1": {
+              "cases": 14,
+              "discretisation_only": 0.01945789873775441,
+              "surrogate_only": 0.014821993737588761,
+              "total": 0.034980064194952545,
+              "without_discretisation": 0.017928353875164355,
+              "without_projection": 0.02848168360398424
+            },
+            "width:2": {
+              "cases": 11,
+              "discretisation_only": 0.023536129501544458,
+              "surrogate_only": 0.039276757071448065,
+              "total": 0.05170027347677289,
+              "without_discretisation": 0.04271817435824164,
+              "without_projection": 0.04825885618997931
+            },
+            "width:3": {
+              "cases": 15,
+              "discretisation_only": 0.035351747596722126,
+              "surrogate_only": 0.04433494082252737,
+              "total": 0.08288859262288785,
+              "without_discretisation": 0.05436364273295177,
+              "without_projection": 0.0712948504560221
+            }
+          }
+        },
+        "p_relative_l2": {
+          "failing_slices": {
+            "surrogate_only": [],
+            "total": [
+              "all",
+              "nominal_axial_strain:0",
+              "nominal_axial_strain:1",
+              "nominal_axial_strain:3",
+              "notch_depth:0",
+              "notch_depth:3",
+              "notch_radius:0",
+              "width:2",
+              "width:3"
+            ],
+            "without_discretisation": []
+          },
+          "median_share": {
+            "discretisation": 0.4315494001503334,
+            "projection": 0.02788773726545945,
+            "surrogate": 0.5423119348960861
+          },
+          "slices": {
+            "all": {
+              "cases": 64,
+              "discretisation_only": 0.028453235317727834,
+              "surrogate_only": 0.024535484998662736,
+              "total": 0.052362363577965886,
+              "without_discretisation": 0.026025081254267696,
+              "without_projection": 0.05078484979400862
+            },
+            "nominal_axial_strain:0": {
+              "cases": 26,
+              "discretisation_only": 0.027804070511762057,
+              "surrogate_only": 0.02411676932902082,
+              "total": 0.05264417887739217,
+              "without_discretisation": 0.025608453746154558,
+              "without_projection": 0.05108047917048575
+            },
+            "nominal_axial_strain:1": {
+              "cases": 12,
+              "discretisation_only": 0.03691373265621881,
+              "surrogate_only": 0.02574415966926953,
+              "total": 0.06393025596226613,
+              "without_discretisation": 0.02747688051203769,
+              "without_projection": 0.0621544421259731
+            },
+            "nominal_axial_strain:2": {
+              "cases": 2,
+              "discretisation_only": 0.01043745391622288,
+              "surrogate_only": 0.017159770380357826,
+              "total": 0.025984737447650737,
+              "without_discretisation": 0.01783178435842946,
+              "without_projection": 0.025312246643730166
+            },
+            "nominal_axial_strain:3": {
+              "cases": 24,
+              "discretisation_only": 0.027152098590257308,
+              "surrogate_only": 0.022555050513692294,
+              "total": 0.051237502932069114,
+              "without_discretisation": 0.023768731851694314,
+              "without_projection": 0.049887041931955936
+            },
+            "notch_depth:0": {
+              "cases": 14,
+              "discretisation_only": 0.03602798234749868,
+              "surrogate_only": 0.024963837534721502,
+              "total": 0.062273302489738155,
+              "without_discretisation": 0.0265768173712392,
+              "without_projection": 0.060558971742873065
+            },
+            "notch_depth:1": {
+              "cases": 11,
+              "discretisation_only": 0.0277147441971963,
+              "surrogate_only": 0.01711451770247169,
+              "total": 0.0447913061678227,
+              "without_discretisation": 0.018181967991443795,
+              "without_projection": 0.043355155000899204
+            },
+            "notch_depth:2": {
+              "cases": 15,
+              "discretisation_only": 0.01554383244333655,
+              "surrogate_only": 0.019196334905493186,
+              "total": 0.034061982175923836,
+              "without_discretisation": 0.020180901694774392,
+              "without_projection": 0.03306423483391316
+            },
+            "notch_depth:3": {
+              "cases": 24,
+              "discretisation_only": 0.027961300817567893,
+              "surrogate_only": 0.02522332196800069,
+              "total": 0.052327882236737136,
+              "without_discretisation": 0.02694786029097399,
+              "without_projection": 0.05056828905792144
+            },
+            "notch_radius:0": {
+              "cases": 18,
+              "discretisation_only": 0.042743527388583065,
+              "surrogate_only": 0.031720159311776415,
+              "total": 0.07780211913817,
+              "without_discretisation": 0.03369879838365141,
+              "without_projection": 0.07573804201703026
+            },
+            "notch_radius:1": {
+              "cases": 22,
+              "discretisation_only": 0.018491231856473934,
+              "surrogate_only": 0.022863415322109937,
+              "total": 0.042495093386454644,
+              "without_discretisation": 0.02414906732512393,
+              "without_projection": 0.04120944138344065
+            },
+            "notch_radius:2": {
+              "cases": 8,
+              "discretisation_only": 0.016304678152729183,
+              "surrogate_only": 0.0192385611225344,
+              "total": 0.03432715641478879,
+              "without_discretisation": 0.020183874493435325,
+              "without_projection": 0.033472500800509626
+            },
+            "notch_radius:3": {
+              "cases": 16,
+              "discretisation_only": 0.010856307972765197,
+              "surrogate_only": 0.019730009319656135,
+              "total": 0.026789091006865266,
+              "without_discretisation": 0.02023204714228772,
+              "without_projection": 0.02619291314878009
+            },
+            "width:0": {
+              "cases": 24,
+              "discretisation_only": 0.015043511300868312,
+              "surrogate_only": 0.020617864898851625,
+              "total": 0.03448060848225885,
+              "without_discretisation": 0.02116801991794391,
+              "without_projection": 0.03352502567975422
+            },
+            "width:1": {
+              "cases": 14,
+              "discretisation_only": 0.023585098973792726,
+              "surrogate_only": 0.02028252648133718,
+              "total": 0.04448936402659692,
+              "without_discretisation": 0.02175622976436573,
+              "without_projection": 0.042964028987465167
+            },
+            "width:2": {
+              "cases": 11,
+              "discretisation_only": 0.02914012753244189,
+              "surrogate_only": 0.020059758973044507,
+              "total": 0.05115501948777128,
+              "without_discretisation": 0.022014891955329387,
+              "without_projection": 0.0491998865054864
+            },
+            "width:3": {
+              "cases": 15,
+              "discretisation_only": 0.04302610056593876,
+              "surrogate_only": 0.03201259820261805,
+              "total": 0.07884602171125187,
+              "without_discretisation": 0.034042245004627714,
+              "without_projection": 0.07664549881071271
+            }
+          }
+        },
+        "u_relative_l2": {
+          "failing_slices": {
+            "surrogate_only": [],
+            "total": [],
+            "without_discretisation": []
+          },
+          "median_share": {
+            "discretisation": 0.2830003210289831,
+            "projection": 0.0,
+            "surrogate": 0.7169996789710169
+          },
+          "slices": {
+            "all": {
+              "cases": 64,
+              "discretisation_only": 0.0013230987182403617,
+              "surrogate_only": 0.004788401276644013,
+              "total": 0.0057875972720792465,
+              "without_discretisation": 0.004788401276644013,
+              "without_projection": 0.0057875972720792465
+            },
+            "nominal_axial_strain:0": {
+              "cases": 26,
+              "discretisation_only": 0.001218499985996112,
+              "surrogate_only": 0.005090650239713574,
+              "total": 0.006135268740414133,
+              "without_discretisation": 0.005090650239713574,
+              "without_projection": 0.006135268740414133
+            },
+            "nominal_axial_strain:1": {
+              "cases": 12,
+              "discretisation_only": 0.0016278530941742225,
+              "surrogate_only": 0.004173018734627382,
+              "total": 0.00528737411344695,
+              "without_discretisation": 0.004173018734627382,
+              "without_projection": 0.00528737411344695
+            },
+            "nominal_axial_strain:2": {
+              "cases": 2,
+              "discretisation_only": 0.0012148305394246164,
+              "surrogate_only": 0.001947496664181031,
+              "total": 0.00303939344988653,
+              "without_discretisation": 0.001947496664181031,
+              "without_projection": 0.00303939344988653
+            },
+            "nominal_axial_strain:3": {
+              "cases": 24,
+              "discretisation_only": 0.0013230987182403617,
+              "surrogate_only": 0.004025988224492982,
+              "total": 0.005249778814285335,
+              "without_discretisation": 0.004025988224492982,
+              "without_projection": 0.005249778814285335
+            },
+            "notch_depth:0": {
+              "cases": 14,
+              "discretisation_only": 0.0008894092861051429,
+              "surrogate_only": 0.0038582169442091152,
+              "total": 0.004289991642249499,
+              "without_discretisation": 0.0038582169442091152,
+              "without_projection": 0.004289991642249499
+            },
+            "notch_depth:1": {
+              "cases": 11,
+              "discretisation_only": 0.0007697074353461472,
+              "surrogate_only": 0.0037391524597456625,
+              "total": 0.0041905584665327044,
+              "without_discretisation": 0.0037391524597456625,
+              "without_projection": 0.0041905584665327044
+            },
+            "notch_depth:2": {
+              "cases": 15,
+              "discretisation_only": 0.0011777854539893595,
+              "surrogate_only": 0.002246393471165097,
+              "total": 0.0031885986638223547,
+              "without_discretisation": 0.002246393471165097,
+              "without_projection": 0.0031885986638223547
+            },
+            "notch_depth:3": {
+              "cases": 24,
+              "discretisation_only": 0.0015339097054407258,
+              "surrogate_only": 0.005628556494815151,
+              "total": 0.006739059586223723,
+              "without_discretisation": 0.005628556494815151,
+              "without_projection": 0.006739059586223723
+            },
+            "notch_radius:0": {
+              "cases": 18,
+              "discretisation_only": 0.0013372391560380744,
+              "surrogate_only": 0.005523613023585193,
+              "total": 0.006866960885336987,
+              "without_discretisation": 0.005523613023585193,
+              "without_projection": 0.006866960885336987
+            },
+            "notch_radius:1": {
+              "cases": 22,
+              "discretisation_only": 0.0013671900623086276,
+              "surrogate_only": 0.00484544938716107,
+              "total": 0.005766267200933146,
+              "without_discretisation": 0.00484544938716107,
+              "without_projection": 0.005766267200933146
+            },
+            "notch_radius:2": {
+              "cases": 8,
+              "discretisation_only": 0.0009290667188503229,
+              "surrogate_only": 0.0033293889798205138,
+              "total": 0.0037962814590304247,
+              "without_discretisation": 0.0033293889798205138,
+              "without_projection": 0.0037962814590304247
+            },
+            "notch_radius:3": {
+              "cases": 16,
+              "discretisation_only": 0.0011719103324542464,
+              "surrogate_only": 0.0038596243474646593,
+              "total": 0.0045051481555201615,
+              "without_discretisation": 0.0038596243474646593,
+              "without_projection": 0.0045051481555201615
+            },
+            "width:0": {
+              "cases": 24,
+              "discretisation_only": 0.0013620212770245545,
+              "surrogate_only": 0.0033166520953337095,
+              "total": 0.004519190844995911,
+              "without_discretisation": 0.0033166520953337095,
+              "without_projection": 0.004519190844995911
+            },
+            "width:1": {
+              "cases": 14,
+              "discretisation_only": 0.001197707822246188,
+              "surrogate_only": 0.0034321107957386754,
+              "total": 0.004154080117071187,
+              "without_discretisation": 0.0034321107957386754,
+              "without_projection": 0.004154080117071187
+            },
+            "width:2": {
+              "cases": 11,
+              "discretisation_only": 0.0009405777499592353,
+              "surrogate_only": 0.002405508964167374,
+              "total": 0.002893469878595551,
+              "without_discretisation": 0.002405508964167374,
+              "without_projection": 0.002893469878595551
+            },
+            "width:3": {
+              "cases": 15,
+              "discretisation_only": 0.001340970369520385,
+              "surrogate_only": 0.006129479922179067,
+              "total": 0.007578370009466041,
+              "without_discretisation": 0.006129479922179067,
+              "without_projection": 0.007578370009466041
+            }
+          }
+        }
+      },
+      "HOLDOUT": {
+        "absolute_peak_error": {
+          "failing_slices": {
+            "surrogate_only": [
+              "notch_radius:0",
+              "width:3"
+            ],
+            "total": [
+              "all",
+              "nominal_axial_strain:0",
+              "nominal_axial_strain:1",
+              "nominal_axial_strain:2",
+              "nominal_axial_strain:3",
+              "notch_depth:0",
+              "notch_depth:1",
+              "notch_depth:2",
+              "notch_depth:3",
+              "notch_radius:0",
+              "notch_radius:1",
+              "width:3"
+            ],
+            "without_discretisation": [
+              "nominal_axial_strain:1",
+              "nominal_axial_strain:3",
+              "notch_depth:2",
+              "notch_radius:0",
+              "width:3"
+            ]
+          },
+          "median_share": {
+            "discretisation": 0.4269568894713228,
+            "projection": 0.15318981335888293,
+            "surrogate": 0.4309725721452068
+          },
+          "slices": {
+            "all": {
+              "cases": 64,
+              "discretisation_only": 0.02804875864903916,
+              "surrogate_only": 0.03967949922269247,
+              "total": 0.0639829885363549,
+              "without_discretisation": 0.04671409430461557,
+              "without_projection": 0.0568637100610467
+            },
+            "nominal_axial_strain:0": {
+              "cases": 23,
+              "discretisation_only": 0.026283562744916222,
+              "surrogate_only": 0.030013065028159196,
+              "total": 0.05499986416370145,
+              "without_discretisation": 0.036806531537740036,
+              "without_projection": 0.049389763790606056
+            },
+            "nominal_axial_strain:1": {
+              "cases": 6,
+              "discretisation_only": 0.03841461703822091,
+              "surrogate_only": 0.045360154748163316,
+              "total": 0.09430651003098066,
+              "without_discretisation": 0.05589189299275975,
+              "without_projection": 0.07958826595503395
+            },
+            "nominal_axial_strain:2": {
+              "cases": 6,
+              "discretisation_only": 0.04754219767234848,
+              "surrogate_only": 0.03163042538800937,
+              "total": 0.08999022051768196,
+              "without_discretisation": 0.042448022845333486,
+              "without_projection": 0.0717748191106519
+            },
+            "nominal_axial_strain:3": {
+              "cases": 29,
+              "discretisation_only": 0.023414968599687346,
+              "surrogate_only": 0.04892138818221601,
+              "total": 0.06286369443626491,
+              "without_discretisation": 0.05245271406685677,
+              "without_projection": 0.05933236855162416
+            },
+            "notch_depth:0": {
+              "cases": 17,
+              "discretisation_only": 0.03214620423770965,
+              "surrogate_only": 0.023091094560993373,
+              "total": 0.06575345028491669,
+              "without_discretisation": 0.034908921631332246,
+              "without_projection": 0.05393562321457783
+            },
+            "notch_depth:1": {
+              "cases": 12,
+              "discretisation_only": 0.018615141931515276,
+              "surrogate_only": 0.02952938508655302,
+              "total": 0.050184540775121037,
+              "without_discretisation": 0.03499279843041072,
+              "without_projection": 0.044262153492227896
+            },
+            "notch_depth:2": {
+              "cases": 16,
+              "discretisation_only": 0.02881070744519323,
+              "surrogate_only": 0.04750859978481512,
+              "total": 0.0775389632557384,
+              "without_discretisation": 0.05464085230556891,
+              "without_projection": 0.06775027452033465
+            },
+            "notch_depth:3": {
+              "cases": 19,
+              "discretisation_only": 0.021285691104323278,
+              "surrogate_only": 0.045548507883829734,
+              "total": 0.06158001624054509,
+              "without_discretisation": 0.048690495602285666,
+              "without_projection": 0.056242867544875126
+            },
+            "notch_radius:0": {
+              "cases": 19,
+              "discretisation_only": 0.036576239262995476,
+              "surrogate_only": 0.06092984658854653,
+              "total": 0.09884653520306629,
+              "without_discretisation": 0.0706531404200859,
+              "without_projection": 0.08630764348886429
+            },
+            "notch_radius:1": {
+              "cases": 14,
+              "discretisation_only": 0.018964776780150665,
+              "surrogate_only": 0.028887927703274512,
+              "total": 0.05134806535478046,
+              "without_discretisation": 0.03489033871988903,
+              "without_projection": 0.045042422965933165
+            },
+            "notch_radius:2": {
+              "cases": 15,
+              "discretisation_only": 0.011258988192102626,
+              "surrogate_only": 0.029434845955834475,
+              "total": 0.04168188937642455,
+              "without_discretisation": 0.032436338664793986,
+              "without_projection": 0.03868039666746504
+            },
+            "notch_radius:3": {
+              "cases": 16,
+              "discretisation_only": 0.00926928487609629,
+              "surrogate_only": 0.03340166366005268,
+              "total": 0.04690598572010751,
+              "without_discretisation": 0.03693571758761361,
+              "without_projection": 0.04337193179254657
+            },
+            "width:0": {
+              "cases": 15,
+              "discretisation_only": 0.01790660092775637,
+              "surrogate_only": 0.01869366939714327,
+              "total": 0.03813394487828774,
+              "without_discretisation": 0.0211021496385114,
+              "without_projection": 0.03444876800439087
+            },
+            "width:1": {
+              "cases": 16,
+              "discretisation_only": 0.026761334081841497,
+              "surrogate_only": 0.0201126510772601,
+              "total": 0.046226620996598314,
+              "without_discretisation": 0.025129522884914067,
+              "without_projection": 0.03779518653250642
+            },
+            "width:2": {
+              "cases": 13,
+              "discretisation_only": 0.019856577885961305,
+              "surrogate_only": 0.022062110658665875,
+              "total": 0.049377371307244754,
+              "without_discretisation": 0.02962866485494811,
+              "without_projection": 0.04181081711096252
+            },
+            "width:3": {
+              "cases": 20,
+              "discretisation_only": 0.0363464420410923,
+              "surrogate_only": 0.06437635880052425,
+              "total": 0.09657652261702351,
+              "without_discretisation": 0.06937353408856918,
+              "without_projection": 0.08419999380728137
+            }
+          }
+        },
+        "p_relative_l2": {
+          "failing_slices": {
+            "surrogate_only": [
+              "nominal_axial_strain:2"
+            ],
+            "total": [
+              "all",
+              "nominal_axial_strain:0",
+              "nominal_axial_strain:1",
+              "nominal_axial_strain:2",
+              "nominal_axial_strain:3",
+              "notch_depth:0",
+              "notch_depth:2",
+              "notch_radius:0",
+              "width:1",
+              "width:3"
+            ],
+            "without_discretisation": [
+              "nominal_axial_strain:2"
+            ]
+          },
+          "median_share": {
+            "discretisation": 0.4411765778757807,
+            "projection": 0.026682850347475376,
+            "surrogate": 0.5354506725863137
+          },
+          "slices": {
+            "all": {
+              "cases": 64,
+              "discretisation_only": 0.03559493400827178,
+              "surrogate_only": 0.02502064096336235,
+              "total": 0.060105319192263515,
+              "without_discretisation": 0.02607241622152641,
+              "without_projection": 0.05794231956819714
+            },
+            "nominal_axial_strain:0": {
+              "cases": 23,
+              "discretisation_only": 0.032878262529269224,
+              "surrogate_only": 0.024203258120171753,
+              "total": 0.056959946666267504,
+              "without_discretisation": 0.025737455653144118,
+              "without_projection": 0.05496830779794064
+            },
+            "nominal_axial_strain:1": {
+              "cases": 6,
+              "discretisation_only": 0.04688404123219538,
+              "surrogate_only": 0.02470298993942785,
+              "total": 0.07260194387907036,
+              "without_discretisation": 0.025831866522009753,
+              "without_projection": 0.06997807200803334
+            },
+            "nominal_axial_strain:2": {
+              "cases": 6,
+              "discretisation_only": 0.054189763533848696,
+              "surrogate_only": 0.050399133860266496,
+              "total": 0.10681879030451023,
+              "without_discretisation": 0.05262902677066153,
+              "without_projection": 0.1045888973941152
+            },
+            "nominal_axial_strain:3": {
+              "cases": 29,
+              "discretisation_only": 0.030393814881218596,
+              "surrogate_only": 0.02397969847961661,
+              "total": 0.054104734654777206,
+              "without_discretisation": 0.025776052705787107,
+              "without_projection": 0.05238494233356403
+            },
+            "notch_depth:0": {
+              "cases": 17,
+              "discretisation_only": 0.0405520070695649,
+              "surrogate_only": 0.02312065005757173,
+              "total": 0.06542160016841854,
+              "without_discretisation": 0.024869593098853646,
+              "without_projection": 0.06367265712713663
+            },
+            "notch_depth:1": {
+              "cases": 12,
+              "discretisation_only": 0.02551580570066931,
+              "surrogate_only": 0.02002573103777394,
+              "total": 0.04368352946901639,
+              "without_discretisation": 0.02052733520315654,
+              "without_projection": 0.04223518100851746
+            },
+            "notch_depth:2": {
+              "cases": 16,
+              "discretisation_only": 0.03640696575776639,
+              "surrogate_only": 0.025547264232456027,
+              "total": 0.06251020098280803,
+              "without_discretisation": 0.0272853271499671,
+              "without_projection": 0.06026018694727011
+            },
+            "notch_depth:3": {
+              "cases": 19,
+              "discretisation_only": 0.024077621936235277,
+              "surrogate_only": 0.025591250482545635,
+              "total": 0.04819370321503676,
+              "without_discretisation": 0.02653408603442099,
+              "without_projection": 0.04635238929957485
+            },
+            "notch_radius:0": {
+              "cases": 19,
+              "discretisation_only": 0.0450186281019988,
+              "surrogate_only": 0.028467558418877454,
+              "total": 0.07440240788162537,
+              "without_discretisation": 0.030393772336332787,
+              "without_projection": 0.07176998186314135
+            },
+            "notch_radius:1": {
+              "cases": 14,
+              "discretisation_only": 0.025759677354785297,
+              "surrogate_only": 0.01960837570127422,
+              "total": 0.04430102412455733,
+              "without_discretisation": 0.020580188117759517,
+              "without_projection": 0.04310118391950985
+            },
+            "notch_radius:2": {
+              "cases": 15,
+              "discretisation_only": 0.014937448098625008,
+              "surrogate_only": 0.021418126214026032,
+              "total": 0.03789377271233736,
+              "without_discretisation": 0.022194845497633616,
+              "without_projection": 0.03695956913305678
+            },
+            "notch_radius:3": {
+              "cases": 16,
+              "discretisation_only": 0.01241779047110134,
+              "surrogate_only": 0.023035223021832283,
+              "total": 0.03708747679012503,
+              "without_discretisation": 0.023804421043426886,
+              "without_projection": 0.03631827876853043
+            },
+            "width:0": {
+              "cases": 15,
+              "discretisation_only": 0.015774411476308037,
+              "surrogate_only": 0.023503816579629938,
+              "total": 0.039282469574208445,
+              "without_discretisation": 0.02471984829343729,
+              "without_projection": 0.03819418027550803
+            },
+            "width:1": {
+              "cases": 16,
+              "discretisation_only": 0.034345948351849585,
+              "surrogate_only": 0.02254464335382354,
+              "total": 0.05815405443172808,
+              "without_discretisation": 0.024339999575690725,
+              "without_projection": 0.05638972873830994
+            },
+            "width:2": {
+              "cases": 13,
+              "discretisation_only": 0.02657021247661958,
+              "surrogate_only": 0.020367734337747162,
+              "total": 0.04807883417106022,
+              "without_discretisation": 0.021518960888919438,
+              "without_projection": 0.04692760761988795
+            },
+            "width:3": {
+              "cases": 20,
+              "discretisation_only": 0.04478545146072424,
+              "surrogate_only": 0.03139512051370397,
+              "total": 0.07350217588034788,
+              "without_discretisation": 0.032505969378916026,
+              "without_projection": 0.07087402693558735
+            }
+          }
+        },
+        "u_relative_l2": {
+          "failing_slices": {
+            "surrogate_only": [],
+            "total": [],
+            "without_discretisation": []
+          },
+          "median_share": {
+            "discretisation": 0.2657011989163194,
+            "projection": 0.0,
+            "surrogate": 0.7342988010836806
+          },
+          "slices": {
+            "all": {
+              "cases": 64,
+              "discretisation_only": 0.0014676280060722737,
+              "surrogate_only": 0.004348553206748714,
+              "total": 0.005345332223220588,
+              "without_discretisation": 0.004348553206748714,
+              "without_projection": 0.005345332223220588
+            },
+            "nominal_axial_strain:0": {
+              "cases": 23,
+              "discretisation_only": 0.0013102788242620581,
+              "surrogate_only": 0.00409016572544349,
+              "total": 0.00506413850434727,
+              "without_discretisation": 0.00409016572544349,
+              "without_projection": 0.00506413850434727
+            },
+            "nominal_axial_strain:1": {
+              "cases": 6,
+              "discretisation_only": 0.0014562022685392195,
+              "surrogate_only": 0.0060900516027152345,
+              "total": 0.007030721723375264,
+              "without_discretisation": 0.0060900516027152345,
+              "without_projection": 0.007030721723375264
+            },
+            "nominal_axial_strain:2": {
+              "cases": 6,
+              "discretisation_only": 0.0015384908978944237,
+              "surrogate_only": 0.008166040867954064,
+              "total": 0.0096682548411102,
+              "without_discretisation": 0.008166040867954064,
+              "without_projection": 0.0096682548411102
+            },
+            "nominal_axial_strain:3": {
+              "cases": 29,
+              "discretisation_only": 0.0013262328011988615,
+              "surrogate_only": 0.0041436503747335355,
+              "total": 0.005166639069115356,
+              "without_discretisation": 0.0041436503747335355,
+              "without_projection": 0.005166639069115356
+            },
+            "notch_depth:0": {
+              "cases": 17,
+              "discretisation_only": 0.0009251789725803349,
+              "surrogate_only": 0.003823552203755811,
+              "total": 0.004189393828015103,
+              "without_discretisation": 0.003823552203755811,
+              "without_projection": 0.004189393828015103
+            },
+            "notch_depth:1": {
+              "cases": 12,
+              "discretisation_only": 0.0008138045409452118,
+              "surrogate_only": 0.002984847070417215,
+              "total": 0.0043485408535580555,
+              "without_discretisation": 0.002984847070417215,
+              "without_projection": 0.0043485408535580555
+            },
+            "notch_depth:2": {
+              "cases": 16,
+              "discretisation_only": 0.0012984263240982633,
+              "surrogate_only": 0.003968878467844491,
+              "total": 0.005139549305411235,
+              "without_discretisation": 0.003968878467844491,
+              "without_projection": 0.005139549305411235
+            },
+            "notch_depth:3": {
+              "cases": 19,
+              "discretisation_only": 0.0015172429063322918,
+              "surrogate_only": 0.006186797091664503,
+              "total": 0.007082249352737443,
+              "without_discretisation": 0.006186797091664503,
+              "without_projection": 0.007082249352737443
+            },
+            "notch_radius:0": {
+              "cases": 19,
+              "discretisation_only": 0.0015094693581037938,
+              "surrogate_only": 0.004407531713909679,
+              "total": 0.005759270819230615,
+              "without_discretisation": 0.004407531713909679,
+              "without_projection": 0.005759270819230615
+            },
+            "notch_radius:1": {
+              "cases": 14,
+              "discretisation_only": 0.0011609615979626794,
+              "surrogate_only": 0.002364168807786105,
+              "total": 0.003128909431374591,
+              "without_discretisation": 0.002364168807786105,
+              "without_projection": 0.003128909431374591
+            },
+            "notch_radius:2": {
+              "cases": 15,
+              "discretisation_only": 0.001257073660145219,
+              "surrogate_only": 0.004575745947370398,
+              "total": 0.005273010805445766,
+              "without_discretisation": 0.004575745947370398,
+              "without_projection": 0.005273010805445766
+            },
+            "notch_radius:3": {
+              "cases": 16,
+              "discretisation_only": 0.0008641448697501732,
+              "surrogate_only": 0.00550718374894496,
+              "total": 0.006093781029843328,
+              "without_discretisation": 0.00550718374894496,
+              "without_projection": 0.006093781029843328
+            },
+            "width:0": {
+              "cases": 15,
+              "discretisation_only": 0.0015101935405127432,
+              "surrogate_only": 0.0035869187013236013,
+              "total": 0.00452932199154115,
+              "without_discretisation": 0.0035869187013236013,
+              "without_projection": 0.00452932199154115
+            },
+            "width:1": {
+              "cases": 16,
+              "discretisation_only": 0.0012876763350475324,
+              "surrogate_only": 0.0025125154160884526,
+              "total": 0.0034936449699774445,
+              "without_discretisation": 0.0025125154160884526,
+              "without_projection": 0.0034936449699774445
+            },
+            "width:2": {
+              "cases": 13,
+              "discretisation_only": 0.0010770103743293897,
+              "surrogate_only": 0.0022715481142507967,
+              "total": 0.0029942775719177615,
+              "without_discretisation": 0.0022715481142507967,
+              "without_projection": 0.0029942775719177615
+            },
+            "width:3": {
+              "cases": 20,
+              "discretisation_only": 0.001460704488675942,
+              "surrogate_only": 0.006733005229510831,
+              "total": 0.007526349367278566,
+              "without_discretisation": 0.006733005229510831,
+              "without_projection": 0.007526349367278566
+            }
+          }
+        }
+      }
+    },
+    "D2": {
+      "DEVELOPMENT": {
+        "absolute_peak_error": {
+          "at_least_half_tolerance": 4,
+          "at_least_tolerance": 0,
+          "cases": 64,
+          "fraction_at_least_tolerance": 0.0
+        },
+        "p_relative_l2": {
+          "at_least_half_tolerance": 12,
+          "at_least_tolerance": 0,
+          "cases": 64,
+          "fraction_at_least_tolerance": 0.0
+        },
+        "u_relative_l2": {
+          "at_least_half_tolerance": 0,
+          "at_least_tolerance": 0,
+          "cases": 64,
+          "fraction_at_least_tolerance": 0.0
+        }
+      },
+      "HOLDOUT": {
+        "absolute_peak_error": {
+          "at_least_half_tolerance": 9,
+          "at_least_tolerance": 0,
+          "cases": 64,
+          "fraction_at_least_tolerance": 0.0
+        },
+        "p_relative_l2": {
+          "at_least_half_tolerance": 16,
+          "at_least_tolerance": 1,
+          "cases": 64,
+          "fraction_at_least_tolerance": 0.015625
+        },
+        "u_relative_l2": {
+          "at_least_half_tolerance": 0,
+          "at_least_tolerance": 0,
+          "cases": 64,
+          "fraction_at_least_tolerance": 0.0
+        }
+      }
+    },
+    "D3": {
+      "DEVELOPMENT": {
+        "absolute_peak_error": {
+          "median_surrogate_by_slice": {
+            "nominal_axial_strain:0": 0.010451744532939372,
+            "nominal_axial_strain:1": 0.013954662087370713,
+            "nominal_axial_strain:2": 0.007874859960885008,
+            "nominal_axial_strain:3": 0.009412313285338661,
+            "notch_depth:0": 0.01481091334954455,
+            "notch_depth:1": 0.00971561590976361,
+            "notch_depth:2": 0.0074834570226451095,
+            "notch_depth:3": 0.014815018519067542,
+            "notch_radius:0": 0.012524911768960787,
+            "notch_radius:1": 0.009207917811776361,
+            "notch_radius:2": 0.013859092466818636,
+            "notch_radius:3": 0.007575300770517256,
+            "width:0": 0.009511220436201312,
+            "width:1": 0.008247627548938995,
+            "width:2": 0.01283599785606191,
+            "width:3": 0.02480012510981464
+          },
+          "sharpest_over_bluntest": 1.6533880499777915
+        },
+        "p_relative_l2": {
+          "median_surrogate_by_slice": {
+            "nominal_axial_strain:0": 0.01795196738033877,
+            "nominal_axial_strain:1": 0.0192513093971572,
+            "nominal_axial_strain:2": 0.016017281553932557,
+            "nominal_axial_strain:3": 0.014911618331302386,
+            "notch_depth:0": 0.017502739508854784,
+            "notch_depth:1": 0.015384695509738025,
+            "notch_depth:2": 0.015027117841659164,
+            "notch_depth:3": 0.019242577362768222,
+            "notch_radius:0": 0.02059237031312348,
+            "notch_radius:1": 0.0170791455684629,
+            "notch_radius:2": 0.015392855927466231,
+            "notch_radius:3": 0.015523482906570286,
+            "width:0": 0.0179003707201213,
+            "width:1": 0.014994716565555077,
+            "width:2": 0.014219262931287004,
+            "width:3": 0.022525281215468772
+          },
+          "sharpest_over_bluntest": 1.326530292013772
+        },
+        "u_relative_l2": {
+          "median_surrogate_by_slice": {
+            "nominal_axial_strain:0": 0.0023018078404888715,
+            "nominal_axial_strain:1": 0.0020889944452857807,
+            "nominal_axial_strain:2": 0.0018860297873214723,
+            "nominal_axial_strain:3": 0.001558622060302296,
+            "notch_depth:0": 0.0024192207249367297,
+            "notch_depth:1": 0.001947496664181031,
+            "notch_depth:2": 0.0014813479233267755,
+            "notch_depth:3": 0.0024048983886520367,
+            "notch_radius:0": 0.0018723032657842874,
+            "notch_radius:1": 0.001890246148150971,
+            "notch_radius:2": 0.0019181925090833189,
+            "notch_radius:3": 0.0023997746416087396,
+            "width:0": 0.0019418485769736782,
+            "width:1": 0.0019844176656698053,
+            "width:2": 0.0017959000338069577,
+            "width:3": 0.004219769492732038
+          },
+          "sharpest_over_bluntest": 0.7801996209648875
+        }
+      },
+      "HOLDOUT": {
+        "absolute_peak_error": {
+          "median_surrogate_by_slice": {
+            "nominal_axial_strain:0": 0.014088429909335197,
+            "nominal_axial_strain:1": 0.01503709161591312,
+            "nominal_axial_strain:2": 0.016095277198277184,
+            "nominal_axial_strain:3": 0.009934946297133618,
+            "notch_depth:0": 0.007270290062314448,
+            "notch_depth:1": 0.006734024034610953,
+            "notch_depth:2": 0.011408933251714541,
+            "notch_depth:3": 0.018359868772146654,
+            "notch_radius:0": 0.016607244562036827,
+            "notch_radius:1": 0.016254939228677292,
+            "notch_radius:2": 0.00868224737946675,
+            "notch_radius:3": 0.009988945757568361,
+            "width:0": 0.009122231432857876,
+            "width:1": 0.011321273874977947,
+            "width:2": 0.01390662223145653,
+            "width:3": 0.02461847803753333
+          },
+          "sharpest_over_bluntest": 1.662562292867989
+        },
+        "p_relative_l2": {
+          "median_surrogate_by_slice": {
+            "nominal_axial_strain:0": 0.019263283876621646,
+            "nominal_axial_strain:1": 0.020045438353668642,
+            "nominal_axial_strain:2": 0.01587322064056515,
+            "nominal_axial_strain:3": 0.016759087711378223,
+            "notch_depth:0": 0.017751587975136388,
+            "notch_depth:1": 0.014981253873697751,
+            "notch_depth:2": 0.01632094562531132,
+            "notch_depth:3": 0.019666975987633707,
+            "notch_radius:0": 0.022345155825295178,
+            "notch_radius:1": 0.016724928418799186,
+            "notch_radius:2": 0.015548951154437246,
+            "notch_radius:3": 0.016274065950205724,
+            "width:0": 0.01670075114778255,
+            "width:1": 0.016896295041780203,
+            "width:2": 0.015548951154437246,
+            "width:3": 0.02168039830592941
+          },
+          "sharpest_over_bluntest": 1.3730530460958779
+        },
+        "u_relative_l2": {
+          "median_surrogate_by_slice": {
+            "nominal_axial_strain:0": 0.0024313825379205204,
+            "nominal_axial_strain:1": 0.002422176267156489,
+            "nominal_axial_strain:2": 0.001820843849960418,
+            "nominal_axial_strain:3": 0.0017271160781084291,
+            "notch_depth:0": 0.00240364812781078,
+            "notch_depth:1": 0.0018158585396961398,
+            "notch_depth:2": 0.0017772846197861417,
+            "notch_depth:3": 0.0022397629382861772,
+            "notch_radius:0": 0.0024856115761464044,
+            "notch_radius:1": 0.0018279529349905298,
+            "notch_radius:2": 0.0017271160781084291,
+            "notch_radius:3": 0.0026248167145802434,
+            "width:0": 0.0016294243177008565,
+            "width:1": 0.0018414129287414164,
+            "width:2": 0.0017471853833627524,
+            "width:3": 0.0035234727318912357
+          },
+          "sharpest_over_bluntest": 0.9469657680627425
+        }
+      }
+    },
+    "D4": {
+      "absolute_peak_error": {
+        "DEVELOPMENT": 0.03009878743807327,
+        "HOLDOUT": 0.03967949922269247,
+        "relative_change": 0.3183088954773021
+      },
+      "p_relative_l2": {
+        "DEVELOPMENT": 0.024535484998662736,
+        "HOLDOUT": 0.02502064096336235,
+        "relative_change": 0.019773644773113608
+      },
+      "u_relative_l2": {
+        "DEVELOPMENT": 0.004788401276644013,
+        "HOLDOUT": 0.004348553206748714,
+        "relative_change": -0.09185697782696467
+      }
+    },
+    "D5": {
+      "DEVELOPMENT": {
+        "absolute_peak_error": {
+          "all": 0.053408836542218036,
+          "passes_without_three_largest": true,
+          "without_three_largest": 0.04930972413834329
+        },
+        "p_relative_l2": {
+          "all": 0.052362363577965886,
+          "passes_without_three_largest": false,
+          "without_three_largest": 0.05115501948777128
+        },
+        "u_relative_l2": {
+          "all": 0.0057875972720792465,
+          "passes_without_three_largest": true,
+          "without_three_largest": 0.004625578522824315
+        }
+      },
+      "HOLDOUT": {
+        "absolute_peak_error": {
+          "all": 0.0639829885363549,
+          "passes_without_three_largest": false,
+          "without_three_largest": 0.05588286487591808
+        },
+        "p_relative_l2": {
+          "all": 0.060105319192263515,
+          "passes_without_three_largest": false,
+          "without_three_largest": 0.05324004906522282
+        },
+        "u_relative_l2": {
+          "all": 0.005345332223220588,
+          "passes_without_three_largest": true,
+          "without_three_largest": 0.004830926541818328
+        }
+      }
+    },
+    "D6": {
+      "absolute_peak_error": {
+        "development_surrogate_median": 0.010095366257636441,
+        "development_surrogate_p90": 0.03009878743807327,
+        "train_cases": 32,
+        "train_median": 0.012100923340891061,
+        "train_over_development_median": 1.1986611512720062,
+        "train_p90": 0.03435600351201401
+      },
+      "p_relative_l2": {
+        "development_surrogate_median": 0.017153810483459042,
+        "development_surrogate_p90": 0.024535484998662736,
+        "train_cases": 32,
+        "train_median": 0.01663450994805711,
+        "train_over_development_median": 0.9697268116665577,
+        "train_p90": 0.02234416764368345
+      },
+      "u_relative_l2": {
+        "development_surrogate_median": 0.0020257596849172104,
+        "development_surrogate_p90": 0.004788401276644013,
+        "train_cases": 32,
+        "train_median": 0.0016700898813545903,
+        "train_over_development_median": 0.8244264577823525,
+        "train_p90": 0.0027128753921222357
+      }
+    }
+  },
+  "evidence_use": "DESCRIPTIVE: the burned notched HOLDOUT and the waived DEVELOPMENT results are analysed, never used to select or tune",
+  "hypotheses": {
+    "a": {
+      "evidence": {
+        "D4_relative_change": {
+          "absolute_peak_error": 0.3183088954773021,
+          "p_relative_l2": 0.019773644773113608
+        },
+        "D7": "owner machine"
+      },
+      "verdict": "NOT_RUN"
+    },
+    "b": {
+      "evidence": {
+        "D3_sharpest_over_bluntest_development": {
+          "absolute_peak_error": 1.6533880499777915,
+          "p_relative_l2": 1.326530292013772
+        },
+        "D6_train_over_development_median": {
+          "absolute_peak_error": 1.1986611512720062,
+          "p_relative_l2": 0.9697268116665577
+        },
+        "D9": "owner machine (needed only if D6 is below one half)"
+      },
+      "verdict": "SUPPORTED"
+    },
+    "c": {
+      "evidence": {
+        "absolute_peak_error": 1.1986611512720062,
+        "p_relative_l2": 0.9697268116665577
+      },
+      "verdict": "SUPPORTED"
+    },
+    "d": {
+      "evidence": {
+        "DEVELOPMENT": {
+          "absolute_peak_error": 0.04930972413834329,
+          "p_relative_l2": 0.05115501948777128
+        },
+        "HOLDOUT": {
+          "absolute_peak_error": 0.05588286487591808,
+          "p_relative_l2": 0.05324004906522282
+        }
+      },
+      "verdict": "NOT_SUPPORTED"
+    },
+    "e": {
+      "evidence": {
+        "D1_without_discretisation_all": {
+          "DEVELOPMENT": {
+            "absolute_peak_error": 0.037571996530517196,
+            "p_relative_l2": 0.026025081254267696
+          },
+          "HOLDOUT": {
+            "absolute_peak_error": 0.04671409430461557,
+            "p_relative_l2": 0.02607241622152641
+          }
+        },
+        "D2_fraction_discretisation_at_least_tolerance": {
+          "DEVELOPMENT": {
+            "absolute_peak_error": 0.0,
+            "p_relative_l2": 0.0
+          },
+          "HOLDOUT": {
+            "absolute_peak_error": 0.0,
+            "p_relative_l2": 0.015625
+          }
+        },
+        "D8": "owner machine (strengthens or weakens)"
+      },
+      "verdict": "SUPPORTED"
+    }
+  },
+  "not_run_here": [
+    "D7",
+    "D8",
+    "D9"
+  ],
+  "protocol_id": "notched-v1-holdout-postmortem-v1",
+  "protocol_sha256_lf": "19752e8c608598faca5649ea951f69ae15b9abdc2ed80bbd9e74821121691871",
+  "schema_version": "1.0",
+  "statistic_clarification": "D6 compares medians; p90 reported beside them"
+}

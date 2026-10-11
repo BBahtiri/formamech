@@ -59,7 +59,49 @@ case's budget, with HOLDOUT maxima of 5.42% (stress field) and 4.75% (peak).
 
 ## Post-mortem result
 
-Not yet recorded.
+### Public part (2026-10-11)
+
+`python -m campaigns.notched_v1.postmortem --write` →
+`artifacts/campaigns/notched-v1/POSTMORTEM-PUBLIC.json` (diagnostics D1–D6).
+All-slice p90 values (tolerance 5% for both stress quantities):
+
+| | DEVELOPMENT field | DEVELOPMENT peak | HOLDOUT field | HOLDOUT peak |
+|---|---|---|---|---|
+| Recorded budget total | 5.24% | 5.34% | 6.01% | 6.40% |
+| Without the reference discretisation term | 2.60% | 3.76% | 2.61% | 4.67% |
+| Surrogate term alone | 2.45% | 3.01% | 2.50% | 3.97% |
+| Reference discretisation term alone | 2.85% | 2.21% | 3.56% | 2.80% |
+
+Removing the reference term leaves 0–5 failing slices instead of 9–12. The
+median case spends 43–44% of its budget on the reference term. The surrogate
+error is 1.33× (field) and 1.65× (peak) larger on the sharpest notches than on
+the bluntest. TRAIN-screen medians equal the DEVELOPMENT surrogate medians
+(0.97× field, 1.20× peak): there is no train-to-test gap. From DEVELOPMENT to
+HOLDOUT the surrogate p90 is unchanged for the field (+2%) and higher for the
+peak (+32%).
+
+| Hypothesis | Verdict | Primary margin |
+|---|---|---|
+| (e) reference discretisation dominates | SUPPORTED | 25% below tolerance without the reference term (DEVELOPMENT, worst stress quantity) |
+| (c) optimization not converged | SUPPORTED by its criterion | TRAIN/DEVELOPMENT median ≥ 0.97 against 0.8 |
+| (b) resolution at the notch root | SUPPORTED | sharpest/bluntest 1.65 against 1.5 |
+| (a) envelope extrapolation | NOT_RUN | peak p90 +32% meets its first criterion; needs D7 |
+| (d) metric fragility | NOT_SUPPORTED | without the 3 largest cases the field p90 still exceeds 5% |
+
+Reading: the frozen notched network reaches about 2.5% (field) and 3–4%
+(peak) p90 against the reference, on training and unseen cases alike. The
+budget fails mainly because the reference recipe's conservative
+discretisation bound at the notch root adds a comparable amount. Criterion
+(c) is met because errors do not shrink from DEVELOPMENT to TRAIN; that is
+equally consistent with a resolution floor (b), so (c) and (b) are read
+together. By the protocol's decision rule, S25 starts with (e): refine the
+reference recipe at the notch root and re-score DEVELOPMENT before any model
+change.
+
+### Owner-machine part
+
+D7 (envelope distance), D8 (reference refinement) and D9 (quadrature probe):
+pending.
 
 ## Consequences
 
