@@ -28,6 +28,7 @@ from piginot.verification import (
     slice_statistic,
     worst_status,
 )
+from tests.platform_support import posix_modes_supported, requires_posix_modes
 
 # ---------------------------------------------------------------- budget
 
@@ -353,6 +354,14 @@ def test_consumption_precedes_reveal_and_survives_a_crash(tmp_path: Path) -> Non
         reveal_after_consumption(
             record_path, candidate_run_hash="3" * 64, reader=lambda: "secret"
         )
+    if posix_modes_supported():  # else: POSIX_MODES_REASON (ADR 0100 findings)
+        assert oct(os.stat(record_path).st_mode & 0o777) == "0o600"
+
+
+@requires_posix_modes
+def test_the_consumption_record_is_owner_only(tmp_path: Path) -> None:
+    record_path = tmp_path / "holdout-consumption.json"
+    consume_holdout(record_path, _RECORD)
     assert oct(os.stat(record_path).st_mode & 0o777) == "0o600"
 
 

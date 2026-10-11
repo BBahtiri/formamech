@@ -11,6 +11,7 @@ import pytest
 from campaigns.notched_v1 import proposal, s9, s9_gate
 from piginot.doe import PublishedCaseManifest, PublishedCaseStatus
 from piginot.doe.roles import EvidenceRole
+from tests.platform_support import posix_modes_supported
 
 
 def _git(repo: Path, *arguments: str) -> None:
@@ -73,7 +74,8 @@ def test_the_ceremony_and_g9_evidence_in_a_scratch_repository(
     )
     primary = repo / s9.PRIVATE_REVEAL_PATH
     assert primary.read_bytes() == backup.read_bytes()
-    assert primary.stat().st_mode & 0o077 == 0
+    if posix_modes_supported():  # else: POSIX_MODES_REASON (ADR 0100 findings)
+        assert primary.stat().st_mode & 0o077 == 0
     manifest_bytes = (repo / s9.PUBLIC_MANIFEST_PATH).read_bytes()
     manifest = PublishedCaseManifest.from_bytes(manifest_bytes)
     assert b'"role":"HOLDOUT"' not in manifest_bytes

@@ -23,6 +23,7 @@ from campaigns.dogbone_v1.s13c_trial import (
     segment_targets,
 )
 from piginot.contracts import canonical_json_bytes
+from tests.platform_support import requires_pinned_initial_weights
 
 _REVISION = "0123456789abcdef0123456789abcdef01234567"
 
@@ -51,6 +52,7 @@ def test_segment_targets_cover_the_budget_and_honour_stop_after() -> None:
         segment_targets(-1, 2400, 400)
 
 
+@requires_pinned_initial_weights
 def test_binding_is_derived_from_the_protocol() -> None:
     protocol = build_dogbone_s13c_protocol()
     binding = _binding()
@@ -78,6 +80,7 @@ def test_binding_is_derived_from_the_protocol() -> None:
         )
 
 
+@requires_pinned_initial_weights
 def test_run_binding_file_round_trips_and_pins_the_run_root(tmp_path: Path) -> None:
     binding = _binding()
     s13c_trial._bind_run_root(tmp_path, binding)

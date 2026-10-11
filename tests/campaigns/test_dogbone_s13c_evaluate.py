@@ -31,6 +31,7 @@ from piginot.training import (
     TrialResult,
     select_checkpoint,
 )
+from tests.platform_support import requires_pinned_initial_weights
 
 _DTYPE = torch.float64
 _TAGS = ("bottom", "gauge_top", "left_symmetry", "right_arc", "right_grip")
@@ -200,6 +201,7 @@ def test_case_diagnostics_locate_the_peak_and_split_root_errors() -> None:
     assert diagnostics.minimum_vertex_determinant == 1.0
 
 
+@requires_pinned_initial_weights
 def test_binding_verification_rejects_foreign_runs(
     protocol: DogboneS13cProtocol,
 ) -> None:
@@ -223,6 +225,7 @@ def test_binding_verification_rejects_foreign_runs(
         )
 
 
+@requires_pinned_initial_weights
 def test_binding_check_does_not_reinitialise_weights(
     protocol: DogboneS13cProtocol, monkeypatch: pytest.MonkeyPatch
 ) -> None:

@@ -29,6 +29,7 @@ from piginot.training import (
     SelectionPolicy,
     model_state_hash,
 )
+from tests.platform_support import requires_pinned_initial_weights
 
 
 @pytest.fixture(scope="module")
@@ -155,6 +156,7 @@ def test_sampler_plan_visits_every_fit_case_once_per_epoch(
     assert plan == build_dogbone_s13c_sampler_plan(protocol)
 
 
+@requires_pinned_initial_weights
 def test_initial_operator_is_deterministic_and_preserves_global_rng(
     protocol: DogboneS13cProtocol,
 ) -> None:

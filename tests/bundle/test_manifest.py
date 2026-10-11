@@ -17,6 +17,7 @@ from piginot.bundle.manifest import (
     verify_bundle,
     write_bundle,
 )
+from tests.platform_support import requires_symlinks, symlinks_available
 
 FILES = {
     "a.json": b'{"a":1}',
@@ -107,7 +108,9 @@ def tamper_cases(directory: Path) -> list[tuple[str, Callable[[Path], None]]]:
     def symlink(root: Path) -> None:
         os.symlink(root / "a.json", root / "link.json")
 
-    cases.extend((("extra file", extra), ("symlink", symlink)))
+    cases.append(("extra file", extra))
+    if symlinks_available():
+        cases.append(("symlink", symlink))
     return cases
 
 
@@ -132,6 +135,17 @@ def test_every_byte_and_structure_change_is_detected(tmp_path: Path) -> None:
     _write(template)
     assert len(tamper_cases(template)) >= 20
     assert detected_by(verify_bundle, template, tmp_path / "work") == []
+
+
+@requires_symlinks
+def test_a_symlinked_file_is_refused(tmp_path: Path) -> None:
+    template = tmp_path / "template"
+    _write(template)
+    copy = tmp_path / "copy"
+    shutil.copytree(template, copy, symlinks=True)
+    os.symlink(copy / "a.json", copy / "link.json")
+    with pytest.raises(BundleIntegrityError):
+        verify_bundle(copy)
 
 
 def test_the_undetected_bundle_tamper_mutant_is_caught(tmp_path: Path) -> None:
