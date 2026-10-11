@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0",
+  "tree": "e44426bf65ae5098c9fe00dfff72e8e9bc967bc0",
+  "commit": "829996353f6b00464ff90c195737107b29dde323",
+  "clean": true,
+  "branch_coverage": true,
+  "coverage_percent": 91.51,
+  "evaluation_coverage_percent": 99.42,
+  "summary": "3151 passed, 1 skipped in 2654.47s (0:44:14)",
+  "counts": {
+    "passed": 3151,
+    "skipped": 1
+  },
+  "skips": [],
+  "execution_profile": {
+    "python": "3.11.15",
+    "system": "Linux",
+    "machine": "x86_64",
+    "torch": "2.13.0+cu130",
+    "cpu_capability": "AVX2"
+  }
+}
