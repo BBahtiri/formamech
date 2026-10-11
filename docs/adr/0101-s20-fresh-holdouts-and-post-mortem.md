@@ -44,6 +44,21 @@ would inform the S25 design that the same set then grades.
    acquisition and compiler code refuse them. Their results may be used
    descriptively in the notched post-mortem, never to select or tune.
 
+5. **Run binding v2 (technical).** `ExecutionProfile` gains an optional
+   `platform_fingerprint` (`os`, `machine`, `cpu_capability`), filled by
+   `piginot.training.platform_fingerprint.platform_fingerprint()`. Fields
+   marked `omit_if_none` are left out of the canonical form when unset, so
+   every v1 profile, run binding, `run_hash` and gate artifact keeps its bytes
+   and hash. Every training or evaluation run started from S20 on binds the
+   fingerprint; the frozen S0–S18 campaign code is not changed, so its
+   recorded runs stay reproducible as registered.
+6. **Windows portability (technical).** Platform-dependent tests skip with an
+   explicit reason from `tests/platform_support.py` (symlinks, POSIX modes,
+   the S13c initial-weights pin); the minimal child environment of the S15
+   anti-scope test keeps `SYSTEMROOT`; the S13 runtime tree hash compares
+   path and handle stat records on size and modification time only where
+   `os.stat` and `os.fstat` use different APIs; `.python-version` pins 3.11.
+
 ## Post-mortem procedure
 
 The notched post-mortem follows

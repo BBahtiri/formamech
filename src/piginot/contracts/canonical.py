@@ -102,6 +102,10 @@ def _json_value(value: object) -> JsonValue:
             field.name: _json_value(getattr(value, field.name))
             for field in fields(value)
             if field.metadata.get("canonical", True)
+            and not (
+                field.metadata.get("omit_if_none", False)
+                and getattr(value, field.name) is None
+            )
         }
         result[_TYPE_DISCRIMINATOR] = canonical_type
         return result

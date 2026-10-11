@@ -5,12 +5,13 @@ from __future__ import annotations
 import math
 import re
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from piginot.contracts.errors import ContractValidationError, NonFiniteNumberError
 from piginot.contracts.specs import FrozenMap, SpecContract, _nonempty
 
 _CONTAINER_DIGEST = re.compile(r"sha256:[0-9a-f]{64}\Z")
+PLATFORM_FINGERPRINT_KEYS = frozenset({"os", "machine", "cpu_capability"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -23,6 +24,12 @@ class ExecutionProfile(SpecContract):
     rng_algorithm: str
     seed: int
     container_digest: str | None = None
+    # Run binding v2 (S20, ADR 0101): operating system, machine and CPU
+    # instruction set, which change trained weights bit for bit. Omitted from
+    # the canonical form when unset, so every v1 profile keeps its hash.
+    platform_fingerprint: Mapping[str, str] | None = field(
+        default=None, metadata={"omit_if_none": True}
+    )
 
     def __post_init__(self) -> None:
         _nonempty(self.python_version, "python_version")
@@ -57,3 +64,18 @@ class ExecutionProfile(SpecContract):
                 "container_digest must be a lowercase sha256 digest"
             )
         object.__setattr__(self, "library_versions", versions)
+        if self.platform_fingerprint is not None:
+            fingerprint: FrozenMap[str] = FrozenMap.copy_of(self.platform_fingerprint)
+            if set(fingerprint) != PLATFORM_FINGERPRINT_KEYS:
+                raise ContractValidationError(
+                    "platform_fingerprint must have exactly the keys "
+                    + ", ".join(sorted(PLATFORM_FINGERPRINT_KEYS))
+                )
+            if any(
+                not isinstance(value, str) or not value or value.strip() != value
+                for value in fingerprint.values()
+            ):
+                raise ContractValidationError(
+                    "platform_fingerprint values must be non-empty canonical text"
+                )
+            object.__setattr__(self, "platform_fingerprint", fingerprint)
