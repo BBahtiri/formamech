@@ -58,6 +58,7 @@ nav:
       - "ADR 0032 — Release 0.1.0": adr/0032-release-0.1.0.md
       - "ADR 0100 — A standalone fork for the S19+ line": adr/0100-s19-fork-for-the-s19-line.md
       - "ADR 0101 — Fresh sealed holdouts and the notched post-mortem": adr/0101-s20-fresh-holdouts-and-post-mortem.md
+      - "ADR 0102 — The per-prediction physics certificate": adr/0102-s21-per-prediction-certificate.md
       - "Upstream sources and licences": adr/upstream-sources.md
 
 theme:
