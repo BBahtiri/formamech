@@ -1,0 +1,91 @@
+{
+  "hypotheses": {
+    "a": {
+      "evidence": {
+        "D4_relative_change": {
+          "absolute_peak_error": 0.3183088954773021,
+          "p_relative_l2": 0.019773644773113608
+        },
+        "D7": "owner machine",
+        "D7_spearman_pooled": {
+          "absolute_peak_error": 0.1560325489837026,
+          "p_relative_l2": 0.46354834279436
+        }
+      },
+      "verdict": "NOT_SUPPORTED"
+    },
+    "b": {
+      "evidence": {
+        "D3_sharpest_over_bluntest_development": {
+          "absolute_peak_error": 1.6533880499777915,
+          "p_relative_l2": 1.326530292013772
+        },
+        "D6_train_over_development_median": {
+          "absolute_peak_error": 1.1986611512720062,
+          "p_relative_l2": 0.9697268116665577
+        },
+        "D9": "not run: needed only if D6 < 0.5"
+      },
+      "verdict": "SUPPORTED"
+    },
+    "c": {
+      "evidence": {
+        "absolute_peak_error": 1.1986611512720062,
+        "p_relative_l2": 0.9697268116665577
+      },
+      "verdict": "SUPPORTED"
+    },
+    "d": {
+      "evidence": {
+        "DEVELOPMENT": {
+          "absolute_peak_error": 0.04930972413834329,
+          "p_relative_l2": 0.05115501948777128
+        },
+        "HOLDOUT": {
+          "absolute_peak_error": 0.05588286487591808,
+          "p_relative_l2": 0.05324004906522282
+        }
+      },
+      "verdict": "NOT_SUPPORTED"
+    },
+    "e": {
+      "evidence": {
+        "D1_without_discretisation_all": {
+          "DEVELOPMENT": {
+            "absolute_peak_error": 0.037571996530517196,
+            "p_relative_l2": 0.026025081254267696
+          },
+          "HOLDOUT": {
+            "absolute_peak_error": 0.04671409430461557,
+            "p_relative_l2": 0.02607241622152641
+          }
+        },
+        "D2_fraction_discretisation_at_least_tolerance": {
+          "DEVELOPMENT": {
+            "absolute_peak_error": 0.0,
+            "p_relative_l2": 0.0
+          },
+          "HOLDOUT": {
+            "absolute_peak_error": 0.0,
+            "p_relative_l2": 0.015625
+          }
+        },
+        "D8": "owner machine (strengthens or weakens)",
+        "D8_bound_within_2x": false,
+        "D8_median_bound_over_observed": {
+          "absolute_peak_error": 7.649841047812135,
+          "p_relative_l2": 6.833859424995008
+        }
+      },
+      "verdict": "SUPPORTED"
+    }
+  },
+  "inputs": {
+    "D7": true,
+    "D8": true,
+    "D9": "not run"
+  },
+  "protocol_id": "notched-v1-holdout-postmortem-v1",
+  "protocol_sha256_lf": "19752e8c608598faca5649ea951f69ae15b9abdc2ed80bbd9e74821121691871",
+  "schema_version": "1.0"
+}
