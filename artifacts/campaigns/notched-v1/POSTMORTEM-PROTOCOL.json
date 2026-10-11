@@ -1,0 +1,122 @@
+{
+  "anti_scope": [
+    "no retraining, no new candidate, no threshold change",
+    "no FEM solve of any fresh H1/H2 case",
+    "reference re-solves (D8) only on DEVELOPMENT cases"
+  ],
+  "campaign_id": "notched-v1",
+  "decision_record": "docs/adr/0101-s20-fresh-holdouts-and-post-mortem.md",
+  "decision_rule": "Hypotheses are not exclusive. Each is SUPPORTED, NOT_SUPPORTED or NOT_RUN by its criterion; NOT_RUN never counts as supported. Supported hypotheses are ranked by the margin of their primary criterion. The ranking is recorded in ADR 0101 and fixes how S25 starts: (e) first -> refine the reference recipe at the notch root and re-score DEVELOPMENT before any model change; (b) -> local resolution (Stage A) before the encoder; (a) -> encoder plus envelope gating; (c) -> longer schedule; (d) -> owner DECISION on the statistic, never a looser tolerance.",
+  "diagnostics": [
+    {
+      "data": "public",
+      "definition": "per case and quantity: shares of surrogate, discretisation and projection in the total; counterfactual all-slice and per-slice statistic of surrogate + projection (discretisation removed) and of surrogate + discretisation (projection removed)",
+      "id": "D1",
+      "name": "budget decomposition"
+    },
+    {
+      "data": "public",
+      "definition": "count of cases whose discretisation term alone is >= 0.5 x and >= 1.0 x the tolerance, per quantity",
+      "id": "D2",
+      "name": "reference-dominated cases"
+    },
+    {
+      "data": "public",
+      "definition": "median surrogate term per slice of notch_radius, width, notch_depth and nominal_axial_strain; ratio of the sharpest-notch slice (notch_radius:0) to the bluntest (notch_radius:3)",
+      "id": "D3",
+      "name": "slice concentration"
+    },
+    {
+      "data": "public",
+      "definition": "relative change of the all-slice surrogate-only p90 from DEVELOPMENT to HOLDOUT, per quantity",
+      "id": "D4",
+      "name": "DEVELOPMENT versus HOLDOUT"
+    },
+    {
+      "data": "public",
+      "definition": "all-slice statistic of the total after removing the 3 largest cases",
+      "id": "D5",
+      "name": "metric fragility"
+    },
+    {
+      "data": "public",
+      "definition": "S13 TRAIN-screen errors of the frozen notched candidate against its DEVELOPMENT surrogate terms",
+      "id": "D6",
+      "name": "TRAIN comparison"
+    },
+    {
+      "data": "owner_machine",
+      "definition": "Mahalanobis distance of each DEVELOPMENT and HOLDOUT case to the TRAIN set in z-scored primitive coordinates; Spearman with the surrogate term",
+      "id": "D7",
+      "name": "envelope distance"
+    },
+    {
+      "data": "owner_machine",
+      "definition": "re-solve the 8 DEVELOPMENT cases with the largest discretisation term on a uniformly refined mesh with the S7 solver; compare the change of the reference QoIs with the recorded discretisation bound",
+      "id": "D8",
+      "name": "reference refinement"
+    },
+    {
+      "data": "owner_machine",
+      "definition": "model energy on TRAIN cases with 12 instead of 3 quadrature points per triangle; median relative rise",
+      "id": "D9",
+      "name": "quadrature probe"
+    }
+  ],
+  "evidence_use": "DESCRIPTIVE: the burned notched HOLDOUT and the waived DEVELOPMENT results are analysed, never used to select or tune",
+  "hypotheses": [
+    {
+      "id": "a",
+      "name": "envelope extrapolation",
+      "supported_if": "D4 HOLDOUT surrogate p90 exceeds DEVELOPMENT by >= 20% relative for p_relative_l2 or absolute_peak_error, AND D7 Spearman >= 0.4"
+    },
+    {
+      "id": "b",
+      "name": "resolution at the notch root (model)",
+      "supported_if": "D3 sharpest/bluntest median surrogate ratio >= 1.5 for p_relative_l2 or absolute_peak_error, AND (D9 median rise >= 1% OR D6 TRAIN error at least half the DEVELOPMENT surrogate)"
+    },
+    {
+      "id": "c",
+      "name": "optimization not converged",
+      "supported_if": "D6 TRAIN-screen errors are at least 80% of the DEVELOPMENT surrogate terms for both stress quantities"
+    },
+    {
+      "id": "d",
+      "name": "metric fragility",
+      "supported_if": "D5 statistic without the 3 largest cases is <= tolerance for both stress quantities on DEVELOPMENT and HOLDOUT"
+    },
+    {
+      "id": "e",
+      "name": "reference discretisation dominates the budget",
+      "supported_if": "D1 surrogate + projection all-slice statistic <= tolerance for both stress quantities on DEVELOPMENT or HOLDOUT, OR D2 >= 10% of cases with discretisation >= 1.0 x tolerance; strengthened if D8 confirms the bound is not loose by more than 2x"
+    }
+  ],
+  "inputs": {
+    "owner_machine": [
+      "notched S10 run root (meshes, TRAIN/DEVELOPMENT FEM labels)",
+      "notched CP-FREEZE candidate checkpoint",
+      "private reveal record of the burned HOLDOUT coordinates"
+    ],
+    "public_sha256_lf": {
+      "artifacts/campaigns/notched-v1/CP-ENVELOPE.json": "e07c5e2ec9e07a99c2de40aeba3a6ddbddd1fe60260528304cf404575dbcf003",
+      "artifacts/campaigns/notched-v1/CP-FREEZE.json": "176b205c296e92b6eadf7e4ddeb52e055db47968386fe57f151403d9e2100a95",
+      "artifacts/campaigns/notched-v1/S13-TRAIN-SCREEN.json": "e5a282ffc1c4cf841c00f80fe493af53fe1310048900aaad0486440b8a5cf8f1",
+      "artifacts/campaigns/notched-v1/S14-DEVELOPMENT.json": "4010542a676d6a6defbafdc6ee9a72b8db7a4197b73da19a3aa88723ed0741b3",
+      "artifacts/campaigns/notched-v1/S14-HOLDOUT.json": "500d4d63bdbe9772e3b8d9ffc6be4abb8347dea4184306a418ada227ca7b54d1",
+      "artifacts/campaigns/notched-v1/public-case-manifest.json": "58ea5ec647853b01bb6e8e897f123ae4e2c83f8b98ad19c652c86809d30c5eb6"
+    }
+  },
+  "protocol_id": "notched-v1-holdout-postmortem-v1",
+  "schema_version": "1.0",
+  "statistic": "p90 of per-case totals for slices with >= 10 cases, else maximum (piginot.verification.budget)",
+  "step": "S20",
+  "tolerances": {
+    "absolute_peak_error": 0.05,
+    "p_relative_l2": 0.05,
+    "u_relative_l2": 0.02
+  },
+  "viewed_before_protocol": [
+    "aggregate budget rows and component summaries of S14-DEVELOPMENT.json and S14-HOLDOUT.json (public since S14)",
+    "ADR 0030 context section"
+  ]
+}

@@ -57,6 +57,7 @@ nav:
       - "ADR 0031 — G17.non-dogbone accepted at DEVELOPMENT_VERIFIED": adr/0031-g17-non-dogbone-acceptance.md
       - "ADR 0032 — Release 0.1.0": adr/0032-release-0.1.0.md
       - "ADR 0100 — A standalone fork for the S19+ line": adr/0100-s19-fork-for-the-s19-line.md
+      - "ADR 0101 — Fresh sealed holdouts and the notched post-mortem": adr/0101-s20-fresh-holdouts-and-post-mortem.md
       - "Upstream sources and licences": adr/upstream-sources.md
 
 theme:

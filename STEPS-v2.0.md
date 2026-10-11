@@ -64,7 +64,23 @@ Evaluated by `python -m campaigns.g19_gate --write`.
 Anti-scope: no source change besides the version, docs, the fork script and the
 gate; no push; no new remote.
 
-## 3. Gates G20–G26
+## 3. Gate G20 — evaluation harness, notched post-mortem, fresh holdouts
+
+Decision record: ADR 0101. Post-mortem protocol:
+`artifacts/campaigns/notched-v1/POSTMORTEM-PROTOCOL.json`.
+
+| Check | Pass condition |
+|---|---|
+| `G20.protocol-first` | the protocol commit is an ancestor of every post-mortem artifact |
+| `G20.harness` | the evaluation harness recomputes the recorded S14 DEVELOPMENT and HOLDOUT budget statistics of both families from their per-case records, tolerance 0; off-by-one case and swapped-split mutants are detected |
+| `G20.burned` | selection and calibration paths raise on burned HOLDOUT IDs (tests, with a mutant) |
+| `G20.holdouts` | per family, H1 and H2 commitments of ≥ 64 cases each, disjoint from each other and from every used case ID and leakage group; protocol commit precedes the draw |
+| `G20.rca` | every hypothesis of the protocol is SUPPORTED, NOT_SUPPORTED or NOT_RUN with its evidence; ADR 0101 records the ranking |
+| `G20.portability` | native Windows suite: 0 failed, every platform skip carries a reason; Linux suite unchanged |
+| `G20.binding` | run binding v2 records operating system and CPU capability; every v1 binding and gate artifact still verifies |
+| `G20.quality` | ruff, ruff format, mypy --strict clean; new modules ≥ 90% branch coverage; global ≥ 90.5% |
+
+## 4. Gates G21–G26
 
 The checks, thresholds and kill criteria of S20–S26 are specified in the
 implementation plan, one table per step. Each step copies its table into this
