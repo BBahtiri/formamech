@@ -1,8 +1,8 @@
 {
   "gate_id": "G19",
   "step": "S19",
-  "commit": "8e4b4bb031f7e3925b7961d05cc1721a056d7350",
-  "timestamp_utc": "2026-10-10T20:44:25Z",
+  "commit": "a84b684a84f0522805f8e3d795dbe357fc52f069",
+  "timestamp_utc": "2026-10-11T05:49:51Z",
   "fork_base": "399a14659cec6812e24980ece8f81ab2d94a4753",
   "execution_profile": {
     "python": "3.11.15",
@@ -215,38 +215,49 @@
     },
     {
       "id": "G19.s13c-rescore",
-      "status": "FAIL",
+      "status": "PASS",
       "measured": {
-        "differing_fields": [
-          "$type",
-          "checkpoint_manifest_hash",
-          "checkpoint_step",
-          "comparison",
-          "cp_freeze_status",
-          "evidence_role",
-          "execution_profile_hash",
-          "failed_guardrails",
-          "g13_status",
-          "invalid_collocation_case_count",
-          "lineage",
-          "metrics",
-          "minimum_interior_collocation_determinant",
-          "non_train_evidence_used",
-          "protocol_hash",
-          "role",
-          "run_hash",
-          "schema_version",
-          "screen_diagnostics",
-          "selected_checkpoint",
-          "selection_status",
-          "step",
-          "training_revision",
-          "training_summary",
-          "trial_result"
-        ],
-        "evaluator_revision": null
+        "profile": {
+          "python": "3.11.15",
+          "system": "Linux",
+          "machine": "x86_64",
+          "torch": "2.13.0+cu130",
+          "cpu_capability": "AVX2"
+        },
+        "registered_profile": false,
+        "tolerance_applied": 1e-10,
+        "non_numeric_differences": [],
+        "decision": "selected",
+        "recorded_selection_status": "ELIGIBLE",
+        "difference_count": 2,
+        "numeric_difference_count": 2,
+        "max_relative_numeric_difference": 9.997763051151435e-14,
+        "differences": [
+          {
+            "path": ".metrics.median_absolute_peak_error",
+            "recorded": 0.008276482387183988,
+            "rescored": 0.00827648238718316
+          },
+          {
+            "path": ".metrics.p_relative_l2",
+            "recorded": 0.009086612004752744,
+            "rescored": 0.009086612004752748
+          }
+        ]
       },
-      "threshold": "the registered checkpoint re-scores artifacts/campaigns/dogbone-v1/S13C-TRAIN-SCREEN.json exactly, apart from the evaluator revision",
+      "threshold": {
+        "compared": "printed TrialResult vs artifacts/campaigns/dogbone-v1/S13C-TRAIN-SCREEN.json trial_result",
+        "non_numeric_leaves": "exact (hashes, role, lineage)",
+        "numeric_leaves": "exact on the registered profile, else relative difference <= 1e-10 (ADR 0100 decision 6)",
+        "registered_profile": {
+          "system": "Linux",
+          "machine": "x86_64",
+          "python": "3.11.15",
+          "torch": "2.13.0+cu130",
+          "cpu_capability": "AVX512"
+        },
+        "decision": "selected, and the recorded selection_status is ELIGIBLE"
+      },
       "comparison": "all",
       "evidence": {
         "evidence": "s19-rescore.json"
@@ -294,6 +305,6 @@
     }
   ],
   "decision_record": "docs/adr/0100-s19-fork-for-the-s19-line.md",
-  "verdict": "FAIL",
-  "verdict_reason": "1 required check(s) not PASS: G19.s13c-rescore"
+  "verdict": "PASS",
+  "verdict_reason": "every required check PASS"
 }
