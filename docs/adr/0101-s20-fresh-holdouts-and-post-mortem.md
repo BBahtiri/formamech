@@ -1,8 +1,8 @@
 # ADR 0101: Fresh sealed holdouts and the notched post-mortem (S20)
 
 - Status: Accepted — decisions 1–4 decided by the decision owner on 2026-10-11
-  ("1–3 ok"); the failure classification (section "Post-mortem result") is
-  added when the post-mortem is complete
+  ("1–3 ok"); decisions 5–6 technical; post-mortem result recorded
+  2026-10-11
 - Date: 2026-10-11
 - Step: S20 (gate `G20`), `STEPS-v2.0.md` §S20
 - Builds on: ADR 0020 (HOLDOUT order), ADR 0030 and ADR 0031 (notched
@@ -113,15 +113,56 @@ together. By the protocol's decision rule, S25 starts with (e): refine the
 reference recipe at the notch root and re-score DEVELOPMENT before any model
 change.
 
-### Owner-machine part
+### Owner-machine part (2026-10-11, WSL2 reference machine)
 
-`campaigns/notched_v1/postmortem_owner.py`: D7 (envelope distance, needs the
-spent HOLDOUT coordinates) and D8 (reference refinement of the 8 DEVELOPMENT
-cases with the largest stress-field reference term at twice the S10
-resolution, needs the S10 run root): pending on the decision owner's machine.
-D9 (quadrature probe) is not run: the protocol needs it only when D6 is below
-one half, and D6 is 0.97 (field) and 1.20 (peak), so it cannot change a
-verdict.
+D7 (`POSTMORTEM-D7.json`): pooled Spearman correlation between the
+Mahalanobis distance to TRAIN and the surrogate term is 0.46 for the stress
+field, 0.16 for the peak and 0.64 for the displacement (DEVELOPMENT and
+HOLDOUT agree; median distance 1.98 and 2.11). The peak changed from
+DEVELOPMENT to HOLDOUT (+32%) without depending on distance; the field
+depends on distance without changing. No stress quantity meets both parts of
+criterion (a).
+
+D8 (`POSTMORTEM-D8.json`): the S10 notched run root is not on the owner's
+machine, so the 8 DEVELOPMENT cases with the largest stress-field reference
+term were re-solved with the S10 recipe; the recomputed references reproduce
+the recorded S14 coarse-level terms to 6.5e-12 (relative). Against a
+reference at twice the resolution, the observed reference error is
+0.39–0.74% (field), 0.28–0.49% (peak) and about 0.01% (displacement). The
+recorded discretisation bound is larger by a median factor of 6.8 (field),
+7.7 (peak) and 12.2 (displacement); per case 6.3–7.3, 6.3–11.1 and
+9.1–16.2. A two-level comparison underestimates the true error by at most a
+factor 2 for first-order convergence, so the bound is at least 3.4×
+(field) and 3.8× (peak) larger than the reference error it stands for.
+
+| Hypothesis | Verdict | Primary margin |
+|---|---|---|
+| (e) the reference discretisation term dominates the budget | SUPPORTED | without it, 25% below tolerance (DEVELOPMENT, worst stress quantity); D8: the term is a conservative bound, at least 3.4× the reference error it estimates |
+| (c) optimization not converged | SUPPORTED by its criterion | TRAIN/DEVELOPMENT medians 0.97 and 1.20 against 0.8 |
+| (b) resolution at the notch root (model) | SUPPORTED | sharpest/bluntest peak surrogate 1.65 against 1.5 |
+| (d) metric fragility | NOT_SUPPORTED | field p90 still above 5% without the 3 largest cases |
+| (a) envelope extrapolation | NOT_SUPPORTED | D4 and D7 never coincide on one quantity |
+
+**Classification.** The notched HOLDOUT failed mainly because of how the
+reference error is charged, not because of the network: the budget adds, per
+case, a reference-error bound built from one coarse level with a safety
+factor, and that bound is several times larger than the reference error a
+finer mesh shows. The network's own error is about 2.5% (field) and 3–4%
+(peak) at p90, with no train-to-test gap. A smaller, real model limitation
+remains at the sharpest notches, where single peak errors reach 8.5%
+(candidate-001677). Criterion (c) holds because errors do not shrink from
+DEVELOPMENT to TRAIN; together with (b) it reads as a resolution floor at the
+notch root rather than an unfinished optimization.
+
+**Consequence for S25 (decision rule of the protocol).** S25 starts with (e):
+a notched v2 reference recipe (finer reference mesh at the notch root and a
+three-level error estimate replacing the single coarse level), re-scoring
+DEVELOPMENT with the unchanged 5% tolerances and the unchanged network,
+before any model change. Changing how the reference term is computed is a
+change of the evaluation method and needs its own owner DECISION ADR; the
+tolerances are not loosened. Only then does (b) local resolution at the notch
+root follow. The field error's dependence on distance (D7) is handled by the
+envelope gating of S23. D9 was not run (see protocol rule above).
 
 ## Consequences
 

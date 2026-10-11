@@ -291,7 +291,7 @@ def check_rca(root: Path) -> dict[str, Any]:
     verdicts = {key: entry["verdict"] for key, entry in committed["hypotheses"].items()}
     section = (root / ADR_PATH).read_text("utf-8").split("## Post-mortem result", 1)[-1]
     section = section.split("\n## ", 1)[0]
-    recorded = "pending" not in section.lower()
+    recorded = re.search(r"\bpending\b", section, re.IGNORECASE) is None
     passed = (
         committed == rebuilt
         and set(verdicts) == {"a", "b", "c", "d", "e"}

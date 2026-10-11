@@ -129,3 +129,11 @@ def test_defective_seals_fail(tmp_path: Path, drawn: fh.FreshDraw, defect: str) 
     root = _seal_repo(tmp_path, public)
     decision = gate._added_in(root, gate.ADR_PATH)
     assert not gate._holdout_family(root, "notched-v1", decision)["passed"]
+
+
+def test_the_adr_result_must_not_be_pending(tmp_path: Path) -> None:
+    import re
+
+    pattern = re.compile(r"\bpending\b", re.IGNORECASE)
+    assert pattern.search("Owner-machine part: pending.")
+    assert not pattern.search("the peak changed without depending on distance")
