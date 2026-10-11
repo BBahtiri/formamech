@@ -120,6 +120,15 @@ pending.
 
 ## Consequences
 
+- The draw is `campaigns/fresh_holdouts.py`, run once per family on the
+  decision owner's machine. It verifies the family's spent S9 HOLDOUT against
+  `CP-ENVELOPE.json` before using it, rejects every fresh case within the S9
+  near-duplicate distance (0.015, normalized weighted metric) of any existing
+  case, splits 128 cases 64/64 by alternating within each primitive stratum in
+  a secret-keyed order, and commits each set with the exact-64 salted S9
+  commitment. The private reveal (Git-ignored primary plus external backup)
+  is written before the public `FRESH-HOLDOUTS.json`, which holds case IDs
+  and commitments only.
 - S22 and S23 evaluate on `H1`; S25 on `H2`. Each set is revealed once per
   frozen model by a dedicated reveal command.
 - 256 FEM reference solves are budgeted, about 100 s each for the notched
