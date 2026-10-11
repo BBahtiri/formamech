@@ -5,6 +5,7 @@ notched S10 run root. Both run on the decision owner's machine::
 
     python -m campaigns.notched_v1.postmortem_owner d7 --old-reveal REVEAL
     python -m campaigns.notched_v1.postmortem_owner d8 --s10-run-root RUN
+    python -m campaigns.notched_v1.postmortem_owner d8 --recompute-reference
     python -m campaigns.notched_v1.postmortem_owner verdicts --write
 
 Statistics fixed here before any result was computed:
@@ -17,7 +18,10 @@ Statistics fixed here before any result was computed:
 - D8: the 8 DEVELOPMENT cases with the largest recorded stress-field
   discretisation term are re-solved with the S10 recipe at twice the columns
   and rows; the observed reference error is the relative difference between
-  the S10 reference and the refined solution on the reference vertices. The
+  the S10 reference and the refined solution on the reference vertices. With
+  ``--recompute-reference`` (no S10 run root) the reference is re-solved with
+  the S10 recipe and must first reproduce the recorded S14 coarse-level terms
+  of every case within a relative 1e-6. The
   recorded bound is "not loose by more than 2x" if the median of
   bound / observed is <= 2 for both stress quantities.
 - D9 is not run: by the protocol it is needed only when D6 is below one half,
@@ -187,6 +191,83 @@ def run_refinement(s10_run_root: Path, case_ids: Sequence[str]) -> dict[str, Any
     return {"scale": D8_SCALE, "observed": observed, "solve_seconds": seconds}
 
 
+REPRODUCTION_TOLERANCE = 1e-6  # relative, recomputed vs recorded S14 coarse terms
+
+
+def _recompute_case(case_id: str) -> dict[str, Any]:
+    """Recompute the S10 reference, reproduce S14's coarse term, refine 2x."""
+
+    from campaigns.dogbone_v1.s14_rehearsal import S14Case
+    from campaigns.notched_v1 import pilot, s14
+    from campaigns.notched_v1.s13 import published_cases
+
+    case = S14Case.from_published(published_cases([case_id])[0])
+    reference = s14.s10_request(case, pilot.execution_profile())
+    reference_result, reference_seconds = s14._solve(reference)
+    coarse = s14.level_request(case, reference, 0.5)
+    coarse_result, _ = s14._solve(coarse)
+    terms = s14.reference_terms(
+        case_id, reference, reference_result, coarse, coarse_result
+    )
+    fine = s14.level_request(case, reference, D8_SCALE)
+    fine_result, fine_seconds = s14._solve(fine)
+    u, p, peak, _ = s14.level_differences(
+        reference, reference_result, fine, fine_result
+    )
+    return {
+        "case_id": case_id,
+        "observed": {
+            "u_relative_l2": u,
+            "p_relative_l2": p,
+            "absolute_peak_error": peak,
+        },
+        "coarse_terms": {
+            "coarse_u_difference": terms.coarse_u_difference,
+            "coarse_p_difference": terms.coarse_p_difference,
+            "coarse_peak_difference": terms.coarse_peak_difference,
+        },
+        "seconds": {"reference": reference_seconds, "fine": fine_seconds},
+    }
+
+
+def reproduction(
+    recomputed: Mapping[str, Mapping[str, float]],
+    development: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Recomputed coarse-level terms against the recorded S14 terms."""
+
+    by_id = {case["case_id"]: case for case in development}
+    worst = 0.0
+    for case_id, terms in recomputed.items():
+        for name, value in terms.items():
+            recorded = float(by_id[case_id]["terms"][name])
+            worst = max(worst, abs(value - recorded) / max(abs(recorded), 1e-300))
+    return {
+        "max_relative_difference": worst,
+        "tolerance": REPRODUCTION_TOLERANCE,
+        "reproduced": worst <= REPRODUCTION_TOLERANCE,
+    }
+
+
+def run_recomputed(case_ids: Sequence[str], workers: int) -> dict[str, Any]:
+    """D8 without an S10 run root: the S10 recipe is re-solved per case."""
+
+    from concurrent.futures import ProcessPoolExecutor
+
+    with ProcessPoolExecutor(max_workers=max(1, workers)) as pool:
+        results = []
+        for result in pool.map(_recompute_case, case_ids):
+            results.append(result)
+            print(f"D8 {len(results)}/{len(case_ids)} {result['case_id']}", flush=True)
+    return {
+        "scale": D8_SCALE,
+        "reference": "recomputed with the S10 recipe (no S10 run root)",
+        "observed": {r["case_id"]: r["observed"] for r in results},
+        "coarse_terms": {r["case_id"]: r["coarse_terms"] for r in results},
+        "solve_seconds": {r["case_id"]: r["seconds"] for r in results},
+    }
+
+
 def verdicts(root: Path) -> dict[str, Any]:
     """Final verdicts: the public ones, completed with D7 and D8 where present."""
 
@@ -236,7 +317,10 @@ def main(arguments: Sequence[str] | None = None) -> int:
     d7 = commands.add_parser("d7")
     d7.add_argument("--old-reveal", type=Path, required=True)
     d8 = commands.add_parser("d8")
-    d8.add_argument("--s10-run-root", type=Path, required=True)
+    source = d8.add_mutually_exclusive_group(required=True)
+    source.add_argument("--s10-run-root", type=Path)
+    source.add_argument("--recompute-reference", action="store_true")
+    d8.add_argument("--workers", type=int, default=4)
     final = commands.add_parser("verdicts")
     final.add_argument("--write", action="store_true")
     options = parser.parse_args(arguments)
@@ -252,7 +336,16 @@ def main(arguments: Sequence[str] | None = None) -> int:
         print({q: round(document[q]["spearman_pooled"], 3) for q in public.QUANTITIES})
     elif options.command == "d8":
         ids = refinement_cases(records["DEVELOPMENT"])
-        run = run_refinement(options.s10_run_root, ids)
+        if options.recompute_reference:
+            run = run_recomputed(ids, options.workers)
+            check = reproduction(run["coarse_terms"], records["DEVELOPMENT"])
+            if not check["reproduced"]:
+                raise RuntimeError(
+                    f"recomputed reference does not reproduce S14: {check}"
+                )
+            run["reproduction"] = check
+        else:
+            run = run_refinement(options.s10_run_root, ids)
         document = {
             **run,
             "case_ids": list(ids),

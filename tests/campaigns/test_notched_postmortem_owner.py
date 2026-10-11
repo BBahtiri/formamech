@@ -102,3 +102,17 @@ def test_verdicts_combine_public_and_owner_parts(tmp_path: Path) -> None:
         json.dumps({q: {"spearman_pooled": 0.1} for q in public.QUANTITIES})
     )
     assert owner.verdicts(tmp_path)["hypotheses"]["a"]["verdict"] == "NOT_SUPPORTED"
+
+
+def test_reproduction_compares_recomputed_coarse_terms_with_the_record() -> None:
+    development = owner._records(ROOT)["DEVELOPMENT"]
+    case = development[0]
+    names = ("coarse_u_difference", "coarse_p_difference", "coarse_peak_difference")
+    exact = {case["case_id"]: {n: case["terms"][n] for n in names}}
+    assert owner.reproduction(exact, development)["reproduced"] is True
+    drifted = {
+        case["case_id"]: {n: v * (1 + 1e-4) for n, v in exact[case["case_id"]].items()}
+    }
+    result = owner.reproduction(drifted, development)
+    assert result["reproduced"] is False
+    assert result["max_relative_difference"] == pytest.approx(1e-4)
