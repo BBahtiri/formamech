@@ -115,8 +115,13 @@ change.
 
 ### Owner-machine part
 
-D7 (envelope distance), D8 (reference refinement) and D9 (quadrature probe):
-pending.
+`campaigns/notched_v1/postmortem_owner.py`: D7 (envelope distance, needs the
+spent HOLDOUT coordinates) and D8 (reference refinement of the 8 DEVELOPMENT
+cases with the largest stress-field reference term at twice the S10
+resolution, needs the S10 run root): pending on the decision owner's machine.
+D9 (quadrature probe) is not run: the protocol needs it only when D6 is below
+one half, and D6 is 0.97 (field) and 1.20 (peak), so it cannot change a
+verdict.
 
 ## Consequences
 
