@@ -1,0 +1,310 @@
+{
+  "gate_id": "G19",
+  "step": "S19",
+  "commit": "a84b684a84f0522805f8e3d795dbe357fc52f069",
+  "timestamp_utc": "2026-10-11T05:49:51Z",
+  "fork_base": "399a14659cec6812e24980ece8f81ab2d94a4753",
+  "execution_profile": {
+    "python": "3.11.15",
+    "system": "Linux",
+    "machine": "x86_64",
+    "torch": "2.13.0+cu130",
+    "cpu_capability": "AVX2"
+  },
+  "checks": [
+    {
+      "id": "G19.isolation",
+      "status": "PASS",
+      "measured": {
+        "remotes": [],
+        "alternates": false,
+        "git_is_directory": true,
+        "worktrees": 1
+      },
+      "threshold": "no remote, no alternates, .git a directory, one worktree",
+      "comparison": "all"
+    },
+    {
+      "id": "G19.ancestry",
+      "status": "PASS",
+      "measured": {
+        "head_descends_from_base": true,
+        "tags": {
+          "v0.1.0": "399a14659cec6812e24980ece8f81ab2d94a4753",
+          "v0.2.0-base": "399a14659cec6812e24980ece8f81ab2d94a4753"
+        }
+      },
+      "threshold": {
+        "base": "399a14659cec6812e24980ece8f81ab2d94a4753",
+        "tags_resolve_to_base": [
+          "v0.1.0",
+          "v0.2.0-base"
+        ]
+      },
+      "comparison": "all"
+    },
+    {
+      "id": "G19.identity",
+      "status": "PASS",
+      "measured": {
+        "authors_after_base": [
+          "Betim Bahtiri"
+        ],
+        "configured_user": "Betim Bahtiri"
+      },
+      "threshold": "every commit after the base and the configured user are Betim Bahtiri",
+      "comparison": "all"
+    },
+    {
+      "id": "G19.quality",
+      "status": "PASS",
+      "measured": {
+        "ruff_check": {
+          "returncode": 0,
+          "summary": "All checks passed!"
+        },
+        "ruff_format": {
+          "returncode": 0,
+          "summary": "541 files already formatted"
+        },
+        "mypy_strict": {
+          "returncode": 0,
+          "summary": "Success: no issues found in 135 source files"
+        }
+      },
+      "threshold": "all three exit 0",
+      "comparison": "all"
+    },
+    {
+      "id": "G19.suite",
+      "status": "PASS",
+      "measured": {
+        "schema_version": "1.0",
+        "commit": "399a14659cec6812e24980ece8f81ab2d94a4753",
+        "tree": "4985578321cc54de0306fc5bb25d5e7992ecfb6c",
+        "collected": 3076,
+        "passed": 3075,
+        "skipped": 1,
+        "failed": 0,
+        "errors": 0,
+        "nonzero_units": [],
+        "units": 224,
+        "split_files": [
+          "tests/campaigns/test_dogbone_ceremony.py"
+        ],
+        "method": "python -m pytest -q -p no:cacheprovider <unit>, one test file per unit (files over the time slice split into node ids), no coverage, run 2026-10-10 on the fork working tree before any S19 change",
+        "execution_profile": {
+          "python": "3.11.15",
+          "system": "Linux",
+          "machine": "x86_64",
+          "torch": "2.13.0+cu130",
+          "cpu_capability": "AVX512",
+          "cpu_count": 1
+        },
+        "s18_record": "3,075 passed, 1 skipped at 12b3138 (docs/campaigns/s18-release-plan.md); src/, tests/ and campaigns/ are identical between 12b3138 and 399a146"
+      },
+      "threshold": {
+        "passed_at_least": 3075,
+        "failed": 0,
+        "errors": 0,
+        "tree_of": "399a14659cec6812e24980ece8f81ab2d94a4753"
+      },
+      "comparison": "all",
+      "evidence": {
+        "evidence": "artifacts/fork/S19-SUITE.json"
+      }
+    },
+    {
+      "id": "G19.coverage",
+      "status": "PASS",
+      "measured": {
+        "schema_version": "1.0",
+        "tree": "4985578321cc54de0306fc5bb25d5e7992ecfb6c",
+        "commit": "399a14659cec6812e24980ece8f81ab2d94a4753",
+        "clean": true,
+        "coverage_percent": 91.44,
+        "branch_coverage": true,
+        "passed": 3075,
+        "failed": 0,
+        "skipped": 1,
+        "errors": 0,
+        "summary": "3075 passed, 1 skipped in 2577.96s (0:42:57)",
+        "execution_profile": {
+          "python": "3.11.15",
+          "system": "Linux",
+          "machine": "x86_64",
+          "torch": "2.13.0+cu130",
+          "cpu_capability": "AVX2"
+        }
+      },
+      "threshold": {
+        "branch_coverage_percent_at_least": 90.5,
+        "package": "src/piginot",
+        "tree_of": "399a14659cec6812e24980ece8f81ab2d94a4753"
+      },
+      "comparison": "all",
+      "evidence": {
+        "evidence": "artifacts/fork/S19-COVERAGE.json"
+      }
+    },
+    {
+      "id": "G19.manifests",
+      "status": "PASS",
+      "measured": {
+        "git_changes_since_base": [],
+        "working_tree_difference": {
+          "missing": [],
+          "extra": [],
+          "changed": []
+        },
+        "recorded_table_blake2b": "e14e8ea8b2d83991208a0f88d28e173c7c34376e7c4217cf28970f673fe0646d",
+        "recorded_file_count": 129
+      },
+      "threshold": "bundles/ and artifacts/ equal the fork base, apart from the fork's own records",
+      "comparison": "all",
+      "evidence": {
+        "evidence": "artifacts/fork/S19-BASE-MANIFEST.json"
+      }
+    },
+    {
+      "id": "G19.bundles",
+      "status": "PASS",
+      "measured": {
+        "bundles": {
+          "dogbone-v1-s13c-cp-freeze": {
+            "manifest_sha256": "009db9d379d6f94ccda5395762e22c9c810c466a686626d500f1575d45b1bb4c",
+            "claim_level": "HOLDOUT_VERIFIED"
+          },
+          "notched-v1-cp-freeze": {
+            "manifest_sha256": "3749f4be4761a55582dd07f90e3cc5950b8231357162366d79dc47463dddcc99",
+            "claim_level": "DEVELOPMENT_VERIFIED"
+          }
+        },
+        "outputs": {
+          "dogbone-v1-s13c-cp-freeze/dogbone-in-domain.json": {
+            "verdict": "IN_DOMAIN",
+            "sha256": "c11c5d1e7af3e3d006c35080893a9e5644bb35731f1f9e877ca9e74f68af6200",
+            "repeat_identical": true
+          },
+          "notched-v1-cp-freeze/notched-in-domain.json": {
+            "verdict": "IN_DOMAIN",
+            "sha256": "9eb1ac08ae7a1c3f3b06c14995a7db064ab8b2f39ed20850f08d62062d4a3728",
+            "repeat_identical": true
+          },
+          "notched-v1-cp-freeze/notched-out-of-envelope.json": {
+            "verdict": "REFUSED",
+            "sha256": "0af48ba02271b278b676fcc896a0c7a39797095c0aba96be52fed6ec73d0b040",
+            "repeat_identical": true
+          }
+        },
+        "profile": {
+          "python": "3.11.15",
+          "system": "Linux",
+          "machine": "x86_64",
+          "torch": "2.13.0+cu130",
+          "cpu_capability": "AVX2"
+        },
+        "golden_for_profile": true,
+        "golden_match": true
+      },
+      "threshold": "recorded manifests and claim levels; example verdicts; repeat and golden outputs byte-identical",
+      "comparison": "all",
+      "evidence": {
+        "evidence": "artifacts/fork/S19-BUNDLE-OUTPUTS.json"
+      }
+    },
+    {
+      "id": "G19.s13c-rescore",
+      "status": "PASS",
+      "measured": {
+        "profile": {
+          "python": "3.11.15",
+          "system": "Linux",
+          "machine": "x86_64",
+          "torch": "2.13.0+cu130",
+          "cpu_capability": "AVX2"
+        },
+        "registered_profile": false,
+        "tolerance_applied": 1e-10,
+        "non_numeric_differences": [],
+        "decision": "selected",
+        "recorded_selection_status": "ELIGIBLE",
+        "difference_count": 2,
+        "numeric_difference_count": 2,
+        "max_relative_numeric_difference": 9.997763051151435e-14,
+        "differences": [
+          {
+            "path": ".metrics.median_absolute_peak_error",
+            "recorded": 0.008276482387183988,
+            "rescored": 0.00827648238718316
+          },
+          {
+            "path": ".metrics.p_relative_l2",
+            "recorded": 0.009086612004752744,
+            "rescored": 0.009086612004752748
+          }
+        ]
+      },
+      "threshold": {
+        "compared": "printed TrialResult vs artifacts/campaigns/dogbone-v1/S13C-TRAIN-SCREEN.json trial_result",
+        "non_numeric_leaves": "exact (hashes, role, lineage)",
+        "numeric_leaves": "exact on the registered profile, else relative difference <= 1e-10 (ADR 0100 decision 6)",
+        "registered_profile": {
+          "system": "Linux",
+          "machine": "x86_64",
+          "python": "3.11.15",
+          "torch": "2.13.0+cu130",
+          "cpu_capability": "AVX512"
+        },
+        "decision": "selected, and the recorded selection_status is ELIGIBLE"
+      },
+      "comparison": "all",
+      "evidence": {
+        "evidence": "s19-rescore.json"
+      }
+    },
+    {
+      "id": "G19.resume",
+      "status": "PASS",
+      "measured": {
+        "replay": {
+          "step": 400,
+          "model_state_hash": "9492c444ebd97e7b461a40dbd88f5cd4b681b599a043cfb3446f8b491dad9e52",
+          "manifest_hash": "d9568fc837ce4487a595b37414a8b482c477f354c1d2c82770a01b2f0239062d",
+          "run_hash": "eb3c5e155d027e6892438fbb57bff786c744419048a11dfef1fd601ae90e5c29",
+          "interrupted_at": 200
+        },
+        "straight": {
+          "step": 400,
+          "model_state_hash": "9492c444ebd97e7b461a40dbd88f5cd4b681b599a043cfb3446f8b491dad9e52",
+          "manifest_hash": "d9568fc837ce4487a595b37414a8b482c477f354c1d2c82770a01b2f0239062d",
+          "run_hash": "eb3c5e155d027e6892438fbb57bff786c744419048a11dfef1fd601ae90e5c29"
+        },
+        "byte_identical_files": {
+          "adaptive.json": true,
+          "checkpoint.json": true,
+          "model.safetensors": true,
+          "optimizer.json": true,
+          "state.safetensors": true
+        },
+        "file_sets_equal": true,
+        "registered_profile_comparison": {
+          "registered_model_state_hash": "e45edbdc6cd47a0ef754b97a0c7613c5703cdecfafcc9edebb4777c6d1e259f8",
+          "matches_registered": false,
+          "expected_to_match": false,
+          "reason": "the registered probe ran on Linux/AVX512; trained weights depend on the CPU instruction set"
+        }
+      },
+      "threshold": {
+        "procedure": "clean checkout; stop after 200; resume to 400; and a straight 0 -> 400 run on the same profile",
+        "step": 400,
+        "resumed_equals_straight": "every checkpoint file byte-identical",
+        "registered_model_state_hash": "reported, required only on the registered profile (ADR 0100 decision 5)"
+      },
+      "comparison": "all"
+    }
+  ],
+  "decision_record": "docs/adr/0100-s19-fork-for-the-s19-line.md",
+  "verdict": "PASS",
+  "verdict_reason": "every required check PASS"
+}

@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "commit": "399a14659cec6812e24980ece8f81ab2d94a4753",
+  "tree": "4985578321cc54de0306fc5bb25d5e7992ecfb6c",
+  "collected": 3076,
+  "passed": 3075,
+  "skipped": 1,
+  "failed": 0,
+  "errors": 0,
+  "nonzero_units": [],
+  "units": 224,
+  "split_files": [
+    "tests/campaigns/test_dogbone_ceremony.py"
+  ],
+  "method": "python -m pytest -q -p no:cacheprovider <unit>, one test file per unit (files over the time slice split into node ids), no coverage, run 2026-10-10 on the fork working tree before any S19 change",
+  "execution_profile": {
+    "python": "3.11.15",
+    "system": "Linux",
+    "machine": "x86_64",
+    "torch": "2.13.0+cu130",
+    "cpu_capability": "AVX512",
+    "cpu_count": 1
+  },
+  "s18_record": "3,075 passed, 1 skipped at 12b3138 (docs/campaigns/s18-release-plan.md); src/, tests/ and campaigns/ are identical between 12b3138 and 399a146"
+}

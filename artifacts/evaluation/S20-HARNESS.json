@@ -1,0 +1,48 @@
+{
+  "comparison": "exact (cases, bit-identical statistic, tolerance, status)",
+  "records": [
+    {
+      "campaign_id": "dogbone-v1",
+      "first_mismatches": [],
+      "gated_rows": 63,
+      "mismatches": 0,
+      "record": "artifacts/campaigns/dogbone-v1/S14-DEVELOPMENT.json",
+      "record_sha256_lf": "85e2132cf1732c22555ba06ff7477d682494ae8ab9ea19dfcbb41c2632e7c55b",
+      "reported_rows": 42,
+      "split": "DEVELOPMENT"
+    },
+    {
+      "campaign_id": "dogbone-v1",
+      "first_mismatches": [],
+      "gated_rows": 63,
+      "mismatches": 0,
+      "record": "artifacts/campaigns/dogbone-v1/S14-HOLDOUT.json",
+      "record_sha256_lf": "102af8880d793d634c8d333e25b643ba0708376cf588e009101c9b1df028848f",
+      "reported_rows": 42,
+      "split": "HOLDOUT"
+    },
+    {
+      "campaign_id": "notched-v1",
+      "first_mismatches": [],
+      "gated_rows": 51,
+      "mismatches": 0,
+      "record": "artifacts/campaigns/notched-v1/S14-DEVELOPMENT.json",
+      "record_sha256_lf": "4010542a676d6a6defbafdc6ee9a72b8db7a4197b73da19a3aa88723ed0741b3",
+      "reported_rows": 24,
+      "split": "DEVELOPMENT"
+    },
+    {
+      "campaign_id": "notched-v1",
+      "first_mismatches": [],
+      "gated_rows": 51,
+      "mismatches": 0,
+      "record": "artifacts/campaigns/notched-v1/S14-HOLDOUT.json",
+      "record_sha256_lf": "500d4d63bdbe9772e3b8d9ffc6be4abb8347dea4184306a418ada227ca7b54d1",
+      "reported_rows": 24,
+      "split": "HOLDOUT"
+    }
+  ],
+  "reproduced": true,
+  "schema_version": "1.0",
+  "step": "S20"
+}

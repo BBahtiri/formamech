@@ -144,3 +144,71 @@ def test_execution_profile_rejects_invalid_attribution_values(
 def test_execution_profile_rejects_non_finite_numbers_with_typed_error() -> None:
     with pytest.raises(NonFiniteNumberError):
         _profile(blas_threads=float("inf"))
+
+
+# --- run binding v2: platform fingerprint (S20, ADR 0101) -------------------
+
+_V1 = {
+    "python_version": "3.11.15",
+    "library_versions": {"torch": "2.13.0"},
+    "blas_threads": 2,
+    "device": "cpu",
+    "dtype": "float32",
+    "rng_algorithm": "torch-cpu-mt19937",
+    "seed": 7,
+}
+_FINGERPRINT = {"os": "Linux", "machine": "x86_64", "cpu_capability": "AVX2"}
+
+
+def test_a_v1_profile_keeps_its_canonical_bytes_and_hash() -> None:
+    from piginot.contracts import hash_spec
+    from piginot.contracts.canonical import canonical_json_bytes
+
+    profile = ExecutionProfile(**_V1)
+    assert b"platform_fingerprint" not in canonical_json_bytes(profile)
+    expected = (
+        b'{"$type":"piginot.contracts.ExecutionProfile","blas_threads":2,'
+        b'"container_digest":null,"device":"cpu","dtype":"float32",'
+        b'"library_versions":{"torch":"2.13.0"},"python_version":"3.11.15",'
+        b'"rng_algorithm":"torch-cpu-mt19937","seed":7}'
+    )
+    assert canonical_json_bytes(profile) == expected
+    assert hash_spec(profile, "content") == hash_spec(
+        ExecutionProfile.from_mapping(dict(_V1)), "content"
+    )
+
+
+def test_the_platform_fingerprint_enters_the_identity() -> None:
+    from piginot.contracts import hash_spec
+
+    v1 = ExecutionProfile(**_V1)
+    avx2 = ExecutionProfile(**_V1, platform_fingerprint=_FINGERPRINT)
+    avx512 = ExecutionProfile(
+        **_V1, platform_fingerprint={**_FINGERPRINT, "cpu_capability": "AVX512"}
+    )
+    hashes = {hash_spec(p, "content") for p in (v1, avx2, avx512)}
+    assert len(hashes) == 3
+    assert dict(avx2.platform_fingerprint or {}) == _FINGERPRINT
+
+
+@pytest.mark.parametrize(
+    "fingerprint",
+    [
+        {"os": "Linux", "machine": "x86_64"},
+        {**_FINGERPRINT, "gpu": "none"},
+        {**_FINGERPRINT, "os": ""},
+        {**_FINGERPRINT, "os": " Linux"},
+        {**_FINGERPRINT, "cpu_capability": 2},
+    ],
+)
+def test_a_malformed_fingerprint_is_refused(fingerprint: dict[str, object]) -> None:
+    with pytest.raises(ContractValidationError):
+        ExecutionProfile(**_V1, platform_fingerprint=fingerprint)  # type: ignore[arg-type]
+
+
+def test_the_running_platform_fingerprint_is_complete() -> None:
+    from piginot.training.platform_fingerprint import platform_fingerprint
+
+    fingerprint = platform_fingerprint()
+    assert set(fingerprint) == {"os", "machine", "cpu_capability"}
+    ExecutionProfile(**_V1, platform_fingerprint=fingerprint)

@@ -6,6 +6,8 @@ import sys
 import textwrap
 from pathlib import Path
 
+from tests.platform_support import windows_safe_environment
+
 ROOT = Path(__file__).resolve().parents[1]
 BUNDLE_ROOT = ROOT / "src" / "piginot" / "bundle"
 FEM_ONLY = ("scipy", "skfem", "meshio", "sympy")
@@ -66,7 +68,9 @@ def test_the_inference_closure_runs_without_fem_dependencies() -> None:
         capture_output=True,
         text=True,
         check=False,
-        env={"PYTHONPATH": str(ROOT / "src"), "PATH": "/usr/bin:/bin"},
+        env=windows_safe_environment(
+            {"PYTHONPATH": str(ROOT / "src"), "PATH": "/usr/bin:/bin"}
+        ),
     )
     assert result.returncode == 0, result.stderr
     assert result.stdout.strip() == "ok"

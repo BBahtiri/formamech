@@ -364,3 +364,58 @@ def test_scientific_package_hashes_do_not_ignore_broken_pyc_symlink(
     monkeypatch.setattr(Path, "lstat", linked_stat)
     with pytest.raises(ValueError, match="link|reparse"):
         runtime.scientific_package_hashes()
+
+
+def _handle_stat_with_other_device(real_fstat: Any) -> Any:
+    """``os.fstat`` as Windows Python >= 3.12 may report it: another st_dev."""
+
+    def fstat(descriptor: int) -> Any:
+        details = real_fstat(descriptor)
+        fields = list(details[:10])
+        fields[2] = details.st_dev + 1
+        extra = {
+            name: getattr(details, name)
+            for name in ("st_atime_ns", "st_mtime_ns", "st_ctime_ns")
+        }
+        return type(details)(fields, extra)
+
+    return fstat
+
+
+def test_a_handle_stat_from_another_api_is_tolerated_only_off_posix(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """S20 portability: path and handle records may differ in st_dev on Windows."""
+
+    (tmp_path / "leaf.bin").write_bytes(b"abc")
+    monkeypatch.setattr(
+        runtime.os, "fstat", _handle_stat_with_other_device(runtime.os.fstat)
+    )
+    monkeypatch.setattr(runtime, "_HANDLE_STAT_MATCHES_PATH_STAT", True)
+    with pytest.raises(RuntimeError, match="changed while hashing"):
+        runtime.snapshot_runtime_tree(tmp_path)
+    monkeypatch.setattr(runtime, "_HANDLE_STAT_MATCHES_PATH_STAT", False)
+    assert runtime.snapshot_runtime_tree(tmp_path).file_count == 1
+
+
+def test_a_size_change_through_the_handle_is_caught_off_posix(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    leaf = tmp_path / "leaf.bin"
+    leaf.write_bytes(b"abc")
+    real_fstat = runtime.os.fstat
+
+    def growing(descriptor: int) -> Any:
+        details = real_fstat(descriptor)
+        fields = list(details[:10])
+        fields[6] = details.st_size + 1
+        extra = {
+            name: getattr(details, name)
+            for name in ("st_atime_ns", "st_mtime_ns", "st_ctime_ns")
+        }
+        return type(details)(fields, extra)
+
+    monkeypatch.setattr(runtime.os, "fstat", growing)
+    monkeypatch.setattr(runtime, "_HANDLE_STAT_MATCHES_PATH_STAT", False)
+    with pytest.raises(RuntimeError, match="changed while hashing"):
+        runtime.snapshot_runtime_tree(tmp_path)

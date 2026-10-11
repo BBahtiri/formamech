@@ -23,6 +23,7 @@ from campaigns.dogbone_v1.s13c_protocol import (
 )
 from campaigns.dogbone_v1.s13c_trial import build_s13c_binding
 from piginot.doe import EvidenceRole
+from tests.platform_support import requires_pinned_initial_weights
 
 _REVISION = "0123456789abcdef0123456789abcdef01234567"
 
@@ -50,6 +51,7 @@ def _bound_run_root(path: Path) -> Path:
     return path
 
 
+@requires_pinned_initial_weights
 def test_identity_changes_for_data_config_code_and_profile(tmp_path: Path) -> None:
     check = s13c_closeout._identity_check(_bound_run_root(tmp_path))
 

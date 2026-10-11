@@ -1,0 +1,265 @@
+{
+  "gate_id": "G20",
+  "step": "S20",
+  "commit": "829996353f6b00464ff90c195737107b29dde323",
+  "timestamp_utc": "2026-10-11T13:48:38Z",
+  "execution_profile": {
+    "python": "3.11.15",
+    "system": "Linux",
+    "machine": "x86_64",
+    "torch": "2.13.0+cu130",
+    "cpu_capability": "AVX2"
+  },
+  "checks": [
+    {
+      "id": "G20.protocol-first",
+      "status": "PASS",
+      "measured": {
+        "protocol_commit": "c2045ea7056a68c2eadbab25e76b50a76bfae9e5",
+        "protocol_commits": 1,
+        "artifacts": {
+          "artifacts/campaigns/notched-v1/POSTMORTEM-PUBLIC.json": "d6a39b695f7f15e27191170333b5ae43726da9b0",
+          "artifacts/campaigns/notched-v1/POSTMORTEM-D7.json": "bd1704b4832499cb18253f5ff4eba3fcd8eb45d1",
+          "artifacts/campaigns/notched-v1/POSTMORTEM-D8.json": "bd1704b4832499cb18253f5ff4eba3fcd8eb45d1",
+          "artifacts/campaigns/notched-v1/POSTMORTEM-VERDICTS.json": "bd1704b4832499cb18253f5ff4eba3fcd8eb45d1"
+        }
+      },
+      "threshold": "protocol committed once, before every post-mortem artifact",
+      "comparison": "all"
+    },
+    {
+      "id": "G20.harness",
+      "status": "PASS",
+      "measured": {
+        "rebuild_equals_record": true,
+        "records": [
+          [
+            "dogbone-v1",
+            "DEVELOPMENT",
+            0
+          ],
+          [
+            "dogbone-v1",
+            "HOLDOUT",
+            0
+          ],
+          [
+            "notched-v1",
+            "DEVELOPMENT",
+            0
+          ],
+          [
+            "notched-v1",
+            "HOLDOUT",
+            0
+          ]
+        ],
+        "tests": {
+          "targets": [
+            "tests/evaluation/test_budget_records.py"
+          ],
+          "returncode": 0,
+          "summary": "10 passed in 1.02s"
+        }
+      },
+      "threshold": "every S14 budget row reproduces exactly; mutant tests pass",
+      "comparison": "all"
+    },
+    {
+      "id": "G20.burned",
+      "status": "PASS",
+      "measured": {
+        "registry_sizes": {
+          "dogbone-v1": 64,
+          "notched-v1": 64
+        },
+        "rebuild_equals_record": true,
+        "tests": {
+          "targets": [
+            "tests/evaluation/test_burned.py"
+          ],
+          "returncode": 0,
+          "summary": "9 passed in 1.06s"
+        }
+      },
+      "threshold": "burned registries rebuild exactly; guard and mutant tests pass",
+      "comparison": "all"
+    },
+    {
+      "id": "G20.holdouts",
+      "status": "PASS",
+      "measured": {
+        "decision_commit": "c2045ea7056a68c2eadbab25e76b50a76bfae9e5",
+        "families": {
+          "dogbone-v1": {
+            "present": true,
+            "passed": true,
+            "sizes": {
+              "H1": 64,
+              "H2": 64
+            },
+            "disjoint": true,
+            "fresh": true,
+            "commitments_bound": true,
+            "envelope_matches": true,
+            "drawn_after_decision": true,
+            "rejected_near_duplicates": 0
+          },
+          "notched-v1": {
+            "present": true,
+            "passed": true,
+            "sizes": {
+              "H1": 64,
+              "H2": 64
+            },
+            "disjoint": true,
+            "fresh": true,
+            "commitments_bound": true,
+            "envelope_matches": true,
+            "drawn_after_decision": true,
+            "rejected_near_duplicates": 2
+          }
+        }
+      },
+      "threshold": "per family: H1 and H2 of 64 fresh, disjoint, bound seals, drawn after ADR 0101",
+      "comparison": "all"
+    },
+    {
+      "id": "G20.rca",
+      "status": "PASS",
+      "measured": {
+        "verdicts": {
+          "a": "NOT_SUPPORTED",
+          "b": "SUPPORTED",
+          "c": "SUPPORTED",
+          "d": "NOT_SUPPORTED",
+          "e": "SUPPORTED"
+        },
+        "rebuild_equals_record": true,
+        "adr_recorded": true
+      },
+      "threshold": "every hypothesis judged; verdicts recompute; ADR 0101 records the result",
+      "comparison": "all"
+    },
+    {
+      "id": "G20.portability",
+      "status": "PASS",
+      "measured": {
+        "schema_version": "1.0",
+        "tree": "e44426bf65ae5098c9fe00dfff72e8e9bc967bc0",
+        "clean": true,
+        "summary": "3143 passed, 9 skipped in 1193.13s (0:19:53)",
+        "counts": {
+          "passed": 3143,
+          "skipped": 9
+        },
+        "skips": [
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_dogbone_s13c_closeout.py:54",
+            "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_dogbone_s13c_evaluate.py:204",
+            "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_dogbone_s13c_evaluate.py:228",
+            "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_dogbone_s13c_protocol.py:159",
+            "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_dogbone_s13c_trial.py:55",
+            "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_dogbone_s13c_trial.py:83",
+            "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_dogbone_s15_bundle.py:57",
+            "reason": "set PIGINOT_CP_FREEZE_WEIGHTS to the CP-FREEZE model export"
+          },
+          {
+            "count": 1,
+            "where": "tests\\store\\test_trees.py:77",
+            "reason": "FIFO unavailable"
+          },
+          {
+            "count": 1,
+            "where": "tests\\verification\\test_core.py:361",
+            "reason": "the OS has no POSIX permission bits (Windows reports 0o666); the owner-only file mode is not enforceable here"
+          }
+        ]
+      },
+      "threshold": "native Windows run of this tree: 0 failed, 0 errors, every skip has a reason",
+      "comparison": "all"
+    },
+    {
+      "id": "G20.binding",
+      "status": "PASS",
+      "measured": {
+        "targets": [
+          "tests/contracts/test_profile.py",
+          "tests/training/test_identity.py"
+        ],
+        "returncode": 0,
+        "summary": "74 passed in 0.92s"
+      },
+      "threshold": "v1 profile canonical form pinned; platform fingerprint enters the identity",
+      "comparison": "all"
+    },
+    {
+      "id": "G20.quality",
+      "status": "PASS",
+      "measured": {
+        "tools": {
+          "ruff_check": 0,
+          "ruff_format": 0,
+          "mypy_strict": 0
+        },
+        "suite": {
+          "schema_version": "1.0",
+          "tree": "e44426bf65ae5098c9fe00dfff72e8e9bc967bc0",
+          "commit": "829996353f6b00464ff90c195737107b29dde323",
+          "clean": true,
+          "branch_coverage": true,
+          "coverage_percent": 91.51,
+          "evaluation_coverage_percent": 99.42,
+          "summary": "3151 passed, 1 skipped in 2654.47s (0:44:14)",
+          "counts": {
+            "passed": 3151,
+            "skipped": 1
+          },
+          "skips": [],
+          "execution_profile": {
+            "python": "3.11.15",
+            "system": "Linux",
+            "machine": "x86_64",
+            "torch": "2.13.0+cu130",
+            "cpu_capability": "AVX2"
+          }
+        }
+      },
+      "threshold": {
+        "tools": "exit 0",
+        "suite": "recorded Linux run of this tree, clean, 0 failed, 0 errors",
+        "global_branch_coverage_at_least": 90.5,
+        "piginot.evaluation_at_least": 90.0
+      },
+      "comparison": "all"
+    }
+  ],
+  "decision_record": "docs/adr/0101-s20-fresh-holdouts-and-post-mortem.md",
+  "verdict": "PASS",
+  "verdict_reason": "every required check PASS"
+}

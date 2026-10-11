@@ -88,6 +88,24 @@ def _file_identity(details: os.stat_result) -> tuple[int, ...]:
     )
 
 
+# On POSIX ``os.stat`` and ``os.fstat`` read the same inode record. On Windows
+# (Python >= 3.12) they may take st_dev and st_ino from different APIs, so a
+# path record and a handle record agree only on size and modification time;
+# path-to-path and handle-to-handle comparisons keep the full identity.
+_HANDLE_STAT_MATCHES_PATH_STAT = os.name == "posix"
+
+
+def _same_file_through_handle(
+    path_details: os.stat_result, handle_details: os.stat_result
+) -> bool:
+    if _HANDLE_STAT_MATCHES_PATH_STAT:
+        return _file_identity(path_details) == _file_identity(handle_details)
+    return (path_details.st_size, path_details.st_mtime_ns) == (
+        handle_details.st_size,
+        handle_details.st_mtime_ns,
+    )
+
+
 def _file_digest(path: Path) -> tuple[int, bytes]:
     before = _unlinked_stat(path)
     if not stat.S_ISREG(before.st_mode):
@@ -95,14 +113,16 @@ def _file_digest(path: Path) -> tuple[int, bytes]:
     digest = hashlib.sha256()
     with path.open("rb") as stream:
         opened = os.fstat(stream.fileno())
-        if _file_identity(opened) != _file_identity(before):
+        if not _same_file_through_handle(before, opened):
             raise RuntimeError("runtime file changed while hashing")
         for chunk in iter(lambda: stream.read(_CHUNK_BYTES), b""):
             digest.update(chunk)
         after = os.fstat(stream.fileno())
-    if _file_identity(before) != _file_identity(after) or _file_identity(
-        before
-    ) != _file_identity(_unlinked_stat(path)):
+    if (
+        _file_identity(opened) != _file_identity(after)
+        or not _same_file_through_handle(before, after)
+        or _file_identity(before) != _file_identity(_unlinked_stat(path))
+    ):
         raise RuntimeError("runtime file changed while hashing")
     return before.st_size, digest.digest()
 
