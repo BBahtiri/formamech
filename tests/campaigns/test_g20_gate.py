@@ -93,6 +93,9 @@ def _seal_repo(tmp_path: Path, public: dict) -> Path:
         "docs/adr",
     ):
         shutil.copytree(fh.REPOSITORY / relative, root / relative, dirs_exist_ok=True)
+    # the scratch "decision" commit must predate any draw, also once the real
+    # FRESH-HOLDOUTS.json is committed in the repository
+    (root / "artifacts/campaigns/notched-v1" / fh.PUBLIC_NAME).unlink(missing_ok=True)
     subprocess.run(["git", "add", "."], cwd=root, check=True)
     subprocess.run(["git", "commit", "-qm", "decision"], cwd=root, check=True)
     path = root / "artifacts/campaigns/notched-v1" / fh.PUBLIC_NAME

@@ -84,6 +84,9 @@ def test_verdicts_combine_public_and_owner_parts(tmp_path: Path) -> None:
     shutil.copytree(
         ROOT / "artifacts" / "campaigns" / "notched-v1", tmp_path / owner.CAMPAIGN
     )
+    # start from the public part only, also once the owner evidence is committed
+    for path in (owner.D7_PATH, owner.D8_PATH, owner.VERDICTS_PATH):
+        (tmp_path / path).unlink(missing_ok=True)
     before = owner.verdicts(tmp_path)
     assert before["hypotheses"]["a"]["verdict"] == "NOT_RUN"
     d7 = {q: {"spearman_pooled": 0.5} for q in public.QUANTITIES}
