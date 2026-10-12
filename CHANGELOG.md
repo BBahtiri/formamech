@@ -10,6 +10,12 @@ Development line S19–S26 (`STEPS-v2.0.md`), forked from `v0.1.0`.
 
 ### Added
 
+- **Calibrated bounds, in progress** (S23): the runtime package
+  `piginot.bounds` (split-conformal bounds, Mahalanobis calibration gate,
+  calibration sidecars), `piginot predict --bounds` and
+  `serve(..., calibration=...)`, and the calibration builder
+  `campaigns/s23_calibration.py`, which runs only after the decision owner
+  accepts ADR 0104 (proposed). No calibration has been run yet.
 - **Verified serving** (S22): `piginot predict --mode fast|certified|exact`,
   FEM recipe sidecars in `bundles/fem-recipes/`, warm-start FEM solves, the
   `verify` extra (ADR 0103).
