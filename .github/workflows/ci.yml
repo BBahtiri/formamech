@@ -68,6 +68,8 @@ jobs:
         run: python -m pytest tests/certify --cov=src/piginot/certify --cov-fail-under=90
       - name: Check S22 serving coverage
         run: python -m pytest tests/serving --cov=src/piginot/serving --cov-fail-under=90
+      - name: Check S23 bounds coverage
+        run: python -m pytest tests/bounds --cov=src/piginot/bounds --cov-fail-under=90
       - name: Audit dependencies
         run: python -m pip_audit
 

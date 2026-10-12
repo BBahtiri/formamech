@@ -26,6 +26,7 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
+from piginot.bounds import CalibrationError, CalibrationRecord
 from piginot.bundle import predict
 
 if TYPE_CHECKING:
@@ -93,14 +94,26 @@ class VerifiedPrediction:
     escalated: bool = False
     request_hash: str | None = None
     reason: str = ""
+    bounds: Mapping[str, Any] | None = None
 
     def document(self) -> dict[str, Any]:
-        """JSON form; ``fast`` returns exactly the v0.1.0 prediction document."""
+        """JSON form; ``fast`` without bounds is exactly the v0.1.0 document.
+
+        Calibrated bounds (S23) appear under ``bounds`` only when requested, so
+        every output without them is unchanged.
+        """
 
         if self.mode is ServingMode.FAST:
-            document: dict[str, Any] = self.prediction.document()
-            return document
-        return {
+            prediction: dict[str, Any] = self.prediction.document()
+            if self.bounds is None:
+                return prediction
+            return {
+                "mode": self.mode.value,
+                "path": self.path.value,
+                "prediction": prediction,
+                "bounds": dict(self.bounds),
+            }
+        document: dict[str, Any] = {
             "mode": self.mode.value,
             "path": self.path.value,
             "escalated": self.escalated,
@@ -123,6 +136,9 @@ class VerifiedPrediction:
             },
             "attempts": [attempt.document() for attempt in self.attempts],
         }
+        if self.bounds is not None:
+            document["bounds"] = dict(self.bounds)
+        return document
 
 
 def default_request_id(inputs: Mapping[str, Any]) -> str:
@@ -246,22 +262,34 @@ def serve(
     request_id: str | None = None,
     backend: Any = None,
     confidence: bool | None = None,
+    calibration: CalibrationRecord | None = None,
 ) -> VerifiedPrediction:
     """Serve one request in the chosen mode (see the module docstring).
 
     ``confidence`` controls the S14 pointwise bound in the returned prediction:
     on by default in ``fast`` (as in v0.1.0), off by default otherwise, where
-    the certificate supersedes it.
+    the certificate supersedes it. ``calibration`` (S23) attaches calibrated
+    upper bounds to a served request: of the S14 budget total in ``fast``, of
+    the reference terms in ``certified`` and ``exact``.
     """
 
     mode = ServingMode(mode)
+    if calibration is not None and (
+        calibration.bundle_manifest_sha256 != bundle.manifest.manifest_sha256
+    ):
+        raise CalibrationError("the calibration belongs to another bundle")
     if mode is ServingMode.FAST:
         prediction = (
             predict(bundle, inputs, queries)
             if confidence is None
             else predict(bundle, inputs, queries, confidence=confidence)
         )
-        return VerifiedPrediction(mode, ServingPath.OPERATOR, prediction)
+        bounds = (
+            calibration.evaluate(inputs, "budget_total")
+            if calibration is not None and prediction.verdict.value != "REFUSED"
+            else None
+        )
+        return VerifiedPrediction(mode, ServingPath.OPERATOR, prediction, bounds=bounds)
     prediction = predict(bundle, inputs, queries, confidence=bool(confidence))
     if prediction.mesh is None or prediction.verdict.value == "REFUSED":
         return VerifiedPrediction(
@@ -296,6 +324,9 @@ def serve(
         )
     )
     request_hash = str(request.recipe_hash)
+    bounds = (
+        None if calibration is None else calibration.evaluate(inputs, "reference_terms")
+    )
     if not needs_exact:
         return VerifiedPrediction(
             mode,
@@ -304,6 +335,7 @@ def serve(
             certificate.document(),
             corrected_nodal,
             request_hash=request_hash,
+            bounds=bounds,
         )
     start = linearization.with_exact_dirichlet(linearization.vector(surrogate))
     attempt, attempts = solve_ladder(backend or backend_type(), request, start)
@@ -319,4 +351,5 @@ def serve(
         escalated=mode is ServingMode.CERTIFIED,
         request_hash=request_hash,
         reason="" if attempt is not None else "every rung of the solve ladder failed",
+        bounds=bounds,
     )

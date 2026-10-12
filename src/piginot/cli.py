@@ -150,7 +150,32 @@ def _predict(args: argparse.Namespace) -> int:
         print(f"piginot: cannot read request: {exc}", file=sys.stderr)
         return EXIT_ERROR
     inputs, queries = parse_request(request)
+    calibration = None
+    if args.bounds or args.calibration is not None:
+        from piginot.bounds import CalibrationError, CalibrationRecord, calibration_path
+
+        try:
+            calibration = CalibrationRecord.load(
+                args.calibration or calibration_path(args.bundle),
+                bundle=Path(args.bundle).name,
+                manifest_sha256=bundle.manifest.manifest_sha256,
+            )
+        except CalibrationError as exc:
+            print(f"piginot: {exc}", file=sys.stderr)
+            return EXIT_ERROR
     if args.mode == "fast":
+        if calibration is not None:
+            from piginot.serving import serve
+
+            served = serve(
+                bundle,
+                inputs,
+                cast(Any, queries),
+                confidence=not args.no_confidence,
+                calibration=calibration,
+            )
+            _emit(served.document(), args.output)
+            return EXIT_OK if served.prediction.in_domain else EXIT_REFUSED
         prediction = predict(
             bundle,
             inputs,
@@ -159,11 +184,15 @@ def _predict(args: argparse.Namespace) -> int:
         )
         _emit(prediction.document(), args.output)
         return EXIT_OK if prediction.in_domain else EXIT_REFUSED
-    return _serve_verified(args, bundle, inputs, queries)
+    return _serve_verified(args, bundle, inputs, queries, calibration)
 
 
 def _serve_verified(
-    args: argparse.Namespace, bundle: Any, inputs: Any, queries: Any
+    args: argparse.Namespace,
+    bundle: Any,
+    inputs: Any,
+    queries: Any,
+    calibration: Any = None,
 ) -> int:
     """``--mode certified|exact`` (S22): certificate, correction, FEM solve."""
 
@@ -180,6 +209,7 @@ def _serve_verified(
             corrected=args.corrected,
             escalate=args.escalate,
             tolerance=args.tolerance,
+            calibration=calibration,
         )
     except MissingExtraError as exc:
         print(f"piginot: {exc}", file=sys.stderr)
@@ -326,6 +356,20 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=None,
         help="FEM recipe (default: beside the bundle)",
+    )
+    predict.add_argument(
+        "--bounds",
+        action="store_true",
+        help="attach the calibrated 90%% upper bounds of the bundle's "
+        "calibration sidecar (fast: S14 budget total; certified and exact: "
+        "FEM reference terms)",
+    )
+    predict.add_argument(
+        "--calibration",
+        type=Path,
+        default=None,
+        help="calibration sidecar to use with --bounds "
+        "(default: <bundles>/calibration/<bundle>.json)",
     )
     predict.set_defaults(handler=_predict)
 
