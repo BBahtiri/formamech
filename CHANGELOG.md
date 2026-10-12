@@ -20,6 +20,16 @@ Development line S19–S26 (`STEPS-v2.0.md`), forked from `v0.1.0`.
   the fork manifest tool `scripts/verify_fork.py`, gate `G19`
   (`campaigns/g19_gate.py`) and the baseline records in `artifacts/fork/`.
 
+### Changed
+
+- **S22 follow-up**: ADR 0103 accepted; the G21 and G22 tables are in
+  `STEPS-v2.0.md`; the user guide explains what the certified and exact modes
+  measure and what they do not; `docs/limitations.md` states the limits of
+  S20–S22, so the 0.1.0 limitations sign-off must be renewed before the next
+  release; `piginot predict` documents `--tolerance` and the other serving
+  options, and refuses `--escalate` or `--tolerance` where they would be
+  ignored. Native Windows runs of S21–S22 are still to be recorded.
+
 ## [0.1.0] - 2026-10-06
 
 The first public release. It completes the STEPS-v1.0 plan (S0–S18). Read

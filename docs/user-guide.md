@@ -202,7 +202,8 @@ figure.savefig("prediction.png", dpi=150, bbox_inches="tight")
 
 ## Certified and exact predictions (0.2.0.dev, S22)
 
-`piginot predict` takes `--mode`:
+`piginot predict` takes `--mode` (from the development line; not in release
+0.1.0):
 
 | Mode | You get | Needs |
 | --- | --- | --- |
@@ -215,10 +216,71 @@ piginot predict bundles/notched-v1-cp-freeze --request bundles/requests/notched-
 piginot predict bundles/notched-v1-cp-freeze --request bundles/requests/notched-in-domain.json --mode exact
 ```
 
-`--escalate` with `--tolerance` turns a certified request into an exact one
-when its certificate is not good enough. The FEM problem comes from the
-bundle's recipe in `bundles/fem-recipes/`. A failed solve is reported as
-`solve_failed`, never as a silent result.
+The FEM problem comes from the bundle's recipe in `bundles/fem-recipes/`: the
+same mesh, element order and solver settings as the bundle's FEM reference
+data. A request the bundle refuses is refused in every mode, before any FEM
+work.
+
+**What `certified` measures.** The certificate takes one Newton step of that
+FEM problem, starting from the prediction:
+
+| Field | Meaning |
+| --- | --- |
+| `verdict` | `OK`; or `INDEFINITE` / `INADMISSIBLE` (a guard failed, no estimate is given) |
+| `eta_energy` | size of the Newton step in the energy norm |
+| `indicators.p_l2_change` | relative L2 change of the first Piola stress along the step |
+| `indicators.u_l2_change` | the same for the displacement |
+| `guards` | which checks passed: admissible states, positive curvature, energy decrease, positive definite tangent |
+
+On the 64 DEVELOPMENT cases of each family, one step landed on the converged
+FEM solution: the step size matched the true distance to it (median ratio
+1.000), so `p_l2_change` is the prediction's stress error against that
+solution. `--corrected` returns the displacement after the step; its peak
+stress was within 0.01% (DogBone) and 0.06% (notched) of the converged
+solution on those cases.
+
+**What `exact` returns.** The FEM solution converged from the prediction: warm
+Newton at full load, then a short continuation, then the cold load-stepped
+solve, then an explicit `solve_failed`. `attempts` lists every rung tried. The
+output holds the displacement at the FEM nodes and the total potential energy.
+On DEVELOPMENT every case converged on the first rung and matched a cold solve
+within 1e-13 (relative).
+
+**What neither measures.** Both modes compare against the FEM solution on the
+recipe's mesh, not against the exact solution of the continuum problem. That
+mesh has its own discretisation error, which the S14 error budgets include as
+the reference term; for the notched plate it is about half of each case's
+budget. Neither mode extends a bundle beyond its envelope.
+
+**Escalation.** With `--escalate`, a certified request whose certificate is
+not `OK`, or whose `p_l2_change` exceeds `--tolerance`, is solved exactly:
+
+```bash
+piginot predict bundles/notched-v1-cp-freeze --request bundles/requests/notched-in-domain.json --mode certified --escalate --tolerance 0.01
+```
+
+`--tolerance 0.01` accepts at most a 1% change of the stress field. The
+response then has `"escalated": true` and the `exact` result.
+
+**Cost.** On the reference machine (Linux x86_64, AVX2), with three solves in
+parallel, a certificate took about 0.5–0.7 s, an exact solve about 5.5 s and a
+cold FEM solve about 190 s. Other machines and loads change these numbers.
+
+**Exit codes.** `0` served, `2` refused, `1` an error or `solve_failed`.
+
+From Python:
+
+```python
+from piginot.bundle import load_bundle
+from piginot.serving import load_recipe, serve
+
+bundle = load_bundle("bundles/notched-v1-cp-freeze")
+recipe = load_recipe(bundle, "bundles/notched-v1-cp-freeze")
+served = serve(bundle, inputs, mode="certified", recipe=recipe, corrected=True)
+print(served.path.value, served.certificate["indicators"]["p_l2_change"])
+```
+
+`inputs` comes from `parse_request` as in the example above.
 
 ## 2. Train a small model end to end (Example 1)
 

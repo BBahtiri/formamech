@@ -80,8 +80,66 @@ Decision record: ADR 0101. Post-mortem protocol:
 | `G20.binding` | run binding v2 records operating system and CPU capability; every v1 binding and gate artifact still verifies |
 | `G20.quality` | ruff, ruff format, mypy --strict clean; new modules ≥ 90% branch coverage; global ≥ 90.5% |
 
-## 4. Gates G21–G26
+## 4. Gate G21 — per-prediction physics certificate
 
-The checks, thresholds and kill criteria of S20–S26 are specified in the
+Evaluated by `python -m campaigns.g21_gate --write`. Decision record: ADR 0102.
+Protocol and ratified thresholds: `artifacts/certify/S21-PROTOCOL.json`
+(64 DEVELOPMENT cases per family, reference machine of ADR 0101 decision 3).
+
+| Check | Pass condition |
+|---|---|
+| `G21.protocol-first` | the protocol is committed once, before both results files |
+| `G21.reference-machine` | both results ran on Linux x86_64 with AVX2 |
+| `G21.recompute` | the records cover the protocol's cases in order; the summaries recompute exactly |
+| `G21.integrity` | every certificate `OK`; recomputed references reproduce the S14 coarse terms within 1e-6 relative; mesh identity; vertex gap and Dirichlet deviation ≤ 1e-9 |
+| `G21.rank` | Spearman(η, true energy-norm error) ≥ 0.8 per family |
+| `G21.effectivity` | η / true error in [0.5, 2.0] for ≥ 90% of cases per family |
+| `G21.stress` | Spearman(stress change along the step, true stress error) ≥ 0.7 per family |
+| `G21.versus-s14` | the certificate ranks the stress error at least as well as the S14 indicator |
+| `G21.cost` | median certificate time ≤ 10% of a cold S10-recipe FEM solve |
+| `G21.determinism` | a re-issued certificate equals the recorded one byte for byte |
+| `G21.quality` | ruff, ruff format, mypy --strict clean; recorded Linux suite of this code tree with 0 failed; global branch coverage ≥ 90.5%; `piginot.certify` ≥ 90% |
+
+Kill rule: Spearman < 0.6 on both families would have made η an acquisition
+signal only. Not triggered (1.000 on both).
+
+Changes from the implementation plan: the plan's `consistency` (energy drop
+against η²/2) and `guards` (constructed bad states) are covered by
+`tests/certify` inside `G21.quality` rather than gated separately; the
+reaction-force and P-field QoI ranks are reported, not gated; there is no
+native Windows check (see the S22 follow-up in the changelog).
+
+## 5. Gate G22 — verified serving
+
+Evaluated by `python -m campaigns.g22_gate --write`. Decision record: ADR 0103.
+Protocol and ratified thresholds: `artifacts/serving/S22-PROTOCOL.json`
+(64 DEVELOPMENT cases per family, reference machine).
+
+| Check | Pass condition |
+|---|---|
+| `G22.protocol-first` | the protocol is committed once, before both results files |
+| `G22.reference-machine` | both results ran on Linux x86_64 with AVX2 |
+| `G22.recompute` | the records cover the protocol's cases in order; the summaries recompute exactly |
+| `G22.integrity` | every cold solve succeeds; the recipes rebuild every S10 request byte for byte |
+| `G22.never-silent` | every exact request converges on some rung of the solve ladder or returns an explicit `solve_failed` |
+| `G22.equivalence` | exact results equal cold solves within 1e-6 relative |
+| `G22.speedup` | median speed-up of exact over cold ≥ 10× per family (plan: 3×) |
+| `G22.correction` | median corrected peak-stress error ≤ 0.1 × the operator's, per family |
+| `G22.fast-unchanged` | fast-mode documents of the example requests equal the S19 goldens |
+| `G22.light-install` | without the FEM packages, fast serves and the other modes raise `MissingExtraError` naming `piginot[verify]` |
+| `G22.old-bundles` | the gated v0.1.0 bundles load unchanged and their recipes bind their manifests |
+| `G22.determinism` | an exact result hash and a certified document re-served under the protocol's conditions equal the recorded ones |
+| `G22.quality` | as `G21.quality`, with `piginot.serving` ≥ 90% |
+
+Changes from the implementation plan: bundle schema v2 is replaced by FEM
+recipe sidecars (`bundles/fem-recipes/`, bound to each manifest hash), so the
+shipped bundles stay byte-identical; `G22.light-install` blocks the FEM imports
+in a subprocess instead of installing a fresh `.[runtime]` environment (a real
+install test belongs to the release step); timings ran with three worker
+processes, one run per case.
+
+## 6. Gates G23–G26
+
+The checks, thresholds and kill criteria of S23–S26 are specified in the
 implementation plan, one table per step. Each step copies its table into this
 document, with the owner's ratified thresholds, before its first run.

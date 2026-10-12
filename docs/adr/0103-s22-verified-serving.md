@@ -1,7 +1,9 @@
 # ADR 0103: Verified serving — fast, certified and exact (S22)
 
-- Status: Proposed — technical decision; the G22 thresholds were accepted by
-  the decision owner on 2026-10-11 (`artifacts/serving/S22-PROTOCOL.json`)
+- Status: Accepted — G22 PASS on 2026-10-12 (`artifacts/gates/S22.json`);
+  accepted as implemented by the decision owner on 2026-10-12 (chat: "Accept
+  ADR 0103"); the G22 thresholds were accepted on 2026-10-11
+  (`artifacts/serving/S22-PROTOCOL.json`)
 - Date: 2026-10-12
 - Step: S22 (gate `G22`), implementation plan Feature 1b
 
