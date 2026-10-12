@@ -1,0 +1,271 @@
+{
+  "gate_id": "G22",
+  "step": "S22",
+  "commit": "66527d4a01f1bb25a71e0dbf86dbbc2fd954dc08",
+  "timestamp_utc": "2026-10-12T19:57:47Z",
+  "execution_profile": {
+    "python": "3.11.15",
+    "system": "Linux",
+    "machine": "x86_64",
+    "torch": "2.13.0+cu130",
+    "cpu_capability": "AVX2"
+  },
+  "checks": [
+    {
+      "id": "G22.protocol-first",
+      "status": "PASS",
+      "measured": {
+        "protocol_commit": "f3ebf125b7428b3283bdc7689ce718ce0e2e4531",
+        "protocol_commits": 1,
+        "results": {
+          "dogbone-v1": "66527d4a01f1bb25a71e0dbf86dbbc2fd954dc08",
+          "notched-v1": "66527d4a01f1bb25a71e0dbf86dbbc2fd954dc08"
+        }
+      },
+      "threshold": "protocol committed once, before both results files",
+      "comparison": "all"
+    },
+    {
+      "id": "G22.reference-machine",
+      "status": "PASS",
+      "measured": {
+        "dogbone-v1": {
+          "cpu_capability": "AVX2",
+          "machine": "x86_64",
+          "os": "Linux"
+        },
+        "notched-v1": {
+          "cpu_capability": "AVX2",
+          "machine": "x86_64",
+          "os": "Linux"
+        }
+      },
+      "threshold": {
+        "cpu_capability": "AVX2",
+        "machine": "x86_64",
+        "os": "Linux"
+      },
+      "comparison": "all"
+    },
+    {
+      "id": "G22.recompute",
+      "status": "PASS",
+      "measured": {
+        "cases_in_protocol_order": {
+          "dogbone-v1": true,
+          "notched-v1": true
+        },
+        "summary_recomputes": {
+          "dogbone-v1": true,
+          "notched-v1": true
+        }
+      },
+      "threshold": "records cover the protocol's cases in order; summaries recompute exactly",
+      "comparison": "all"
+    },
+    {
+      "id": "G22.integrity",
+      "status": "PASS",
+      "measured": {
+        "dogbone-v1": {
+          "cases": 64,
+          "cold_solved": 64,
+          "pass": true
+        },
+        "notched-v1": {
+          "cases": 64,
+          "cold_solved": 64,
+          "pass": true
+        }
+      },
+      "threshold": {
+        "every_cold_solve_succeeds": true,
+        "recipes_reproduce_all_cases": true
+      },
+      "comparison": "all"
+    },
+    {
+      "id": "G22.never-silent",
+      "status": "PASS",
+      "measured": {
+        "dogbone-v1": {
+          "paths": {
+            "warm_newton": 64
+          },
+          "silent_results": 0,
+          "pass": true
+        },
+        "notched-v1": {
+          "paths": {
+            "warm_newton": 64
+          },
+          "silent_results": 0,
+          "pass": true
+        }
+      },
+      "threshold": "every exact request converges (any ladder path) or returns an explicit solve_failed",
+      "comparison": "all"
+    },
+    {
+      "id": "G22.equivalence",
+      "status": "PASS",
+      "measured": {
+        "dogbone-v1": {
+          "equivalence_cases": 64,
+          "equivalence_max_relative": 5.0260402255702834e-14,
+          "pass": true
+        },
+        "notched-v1": {
+          "equivalence_cases": 64,
+          "equivalence_max_relative": 5.33900862916282e-14,
+          "pass": true
+        }
+      },
+      "threshold": {
+        "equivalence_relative_at_most": 1e-06
+      },
+      "comparison": "all"
+    },
+    {
+      "id": "G22.speedup",
+      "status": "PASS",
+      "measured": {
+        "dogbone-v1": {
+          "median_speedup": 35.77196181801976,
+          "min_speedup": 19.39716341375743,
+          "pass": true
+        },
+        "notched-v1": {
+          "median_speedup": 33.21639806593953,
+          "min_speedup": 19.07405405066964,
+          "pass": true
+        }
+      },
+      "threshold": {
+        "median_speedup_at_least": 10.0
+      },
+      "comparison": "all"
+    },
+    {
+      "id": "G22.correction",
+      "status": "PASS",
+      "measured": {
+        "dogbone-v1": {
+          "median_operator_peak_error": 0.006454032746970055,
+          "median_corrected_peak_error": 1.621683203079411e-05,
+          "median_served_peak_error": 0.006967862918072611,
+          "pass": true
+        },
+        "notched-v1": {
+          "median_operator_peak_error": 0.01042352540390314,
+          "median_corrected_peak_error": 4.0206180235563874e-05,
+          "median_served_peak_error": 0.010095366257636223,
+          "pass": true
+        }
+      },
+      "threshold": {
+        "corrected_over_operator_median_peak_error_at_most": 0.1
+      },
+      "comparison": "all"
+    },
+    {
+      "id": "G22.fast-unchanged",
+      "status": "PASS",
+      "measured": {
+        "dogbone-v1-s13c-cp-freeze/dogbone-in-domain.json": true,
+        "notched-v1-cp-freeze/notched-in-domain.json": true,
+        "notched-v1-cp-freeze/notched-out-of-envelope.json": true
+      },
+      "threshold": "equal to the S19 goldens",
+      "comparison": "all"
+    },
+    {
+      "id": "G22.light-install",
+      "status": "PASS",
+      "measured": {
+        "targets": [
+          "tests/serving/test_hybrid.py::test_the_light_install_serves_fast_and_explains_the_rest"
+        ],
+        "returncode": 0,
+        "summary": "1 passed in 6.44s"
+      },
+      "threshold": "test passes",
+      "comparison": "all"
+    },
+    {
+      "id": "G22.old-bundles",
+      "status": "PASS",
+      "measured": {
+        "targets": [
+          "tests/test_shipped_bundles.py",
+          "tests/serving/test_recipe.py"
+        ],
+        "returncode": 0,
+        "summary": "8 passed in 6.00s"
+      },
+      "threshold": "tests pass",
+      "comparison": "all"
+    },
+    {
+      "id": "G22.determinism",
+      "status": "PASS",
+      "measured": {
+        "dogbone-v1": {
+          "case_id": "candidate-000156",
+          "exact_equal": true,
+          "certified_equal": true
+        },
+        "notched-v1": {
+          "case_id": "candidate-000020",
+          "exact_equal": true,
+          "certified_equal": true
+        }
+      },
+      "threshold": "exact result hash and certified document re-served under the protocol's conditions are equal",
+      "comparison": "all"
+    },
+    {
+      "id": "G22.quality",
+      "status": "PASS",
+      "measured": {
+        "tools": {
+          "ruff_check": 0,
+          "ruff_format": 0,
+          "mypy_strict": 0
+        },
+        "suite": {
+          "schema_version": "1.0",
+          "tree": "ea5d4af1338549d82a6f413b3609a09a2840b230",
+          "commit": "66527d4a01f1bb25a71e0dbf86dbbc2fd954dc08",
+          "clean": true,
+          "branch_coverage": true,
+          "coverage_percent": 91.63,
+          "serving_coverage_percent": 94.04,
+          "summary": "3232 passed, 1 skipped in 8618.27s (2:23:38)",
+          "counts": {
+            "passed": 3232,
+            "skipped": 1
+          },
+          "skips": [],
+          "execution_profile": {
+            "python": "3.11.15",
+            "system": "Linux",
+            "machine": "x86_64",
+            "torch": "2.13.0+cu130",
+            "cpu_capability": "AVX2"
+          }
+        }
+      },
+      "threshold": {
+        "tools": "exit 0",
+        "suite": "recorded Linux run of this code tree, clean, 0 failed, 0 errors",
+        "global_branch_coverage_at_least": 90.5,
+        "piginot.serving_at_least": 90.0
+      },
+      "comparison": "all"
+    }
+  ],
+  "decision_record": "docs/adr/0103-s22-verified-serving.md",
+  "verdict": "PASS",
+  "verdict_reason": "every required check PASS"
+}
