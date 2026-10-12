@@ -1,0 +1,108 @@
+{
+  "axial_strain_rule": {
+    "boundary_condition": "right_grip_displacement",
+    "boundary_tag": "right_grip",
+    "strain_input": "nominal_axial_strain"
+  },
+  "bundle": "dogbone-v1-s13c-cp-freeze",
+  "bundle_manifest_sha256": "009db9d379d6f94ccda5395762e22c9c810c466a686626d500f1575d45b1bb4c",
+  "material_inputs": {
+    "elastic_modulus": "elastic_modulus",
+    "poisson_ratio": "poisson_ratio"
+  },
+  "schema": "piginot.fem-recipe-v1",
+  "source": "S10 request of candidate-000156 (dogbone-v1)",
+  "template": {
+    "body_force_provider_ids": {},
+    "boundary_conditions": [
+      {
+        "$type": "piginot.contracts.BoundaryConditionSpec",
+        "boundary_tag": "left_symmetry",
+        "components": [
+          "x"
+        ],
+        "kind": "symmetry",
+        "name": "left_x_symmetry",
+        "values": []
+      },
+      {
+        "$type": "piginot.contracts.BoundaryConditionSpec",
+        "boundary_tag": "bottom",
+        "components": [
+          "y"
+        ],
+        "kind": "symmetry",
+        "name": "bottom_y_symmetry",
+        "values": []
+      },
+      {
+        "$type": "piginot.contracts.BoundaryConditionSpec",
+        "boundary_tag": "right_grip",
+        "components": [
+          "x"
+        ],
+        "kind": "dirichlet",
+        "name": "right_grip_displacement",
+        "values": [
+          {
+            "$type": "piginot.contracts.CanonicalQuantity",
+            "dimension": "length",
+            "unit": "mm",
+            "value": 3.7894633579256296
+          }
+        ]
+      }
+    ],
+    "boundary_field_provider_ids": {},
+    "config": {
+      "$type": "piginot.contracts.FemSolverConfig",
+      "element_order": 2,
+      "load_steps": 64,
+      "max_dofs": 100000,
+      "max_newton_iterations": 20,
+      "plane_stress_max_iterations": 32,
+      "solver_tolerance": 1e-10
+    },
+    "execution_profile": {
+      "$type": "piginot.contracts.ExecutionProfile",
+      "blas_threads": 1,
+      "container_digest": null,
+      "device": "cpu",
+      "dtype": "float64",
+      "library_versions": {
+        "numpy": "2.2.6",
+        "piginot": "0.2.0.dev0",
+        "rfc8785": "0.1.4",
+        "scikit-fem": "12.0.2",
+        "scipy": "1.17.1",
+        "torch": "2.13.0"
+      },
+      "python_version": "3.11.15",
+      "rng_algorithm": "none",
+      "seed": 0
+    },
+    "loads": [],
+    "material": {
+      "$type": "piginot.contracts.MaterialSpec",
+      "model": "finite_strain_plane_stress_neo_hookean",
+      "name": "dogbone-pinned-reference-material-v1",
+      "properties": {
+        "elastic_modulus": {
+          "$type": "piginot.contracts.CanonicalQuantity",
+          "dimension": "stress",
+          "unit": "MPa",
+          "value": 760
+        },
+        "poisson_ratio": {
+          "$type": "piginot.contracts.CanonicalQuantity",
+          "dimension": "dimensionless",
+          "unit": "1",
+          "value": 0.23
+        }
+      }
+    },
+    "qois": [],
+    "rigid_mode_constraint": null,
+    "traction_field_provider_ids": {}
+  }
+}

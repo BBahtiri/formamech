@@ -1,0 +1,18 @@
+{
+  "families": {
+    "dogbone-v1": {
+      "bundle": "dogbone-v1-s13c-cp-freeze",
+      "cases": 64,
+      "recipe_sha256": "15fb68527903d0bc3f1577da5464cabcc3ac04d69121a54063dbb44d3fdc90ed",
+      "reproduced_byte_for_byte": 64
+    },
+    "notched-v1": {
+      "bundle": "notched-v1-cp-freeze",
+      "cases": 64,
+      "recipe_sha256": "3713001ea5b03bfe976e0f2b1647ee91e16c725b704028669ec23aea4390f10c",
+      "reproduced_byte_for_byte": 64
+    }
+  },
+  "schema_version": "1.0",
+  "step": "S22"
+}
