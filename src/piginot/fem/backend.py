@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import warnings
+from collections.abc import Sequence
 from dataclasses import replace
 from typing import Any
 
@@ -86,9 +87,39 @@ class ScikitFemBackend:
 
         return tuple(self._solve_one(request) for request in requests)
 
-    def _solve_one(self, request: FemRequest) -> FemAttempt:
+    def solve_from(
+        self,
+        request: FemRequest,
+        initial: FloatArray,
+        load_factors: Sequence[float] = (1.0,),
+    ) -> FemAttempt:
+        """Solve starting from ``initial`` (a full DOF vector), S22 warm start.
+
+        The constrained DOFs are reset to ``factor * target`` at each load
+        factor, exactly as in a cold solve; the free DOFs start from
+        ``initial``. With the defaults this is Newton at full load from the
+        given state. Failures come back as visible attempts, never silently.
+        """
+
+        factors = tuple(float(f) for f in load_factors)
+        if (
+            not factors
+            or any(not 0.0 < f <= 1.0 for f in factors)
+            or factors[-1] != 1.0
+        ):
+            raise ValueError("load factors must lie in (0, 1] and end at 1")
+        if list(factors) != sorted(factors):
+            raise ValueError("load factors must increase")
+        return self._solve_one(request, np.asarray(initial, dtype=np.float64), factors)
+
+    def _solve_one(
+        self,
+        request: FemRequest,
+        initial: FloatArray | None = None,
+        load_factors: tuple[float, ...] | None = None,
+    ) -> FemAttempt:
         try:
-            result = self._solve_success(request)
+            result = self._solve_success(request, initial, load_factors)
             store_hash = None
             if self._store is not None:
                 payload = canonical_json_bytes({"domain": "content", "payload": result})
@@ -118,7 +149,12 @@ class ScikitFemBackend:
                 message=str(exc),
             )
 
-    def _solve_success(self, request: FemRequest) -> FemResult:
+    def _solve_success(
+        self,
+        request: FemRequest,
+        initial: FloatArray | None = None,
+        load_factors: tuple[float, ...] | None = None,
+    ) -> FemResult:
         _validate_qois(request)
         peak_outcome = peak_stress_screen(request)
         if peak_outcome is not None:
@@ -151,12 +187,16 @@ class ScikitFemBackend:
             traction_provider_ids=request.traction_field_provider_ids,
             traction_providers=self._traction_field_providers,
         )
+        if initial is not None and initial.shape != (basis.N,):
+            raise ValueError(f"initial displacement must have {basis.N} DOFs")
         displacement, state, history, residual = _solve_newton(
             basis,
             constraints,
             external_force,
             material,
             request,
+            initial=initial,
+            load_factors=load_factors,
         )
         stress = _matrix3_field(state.first_piola)
         recovered = recover_stress(scalar_basis, state.first_piola)
@@ -233,19 +273,33 @@ def _solve_newton(
     external_force: FloatArray,
     material: MaterialSpec,
     request: FemRequest,
+    *,
+    initial: FloatArray | None = None,
+    load_factors: tuple[float, ...] | None = None,
 ) -> tuple[
     FloatArray,
     AssemblyState,
     tuple[FemConvergenceEntry, ...],
     FloatArray,
 ]:
-    displacement = np.zeros(basis.N, dtype=np.float64)
+    displacement = (
+        np.zeros(basis.N, dtype=np.float64)
+        if initial is None
+        else np.array(initial, dtype=np.float64, copy=True)
+    )
     history: list[FemConvergenceEntry] = []
     final_state: AssemblyState | None = None
     final_residual: FloatArray | None = None
+    factors = (
+        load_factors
+        if load_factors is not None
+        else tuple(
+            step / request.config.load_steps
+            for step in range(1, request.config.load_steps + 1)
+        )
+    )
 
-    for load_step in range(1, request.config.load_steps + 1):
-        load_factor = load_step / request.config.load_steps
+    for load_step, load_factor in enumerate(factors, start=1):
         displacement = displacement.copy()
         displacement[constraints.constrained] = (
             load_factor * constraints.target_values[constraints.constrained]
