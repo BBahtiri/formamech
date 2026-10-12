@@ -11,7 +11,9 @@ from piginot.serving.hybrid import (
     SolveAttempt,
     VerifiedPrediction,
     default_request_id,
+    load_recipe,
     operator_displacement,
+    recipe_path,
     serve,
     solve_ladder,
 )
@@ -23,7 +25,9 @@ __all__ = (
     "SolveAttempt",
     "VerifiedPrediction",
     "default_request_id",
+    "load_recipe",
     "operator_displacement",
+    "recipe_path",
     "serve",
     "solve_ladder",
 )

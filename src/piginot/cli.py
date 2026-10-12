@@ -132,14 +132,47 @@ def _predict(args: argparse.Namespace) -> int:
         print(f"piginot: cannot read request: {exc}", file=sys.stderr)
         return EXIT_ERROR
     inputs, queries = parse_request(request)
-    prediction = predict(
-        bundle,
-        inputs,
-        queries,
-        confidence=not args.no_confidence,
-    )
-    _emit(prediction.document(), args.output)
-    return EXIT_OK if prediction.in_domain else EXIT_REFUSED
+    if args.mode == "fast":
+        prediction = predict(
+            bundle,
+            inputs,
+            queries,
+            confidence=not args.no_confidence,
+        )
+        _emit(prediction.document(), args.output)
+        return EXIT_OK if prediction.in_domain else EXIT_REFUSED
+    return _serve_verified(args, bundle, inputs, queries)
+
+
+def _serve_verified(
+    args: argparse.Namespace, bundle: Any, inputs: Any, queries: Any
+) -> int:
+    """``--mode certified|exact`` (S22): certificate, correction, FEM solve."""
+
+    from piginot.serving import MissingExtraError, ServingPath, load_recipe, serve
+
+    try:
+        recipe = load_recipe(bundle, args.bundle, args.recipe)
+        served = serve(
+            bundle,
+            inputs,
+            queries,
+            mode=args.mode,
+            recipe=recipe,
+            corrected=args.corrected,
+            escalate=args.escalate,
+            tolerance=args.tolerance,
+        )
+    except MissingExtraError as exc:
+        print(f"piginot: {exc}", file=sys.stderr)
+        return EXIT_ERROR
+    except (OSError, ValueError) as exc:
+        print(f"piginot: cannot serve {args.mode}: {exc}", file=sys.stderr)
+        return EXIT_ERROR
+    _emit(served.document(), args.output)
+    if served.path is ServingPath.REFUSED:
+        return EXIT_REFUSED
+    return EXIT_ERROR if served.path is ServingPath.SOLVE_FAILED else EXIT_OK
 
 
 def _inspect(args: argparse.Namespace) -> int:
@@ -237,6 +270,28 @@ def build_parser() -> argparse.ArgumentParser:
     predict.add_argument("--request", required=True, type=Path)
     predict.add_argument("--output", type=Path, default=None)
     predict.add_argument("--no-confidence", action="store_true")
+    predict.add_argument(
+        "--mode",
+        choices=("fast", "certified", "exact"),
+        default="fast",
+        help="fast: the bundle alone; certified: plus the physics certificate; "
+        "exact: the converged FEM solution from the prediction (needs piginot[verify])",
+    )
+    predict.add_argument(
+        "--corrected", action="store_true", help="certified: add the corrected field"
+    )
+    predict.add_argument(
+        "--escalate",
+        action="store_true",
+        help="certified: solve exactly if not certified",
+    )
+    predict.add_argument("--tolerance", type=float, default=None)
+    predict.add_argument(
+        "--recipe",
+        type=Path,
+        default=None,
+        help="FEM recipe (default: beside the bundle)",
+    )
     predict.set_defaults(handler=_predict)
 
     inspect = subparsers.add_parser("inspect", help="describe a bundle")

@@ -161,6 +161,32 @@ def operator_displacement(
     return result
 
 
+def recipe_path(bundle_path: Any) -> Any:
+    """Where a bundle's recipe sidecar lives: ``<bundles>/fem-recipes/<name>.json``."""
+
+    from pathlib import Path
+
+    directory = Path(bundle_path)
+    return directory.parent / "fem-recipes" / f"{directory.name}.json"
+
+
+def load_recipe(bundle: Any, bundle_path: Any, path: Any = None) -> FemRecipe:
+    """Load and bind the recipe of a loaded bundle (needs the FEM extra)."""
+
+    from pathlib import Path
+
+    try:
+        from piginot.serving.recipe import FemRecipe
+    except ImportError as exc:
+        raise MissingExtraError("certified") from exc
+    location = Path(path) if path is not None else recipe_path(bundle_path)
+    return FemRecipe.load(
+        location,
+        bundle=Path(bundle_path).name,
+        manifest_sha256=bundle.manifest.manifest_sha256,
+    )
+
+
 def _fem(mode: ServingMode) -> tuple[Any, Any, Any]:
     try:
         from piginot.certify import certify_with_correction
