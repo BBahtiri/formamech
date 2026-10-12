@@ -151,9 +151,25 @@ def test_each_defect_fails_its_check(
     assert statuses[failing] == "FAIL", statuses
 
 
-def test_a_reissued_certificate_is_deterministic() -> None:
+def test_a_reissued_certificate_is_deterministic_and_single_threaded() -> None:
+    import torch
+
     case_id = PROTOCOL["families"]["notched-v1"]["case_ids"][0]
-    first = gate.reissue("notched-v1", case_id)
+    before = torch.get_num_threads()
+    seen: list[int] = []
+    original = gate.s21._bundle
+
+    def spy(name: str) -> object:
+        seen.append(torch.get_num_threads())
+        return original(name)
+
+    gate.s21._bundle = spy  # type: ignore[assignment]
+    try:
+        first = gate.reissue("notched-v1", case_id)
+    finally:
+        gate.s21._bundle = original  # type: ignore[assignment]
+    assert seen == [1]
+    assert torch.get_num_threads() == before
     assert first["verdict"] == "OK"
     assert gate.reissue("notched-v1", case_id) == first
 

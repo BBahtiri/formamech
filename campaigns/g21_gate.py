@@ -214,6 +214,7 @@ def _family_checks(
 def check_determinism(
     root: Path, results: Mapping[str, Mapping[str, Any]]
 ) -> dict[str, Any]:
+    from campaigns.g19_gate import _differences, _relative
     from piginot.training.platform_fingerprint import platform_fingerprint
 
     here = platform_fingerprint()
@@ -227,49 +228,69 @@ def check_determinism(
     for campaign, document in results.items():
         record = document["records"][0]
         reissued = reissue(campaign, record["case_id"])
+        differences = _differences(record["certificate"], reissued)
+        relatives = [
+            value
+            for value in (_relative(a, b) for _, a, b in differences)
+            if value is not None
+        ]
         measured[campaign] = {
             "case_id": record["case_id"],
-            "equal": reissued == record["certificate"],
+            "equal": not differences,
+            "differing_fields": [path for path, _, _ in differences][:10],
+            "max_relative_difference": max(relatives) if relatives else 0.0,
         }
     return check_document(
         "G21.determinism",
         all(m["equal"] for m in measured.values()),
         measured,
-        "a re-issued certificate equals the recorded one byte for byte",
+        "a certificate re-issued under the protocol's conditions (one torch "
+        "thread, same prediction options) equals the recorded one byte for byte",
         "all",
     )
 
 
 def reissue(campaign: str, case_id: str) -> dict[str, Any]:
-    """The certificate of one case, without the reference solve."""
+    """The certificate of one case, without the reference solve.
+
+    Runs under the evaluation's conditions: one torch thread (the protocol's
+    worker setting; more threads change the summation order of the network's
+    matrix products) and the same prediction options.
+    """
 
     import numpy as np
+    import torch
 
     from campaigns.dogbone_v1.s14_candidate import S14Case
     from piginot.bundle import predict
     from piginot.certify import certify
     from piginot.fem.linearization import FemLinearization
 
-    family = s21.runtime(campaign)
-    case = S14Case.from_published(s21._published(campaign)[case_id])
-    request = family.s10_request(case, family.profile())
-    linearization = FemLinearization(request)
-    values = {k: float(v) for k, v in case.primitive_coordinates.items()}
-    prediction = predict(
-        s21._bundle(family.bundle),
-        family.theta(
-            values,
-            elastic_modulus=values["elastic_modulus"],
-            poisson_ratio=values["poisson_ratio"],
-        ),
-        linearization.dof_coordinates.tolist(),
-        confidence=False,
-    )
-    assert prediction.queries is not None
-    surrogate = prediction.queries.u.detach().numpy().astype(np.float64)
-    document: dict[str, Any] = json.loads(
-        json.dumps(certify(linearization, surrogate).document())
-    )
+    threads = torch.get_num_threads()
+    torch.set_num_threads(1)
+    try:
+        family = s21.runtime(campaign)
+        case = S14Case.from_published(s21._published(campaign)[case_id])
+        request = family.s10_request(case, family.profile())
+        linearization = FemLinearization(request)
+        values = {k: float(v) for k, v in case.primitive_coordinates.items()}
+        prediction = predict(
+            s21._bundle(family.bundle),
+            family.theta(
+                values,
+                elastic_modulus=values["elastic_modulus"],
+                poisson_ratio=values["poisson_ratio"],
+            ),
+            linearization.dof_coordinates.tolist(),
+            confidence=True,
+        )
+        assert prediction.queries is not None
+        surrogate = prediction.queries.u.detach().numpy().astype(np.float64)
+        document: dict[str, Any] = json.loads(
+            json.dumps(certify(FemLinearization(request), surrogate).document())
+        )
+    finally:
+        torch.set_num_threads(threads)
     return document
 
 
