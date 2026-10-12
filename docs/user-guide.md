@@ -199,6 +199,27 @@ figure.savefig("prediction.png", dpi=150, bbox_inches="tight")
 
 ![First Piola stress magnitude of the notched plate, width 22 mm, notch radius 4 mm, depth 3 mm, 15% strain](assets/notched-prediction.png)
 
+
+## Certified and exact predictions (0.2.0.dev, S22)
+
+`piginot predict` takes `--mode`:
+
+| Mode | You get | Needs |
+| --- | --- | --- |
+| `fast` (default) | the bundle's prediction, as in 0.1.0 | `pip install 'piginot[runtime]'` |
+| `certified` | the prediction plus a physics certificate (`eta_energy`, stress change, guards); `--corrected` adds the corrected displacement at the FEM nodes | `pip install 'piginot[verify]'` |
+| `exact` | the converged FEM solution, started from the prediction, with the path that produced it | `pip install 'piginot[verify]'` |
+
+```bash
+piginot predict bundles/notched-v1-cp-freeze --request bundles/requests/notched-in-domain.json --mode certified --corrected
+piginot predict bundles/notched-v1-cp-freeze --request bundles/requests/notched-in-domain.json --mode exact
+```
+
+`--escalate` with `--tolerance` turns a certified request into an exact one
+when its certificate is not good enough. The FEM problem comes from the
+bundle's recipe in `bundles/fem-recipes/`. A failed solve is reported as
+`solve_failed`, never as a silent result.
+
 ## 2. Train a small model end to end (Example 1)
 
 Example 1 runs the whole method on one fixed notched geometry (width 23 mm,

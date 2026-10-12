@@ -10,6 +10,12 @@ Development line S19–S26 (`STEPS-v2.0.md`), forked from `v0.1.0`.
 
 ### Added
 
+- **Verified serving** (S22): `piginot predict --mode fast|certified|exact`,
+  FEM recipe sidecars in `bundles/fem-recipes/`, warm-start FEM solves, the
+  `verify` extra (ADR 0103).
+- **Per-prediction physics certificate** (S21): `piginot.certify` (ADR 0102).
+- **Evaluation harness, fresh sealed holdouts, notched post-mortem** (S20,
+  ADR 0101).
 - **Fork and baseline lock** (S19): a standalone fork of `v0.1.0` (ADR 0100),
   the fork manifest tool `scripts/verify_fork.py`, gate `G19`
   (`campaigns/g19_gate.py`) and the baseline records in `artifacts/fork/`.

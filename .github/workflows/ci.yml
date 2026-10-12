@@ -64,6 +64,10 @@ jobs:
         run: python -m pytest tests/mutation tests/test_s16_anti_scope.py --cov=src/piginot/mutation --cov-fail-under=85
       - name: Check S20 evaluation harness coverage
         run: python -m pytest tests/evaluation --cov=src/piginot/evaluation --cov-fail-under=90
+      - name: Check S21 certificate coverage
+        run: python -m pytest tests/certify --cov=src/piginot/certify --cov-fail-under=90
+      - name: Check S22 serving coverage
+        run: python -m pytest tests/serving --cov=src/piginot/serving --cov-fail-under=90
       - name: Audit dependencies
         run: python -m pip_audit
 

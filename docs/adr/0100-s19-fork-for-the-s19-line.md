@@ -1,6 +1,7 @@
 # ADR 0100: A standalone fork for the S19+ line
 
-- Status: Proposed — decisions 1–4 need the decision owner's sign-off;
+- Status: Proposed — decisions 1–3 need the decision owner's sign-off;
+  decision 4 as amended accepted by the decision owner on 2026-10-11;
   decision 5 accepted by the decision owner on 2026-10-10; decision 6 takes
   effect with the owner's G19 commit that cites it
 - Date: 2026-10-10
@@ -37,6 +38,13 @@ repository have already collided once: test subprocesses that inherited
 4. **Merge-back.** Work returns to the shared repository once, as a Git
    bundle, through a single decision record signed by the decision owner. This
    line never pushes, never adds a remote and never closes `G18.install`.
+   *Amended 2026-10-11 by the decision owner:* after G20 the feature branches
+   of this line (`codex/s19-*`, `codex/s20-*`, and later steps) are pushed to
+   the private repository `github.com/BBahtiri/verified-neural-operators` as an
+   off-machine backup and for CI. `main` and the release line stay untouched;
+   merging into `main` remains a separate owner decision. The isolation checks
+   of G19 apply to the cloud workspace and the owner's working clones, not to
+   the shared repository that pushes.
 5. **`G19.resume` is judged on the profile that runs it** (accepted by the
    decision owner on 2026-10-10). The check passes when a clean-checkout S13c
    run stopped at step 200 and resumed to 400 is byte-identical, file for
