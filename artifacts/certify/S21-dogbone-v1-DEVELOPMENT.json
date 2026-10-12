@@ -1,0 +1,2573 @@
+{
+  "campaign_id": "dogbone-v1",
+  "execution_profile": {
+    "cpu_capability": "AVX2",
+    "machine": "x86_64",
+    "python": "3.11.15",
+    "system": "Linux",
+    "torch": "2.13.0+cu130"
+  },
+  "platform_fingerprint": {
+    "cpu_capability": "AVX2",
+    "machine": "x86_64",
+    "os": "Linux"
+  },
+  "protocol_sha256": "c07dfe16cd56e2b71ab99a905b95dda0f09cdbaec883c0e76ac6b0e9e54a339b",
+  "records": [
+    {
+      "case_id": "candidate-000156",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.24213454661253309,
+        "eta_energy": 0.6958811641645578,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.000038200440538,
+          "p_l2_change": 0.012776416266109824,
+          "u_l2_change": 0.0013848665407658646
+        },
+        "potential_energy": 1457.6527210658542,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 5.892170332904792e-13,
+      "mesh_id_equal": true,
+      "reproduction": {
+        "coarse_p_difference": 0.0029431949814774845,
+        "coarse_peak_difference": 0.0012310057639221114,
+        "coarse_u_difference": 0.0002634881820613486
+      },
+      "s14_indicator_median": 1.4121475194047333,
+      "seconds": {
+        "certificate": 0.6726650139898993,
+        "cold_fem": 114.94363488400995
+      },
+      "true": {
+        "energy": 0.695882362951219,
+        "p_relative_l2": 0.012777180677705805,
+        "u_relative_l2": 0.0013843233029855674
+      },
+      "vertex_gap": 5.551115123125783e-17
+    },
+    {
+      "case_id": "candidate-000157",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.08791705992950938,
+        "eta_energy": 0.41937253005359243,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 0.9997771173890188,
+          "p_l2_change": 0.01460745849429433,
+          "u_l2_change": 0.0017699785772050725
+        },
+        "potential_energy": 397.29184862030996,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 1.0571260227201768e-12,
+      "mesh_id_equal": true,
+      "reproduction": {
+        "coarse_p_difference": 0.004963209342376734,
+        "coarse_peak_difference": 9.246529591788163e-05,
+        "coarse_u_difference": 0.00036569626888448796
+      },
+      "s14_indicator_median": 0.9744975770426508,
+      "seconds": {
+        "certificate": 0.6442527520121075,
+        "cold_fem": 116.1056932270003
+      },
+      "true": {
+        "energy": 0.4193727520333414,
+        "p_relative_l2": 0.014601630854328565,
+        "u_relative_l2": 0.0017683623872593178
+      },
+      "vertex_gap": 2.7755575615628914e-17
+    },
+    {
+      "case_id": "candidate-000316",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.07967058042413555,
+        "eta_energy": 0.39919516113384124,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 0.999902007151949,
+          "p_l2_change": 0.010290101084419705,
+          "u_l2_change": 0.0005241257292317182
+        },
+        "potential_energy": 778.0344980990694,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 4.1916937696727674e-13,
+      "mesh_id_equal": true,
+      "reproduction": {
+        "coarse_p_difference": 0.0047075457960666775,
+        "coarse_peak_difference": 0.0010106791356143884,
+        "coarse_u_difference": 0.0004907723941724838
+      },
+      "s14_indicator_median": 1.073211600773635,
+      "seconds": {
+        "certificate": 0.6863709850003943,
+        "cold_fem": 114.13589535500796
+      },
+      "true": {
+        "energy": 0.39919569092682217,
+        "p_relative_l2": 0.010287865887717091,
+        "u_relative_l2": 0.0005244039238721198
+      },
+      "vertex_gap": 8.326672684688674e-17
+    },
+    {
+      "case_id": "candidate-000357",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.20963780009333277,
+        "eta_energy": 0.647483479058509,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.0000971878468725,
+          "p_l2_change": 0.012141710131597934,
+          "u_l2_change": 0.0013723968503858866
+        },
+        "potential_energy": 1406.574919852088,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 8.236839482845795e-13,
+      "mesh_id_equal": true,
+      "reproduction": {
+        "coarse_p_difference": 0.0036311913877036485,
+        "coarse_peak_difference": 0.002355335423769183,
+        "coarse_u_difference": 0.00023897931496360078
+      },
+      "s14_indicator_median": 1.3186805656781626,
+      "seconds": {
+        "certificate": 0.6260687350004446,
+        "cold_fem": 103.03807730801054
+      },
+      "true": {
+        "energy": 0.6474847473290205,
+        "p_relative_l2": 0.012143851215389714,
+        "u_relative_l2": 0.001372375327668711
+      },
+      "vertex_gap": 5.551115123125783e-17
+    },
+    {
+      "case_id": "candidate-000572",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.07722983400446992,
+        "eta_energy": 0.39307440468154886,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 0.999690502981104,
+          "p_l2_change": 0.010258720340425142,
+          "u_l2_change": 0.0013606343375172235
+        },
+        "potential_energy": 706.8603197545274,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 4.009934731627506e-13,
+      "mesh_id_equal": true,
+      "reproduction": {
+        "coarse_p_difference": 0.007667945696874043,
+        "coarse_peak_difference": 0.006856696682388787,
+        "coarse_u_difference": 0.00024296466999631795
+      },
+      "s14_indicator_median": 0.831944521631686,
+      "seconds": {
+        "certificate": 0.6406186729873298,
+        "cold_fem": 125.72892760300601
+      },
+      "true": {
+        "energy": 0.3930749059682714,
+        "p_relative_l2": 0.010253774858765906,
+        "u_relative_l2": 0.0013602693660894904
+      },
+      "vertex_gap": 5.551115123125783e-17
+    },
+    {
+      "case_id": "candidate-000610",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.1039088358202207,
+        "eta_energy": 0.45583782727606764,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.000142197080354,
+          "p_l2_change": 0.008314768642234682,
+          "u_l2_change": 0.0008199283140458188
+        },
+        "potential_energy": 1488.1751826815512,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 4.5315894957030735e-13,
+      "mesh_id_equal": true,
+      "reproduction": {
+        "coarse_p_difference": 0.0023341128505915804,
+        "coarse_peak_difference": 0.002628867370110478,
+        "coarse_u_difference": 0.0001538391412861062
+      },
+      "s14_indicator_median": 1.1472821820093408,
+      "seconds": {
+        "certificate": 0.6265822210116312,
+        "cold_fem": 125.19181681801274
+      },
+      "true": {
+        "energy": 0.455838652784911,
+        "p_relative_l2": 0.00831656320134711,
+        "u_relative_l2": 0.0008203108212139714
+      },
+      "vertex_gap": 1.6653345369377348e-16
+    },
+    {
+      "case_id": "candidate-000649",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.09437800875991798,
+        "eta_energy": 0.4344491459734582,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.0000527538574617,
+          "p_l2_change": 0.013172486189871,
+          "u_l2_change": 0.002122135940464326
+        },
+        "potential_energy": 526.9798551405868,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 5.050754519451838e-13,
+      "mesh_id_equal": true,
+      "reproduction": {
+        "coarse_p_difference": 0.004204810711689213,
+        "coarse_peak_difference": 0.0010293713826769618,
+        "coarse_u_difference": 0.00023544518290113706
+      },
+      "s14_indicator_median": 1.3186805656781626,
+      "seconds": {
+        "certificate": 0.6807647450041259,
+        "cold_fem": 131.16069654599414
+      },
+      "true": {
+        "energy": 0.4344492682649055,
+        "p_relative_l2": 0.013174068314902929,
+        "u_relative_l2": 0.002121628494262968
+      },
+      "vertex_gap": 0.0
+    },
+    {
+      "case_id": "candidate-000672",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.04298186273808824,
+        "eta_energy": 0.2931929131523214,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.0000190915965421,
+          "p_l2_change": 0.008947974759272614,
+          "u_l2_change": 0.0008973578436386177
+        },
+        "potential_energy": 530.1732265834798,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 3.7813689526596424e-13,
+      "mesh_id_equal": true,
+      "reproduction": {
+        "coarse_p_difference": 0.004981181783697903,
+        "coarse_peak_difference": 0.0005767488865325736,
+        "coarse_u_difference": 0.0003622001671983934
+      },
+      "s14_indicator_median": 0.8914741798474726,
+      "seconds": {
+        "certificate": 0.6745473399932962,
+        "cold_fem": 106.82950687000994
+      },
+      "true": {
+        "energy": 0.2931930453688555,
+        "p_relative_l2": 0.008948239820044472,
+        "u_relative_l2": 0.0008978103926752531
+      },
+      "vertex_gap": 2.7755575615628914e-17
+    },
+    {
+      "case_id": "candidate-000678",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.1051167549778711,
+        "eta_energy": 0.4585027795301296,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.0000414371612474,
+          "p_l2_change": 0.007674909316741686,
+          "u_l2_change": 0.0005143521726534064
+        },
+        "potential_energy": 1767.6469785634051,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 7.217464825368445e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 0.9196590726575705,
+      "seconds": {
+        "certificate": 0.6421362249966478,
+        "cold_fem": 130.38420379099261
+      },
+      "true": {
+        "energy": 0.4585031025585327,
+        "p_relative_l2": 0.007675385519055023,
+        "u_relative_l2": 0.0005143698288722528
+      },
+      "vertex_gap": 1.6653345369377348e-16
+    },
+    {
+      "case_id": "candidate-000905",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.05045101832365617,
+        "eta_energy": 0.3176283017904486,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.0001417273228401,
+          "p_l2_change": 0.008871629837440938,
+          "u_l2_change": 0.0004612603511771326
+        },
+        "potential_energy": 627.6813262801219,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 4.5065692579633543e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 1.0507979480978833,
+      "seconds": {
+        "certificate": 0.6672348900028737,
+        "cold_fem": 125.52974686599919
+      },
+      "true": {
+        "energy": 0.31762842986982875,
+        "p_relative_l2": 0.00887382552026828,
+        "u_relative_l2": 0.0004612415684223477
+      },
+      "vertex_gap": 2.7755575615628914e-17
+    },
+    {
+      "case_id": "candidate-000918",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.09135564304710897,
+        "eta_energy": 0.4275083117316126,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 0.9997150932967939,
+          "p_l2_change": 0.008558461268539593,
+          "u_l2_change": 0.0008649353225088453
+        },
+        "potential_energy": 1284.4144749843815,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 4.983833923436822e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 1.1472821820093408,
+      "seconds": {
+        "certificate": 0.7320936719916062,
+        "cold_fem": 125.09986798999307
+      },
+      "true": {
+        "energy": 0.4275086239171552,
+        "p_relative_l2": 0.008553682064442196,
+        "u_relative_l2": 0.0008645690073684681
+      },
+      "vertex_gap": 5.551115123125783e-17
+    },
+    {
+      "case_id": "candidate-000951",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.07212148496432746,
+        "eta_energy": 0.3797746422261666,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.0000983926422486,
+          "p_l2_change": 0.008984494040681879,
+          "u_l2_change": 0.0005036138782580662
+        },
+        "potential_energy": 856.6610428912624,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 5.319859531941368e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 1.0507979480978833,
+      "seconds": {
+        "certificate": 0.6249381660018116,
+        "cold_fem": 127.63874075100466
+      },
+      "true": {
+        "energy": 0.3797748219166092,
+        "p_relative_l2": 0.008985918180550558,
+        "u_relative_l2": 0.0005035400925189111
+      },
+      "vertex_gap": 5.551115123125783e-17
+    },
+    {
+      "case_id": "candidate-000954",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.07684478320902599,
+        "eta_energy": 0.3920618380829997,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 0.9998509004458157,
+          "p_l2_change": 0.009125975424591568,
+          "u_l2_change": 0.0007656031550973521
+        },
+        "potential_energy": 918.8921186512159,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 5.353677737832397e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 0.9196590726575705,
+      "seconds": {
+        "certificate": 0.6764119359868346,
+        "cold_fem": 135.44122863899975
+      },
+      "true": {
+        "energy": 0.39206211595209906,
+        "p_relative_l2": 0.009123419718649262,
+        "u_relative_l2": 0.0007651561609785746
+      },
+      "vertex_gap": 8.326672684688674e-17
+    },
+    {
+      "case_id": "candidate-000976",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.0444268168284907,
+        "eta_energy": 0.2980573594316612,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.0001738457941556,
+          "p_l2_change": 0.008473521942556687,
+          "u_l2_change": 0.0008281593545230335
+        },
+        "potential_energy": 638.5145322585594,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 3.508608595297234e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 0.7833459571302505,
+      "seconds": {
+        "certificate": 0.8333402080024825,
+        "cold_fem": 110.68126249000488
+      },
+      "true": {
+        "energy": 0.29805739568855355,
+        "p_relative_l2": 0.00847601914352073,
+        "u_relative_l2": 0.0008285102680294059
+      },
+      "vertex_gap": 2.7755575615628914e-17
+    },
+    {
+      "case_id": "candidate-000993",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.07041894870280885,
+        "eta_energy": 0.3752700889814178,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.0000728388370315,
+          "p_l2_change": 0.00760515187991932,
+          "u_l2_change": 0.0004944144233011834
+        },
+        "potential_energy": 1204.2735137482096,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 1.3168938896651203e-12,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 0.8914741798474726,
+      "seconds": {
+        "certificate": 0.6712129910010844,
+        "cold_fem": 114.5267645369895
+      },
+      "true": {
+        "energy": 0.37527016653247386,
+        "p_relative_l2": 0.007605978681663133,
+        "u_relative_l2": 0.0004943779693585912
+      },
+      "vertex_gap": 1.1102230246251565e-16
+    },
+    {
+      "case_id": "candidate-000997",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.059290483865311217,
+        "eta_energy": 0.34436039199889845,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 0.9999737583069864,
+          "p_l2_change": 0.011279848318563471,
+          "u_l2_change": 0.0010091393534017046
+        },
+        "potential_energy": 452.5213893285448,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 6.356269390511438e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 0.831944521631686,
+      "seconds": {
+        "certificate": 0.7093932970019523,
+        "cold_fem": 111.76674123799603
+      },
+      "true": {
+        "energy": 0.3443605277257209,
+        "p_relative_l2": 0.011278769631850477,
+        "u_relative_l2": 0.001008984059251528
+      },
+      "vertex_gap": 5.551115123125783e-17
+    },
+    {
+      "case_id": "candidate-001004",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.16117878259524332,
+        "eta_energy": 0.5677792857859516,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 0.9999511368457932,
+          "p_l2_change": 0.013381585209011957,
+          "u_l2_change": 0.0010967920096735966
+        },
+        "potential_energy": 869.6903789716157,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 7.570264472038485e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 1.0507979480978833,
+      "seconds": {
+        "certificate": 0.7421606340067228,
+        "cold_fem": 135.91951693600276
+      },
+      "true": {
+        "energy": 0.5677798159955396,
+        "p_relative_l2": 0.013379938693034086,
+        "u_relative_l2": 0.0010969143944647459
+      },
+      "vertex_gap": 2.7755575615628914e-17
+    },
+    {
+      "case_id": "candidate-001014",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.1829428768330672,
+        "eta_energy": 0.6048489537439066,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.0001188950161501,
+          "p_l2_change": 0.013914313651746436,
+          "u_l2_change": 0.0014356960755724274
+        },
+        "potential_energy": 924.3535696822669,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 6.727503195169487e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 1.5395950672481764,
+      "seconds": {
+        "certificate": 0.5763932349946117,
+        "cold_fem": 132.39336821700272
+      },
+      "true": {
+        "energy": 0.6048492104092177,
+        "p_relative_l2": 0.013917879969607548,
+        "u_relative_l2": 0.0014356827472010996
+      },
+      "vertex_gap": 5.551115123125783e-17
+    },
+    {
+      "case_id": "candidate-001134",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.0461225401933234,
+        "eta_energy": 0.303702269935193,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.000108544645677,
+          "p_l2_change": 0.008965459654991651,
+          "u_l2_change": 0.0009006925860565606
+        },
+        "potential_energy": 573.2045698694853,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 3.3037024748174907e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 1.0507979480978833,
+      "seconds": {
+        "certificate": 0.5819052250008099,
+        "cold_fem": 105.55059958899801
+      },
+      "true": {
+        "energy": 0.30370234014084435,
+        "p_relative_l2": 0.008967132397666977,
+        "u_relative_l2": 0.0009011286672648551
+      },
+      "vertex_gap": 2.7755575615628914e-17
+    },
+    {
+      "case_id": "candidate-001146",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.18359557396206583,
+        "eta_energy": 0.6059660198370599,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 0.9999900072853304,
+          "p_l2_change": 0.008935622787102885,
+          "u_l2_change": 0.0010070394859343018
+        },
+        "potential_energy": 2245.2033042225085,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 7.753289653287181e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 0.9744975770426508,
+      "seconds": {
+        "certificate": 0.5649899359996198,
+        "cold_fem": 120.59454564101179
+      },
+      "true": {
+        "energy": 0.6059663910278903,
+        "p_relative_l2": 0.008935203261176621,
+        "u_relative_l2": 0.0010070859577276502
+      },
+      "vertex_gap": 1.1102230246251565e-16
+    },
+    {
+      "case_id": "candidate-001321",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.14528006634282065,
+        "eta_energy": 0.5389817525962536,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.0002024192246788,
+          "p_l2_change": 0.009095434115575417,
+          "u_l2_change": 0.0007703241049560525
+        },
+        "potential_energy": 1773.3822047466501,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 6.033721136558996e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 0.8914741798474726,
+      "seconds": {
+        "certificate": 0.5770216050004819,
+        "cold_fem": 121.14410845999373
+      },
+      "true": {
+        "energy": 0.5389820906741615,
+        "p_relative_l2": 0.00909845756736325,
+        "u_relative_l2": 0.0007702479036457646
+      },
+      "vertex_gap": 5.551115123125783e-17
+    },
+    {
+      "case_id": "candidate-001479",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.09493253857385753,
+        "eta_energy": 0.43568483593018054,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.0002307480440014,
+          "p_l2_change": 0.013003724971253076,
+          "u_l2_change": 0.0012530506579160679
+        },
+        "potential_energy": 558.2464649928456,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 2.814873278745016e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 1.1472821820093408,
+      "seconds": {
+        "certificate": 0.5686757459916407,
+        "cold_fem": 92.51945853199868
+      },
+      "true": {
+        "energy": 0.43568506428884973,
+        "p_relative_l2": 0.013008597934596852,
+        "u_relative_l2": 0.001253956085457345
+      },
+      "vertex_gap": 2.7755575615628914e-17
+    },
+    {
+      "case_id": "candidate-001512",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.07591219594178256,
+        "eta_energy": 0.38963897542787085,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.0000386033973514,
+          "p_l2_change": 0.00898326476972653,
+          "u_l2_change": 0.0005151696870395255
+        },
+        "potential_energy": 916.9391813641184,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 8.798186074172968e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 1.0507979480978833,
+      "seconds": {
+        "certificate": 0.5601099100022111,
+        "cold_fem": 93.19458846299676
+      },
+      "true": {
+        "energy": 0.3896391575000925,
+        "p_relative_l2": 0.008983827593522698,
+        "u_relative_l2": 0.0005150766859316764
+      },
+      "vertex_gap": 5.551115123125783e-17
+    },
+    {
+      "case_id": "candidate-001549",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.14702828673614476,
+        "eta_energy": 0.5422278125295754,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.0001550036956972,
+          "p_l2_change": 0.013364584242773706,
+          "u_l2_change": 0.0020652596941621647
+        },
+        "potential_energy": 825.4026924536793,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 4.37456335702669e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 1.0507979480978833,
+      "seconds": {
+        "certificate": 0.5933014580077725,
+        "cold_fem": 113.21364820298913
+      },
+      "true": {
+        "energy": 0.5422297237729167,
+        "p_relative_l2": 0.013368653443776557,
+        "u_relative_l2": 0.0020666043349762135
+      },
+      "vertex_gap": 8.326672684688674e-17
+    },
+    {
+      "case_id": "candidate-001591",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.1875139549499636,
+        "eta_energy": 0.6124324882725175,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 0.9998783097570795,
+          "p_l2_change": 0.01110061158585937,
+          "u_l2_change": 0.0009894099921513096
+        },
+        "potential_energy": 1456.949136573676,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 7.634512649180328e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 1.742178037721186,
+      "seconds": {
+        "certificate": 0.5937810509931296,
+        "cold_fem": 115.03632012300659
+      },
+      "true": {
+        "energy": 0.6124327616120815,
+        "p_relative_l2": 0.011097866351224053,
+        "u_relative_l2": 0.0009890211393981567
+      },
+      "vertex_gap": 5.551115123125783e-17
+    },
+    {
+      "case_id": "candidate-001613",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.14500149504124238,
+        "eta_energy": 0.5384944031081098,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.0000923106850768,
+          "p_l2_change": 0.00966244156814567,
+          "u_l2_change": 0.0005905239746441742
+        },
+        "potential_energy": 1540.738503171507,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 8.587624566005299e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 1.4121475194047333,
+      "seconds": {
+        "certificate": 0.578750313987257,
+        "cold_fem": 127.36631858001056
+      },
+      "true": {
+        "energy": 0.5384950482575706,
+        "p_relative_l2": 0.009663585313967583,
+        "u_relative_l2": 0.0005907996576373422
+      },
+      "vertex_gap": 5.551115123125783e-17
+    },
+    {
+      "case_id": "candidate-001660",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.04863823137509371,
+        "eta_energy": 0.31186314136398013,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.0001834676347636,
+          "p_l2_change": 0.008236274960674608,
+          "u_l2_change": 0.000700347693872382
+        },
+        "potential_energy": 704.757743645817,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 1.021742744715912e-12,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 1.1472821820093408,
+      "seconds": {
+        "certificate": 0.568268041999545,
+        "cold_fem": 106.04596382100135
+      },
+      "true": {
+        "energy": 0.3118632828939484,
+        "p_relative_l2": 0.008239100359729913,
+        "u_relative_l2": 0.0007007254386464553
+      },
+      "vertex_gap": 8.326672684688674e-17
+    },
+    {
+      "case_id": "candidate-001716",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.045000882722433744,
+        "eta_energy": 0.2999781172137769,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.000165520121007,
+          "p_l2_change": 0.008883159784589463,
+          "u_l2_change": 0.0005572660207585418
+        },
+        "potential_energy": 572.3360382101984,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 6.666336816327543e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 0.7389421004056292,
+      "seconds": {
+        "certificate": 0.7057685449981363,
+        "cold_fem": 102.80523541200091
+      },
+      "true": {
+        "energy": 0.299978087909502,
+        "p_relative_l2": 0.008885564938813812,
+        "u_relative_l2": 0.0005575343758962671
+      },
+      "vertex_gap": 5.551115123125783e-17
+    },
+    {
+      "case_id": "candidate-001761",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.09421117170586513,
+        "eta_energy": 0.43408439696007345,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 0.9999632738974559,
+          "p_l2_change": 0.009391289778504243,
+          "u_l2_change": 0.0005443912860996545
+        },
+        "potential_energy": 1034.2619586708338,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 7.229314505378025e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 1.0507979480978833,
+      "seconds": {
+        "certificate": 0.7059682779945433,
+        "cold_fem": 130.27946821699152
+      },
+      "true": {
+        "energy": 0.43408472644518986,
+        "p_relative_l2": 0.009390421693106112,
+        "u_relative_l2": 0.0005441613395525051
+      },
+      "vertex_gap": 2.7755575615628914e-17
+    },
+    {
+      "case_id": "candidate-001771",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.13831315381139575,
+        "eta_energy": 0.525974297102039,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 0.9999181143168104,
+          "p_l2_change": 0.009747160081506227,
+          "u_l2_change": 0.0009600748906665234
+        },
+        "potential_energy": 1461.352068601875,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 8.283750512218422e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 1.073211600773635,
+      "seconds": {
+        "certificate": 0.5898754429945257,
+        "cold_fem": 137.58072152300156
+      },
+      "true": {
+        "energy": 0.5259747786884512,
+        "p_relative_l2": 0.009745824299752423,
+        "u_relative_l2": 0.0009601058852129413
+      },
+      "vertex_gap": 1.6653345369377348e-16
+    },
+    {
+      "case_id": "candidate-001796",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.26220675468766785,
+        "eta_energy": 0.7242564464667917,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 0.9997447497150774,
+          "p_l2_change": 0.0114082594441001,
+          "u_l2_change": 0.0009840366543946725
+        },
+        "potential_energy": 1963.4892543590256,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 4.5371238612533816e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 1.2290034976061086,
+      "seconds": {
+        "certificate": 1.0973123320000013,
+        "cold_fem": 149.1257986129931
+      },
+      "true": {
+        "energy": 0.7242584943759766,
+        "p_relative_l2": 0.011403522275550103,
+        "u_relative_l2": 0.0009837940775651937
+      },
+      "vertex_gap": 1.1102230246251565e-16
+    },
+    {
+      "case_id": "candidate-001894",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.1302615595595853,
+        "eta_energy": 0.5103802202990814,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.0001349384646436,
+          "p_l2_change": 0.006856495249331328,
+          "u_l2_change": 0.0004768186752291707
+        },
+        "potential_energy": 2839.9300931499106,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 7.71212097397456e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 1.073211600773635,
+      "seconds": {
+        "certificate": 0.620042830996681,
+        "cold_fem": 137.24490925300051
+      },
+      "true": {
+        "energy": 0.510380400990112,
+        "p_relative_l2": 0.006857946880427606,
+        "u_relative_l2": 0.0004770176785552923
+      },
+      "vertex_gap": 1.1102230246251565e-16
+    },
+    {
+      "case_id": "candidate-001970",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.08062898883565595,
+        "eta_energy": 0.40156867621761855,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.00000357163228,
+          "p_l2_change": 0.009845475865900621,
+          "u_l2_change": 0.0006300064428867708
+        },
+        "potential_energy": 816.4571734072841,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 5.510130742335168e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 0.831944521631686,
+      "seconds": {
+        "certificate": 0.6243197959993267,
+        "cold_fem": 136.16033310699277
+      },
+      "true": {
+        "energy": 0.4015689399293809,
+        "p_relative_l2": 0.009845293199129591,
+        "u_relative_l2": 0.0006300168641940234
+      },
+      "vertex_gap": 5.551115123125783e-17
+    },
+    {
+      "case_id": "candidate-002036",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.07795616452006016,
+        "eta_energy": 0.3948479695210611,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.000047529002044,
+          "p_l2_change": 0.011765890988851975,
+          "u_l2_change": 0.001046661618010051
+        },
+        "potential_energy": 560.4767459483826,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 3.0933811172640245e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 0.9744975770426508,
+      "seconds": {
+        "certificate": 0.6468053489952581,
+        "cold_fem": 110.73393335498986
+      },
+      "true": {
+        "energy": 0.3948483091803155,
+        "p_relative_l2": 0.011767016601979468,
+        "u_relative_l2": 0.0010467526813672141
+      },
+      "vertex_gap": 5.551115123125783e-17
+    },
+    {
+      "case_id": "candidate-002046",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.08135979586506892,
+        "eta_energy": 0.40339953552330565,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 0.999928756554791,
+          "p_l2_change": 0.009644964601499295,
+          "u_l2_change": 0.0006163466535143758
+        },
+        "potential_energy": 889.4558809625349,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 4.4169094283452306e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 0.9196590726575705,
+      "seconds": {
+        "certificate": 0.7056010509986663,
+        "cold_fem": 126.95487555199361
+      },
+      "true": {
+        "energy": 0.4034001354055188,
+        "p_relative_l2": 0.009643558196855313,
+        "u_relative_l2": 0.0006162541622256278
+      },
+      "vertex_gap": 0.0
+    },
+    {
+      "case_id": "candidate-002151",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.11833252909184466,
+        "eta_energy": 0.4864091945755747,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.000300741543448,
+          "p_l2_change": 0.012244548268438751,
+          "u_l2_change": 0.0012253404770951252
+        },
+        "potential_energy": 774.4286404558612,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 3.2202237666787297e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 1.1472821820093408,
+      "seconds": {
+        "certificate": 0.5800233810005011,
+        "cold_fem": 101.82362597700558
+      },
+      "true": {
+        "energy": 0.4864096724160703,
+        "p_relative_l2": 0.012250646657697461,
+        "u_relative_l2": 0.001225992313419353
+      },
+      "vertex_gap": 5.551115123125783e-17
+    },
+    {
+      "case_id": "candidate-002164",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.05510234495466193,
+        "eta_energy": 0.3320175810406658,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 0.9997189275520965,
+          "p_l2_change": 0.01039281685827229,
+          "u_l2_change": 0.0012396979458083456
+        },
+        "potential_energy": 499.20591836899376,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 2.644413147908564e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 0.9196590726575705,
+      "seconds": {
+        "certificate": 0.6089248350035632,
+        "cold_fem": 104.8032271550037
+      },
+      "true": {
+        "energy": 0.33201788337931587,
+        "p_relative_l2": 0.010387717640204847,
+        "u_relative_l2": 0.0012391462626152375
+      },
+      "vertex_gap": 2.7755575615628914e-17
+    },
+    {
+      "case_id": "candidate-002230",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.1311798315064152,
+        "eta_energy": 0.5121413704513771,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.0002702352884347,
+          "p_l2_change": 0.007397374977969438,
+          "u_l2_change": 0.000705559418586613
+        },
+        "potential_energy": 2505.35501113141,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 6.657903175833148e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 0.8914741798474726,
+      "seconds": {
+        "certificate": 0.646845816008863,
+        "cold_fem": 119.77173962899542
+      },
+      "true": {
+        "energy": 0.5121418683205747,
+        "p_relative_l2": 0.007401184086793736,
+        "u_relative_l2": 0.0007061488041064064
+      },
+      "vertex_gap": 1.1102230246251565e-16
+    },
+    {
+      "case_id": "candidate-002298",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.05815084423352346,
+        "eta_energy": 0.34104019495320337,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 0.9999421700768882,
+          "p_l2_change": 0.006505804595183358,
+          "u_l2_change": 0.00043303498605238243
+        },
+        "potential_energy": 1335.165033079857,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 5.558653799454586e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 1.073211600773635,
+      "seconds": {
+        "certificate": 0.6660993479890749,
+        "cold_fem": 120.1956792580022
+      },
+      "true": {
+        "energy": 0.3410402474242207,
+        "p_relative_l2": 0.0065049400948990425,
+        "u_relative_l2": 0.00043291934054705153
+      },
+      "vertex_gap": 5.551115123125783e-17
+    },
+    {
+      "case_id": "candidate-002356",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.17422152361996268,
+        "eta_energy": 0.590280000802859,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.0000360700135236,
+          "p_l2_change": 0.010670744336482059,
+          "u_l2_change": 0.001005263506304898
+        },
+        "potential_energy": 1532.5098187600597,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 6.795615060236667e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 1.2290034976061086,
+      "seconds": {
+        "certificate": 0.6226870019891066,
+        "cold_fem": 98.9884433690022
+      },
+      "true": {
+        "energy": 0.5902804535991134,
+        "p_relative_l2": 0.010671599498746433,
+        "u_relative_l2": 0.0010049599130206224
+      },
+      "vertex_gap": 5.551115123125783e-17
+    },
+    {
+      "case_id": "candidate-002569",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.153895075535047,
+        "eta_energy": 0.554762028251623,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.000095018826239,
+          "p_l2_change": 0.009270508006126051,
+          "u_l2_change": 0.0005275168014224781
+        },
+        "potential_energy": 1752.270148554831,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 9.282154006351542e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 1.3186805656781626,
+      "seconds": {
+        "certificate": 0.5870316890068352,
+        "cold_fem": 138.83822173099907
+      },
+      "true": {
+        "energy": 0.5547625686567046,
+        "p_relative_l2": 0.009271529326403934,
+        "u_relative_l2": 0.000527616864596237
+      },
+      "vertex_gap": 1.1102230246251565e-16
+    },
+    {
+      "case_id": "candidate-002610",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.17125256035978964,
+        "eta_energy": 0.5852851639726189,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 0.9998435233340999,
+          "p_l2_change": 0.008249211073206574,
+          "u_l2_change": 0.0006078403980371461
+        },
+        "potential_energy": 2557.1555031853604,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 7.503910233612795e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 1.073211600773635,
+      "seconds": {
+        "certificate": 1.053038900005049,
+        "cold_fem": 143.75312515199766
+      },
+      "true": {
+        "energy": 0.5852866565043215,
+        "p_relative_l2": 0.008246659235260285,
+        "u_relative_l2": 0.0006077382122095422
+      },
+      "vertex_gap": 1.1102230246251565e-16
+    },
+    {
+      "case_id": "candidate-002629",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.48091663214381697,
+        "eta_energy": 0.980730748592179,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.0000004814282248,
+          "p_l2_change": 0.02127808035948254,
+          "u_l2_change": 0.0025941360872313874
+        },
+        "potential_energy": 1043.6418099822708,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 4.817594339503229e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 1.742178037721186,
+      "seconds": {
+        "certificate": 0.5592171590105863,
+        "cold_fem": 119.8965123819944
+      },
+      "true": {
+        "energy": 0.9807328223138775,
+        "p_relative_l2": 0.02127851188404646,
+        "u_relative_l2": 0.0025920897313996636
+      },
+      "vertex_gap": 5.551115123125783e-17
+    },
+    {
+      "case_id": "candidate-002652",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.15465637821148448,
+        "eta_energy": 0.5561548652258033,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.0000146207185545,
+          "p_l2_change": 0.012685227624433283,
+          "u_l2_change": 0.0008313238884154824
+        },
+        "potential_energy": 946.6817609573068,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 8.391525778146387e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 1.073211600773635,
+      "seconds": {
+        "certificate": 1.2792524230026174,
+        "cold_fem": 140.39145088499936
+      },
+      "true": {
+        "energy": 0.5561554519181191,
+        "p_relative_l2": 0.012685361825115725,
+        "u_relative_l2": 0.0008314443975067571
+      },
+      "vertex_gap": 1.1102230246251565e-16
+    },
+    {
+      "case_id": "candidate-002821",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.07499792742373756,
+        "eta_energy": 0.3873192334052407,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 0.9998644565073768,
+          "p_l2_change": 0.009723785800187477,
+          "u_l2_change": 0.0008482611498059907
+        },
+        "potential_energy": 749.861642435073,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 4.495054254529042e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 0.7833459571302505,
+      "seconds": {
+        "certificate": 0.857004120000056,
+        "cold_fem": 148.14735649600334
+      },
+      "true": {
+        "energy": 0.38731944800900475,
+        "p_relative_l2": 0.009721498719988599,
+        "u_relative_l2": 0.0008478919248536959
+      },
+      "vertex_gap": 5.551115123125783e-17
+    },
+    {
+      "case_id": "candidate-002828",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.08108655690011801,
+        "eta_energy": 0.4027181817459544,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 0.999945615961538,
+          "p_l2_change": 0.00853736215911141,
+          "u_l2_change": 0.0007232012673328644
+        },
+        "potential_energy": 1115.2426748648434,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 6.51089786728081e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 1.2290034976061086,
+      "seconds": {
+        "certificate": 0.7985416960000293,
+        "cold_fem": 144.02087602500978
+      },
+      "true": {
+        "energy": 0.40271876638681037,
+        "p_relative_l2": 0.008536388168470913,
+        "u_relative_l2": 0.0007229360422427998
+      },
+      "vertex_gap": 5.551115123125783e-17
+    },
+    {
+      "case_id": "candidate-002859",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.398998845836104,
+        "eta_energy": 0.8932753650109508,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.0000712006845944,
+          "p_l2_change": 0.012825018907593445,
+          "u_l2_change": 0.001439448016944569
+        },
+        "potential_energy": 2412.9106607380418,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 8.368602194674089e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 1.4121475194047333,
+      "seconds": {
+        "certificate": 1.0309670230053598,
+        "cold_fem": 148.80221256699588
+      },
+      "true": {
+        "energy": 0.893288943682748,
+        "p_relative_l2": 0.012827567219850544,
+        "u_relative_l2": 0.0014407732150052263
+      },
+      "vertex_gap": 1.6653345369377348e-16
+    },
+    {
+      "case_id": "candidate-002866",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.11730701789792874,
+        "eta_energy": 0.48430069169309087,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.0002851273980828,
+          "p_l2_change": 0.0074542139872136315,
+          "u_l2_change": 0.0007354823003443289
+        },
+        "potential_energy": 2127.237871917028,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 6.070161964537881e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 0.9744975770426508,
+      "seconds": {
+        "certificate": 0.6004879000101937,
+        "cold_fem": 147.30113167499076
+      },
+      "true": {
+        "energy": 0.4843011864383234,
+        "p_relative_l2": 0.007458095505868097,
+        "u_relative_l2": 0.0007358623651152157
+      },
+      "vertex_gap": 1.6653345369377348e-16
+    },
+    {
+      "case_id": "candidate-002878",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.08758736404979572,
+        "eta_energy": 0.4184872268880497,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.0002464948714618,
+          "p_l2_change": 0.008521394620165617,
+          "u_l2_change": 0.0011858625058406265
+        },
+        "potential_energy": 1237.5357068935796,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 4.990536667664211e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 0.831944521631686,
+      "seconds": {
+        "certificate": 0.6156251490028808,
+        "cold_fem": 152.38741251999454
+      },
+      "true": {
+        "energy": 0.41848759327225765,
+        "p_relative_l2": 0.008525145200737253,
+        "u_relative_l2": 0.0011858060292628907
+      },
+      "vertex_gap": 1.1102230246251565e-16
+    },
+    {
+      "case_id": "candidate-002933",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.13728966570420198,
+        "eta_energy": 0.5240154282020544,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 0.9999532485379117,
+          "p_l2_change": 0.008798425724031058,
+          "u_l2_change": 0.00034974314027223373
+        },
+        "potential_energy": 1674.0042643782524,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 8.57626382514654e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 1.5395950672481764,
+      "seconds": {
+        "certificate": 0.8540173070068704,
+        "cold_fem": 156.30623960999947
+      },
+      "true": {
+        "energy": 0.5240156712410793,
+        "p_relative_l2": 0.008797692825181206,
+        "u_relative_l2": 0.00034962063039801415
+      },
+      "vertex_gap": 1.1102230246251565e-16
+    },
+    {
+      "case_id": "candidate-002965",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.09600737223559008,
+        "eta_energy": 0.4381879592038543,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.0000315448223593,
+          "p_l2_change": 0.010308057454449885,
+          "u_l2_change": 0.0008491763869173383
+        },
+        "potential_energy": 882.7945007478405,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 3.6824562416351615e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 0.9744975770426508,
+      "seconds": {
+        "certificate": 0.7684606840048218,
+        "cold_fem": 133.6220006950025
+      },
+      "true": {
+        "energy": 0.43818810104512107,
+        "p_relative_l2": 0.01030888508328713,
+        "u_relative_l2": 0.0008494353448912029
+      },
+      "vertex_gap": 0.0
+    },
+    {
+      "case_id": "candidate-002972",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.0778576942093423,
+        "eta_energy": 0.39468323225939766,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 0.9996182605434687,
+          "p_l2_change": 0.00804011066372604,
+          "u_l2_change": 0.0005658851613972346
+        },
+        "potential_energy": 1178.2317667530647,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 4.794814793601019e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 1.0507979480978833,
+      "seconds": {
+        "certificate": 0.5928348379966337,
+        "cold_fem": 158.61093928699847
+      },
+      "true": {
+        "energy": 0.39468543529377426,
+        "p_relative_l2": 0.008034586625507685,
+        "u_relative_l2": 0.0005659778178228813
+      },
+      "vertex_gap": 5.551115123125783e-17
+    },
+    {
+      "case_id": "candidate-003023",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.039759169939713956,
+        "eta_energy": 0.28197755641074135,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.000088007067306,
+          "p_l2_change": 0.009664825243954322,
+          "u_l2_change": 0.001597078643906895
+        },
+        "potential_energy": 417.08935482823887,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 3.383578592873229e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 0.9744975770426508,
+      "seconds": {
+        "certificate": 0.6008823140000459,
+        "cold_fem": 103.04226066399133
+      },
+      "true": {
+        "energy": 0.281977640512716,
+        "p_relative_l2": 0.009666277807812387,
+        "u_relative_l2": 0.001597371220061008
+      },
+      "vertex_gap": 5.551115123125783e-17
+    },
+    {
+      "case_id": "candidate-003052",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.12127191058584685,
+        "eta_energy": 0.49246710739246213,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.000082339563888,
+          "p_l2_change": 0.008708835538080772,
+          "u_l2_change": 0.0007012211137934096
+        },
+        "potential_energy": 1595.10453233588,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 7.437938218958363e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 1.073211600773635,
+      "seconds": {
+        "certificate": 0.6602610949921655,
+        "cold_fem": 100.44793780399777
+      },
+      "true": {
+        "energy": 0.4924673822046993,
+        "p_relative_l2": 0.008709922585264093,
+        "u_relative_l2": 0.0007012247712677305
+      },
+      "vertex_gap": 5.551115123125783e-17
+    },
+    {
+      "case_id": "candidate-003144",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.06700292965126664,
+        "eta_energy": 0.3660988478209189,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 0.9998320723151399,
+          "p_l2_change": 0.009123235256948066,
+          "u_l2_change": 0.0007502738740615104
+        },
+        "potential_energy": 789.0051314741398,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 3.79109660089186e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 0.9196590726575705,
+      "seconds": {
+        "certificate": 0.5686217229958856,
+        "cold_fem": 121.66661844000919
+      },
+      "true": {
+        "energy": 0.3661013214282405,
+        "p_relative_l2": 0.009120852501626961,
+        "u_relative_l2": 0.0007505785778301902
+      },
+      "vertex_gap": 0.0
+    },
+    {
+      "case_id": "candidate-003268",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.10971640582101827,
+        "eta_energy": 0.46840533182185073,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.0001333468043148,
+          "p_l2_change": 0.012138119347815212,
+          "u_l2_change": 0.0008488229775156449
+        },
+        "potential_energy": 745.2293009861814,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 5.219417327098148e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 0.9196590726575705,
+      "seconds": {
+        "certificate": 0.5902460839861305,
+        "cold_fem": 94.93284398500691
+      },
+      "true": {
+        "energy": 0.4684057687864232,
+        "p_relative_l2": 0.012141002249177042,
+        "u_relative_l2": 0.0008489444857470397
+      },
+      "vertex_gap": 5.551115123125783e-17
+    },
+    {
+      "case_id": "candidate-003369",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.10697771144054968,
+        "eta_energy": 0.4625529958374665,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.0000006960468013,
+          "p_l2_change": 0.008752295606920925,
+          "u_l2_change": 0.0005916654790743342
+        },
+        "potential_energy": 1389.7185279113132,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 7.298902113784761e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 1.0507979480978833,
+      "seconds": {
+        "certificate": 0.5731614659889601,
+        "cold_fem": 113.72675629500009
+      },
+      "true": {
+        "energy": 0.4625533324107049,
+        "p_relative_l2": 0.008752204623430576,
+        "u_relative_l2": 0.0005916246906398803
+      },
+      "vertex_gap": 1.1102230246251565e-16
+    },
+    {
+      "case_id": "candidate-003581",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.05023891979351447,
+        "eta_energy": 0.31700418960597093,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 0.9998625095731518,
+          "p_l2_change": 0.011090474753182972,
+          "u_l2_change": 0.0005566884502096809
+        },
+        "potential_energy": 401.0601823057542,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 4.862411716434049e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 0.8914741798474726,
+      "seconds": {
+        "certificate": 0.5775667549896752,
+        "cold_fem": 92.41000540000095
+      },
+      "true": {
+        "energy": 0.31700430591155554,
+        "p_relative_l2": 0.011087736858962086,
+        "u_relative_l2": 0.0005564628358086059
+      },
+      "vertex_gap": 5.551115123125783e-17
+    },
+    {
+      "case_id": "candidate-003584",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.07175904703922242,
+        "eta_energy": 0.3788435439604625,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 0.9999697836634048,
+          "p_l2_change": 0.0084929396204954,
+          "u_l2_change": 0.0005689212777175277
+        },
+        "potential_energy": 1002.0865606492229,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 1.0198474354513429e-12,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 1.3186805656781626,
+      "seconds": {
+        "certificate": 0.5832512540073367,
+        "cold_fem": 94.04812163600582
+      },
+      "true": {
+        "energy": 0.37884383436794244,
+        "p_relative_l2": 0.008492252311910429,
+        "u_relative_l2": 0.0005692779642700599
+      },
+      "vertex_gap": 1.1102230246251565e-16
+    },
+    {
+      "case_id": "candidate-003632",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.05333142887536724,
+        "eta_energy": 0.3265852931241781,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.000045979371999,
+          "p_l2_change": 0.012811041947458147,
+          "u_l2_change": 0.0008265256559726906
+        },
+        "potential_energy": 326.7636020586009,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 2.7063946828140707e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 1.073211600773635,
+      "seconds": {
+        "certificate": 0.5664689510012977,
+        "cold_fem": 94.2556560630037
+      },
+      "true": {
+        "energy": 0.3265854596461059,
+        "p_relative_l2": 0.012811779696471058,
+        "u_relative_l2": 0.0008263035570250627
+      },
+      "vertex_gap": 5.551115123125783e-17
+    },
+    {
+      "case_id": "candidate-003636",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.17275566844773493,
+        "eta_energy": 0.5878806731441693,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 0.9997327894210883,
+          "p_l2_change": 0.008474901258602936,
+          "u_l2_change": 0.000666667676782312
+        },
+        "potential_energy": 2375.144730584429,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 7.377042154923571e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 1.4121475194047333,
+      "seconds": {
+        "certificate": 0.5695240200002445,
+        "cold_fem": 115.7038948660047
+      },
+      "true": {
+        "energy": 0.5878832938668531,
+        "p_relative_l2": 0.008470501212035676,
+        "u_relative_l2": 0.0006666743615429721
+      },
+      "vertex_gap": 0.0
+    },
+    {
+      "case_id": "candidate-003673",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.08277456992880161,
+        "eta_energy": 0.40684045122650164,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 1.00018116999103,
+          "p_l2_change": 0.010517264601096478,
+          "u_l2_change": 0.0005184522461617457
+        },
+        "potential_energy": 752.0887221922909,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 4.85967555910611e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 0.8914741798474726,
+      "seconds": {
+        "certificate": 0.5868394880089909,
+        "cold_fem": 90.93125140300253
+      },
+      "true": {
+        "energy": 0.4068406361374473,
+        "p_relative_l2": 0.0105205318647196,
+        "u_relative_l2": 0.000518633501725129
+      },
+      "vertex_gap": 8.326672684688674e-17
+    },
+    {
+      "case_id": "candidate-003729",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.06452314242255852,
+        "eta_energy": 0.35924452777036686,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 0.9999198345115776,
+          "p_l2_change": 0.01091997704599559,
+          "u_l2_change": 0.0006405601900201558
+        },
+        "potential_energy": 549.9479413374224,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 4.2946194854779864e-13,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 0.8914741798474726,
+      "seconds": {
+        "certificate": 0.5000156430032803,
+        "cold_fem": 89.90495012501196
+      },
+      "true": {
+        "energy": 0.35924483239020855,
+        "p_relative_l2": 0.010918296786106296,
+        "u_relative_l2": 0.0006409017402464034
+      },
+      "vertex_gap": 8.326672684688674e-17
+    },
+    {
+      "case_id": "candidate-003829",
+      "certificate": {
+        "dirichlet_deviation": 0.0,
+        "dof_count": 7458,
+        "energy_drop": 0.12955161400964244,
+        "eta_energy": 0.5090549616545562,
+        "guards": {
+          "admissible": true,
+          "energy_decrease": true,
+          "increment_solved": true,
+          "positive_curvature": true,
+          "positive_definite": true,
+          "step_admissible": true
+        },
+        "indicators": {
+          "energy_ratio": 0.9998698527349412,
+          "p_l2_change": 0.009150712782917025,
+          "u_l2_change": 0.001444806191663649
+        },
+        "potential_energy": 1476.4363660618346,
+        "reason": "",
+        "schema_version": "1.0",
+        "verdict": "OK"
+      },
+      "floor_eta": 1.823126748053653e-12,
+      "mesh_id_equal": true,
+      "s14_indicator_median": 0.7833459571302505,
+      "seconds": {
+        "certificate": 0.49706560900085606,
+        "cold_fem": 90.33108823800285
+      },
+      "true": {
+        "energy": 0.5090551939362007,
+        "p_relative_l2": 0.009148652275277171,
+        "u_relative_l2": 0.0014439311633964765
+      },
+      "vertex_gap": 5.551115123125783e-17
+    }
+  ],
+  "schema_version": "1.0",
+  "summary": {
+    "cases": 64,
+    "certificates_ok": 64,
+    "cost_ratio": 0.005203242777150885,
+    "effectivity_cases": 64,
+    "effectivity_median": 0.9999992710570689,
+    "effectivity_within_band": 1.0,
+    "energy_ratio_median": 1.0000338074179416,
+    "max_dirichlet_deviation": 0.0,
+    "max_vertex_gap": 1.6653345369377348e-16,
+    "mesh_identity": true,
+    "reproduction_cases": 8,
+    "reproduction_max_relative": 9.330510967381591e-11,
+    "spearman_eta_energy": 0.9999999999999998,
+    "spearman_s14_stress": 0.18836569754199453,
+    "spearman_stress": 0.9999542124542123
+  },
+  "workers": 3
+}
