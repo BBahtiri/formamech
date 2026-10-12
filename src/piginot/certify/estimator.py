@@ -71,6 +71,24 @@ def certify(
 ) -> Certificate:
     """The certificate of one surrogate displacement on the request's mesh."""
 
+    return certify_with_correction(
+        linearization, nodal_displacement, qoi_functions=qoi_functions
+    )[0]
+
+
+def certify_with_correction(
+    linearization: FemLinearization,
+    nodal_displacement: FloatArray,
+    *,
+    qoi_functions: Mapping[str, QoiFunction] | None = None,
+) -> tuple[Certificate, FloatArray | None]:
+    """The certificate and, if it is ``OK``, the corrected full DOF vector.
+
+    The corrected state is the surrogate plus its Newton increment (Dirichlet
+    DOFs at their prescribed values); S21 found it to coincide with the
+    converged discrete solution to the certificate's resolution.
+    """
+
     raw = linearization.vector(nodal_displacement)
     deviation = linearization.dirichlet_deviation(raw)
     vector = linearization.with_exact_dirichlet(raw)
@@ -78,7 +96,7 @@ def certify(
     try:
         before = linearization.state(vector)
     except FemSolveFailure as exc:
-        return Certificate(
+        certificate = Certificate(
             CertificateVerdict.INADMISSIBLE,
             None,
             None,
@@ -88,13 +106,14 @@ def certify(
             dof_count=dofs,
             reason=f"{exc.code.value}: {exc}",
         )
+        return certificate, None
     guards: dict[str, bool | None] = {"admissible": True}
     try:
         increment = linearization.newton_increment(before)
         guards["increment_solved"] = True
     except FemSolveFailure as exc:
         guards["increment_solved"] = False
-        return Certificate(
+        certificate = Certificate(
             CertificateVerdict.INDEFINITE,
             None,
             None,
@@ -104,6 +123,7 @@ def certify(
             dof_count=dofs,
             reason=f"{exc.code.value}: {exc}",
         )
+        return certificate, None
     curvature = float(
         increment[linearization.constraints.free]
         @ (
@@ -123,7 +143,7 @@ def certify(
         guards["step_admissible"] = True
     except FemSolveFailure as exc:
         guards["step_admissible"] = False
-        return Certificate(
+        certificate = Certificate(
             CertificateVerdict.INDEFINITE,
             None,
             None,
@@ -133,6 +153,7 @@ def certify(
             dof_count=dofs,
             reason=f"Newton step leaves the admissible set: {exc.code.value}",
         )
+        return certificate, None
     energy_drop = before.potential_energy - after.potential_energy
     guards["energy_decrease"] = energy_drop > 0.0
     eta = float(np.sqrt(max(curvature, 0.0)))
@@ -159,7 +180,7 @@ def certify(
     ok = all(guards[name] for name in required) and definite is not False
     if definite is None and not linearization.has_global_constraints:
         ok = False  # pivoting hid the inertia: refuse rather than guess
-    return Certificate(
+    certificate = Certificate(
         CertificateVerdict.OK if ok else CertificateVerdict.INDEFINITE,
         eta,
         energy_drop,
@@ -182,3 +203,4 @@ def certify(
             )
         ),
     )
+    return certificate, (vector + increment if ok else None)

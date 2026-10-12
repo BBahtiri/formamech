@@ -171,6 +171,36 @@ class EnergyFormServing:
             torch.cat(u_parts), torch.cat(gradient_parts), torch.cat(stress_parts)
         )
 
+    def displacement(
+        self,
+        query_xy: torch.Tensor,
+        *,
+        parameters: torch.Tensor,
+        frame: QueryFrame,
+        lifting: DirichletLifting,
+        chunk: int,
+    ) -> torch.Tensor:
+        """Only ``u`` at ``query_xy``, chunked exactly as :meth:`serve` (S22).
+
+        ``serve`` computes ``u`` with this same forward pass before taking
+        gradients, so the values are bit-identical to its ``u``; the stress
+        and gradient work is skipped. Used to evaluate the operator at FEM
+        displacement nodes for certificates and warm starts.
+        """
+
+        parts: list[torch.Tensor] = []
+        with torch.no_grad():
+            for start in range(0, query_xy.shape[0], chunk):
+                points = query_xy[start : start + chunk].unsqueeze(0)
+                u = self._model.displacement(
+                    query_xy=points,
+                    parameters=parameters,
+                    frame=frame,
+                    lifting=lifting,
+                )
+                parts.append(u[0].detach())
+        return torch.cat(parts)
+
     def residual(
         self,
         query_xy: torch.Tensor,

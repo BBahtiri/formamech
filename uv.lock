@@ -991,6 +991,15 @@ runtime = [
     { name = "safetensors" },
     { name = "torch" },
 ]
+verify = [
+    { name = "numpy" },
+    { name = "safetensors" },
+    { name = "scikit-fem" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "scipy", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "sympy" },
+    { name = "torch" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -1000,6 +1009,7 @@ requires-dist = [
     { name = "numpy", marker = "extra == 'fem'", specifier = ">=1.26,<2.3" },
     { name = "numpy", marker = "extra == 'geometry'", specifier = ">=1.26,<2.3" },
     { name = "numpy", marker = "extra == 'runtime'", specifier = ">=1.26,<2.3" },
+    { name = "numpy", marker = "extra == 'verify'", specifier = ">=1.26,<2.3" },
     { name = "pip-audit", marker = "extra == 'dev'", specifier = ">=2.8,<3" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.1,<5" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3,<10" },
@@ -1008,16 +1018,21 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.9,<1" },
     { name = "safetensors", marker = "extra == 'ml'", specifier = ">=0.8,<1" },
     { name = "safetensors", marker = "extra == 'runtime'", specifier = ">=0.8,<1" },
+    { name = "safetensors", marker = "extra == 'verify'", specifier = ">=0.8,<1" },
     { name = "scikit-fem", marker = "extra == 'fem'", specifier = ">=11,<13" },
+    { name = "scikit-fem", marker = "extra == 'verify'", specifier = ">=11,<13" },
     { name = "scipy", marker = "extra == 'fem'", specifier = ">=1.12,<2" },
+    { name = "scipy", marker = "extra == 'verify'", specifier = ">=1.12,<2" },
     { name = "setuptools", marker = "extra == 'dev'", specifier = ">=83" },
     { name = "sympy", marker = "extra == 'fem'", specifier = ">=1.13,<2" },
+    { name = "sympy", marker = "extra == 'verify'", specifier = ">=1.13,<2" },
     { name = "torch", marker = "extra == 'fem'", specifier = ">=2.6,<3" },
     { name = "torch", marker = "extra == 'ml'", specifier = ">=2.6,<3" },
     { name = "torch", marker = "extra == 'physics'", specifier = ">=2.6,<3" },
     { name = "torch", marker = "extra == 'runtime'", specifier = ">=2.6,<3" },
+    { name = "torch", marker = "extra == 'verify'", specifier = ">=2.6,<3" },
 ]
-provides-extras = ["fem", "geometry", "physics", "ml", "runtime", "dev"]
+provides-extras = ["fem", "geometry", "physics", "ml", "runtime", "verify", "dev"]
 
 [[package]]
 name = "pip"
