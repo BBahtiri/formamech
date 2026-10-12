@@ -34,10 +34,13 @@ def test_a_recipe_rebuilds_an_s10_request_byte_for_byte() -> None:
     ]["case_ids"][5]
     case, inputs = s22_recipes.case_inputs("notched-v1", case_id)
     family = s21.runtime("notched-v1")
-    reference = family.s10_request(case, family.profile())
     served = predict(s21._bundle(BUNDLE), inputs, confidence=False).mesh
     assert served is not None
     built = recipe.build_request(inputs, served, case_id)
+    # The recipe carries the registered S10 execution profile (Python 3.11.15
+    # on the reference machine); the campaign builds its profile from the
+    # running interpreter, so the comparison uses the recipe's profile.
+    reference = family.s10_request(case, built.execution_profile)
     assert canonical_json_bytes(built) == canonical_json_bytes(reference)
 
 
