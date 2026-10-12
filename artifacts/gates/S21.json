@@ -1,0 +1,262 @@
+{
+  "gate_id": "G21",
+  "step": "S21",
+  "commit": "b86e245a9ea24ac16a36e0cf16c92ed5ddc2f057",
+  "timestamp_utc": "2026-10-12T07:37:14Z",
+  "execution_profile": {
+    "python": "3.11.15",
+    "system": "Linux",
+    "machine": "x86_64",
+    "torch": "2.13.0+cu130",
+    "cpu_capability": "AVX2"
+  },
+  "checks": [
+    {
+      "id": "G21.protocol-first",
+      "status": "PASS",
+      "measured": {
+        "protocol_commit": "934893eb5675765e4140068e0689830d6046c2d2",
+        "protocol_commits": 1,
+        "results": {
+          "dogbone-v1": "9571f02ded82379de86fc8edf1fea149338cffa9",
+          "notched-v1": "9571f02ded82379de86fc8edf1fea149338cffa9"
+        }
+      },
+      "threshold": "protocol committed once, before both results files",
+      "comparison": "all"
+    },
+    {
+      "id": "G21.reference-machine",
+      "status": "PASS",
+      "measured": {
+        "dogbone-v1": {
+          "cpu_capability": "AVX2",
+          "machine": "x86_64",
+          "os": "Linux"
+        },
+        "notched-v1": {
+          "cpu_capability": "AVX2",
+          "machine": "x86_64",
+          "os": "Linux"
+        }
+      },
+      "threshold": {
+        "cpu_capability": "AVX2",
+        "machine": "x86_64",
+        "os": "Linux"
+      },
+      "comparison": "all"
+    },
+    {
+      "id": "G21.recompute",
+      "status": "PASS",
+      "measured": {
+        "cases_in_protocol_order": {
+          "dogbone-v1": true,
+          "notched-v1": true
+        },
+        "summary_recomputes": {
+          "dogbone-v1": true,
+          "notched-v1": true
+        }
+      },
+      "threshold": "records cover the protocol's cases in order; summaries recompute exactly",
+      "comparison": "all"
+    },
+    {
+      "id": "G21.integrity",
+      "status": "PASS",
+      "measured": {
+        "dogbone-v1": {
+          "cases": 64,
+          "certificates_ok": 64,
+          "reproduction_cases": 8,
+          "reproduction_max_relative": 9.330510967381591e-11,
+          "mesh_identity": true,
+          "max_vertex_gap": 1.6653345369377348e-16,
+          "max_dirichlet_deviation": 0.0,
+          "pass": true
+        },
+        "notched-v1": {
+          "cases": 64,
+          "certificates_ok": 64,
+          "reproduction_cases": 8,
+          "reproduction_max_relative": 9.295800205042727e-13,
+          "mesh_identity": true,
+          "max_vertex_gap": 4.440892098500626e-16,
+          "max_dirichlet_deviation": 0.0,
+          "pass": true
+        }
+      },
+      "threshold": {
+        "dirichlet_deviation_at_most": 1e-09,
+        "every_certificate_ok": true,
+        "mesh_identity": true,
+        "reproduction_relative_at_most": 1e-06,
+        "vertex_gap_at_most": 1e-09
+      },
+      "comparison": "all"
+    },
+    {
+      "id": "G21.rank",
+      "status": "PASS",
+      "measured": {
+        "dogbone-v1": {
+          "spearman_eta_energy": 0.9999999999999998,
+          "pass": true
+        },
+        "notched-v1": {
+          "spearman_eta_energy": 0.9999999999999998,
+          "pass": true
+        }
+      },
+      "threshold": {
+        "spearman_eta_energy_at_least": 0.8
+      },
+      "comparison": "all"
+    },
+    {
+      "id": "G21.effectivity",
+      "status": "PASS",
+      "measured": {
+        "dogbone-v1": {
+          "effectivity_cases": 64,
+          "effectivity_within_band": 1.0,
+          "effectivity_median": 0.9999992710570689,
+          "pass": true
+        },
+        "notched-v1": {
+          "effectivity_cases": 64,
+          "effectivity_within_band": 1.0,
+          "effectivity_median": 0.9999990139802319,
+          "pass": true
+        }
+      },
+      "threshold": {
+        "effectivity_band": [
+          0.5,
+          2.0
+        ],
+        "effectivity_within_band_at_least": 0.9
+      },
+      "comparison": "all"
+    },
+    {
+      "id": "G21.stress",
+      "status": "PASS",
+      "measured": {
+        "dogbone-v1": {
+          "spearman_stress": 0.9999542124542123,
+          "pass": true
+        },
+        "notched-v1": {
+          "spearman_stress": 0.9999999999999998,
+          "pass": true
+        }
+      },
+      "threshold": {
+        "spearman_stress_at_least": 0.7
+      },
+      "comparison": "all"
+    },
+    {
+      "id": "G21.versus-s14",
+      "status": "PASS",
+      "measured": {
+        "dogbone-v1": {
+          "spearman_stress": 0.9999542124542123,
+          "spearman_s14_stress": 0.18836569754199453,
+          "pass": true
+        },
+        "notched-v1": {
+          "spearman_stress": 0.9999999999999998,
+          "spearman_s14_stress": 0.4756819797852052,
+          "pass": true
+        }
+      },
+      "threshold": "the certificate ranks the stress error at least as well as the S14 indicator",
+      "comparison": "all"
+    },
+    {
+      "id": "G21.cost",
+      "status": "PASS",
+      "measured": {
+        "dogbone-v1": {
+          "cost_ratio": 0.005203242777150885,
+          "pass": true
+        },
+        "notched-v1": {
+          "cost_ratio": 0.005724474480384579,
+          "pass": true
+        }
+      },
+      "threshold": {
+        "cost_ratio_at_most": 0.1
+      },
+      "comparison": "all"
+    },
+    {
+      "id": "G21.determinism",
+      "status": "PASS",
+      "measured": {
+        "dogbone-v1": {
+          "case_id": "candidate-000156",
+          "equal": true,
+          "differing_fields": [],
+          "max_relative_difference": 0.0
+        },
+        "notched-v1": {
+          "case_id": "candidate-000020",
+          "equal": true,
+          "differing_fields": [],
+          "max_relative_difference": 0.0
+        }
+      },
+      "threshold": "a certificate re-issued under the protocol's conditions (one torch thread, same prediction options) equals the recorded one byte for byte",
+      "comparison": "all"
+    },
+    {
+      "id": "G21.quality",
+      "status": "PASS",
+      "measured": {
+        "tools": {
+          "ruff_check": 0,
+          "ruff_format": 0,
+          "mypy_strict": 0
+        },
+        "suite": {
+          "schema_version": "1.0",
+          "tree": "30443b00cf8e65d181c2e75742155ca9f094632e",
+          "commit": "b86e245a9ea24ac16a36e0cf16c92ed5ddc2f057",
+          "clean": true,
+          "branch_coverage": true,
+          "coverage_percent": 91.59,
+          "certify_coverage_percent": 98.55,
+          "summary": "3192 passed, 1 skipped in 2307.25s (0:38:27)",
+          "counts": {
+            "passed": 3192,
+            "skipped": 1
+          },
+          "skips": [],
+          "execution_profile": {
+            "python": "3.11.15",
+            "system": "Linux",
+            "machine": "x86_64",
+            "torch": "2.13.0+cu130",
+            "cpu_capability": "AVX2"
+          }
+        }
+      },
+      "threshold": {
+        "tools": "exit 0",
+        "suite": "recorded Linux run of this code tree, clean, 0 failed, 0 errors",
+        "global_branch_coverage_at_least": 90.5,
+        "piginot.certify_at_least": 90.0
+      },
+      "comparison": "all"
+    }
+  ],
+  "decision_record": "docs/adr/0102-s21-per-prediction-certificate.md",
+  "verdict": "PASS",
+  "verdict_reason": "every required check PASS"
+}
