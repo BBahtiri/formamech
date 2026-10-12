@@ -1,7 +1,7 @@
 # ADR 0102: The per-prediction physics certificate (S21)
 
-- Status: Proposed — technical decision; the G21 thresholds are ratified by
-  the decision owner with the S21 protocol before any DEVELOPMENT scoring
+- Status: Accepted — G21 PASS on 2026-10-11 (`artifacts/gates/S21.json`);
+  thresholds ratified by the decision owner in `artifacts/certify/S21-PROTOCOL.json`
 - Date: 2026-10-11
 - Step: S21 (gate `G21`), `STEPS-v2.0.md` §S21; implementation plan Feature 1a
 
@@ -47,6 +47,25 @@ On the S7 traction test problem (refined unit square, P1 and P2), with smooth
 perturbations of the converged solution over two orders of magnitude, `eta`
 equals the true energy-norm error within ±10% and the energy drop equals
 `eta^2 / 2` within 10% (`tests/certify`).
+
+## Result (G21, reference machine, 64 DEVELOPMENT cases per family)
+
+| Check | DogBone | Notched |
+|---|---|---|
+| Spearman(eta, true energy error), threshold 0.8 | 1.000 | 1.000 |
+| Effectivity in [0.5, 2], threshold 90% of cases | 100% (median 1.000) | 100% (median 1.000) |
+| Spearman(stress change, true stress error), threshold 0.7 | 1.000 | 1.000 |
+| Same ranking by the S14 indicator | 0.19 | 0.48 |
+| Certificate cost / cold FEM solve, threshold 10% | 0.52% | 0.57% |
+
+All 128 certificates are `OK`; the recomputed S10 references reproduce the
+S14 coarse terms to 9e-11 and 9e-13; a re-issued certificate is
+byte-identical. The surrogate is close enough to the discrete solution that
+one Newton step lands on it: the certificate measures each prediction's
+discrete error essentially exactly. G21 first failed its determinism check
+because the gate re-issued with eight torch threads and the evaluation with
+one (summation order, 4.4e-16); the gate now re-issues under the protocol's
+conditions.
 
 ## Consequences
 
