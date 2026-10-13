@@ -177,3 +177,6 @@ the implementation plan's S24, S25 and S26 sections; those of S25, S26 and S29
 are written at the start of each step (ADR 0105). Each step copies its table
 into this document, with the owner's ratified thresholds, before its first
 run.
+
+S24's proposed table is in ADR 0106 (proposed); it is copied here when the
+owner signs it off, before the ADF viability run.
