@@ -6,7 +6,7 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased] - 0.2.0.dev0
 
-Development line S19–S26 (`STEPS-v2.0.md`), forked from `v0.1.0`.
+Development line S19–S29 (`STEPS-v2.0.md`, ADR 0105), forked from `v0.1.0`.
 
 ### Added
 

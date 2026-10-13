@@ -60,7 +60,8 @@ nav:
       - "ADR 0101 — Fresh sealed holdouts and the notched post-mortem": adr/0101-s20-fresh-holdouts-and-post-mortem.md
       - "ADR 0102 — The per-prediction physics certificate": adr/0102-s21-per-prediction-certificate.md
       - "ADR 0103 — Verified serving: fast, certified and exact": adr/0103-s22-verified-serving.md
-      - "ADR 0104 — Calibrated error bounds and envelope gating (proposed)": adr/0104-s23-calibrated-bounds.md
+      - "ADR 0104 — Calibrated error bounds and envelope gating": adr/0104-s23-calibrated-bounds.md
+      - "ADR 0105 — Scope of release 0.2.0 and the step sequence S24–S29": adr/0105-v0.2-scope-and-sequence.md
       - "Upstream sources and licences": adr/upstream-sources.md
 
 theme:

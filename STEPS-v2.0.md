@@ -1,4 +1,4 @@
-# PI-GINOT v2 — Steps S19–S26 with Quality Gates
+# PI-GINOT v2 — Steps S19–S29 with Quality Gates
 
 **Extends:** `STEPS-v1.0.md`. Its gate policy (§0) applies unchanged: `NOT_RUN`
 is never `PASS`, thresholds only tighten, every gate writes
@@ -6,7 +6,9 @@ is never `PASS`, thresholds only tighten, every gate writes
 are per module.
 
 **Plan:** "PI-GINOT S19–S26 implementation plan: top 5 features" (Claude Doc,
-10 Oct 2026). Decision records of this line start at ADR 0100 (ADR 0100).
+10 Oct 2026), extended to S29 for release 0.2.0 by ADR 0105 (user-defined
+hyperelastic materials and the release). Decision records of this line start
+at ADR 0100.
 
 ---
 
@@ -37,12 +39,17 @@ are per module.
 | **S21** | Per-prediction physics certificate | 1 | 1.5 wk | S20 | `G21` |
 | **S22** | Verified serving with Newton warm start | 1 | 1.5 wk | S21 | `G22` |
 | **S23** | Calibrated conformal bounds and envelope gating | 3 | 1 wk | S20, S22 | `G23` ⚑ |
-| **S24** | ProblemSpec and generalized exact BC lifting | 4 | 2–3 wk | S20 | `G24` ⚑ |
-| **S25** | Cross-family geometry encoder | 2 | 4–6 wk | S20, S23, S24 | `G25` ⚑ |
-| **S26** | One-command campaign compiler and evidence report | 5 | 2–3 wk | S23, S24 | `G26` ⚑ |
+| **S24** | ProblemSpec, generalized exact BC lifting, FEM recipes from the spec | 4 | 2–3 wk | S20 | `G24` ⚑ |
+| **S25** | Material registry: isotropic hyperelastic models, energy formula, admission gate | 6 | 2.5–3.5 wk | S24 | `G25` ⚑ |
+| **S26** | Anisotropic hyperelastic models with in-plane fibre families | 6 | 1.5–2 wk | S25 | `G26` ⚑ |
+| **S27** | Cross-family geometry encoder (the plan's S25) | 2 | 4–6 wk | S20, S23, S24 | `G27` ⚑ |
+| **S28** | One-command campaign compiler and evidence report, with a material stage (the plan's S26) | 5 | 2.5–3.5 wk | S23, S24, S26 | `G28` ⚑ |
+| **S29** | Release 0.2.0 | — | 1–2 wk | S28 | `G29` ⚑ |
 
-⚑ = the step needs a signed owner decision (ADR 0101, 0104–0107).
-S24 may run in parallel with S21–S23, and S26 with S25, in separate clones.
+⚑ = the step needs a signed owner decision (ADR 0101, 0104, 0106–0111).
+Feature 6 is user-defined hyperelastic materials (ADR 0105). S27 may run in
+parallel with S25, S26 and S28, in separate clones; S29 does not wait for S27
+if S27's kill rule fires. After S29 the line is feature-frozen (ADR 0105).
 
 ## 2. Gate G19 — fork and baseline lock
 
@@ -163,8 +170,10 @@ once on the fresh H1 set.
 Kill rule: if a coverage count fails on H1, record FAIL, do not retune on H1,
 and serve without bounds; certificates and exact serving are unaffected.
 
-## 7. Gates G24–G26
+## 7. Gates G24–G29
 
-The checks, thresholds and kill criteria of S24–S26 are specified in the
-implementation plan, one table per step. Each step copies its table into this
-document, with the owner's ratified thresholds, before its first run.
+The checks, thresholds and kill criteria of S24, S27 and S28 are specified in
+the implementation plan's S24, S25 and S26 sections; those of S25, S26 and S29
+are written at the start of each step (ADR 0105). Each step copies its table
+into this document, with the owner's ratified thresholds, before its first
+run.
