@@ -282,6 +282,44 @@ print(served.path.value, served.certificate["indicators"]["p_l2_change"])
 
 `inputs` comes from `parse_request` as in the example above.
 
+## Calibrated error bounds (0.2.0.dev, S23)
+
+`--bounds` attaches calibrated 90% upper bounds to a served request, in any
+mode ([ADR 0104](adr/0104-s23-calibrated-bounds.md)). They bound the S14
+budgeted error, the quantity the claim levels and their tolerances are about:
+the prediction's error against the FEM reference plus that reference's own
+discretisation and projection terms.
+
+```bash
+piginot predict bundles/dogbone-v1-s13c-cp-freeze --request bundles/requests/dogbone-in-domain.json --bounds
+```
+
+| Mode | `bounds.kind` | What is bounded |
+| --- | --- | --- |
+| `fast` | `budget_total` | the whole budgeted error of the prediction |
+| `certified`, `exact` | `reference_terms` | only what the FEM mesh adds; the certificate measures the rest |
+
+The bounds are one number per family and quantity, calibrated on the 64
+DEVELOPMENT cases of each bundle:
+
+| Bundle | Bound | Stress field | Peak stress | Displacement |
+| --- | --- | --- | --- | --- |
+| DogBone | `budget_total` | 2.58% | 4.07% | 0.22% |
+| DogBone | `reference_terms` | 1.45% | 2.54% | 0.10% |
+| Notched | `budget_total` | 5.41% | 5.47% | 0.63% |
+| Notched | `reference_terms` | 3.11% | 3.26% | 0.13% |
+
+Read them as: at least 90% of requests drawn like the calibration cases lie
+within the bound. It is a guarantee over requests, not for one particular
+request. A request that is inside the bundle's envelope but further from the
+training cases than any calibration case is served with
+`"status": "OUT_OF_CALIBRATION"` and no bound. The bounds come from the
+sidecars in `bundles/calibration/`, bound to each bundle's manifest; they need
+only `piginot[runtime]`. Without `--bounds` every output is unchanged.
+
+The bounds are tested once on the fresh H1 cases (gate G23); until that test
+has passed, treat them as calibrated but not yet confirmed.
+
 ## 2. Train a small model end to end (Example 1)
 
 Example 1 runs the whole method on one fixed notched geometry (width 23 mm,
