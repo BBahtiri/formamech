@@ -1,0 +1,3809 @@
+{
+  "bundle": "dogbone-v1-s13c-cp-freeze",
+  "bundle_manifest_sha256": "009db9d379d6f94ccda5395762e22c9c810c466a686626d500f1575d45b1bb4c",
+  "calibration_sha256": "96cd6bb3192fc6ac69894051ce52e08f501f11b6757fac5d7d7dcee1e008719e",
+  "campaign_id": "dogbone-v1",
+  "cases": [
+    {
+      "case_id": "fresh-h1-000",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.015407697363547966,
+          "projection": 0.005903332323198455
+        },
+        "p_relative_l2": {
+          "discretisation": 0.010984326310242574,
+          "projection": 0.001653413805694646
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0005893412078512304,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9916280941843043,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:1",
+        "grip_to_gauge_ratio:1",
+        "length_to_gauge_ratio:1"
+      ],
+      "slices": [
+        "all",
+        "L_total:0",
+        "W_grip:0",
+        "W_gauge:0",
+        "R_fillet:0",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.013640860142144707,
+        "p_relative_l2": 0.010108048927382424,
+        "u_relative_l2": 0.0010870700593272689
+      },
+      "terms": {
+        "case_id": "fresh-h1-000",
+        "coarse_p_difference": 0.00557580015748354,
+        "coarse_peak_difference": 0.001953444201585514,
+        "coarse_u_difference": 0.00029915797352854335,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.001653413805694646,
+        "recovery_root_cells": 0.005903332323198455
+      }
+    },
+    {
+      "case_id": "fresh-h1-001",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.01934938908532562,
+          "projection": 0.007413559036523226
+        },
+        "p_relative_l2": {
+          "discretisation": 0.012282366121648585,
+          "projection": 0.002603910012518477
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0008788745576072447,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9934328862453936,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:1",
+        "grip_to_gauge_ratio:2",
+        "length_to_gauge_ratio:1"
+      ],
+      "slices": [
+        "all",
+        "L_total:0",
+        "W_grip:1",
+        "W_gauge:0",
+        "R_fillet:0",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.010403421539687424,
+        "p_relative_l2": 0.010463687073254888,
+        "u_relative_l2": 0.0017343681458995425
+      },
+      "terms": {
+        "case_id": "fresh-h1-001",
+        "coarse_p_difference": 0.006234703615050043,
+        "coarse_peak_difference": 0.0009399418707213198,
+        "coarse_u_difference": 0.00044612921705951513,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.002603910012518477,
+        "recovery_root_cells": 0.007413559036523226
+      }
+    },
+    {
+      "case_id": "fresh-h1-002",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.019902933991510437,
+          "projection": 0.007625645207475264
+        },
+        "p_relative_l2": {
+          "discretisation": 0.012908035423694404,
+          "projection": 0.0028252999814907674
+        },
+        "u_relative_l2": {
+          "discretisation": 0.000981518666148141,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9860303815583363,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:0",
+        "grip_to_gauge_ratio:2",
+        "length_to_gauge_ratio:0"
+      ],
+      "slices": [
+        "all",
+        "L_total:0",
+        "W_grip:2",
+        "W_gauge:1",
+        "R_fillet:0",
+        "nominal_axial_strain:2"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.001879824060349001,
+        "p_relative_l2": 0.010381938830144322,
+        "u_relative_l2": 0.001435019002027344
+      },
+      "terms": {
+        "case_id": "fresh-h1-002",
+        "coarse_p_difference": 0.006552302245530155,
+        "coarse_peak_difference": 0.001168342418748851,
+        "coarse_u_difference": 0.0004982328254559092,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0028252999814907674,
+        "recovery_root_cells": 0.007625645207475264
+      }
+    },
+    {
+      "case_id": "fresh-h1-003",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.018680126431982937,
+          "projection": 0.006398278691335551
+        },
+        "p_relative_l2": {
+          "discretisation": 0.013097440548561051,
+          "projection": 0.0011933253876378663
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0002662008550192714,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9856864032602443,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:0",
+        "grip_to_gauge_ratio:0",
+        "length_to_gauge_ratio:0"
+      ],
+      "slices": [
+        "all",
+        "L_total:0",
+        "W_grip:1",
+        "W_gauge:3",
+        "R_fillet:0",
+        "nominal_axial_strain:1"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.0028188499279181043,
+        "p_relative_l2": 0.014819144281772037,
+        "u_relative_l2": 0.0012947848415867476
+      },
+      "terms": {
+        "case_id": "fresh-h1-003",
+        "coarse_p_difference": 0.006648446978965001,
+        "coarse_peak_difference": 0.009482297681209614,
+        "coarse_u_difference": 0.0001351273375732342,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0011933253876378663,
+        "recovery_root_cells": 0.006398278691335551
+      }
+    },
+    {
+      "case_id": "fresh-h1-004",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.013772542825187507,
+          "projection": 0.005276836331489467
+        },
+        "p_relative_l2": {
+          "discretisation": 0.009573069872205513,
+          "projection": 0.0018542000509731416
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0009341329549367983,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9897828506897498,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:1",
+        "grip_to_gauge_ratio:2",
+        "length_to_gauge_ratio:1"
+      ],
+      "slices": [
+        "all",
+        "L_total:0",
+        "W_grip:1",
+        "W_gauge:0",
+        "R_fillet:1",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.0018903780642752902,
+        "p_relative_l2": 0.009582016336695903,
+        "u_relative_l2": 0.0013970369457161063
+      },
+      "terms": {
+        "case_id": "fresh-h1-004",
+        "coarse_p_difference": 0.004859426331068788,
+        "coarse_peak_difference": 0.000614993107546502,
+        "coarse_u_difference": 0.00047417916494253725,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0018542000509731416,
+        "recovery_root_cells": 0.005276836331489467
+      }
+    },
+    {
+      "case_id": "fresh-h1-005",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.01878440495236877,
+          "projection": 0.007197090020064663
+        },
+        "p_relative_l2": {
+          "discretisation": 0.011185217382429771,
+          "projection": 0.0028085567808547804
+        },
+        "u_relative_l2": {
+          "discretisation": 0.001149485579936092,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.992867004590542,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:1",
+        "grip_to_gauge_ratio:3",
+        "length_to_gauge_ratio:1"
+      ],
+      "slices": [
+        "all",
+        "L_total:0",
+        "W_grip:3",
+        "W_gauge:0",
+        "R_fillet:1",
+        "nominal_axial_strain:1"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.027128152029190607,
+        "p_relative_l2": 0.009448663123396425,
+        "u_relative_l2": 0.0007321233056583872
+      },
+      "terms": {
+        "case_id": "fresh-h1-005",
+        "coarse_p_difference": 0.005677775321030341,
+        "coarse_peak_difference": 0.0010523443762254332,
+        "coarse_u_difference": 0.0005834952182416711,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0028085567808547804,
+        "recovery_root_cells": 0.007197090020064663
+      }
+    },
+    {
+      "case_id": "fresh-h1-006",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.011661178743799882,
+          "projection": 0.0044678845761685375
+        },
+        "p_relative_l2": {
+          "discretisation": 0.009909031833839694,
+          "projection": 0.0011718730686718262
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0004410619272564009,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9757675287411893,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:0",
+        "grip_to_gauge_ratio:0",
+        "length_to_gauge_ratio:0"
+      ],
+      "slices": [
+        "all",
+        "L_total:0",
+        "W_grip:1",
+        "W_gauge:2",
+        "R_fillet:1",
+        "nominal_axial_strain:2"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.0036836063069169986,
+        "p_relative_l2": 0.010752577235768137,
+        "u_relative_l2": 0.0008591198499148793
+      },
+      "terms": {
+        "case_id": "fresh-h1-006",
+        "coarse_p_difference": 0.005029965397888169,
+        "coarse_peak_difference": 0.003597313419205961,
+        "coarse_u_difference": 0.00022388930317583804,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0011718730686718262,
+        "recovery_root_cells": 0.0044678845761685375
+      }
+    },
+    {
+      "case_id": "fresh-h1-007",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.014062171839487459,
+          "projection": 0.004711031329662347
+        },
+        "p_relative_l2": {
+          "discretisation": 0.014300190362783053,
+          "projection": 0.0007374340260753302
+        },
+        "u_relative_l2": {
+          "discretisation": 0.00011517995486994093,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0242533167346648,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:0",
+        "grip_to_gauge_ratio:0",
+        "length_to_gauge_ratio:0"
+      ],
+      "slices": [
+        "all",
+        "L_total:0",
+        "W_grip:0",
+        "W_gauge:3",
+        "R_fillet:1",
+        "nominal_axial_strain:1"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.033143093171626156,
+        "p_relative_l2": 0.024448318621518535,
+        "u_relative_l2": 0.002548163753375845
+      },
+      "terms": {
+        "case_id": "fresh-h1-007",
+        "coarse_p_difference": 0.007258979879585306,
+        "coarse_peak_difference": 0.0071381582941560705,
+        "coarse_u_difference": 5.8466982167482705e-05,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0007374340260753302,
+        "recovery_root_cells": 0.004711031329662347
+      }
+    },
+    {
+      "case_id": "fresh-h1-008",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.009858946007204498,
+          "projection": 0.003777373949120497
+        },
+        "p_relative_l2": {
+          "discretisation": 0.008075595644387402,
+          "projection": 0.001372268280411347
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0009112357658977158,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.985912250441027,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:2",
+        "grip_to_gauge_ratio:2",
+        "length_to_gauge_ratio:1"
+      ],
+      "slices": [
+        "all",
+        "L_total:0",
+        "W_grip:0",
+        "W_gauge:0",
+        "R_fillet:2",
+        "nominal_axial_strain:1"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.008876820775650253,
+        "p_relative_l2": 0.009373659580625195,
+        "u_relative_l2": 0.0011484951942234611
+      },
+      "terms": {
+        "case_id": "fresh-h1-008",
+        "coarse_p_difference": 0.004099287129130661,
+        "coarse_peak_difference": 0.001234103534071646,
+        "coarse_u_difference": 0.0004625562263440182,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.001372268280411347,
+        "recovery_root_cells": 0.003777373949120497
+      }
+    },
+    {
+      "case_id": "fresh-h1-009",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.016077709578503272,
+          "projection": 0.006160041984100871
+        },
+        "p_relative_l2": {
+          "discretisation": 0.009501067092266585,
+          "projection": 0.0025173761164047122
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0013428978258384335,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.988278721479398,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:2",
+        "grip_to_gauge_ratio:3",
+        "length_to_gauge_ratio:1"
+      ],
+      "slices": [
+        "all",
+        "L_total:0",
+        "W_grip:3",
+        "W_gauge:0",
+        "R_fillet:2",
+        "nominal_axial_strain:1"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.013464399764824704,
+        "p_relative_l2": 0.011764816918919835,
+        "u_relative_l2": 0.0021373976657115172
+      },
+      "terms": {
+        "case_id": "fresh-h1-009",
+        "coarse_p_difference": 0.004822876696582023,
+        "coarse_peak_difference": 0.0025124332038540427,
+        "coarse_u_difference": 0.0006816740232682404,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0025173761164047122,
+        "recovery_root_cells": 0.006160041984100871
+      }
+    },
+    {
+      "case_id": "fresh-h1-010",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.01563803221860302,
+          "projection": 0.005991583225518399
+        },
+        "p_relative_l2": {
+          "discretisation": 0.009598486552828616,
+          "projection": 0.0022722033820313237
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0011745257714914034,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9899915535360907,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:2",
+        "grip_to_gauge_ratio:3",
+        "length_to_gauge_ratio:1"
+      ],
+      "slices": [
+        "all",
+        "L_total:0",
+        "W_grip:3",
+        "W_gauge:0",
+        "R_fillet:2",
+        "nominal_axial_strain:2"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.005939644907828025,
+        "p_relative_l2": 0.00916792204519199,
+        "u_relative_l2": 0.000749575286027988
+      },
+      "terms": {
+        "case_id": "fresh-h1-010",
+        "coarse_p_difference": 0.004872328199405389,
+        "coarse_peak_difference": 0.0018177614577555108,
+        "coarse_u_difference": 0.0005962059753763469,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0022722033820313237,
+        "recovery_root_cells": 0.005991583225518399
+      }
+    },
+    {
+      "case_id": "fresh-h1-011",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.012255410091581077,
+          "projection": 0.004695559422061716
+        },
+        "p_relative_l2": {
+          "discretisation": 0.010315453305009279,
+          "projection": 0.0016129456757097975
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0007344105073389714,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9804213051633879,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:1",
+        "grip_to_gauge_ratio:1",
+        "length_to_gauge_ratio:0"
+      ],
+      "slices": [
+        "all",
+        "L_total:0",
+        "W_grip:3",
+        "W_gauge:2",
+        "R_fillet:2",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.0019184362433001267,
+        "p_relative_l2": 0.014659198038786434,
+        "u_relative_l2": 0.002368227226871742
+      },
+      "terms": {
+        "case_id": "fresh-h1-011",
+        "coarse_p_difference": 0.0052362707132026795,
+        "coarse_peak_difference": 0.001606051795201676,
+        "coarse_u_difference": 0.0003727972118471936,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0016129456757097975,
+        "recovery_root_cells": 0.004695559422061716
+      }
+    },
+    {
+      "case_id": "fresh-h1-012",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.007405958262825983,
+          "projection": 0.0027301804488965528
+        },
+        "p_relative_l2": {
+          "discretisation": 0.005339860701121946,
+          "projection": 0.0006450627628742736
+        },
+        "u_relative_l2": {
+          "discretisation": 0.00024053242016703767,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9998875264533621,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:0",
+        "grip_to_gauge_ratio:0",
+        "length_to_gauge_ratio:0"
+      ],
+      "slices": [
+        "all",
+        "L_total:0",
+        "W_grip:0",
+        "W_gauge:3",
+        "R_fillet:2",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.007410092955891675,
+        "p_relative_l2": 0.010508400664267083,
+        "u_relative_l2": 0.0010819764411128716
+      },
+      "terms": {
+        "case_id": "fresh-h1-012",
+        "coarse_p_difference": 0.0027105891883867747,
+        "coarse_peak_difference": 0.0037593696765614126,
+        "coarse_u_difference": 0.00012209767521169425,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0006450627628742736,
+        "recovery_root_cells": 0.0027301804488965528
+      }
+    },
+    {
+      "case_id": "fresh-h1-013",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.009836785409682657,
+          "projection": 0.0037688832987289875
+        },
+        "p_relative_l2": {
+          "discretisation": 0.00821622104879756,
+          "projection": 0.0014603377795206532
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0009410371169304159,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9857650125411291,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:2",
+        "grip_to_gauge_ratio:2",
+        "length_to_gauge_ratio:1"
+      ],
+      "slices": [
+        "all",
+        "L_total:0",
+        "W_grip:2",
+        "W_gauge:0",
+        "R_fillet:3",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.0046758274985158055,
+        "p_relative_l2": 0.011039361568300772,
+        "u_relative_l2": 0.0014806169042076245
+      },
+      "terms": {
+        "case_id": "fresh-h1-013",
+        "coarse_p_difference": 0.00417067058314597,
+        "coarse_peak_difference": 0.0012607612120946624,
+        "coarse_u_difference": 0.00047768381570071874,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0014603377795206532,
+        "recovery_root_cells": 0.0037688832987289875
+      }
+    },
+    {
+      "case_id": "fresh-h1-014",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.013464005990953898,
+          "projection": 0.005158622985039808
+        },
+        "p_relative_l2": {
+          "discretisation": 0.009045937075965956,
+          "projection": 0.0022663994764803453
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0013415851664720859,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9857545840090918,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:3",
+        "grip_to_gauge_ratio:3",
+        "length_to_gauge_ratio:1"
+      ],
+      "slices": [
+        "all",
+        "L_total:0",
+        "W_grip:3",
+        "W_gauge:0",
+        "R_fillet:3",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.02236693746487635,
+        "p_relative_l2": 0.02277640197177123,
+        "u_relative_l2": 0.00839051076851004
+      },
+      "terms": {
+        "case_id": "fresh-h1-014",
+        "coarse_p_difference": 0.0045918462314548,
+        "coarse_peak_difference": 0.0030559087008023996,
+        "coarse_u_difference": 0.0006810076987167949,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0022663994764803453,
+        "recovery_root_cells": 0.005158622985039808
+      }
+    },
+    {
+      "case_id": "fresh-h1-015",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.009187180116012177,
+          "projection": 0.003519992381613861
+        },
+        "p_relative_l2": {
+          "discretisation": 0.00813436548423732,
+          "projection": 0.001274136565638376
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0007289794159074084,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9799197597132088,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:2",
+        "grip_to_gauge_ratio:1",
+        "length_to_gauge_ratio:0"
+      ],
+      "slices": [
+        "all",
+        "L_total:0",
+        "W_grip:2",
+        "W_gauge:1",
+        "R_fillet:3",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.01917293258164669,
+        "p_relative_l2": 0.0162057291638042,
+        "u_relative_l2": 0.0025141797758004205
+      },
+      "terms": {
+        "case_id": "fresh-h1-015",
+        "coarse_p_difference": 0.0041291195351458474,
+        "coarse_peak_difference": 0.00028043180242332477,
+        "coarse_u_difference": 0.00037004031264335454,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.001274136565638376,
+        "recovery_root_cells": 0.003519992381613861
+      }
+    },
+    {
+      "case_id": "fresh-h1-016",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.006191805528118347,
+          "projection": 0.0023723392828039645
+        },
+        "p_relative_l2": {
+          "discretisation": 0.004108205841138754,
+          "projection": 0.0006478716625195772
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0003580079028508875,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9946818123242352,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:1",
+        "grip_to_gauge_ratio:0",
+        "length_to_gauge_ratio:0"
+      ],
+      "slices": [
+        "all",
+        "L_total:0",
+        "W_grip:0",
+        "W_gauge:2",
+        "R_fillet:3",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.0002790025355880996,
+        "p_relative_l2": 0.00854002734769868,
+        "u_relative_l2": 0.0008544151475252064
+      },
+      "terms": {
+        "case_id": "fresh-h1-016",
+        "coarse_p_difference": 0.0020853836757049513,
+        "coarse_peak_difference": 0.00168770251804291,
+        "coarse_u_difference": 0.00018172989992430838,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0006478716625195772,
+        "recovery_root_cells": 0.0023723392828039645
+      }
+    },
+    {
+      "case_id": "fresh-h1-017",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.008205542842239538,
+          "projection": 0.0031438861464519307
+        },
+        "p_relative_l2": {
+          "discretisation": 0.009907629838064704,
+          "projection": 0.0006876424897053222
+        },
+        "u_relative_l2": {
+          "discretisation": 0.00017108921200322756,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0198989274252968,
+      "reported_slices": [
+        "arc_feasibility_ratio:1",
+        "fillet_to_gauge_ratio:1",
+        "grip_to_gauge_ratio:0",
+        "length_to_gauge_ratio:0"
+      ],
+      "slices": [
+        "all",
+        "L_total:0",
+        "W_grip:0",
+        "W_gauge:3",
+        "R_fillet:3",
+        "nominal_axial_strain:1"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.008424762163254596,
+        "p_relative_l2": 0.014245960709591833,
+        "u_relative_l2": 0.0007786478070578404
+      },
+      "terms": {
+        "case_id": "fresh-h1-017",
+        "coarse_p_difference": 0.005029253724905941,
+        "coarse_peak_difference": 0.002137648551453249,
+        "coarse_u_difference": 8.684731573767897e-05,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0006876424897053222,
+        "recovery_root_cells": 0.0031438861464519307
+      }
+    },
+    {
+      "case_id": "fresh-h1-018",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.0073325687772873745,
+          "projection": 0.002809413324631178
+        },
+        "p_relative_l2": {
+          "discretisation": 0.005290505441772048,
+          "projection": 0.0008570262252595705
+        },
+        "u_relative_l2": {
+          "discretisation": 0.00044505941106766936,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9798812879085387,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:1",
+        "grip_to_gauge_ratio:0",
+        "length_to_gauge_ratio:0"
+      ],
+      "slices": [
+        "all",
+        "L_total:0",
+        "W_grip:2",
+        "W_gauge:3",
+        "R_fillet:3",
+        "nominal_axial_strain:2"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.007164723377181505,
+        "p_relative_l2": 0.01894721675839684,
+        "u_relative_l2": 0.003959093756787745
+      },
+      "terms": {
+        "case_id": "fresh-h1-018",
+        "coarse_p_difference": 0.002685535757244694,
+        "coarse_peak_difference": 0.0023598491657086393,
+        "coarse_u_difference": 0.00022591848277546669,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0008570262252595705,
+        "recovery_root_cells": 0.002809413324631178
+      }
+    },
+    {
+      "case_id": "fresh-h1-019",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.01621356446115387,
+          "projection": 0.006212093663277345
+        },
+        "p_relative_l2": {
+          "discretisation": 0.011616926317813315,
+          "projection": 0.001705423525744256
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0005768134549021754,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9903837657299724,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:0",
+        "grip_to_gauge_ratio:1",
+        "length_to_gauge_ratio:1"
+      ],
+      "slices": [
+        "all",
+        "L_total:1",
+        "W_grip:1",
+        "W_gauge:1",
+        "R_fillet:0",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.0028719254317340647,
+        "p_relative_l2": 0.006998522843911349,
+        "u_relative_l2": 0.000638814886425078
+      },
+      "terms": {
+        "case_id": "fresh-h1-019",
+        "coarse_p_difference": 0.005896916912595591,
+        "coarse_peak_difference": 0.001973944877378062,
+        "coarse_u_difference": 0.00029279870807217027,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.001705423525744256,
+        "recovery_root_cells": 0.006212093663277345
+      }
+    },
+    {
+      "case_id": "fresh-h1-020",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.013325788233386725,
+          "projection": 0.0035087476293549575
+        },
+        "p_relative_l2": {
+          "discretisation": 0.00754685587767781,
+          "projection": 0.0006197483309155775
+        },
+        "u_relative_l2": {
+          "discretisation": 0.00013591876773268944,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0178733015750983,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:0",
+        "grip_to_gauge_ratio:0",
+        "length_to_gauge_ratio:0"
+      ],
+      "slices": [
+        "all",
+        "L_total:1",
+        "W_grip:0",
+        "W_gauge:3",
+        "R_fillet:0",
+        "nominal_axial_strain:2"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.0222564079094057,
+        "p_relative_l2": 0.01330194022224775,
+        "u_relative_l2": 0.0008859600453160417
+      },
+      "terms": {
+        "case_id": "fresh-h1-020",
+        "coarse_p_difference": 0.0038308913084658934,
+        "coarse_peak_difference": 0.006764359509333363,
+        "coarse_u_difference": 6.899429834146672e-05,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0006197483309155775,
+        "recovery_root_cells": 0.0035087476293549575
+      }
+    },
+    {
+      "case_id": "fresh-h1-021",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.018797075599430564,
+          "projection": 0.007201944674111328
+        },
+        "p_relative_l2": {
+          "discretisation": 0.010875840224420372,
+          "projection": 0.002726239336276305
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0011448547067895423,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9945595328579739,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:2",
+        "grip_to_gauge_ratio:3",
+        "length_to_gauge_ratio:2"
+      ],
+      "slices": [
+        "all",
+        "L_total:1",
+        "W_grip:3",
+        "W_gauge:0",
+        "R_fillet:1",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.0026775239983657024,
+        "p_relative_l2": 0.008723501010808408,
+        "u_relative_l2": 0.000841818908761535
+      },
+      "terms": {
+        "case_id": "fresh-h1-021",
+        "coarse_p_difference": 0.005520731078385976,
+        "coarse_peak_difference": 0.0015681440265822356,
+        "coarse_u_difference": 0.0005811445212129656,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.002726239336276305,
+        "recovery_root_cells": 0.007201944674111328
+      }
+    },
+    {
+      "case_id": "fresh-h1-022",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.014152944481709555,
+          "projection": 0.005422584092609025
+        },
+        "p_relative_l2": {
+          "discretisation": 0.011604494743937514,
+          "projection": 0.0014130693365345393
+        },
+        "u_relative_l2": {
+          "discretisation": 0.00046891331569521883,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9898338587753531,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:0",
+        "grip_to_gauge_ratio:1",
+        "length_to_gauge_ratio:0"
+      ],
+      "slices": [
+        "all",
+        "L_total:1",
+        "W_grip:2",
+        "W_gauge:2",
+        "R_fillet:1",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.009284569371354268,
+        "p_relative_l2": 0.009541223335738275,
+        "u_relative_l2": 0.0006823772422529086
+      },
+      "terms": {
+        "case_id": "fresh-h1-022",
+        "coarse_p_difference": 0.005890606469003815,
+        "coarse_peak_difference": 0.0038429854584586024,
+        "coarse_u_difference": 0.00023802706380467961,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0014130693365345393,
+        "recovery_root_cells": 0.005422584092609025
+      }
+    },
+    {
+      "case_id": "fresh-h1-023",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.014556419724447843,
+          "projection": 0.005577172308217564
+        },
+        "p_relative_l2": {
+          "discretisation": 0.008838670946893676,
+          "projection": 0.002063101611169387
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0011828745330243631,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9936766244392593,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:2",
+        "grip_to_gauge_ratio:3",
+        "length_to_gauge_ratio:2"
+      ],
+      "slices": [
+        "all",
+        "L_total:1",
+        "W_grip:2",
+        "W_gauge:0",
+        "R_fillet:2",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.012103001927758884,
+        "p_relative_l2": 0.0100555582966388,
+        "u_relative_l2": 0.0018175199251638176
+      },
+      "terms": {
+        "case_id": "fresh-h1-023",
+        "coarse_p_difference": 0.004486634998423186,
+        "coarse_peak_difference": 0.002312883231119836,
+        "coarse_u_difference": 0.0006004439253930778,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.002063101611169387,
+        "recovery_root_cells": 0.005577172308217564
+      }
+    },
+    {
+      "case_id": "fresh-h1-024",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.008344628468370818,
+          "projection": 0.003197175658379624
+        },
+        "p_relative_l2": {
+          "discretisation": 0.0068373359404400496,
+          "projection": 0.0008580976064427495
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0004860746430480932,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.991539712996924,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:1",
+        "grip_to_gauge_ratio:1",
+        "length_to_gauge_ratio:1"
+      ],
+      "slices": [
+        "all",
+        "L_total:1",
+        "W_grip:0",
+        "W_gauge:1",
+        "R_fillet:2",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.006203916625711655,
+        "p_relative_l2": 0.007176717070101916,
+        "u_relative_l2": 0.001073308632067048
+      },
+      "terms": {
+        "case_id": "fresh-h1-024",
+        "coarse_p_difference": 0.0034707289037766748,
+        "coarse_peak_difference": 0.000892963152371791,
+        "coarse_u_difference": 0.00024673839748634173,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0008580976064427495,
+        "recovery_root_cells": 0.003197175658379624
+      }
+    },
+    {
+      "case_id": "fresh-h1-025",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.01516762243271763,
+          "projection": 0.005811349591079552
+        },
+        "p_relative_l2": {
+          "discretisation": 0.010789985422489434,
+          "projection": 0.0019150981719863304
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0008188266267181023,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.982655383345786,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:1",
+        "grip_to_gauge_ratio:1",
+        "length_to_gauge_ratio:1"
+      ],
+      "slices": [
+        "all",
+        "L_total:1",
+        "W_grip:3",
+        "W_gauge:1",
+        "R_fillet:2",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.00115286311457335,
+        "p_relative_l2": 0.007589580628765812,
+        "u_relative_l2": 0.0003721977086419618
+      },
+      "terms": {
+        "case_id": "fresh-h1-025",
+        "coarse_p_difference": 0.005477149960654535,
+        "coarse_peak_difference": 0.00044347151239752607,
+        "coarse_u_difference": 0.000415648033867057,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0019150981719863304,
+        "recovery_root_cells": 0.005811349591079552
+      }
+    },
+    {
+      "case_id": "fresh-h1-026",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.006777363746468717,
+          "projection": 0.0025966910906010414
+        },
+        "p_relative_l2": {
+          "discretisation": 0.005281560013393827,
+          "projection": 0.0007617403059720629
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0005856215757149397,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9996699054987445,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:3",
+        "grip_to_gauge_ratio:1",
+        "length_to_gauge_ratio:2"
+      ],
+      "slices": [
+        "all",
+        "L_total:1",
+        "W_grip:0",
+        "W_gauge:0",
+        "R_fillet:3",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.009245253118540898,
+        "p_relative_l2": 0.010164429016316045,
+        "u_relative_l2": 0.001304514208900479
+      },
+      "terms": {
+        "case_id": "fresh-h1-026",
+        "coarse_p_difference": 0.002680994930656765,
+        "coarse_peak_difference": 0.00032966869313554937,
+        "coarse_u_difference": 0.0002972698353882943,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0007617403059720629,
+        "recovery_root_cells": 0.0025966910906010414
+      }
+    },
+    {
+      "case_id": "fresh-h1-027",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.009848143545684057,
+          "projection": 0.003773235074974735
+        },
+        "p_relative_l2": {
+          "discretisation": 0.007842806375018779,
+          "projection": 0.0013114045239499942
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0009381638942573017,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9896214461118773,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:3",
+        "grip_to_gauge_ratio:2",
+        "length_to_gauge_ratio:2"
+      ],
+      "slices": [
+        "all",
+        "L_total:1",
+        "W_grip:1",
+        "W_gauge:0",
+        "R_fillet:3",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.005562282397312471,
+        "p_relative_l2": 0.007982147162314147,
+        "u_relative_l2": 0.0005431569244135027
+      },
+      "terms": {
+        "case_id": "fresh-h1-027",
+        "coarse_p_difference": 0.003981119987319177,
+        "coarse_peak_difference": 0.001662353861410409,
+        "coarse_u_difference": 0.0004762253270341633,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0013114045239499942,
+        "recovery_root_cells": 0.003773235074974735
+      }
+    },
+    {
+      "case_id": "fresh-h1-028",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.012014167988085172,
+          "projection": 0.004603129497350641
+        },
+        "p_relative_l2": {
+          "discretisation": 0.007953113696402354,
+          "projection": 0.0017779273657434777
+        },
+        "u_relative_l2": {
+          "discretisation": 0.001290318154462551,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9914497314847922,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:3",
+        "grip_to_gauge_ratio:3",
+        "length_to_gauge_ratio:2"
+      ],
+      "slices": [
+        "all",
+        "L_total:1",
+        "W_grip:3",
+        "W_gauge:0",
+        "R_fillet:3",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.033475378161068006,
+        "p_relative_l2": 0.014760297023450083,
+        "u_relative_l2": 0.004831009255694621
+      },
+      "terms": {
+        "case_id": "fresh-h1-028",
+        "coarse_p_difference": 0.004037113551473276,
+        "coarse_peak_difference": 0.0030958449509915884,
+        "coarse_u_difference": 0.000654983834752564,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0017779273657434777,
+        "recovery_root_cells": 0.004603129497350641
+      }
+    },
+    {
+      "case_id": "fresh-h1-029",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.013458049288481011,
+          "projection": 0.005156340723555943
+        },
+        "p_relative_l2": {
+          "discretisation": 0.008621294179597816,
+          "projection": 0.0019001915471078044
+        },
+        "u_relative_l2": {
+          "discretisation": 0.001193288461960741,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9901411657132207,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:2",
+        "grip_to_gauge_ratio:3",
+        "length_to_gauge_ratio:2"
+      ],
+      "slices": [
+        "all",
+        "L_total:1",
+        "W_grip:3",
+        "W_gauge:0",
+        "R_fillet:3",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.011593824325767573,
+        "p_relative_l2": 0.009606746454839854,
+        "u_relative_l2": 0.0010722126517547339
+      },
+      "terms": {
+        "case_id": "fresh-h1-029",
+        "coarse_p_difference": 0.00437629146172478,
+        "coarse_peak_difference": 0.002438332734721039,
+        "coarse_u_difference": 0.0006057301837364168,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0019001915471078044,
+        "recovery_root_cells": 0.005156340723555943
+      }
+    },
+    {
+      "case_id": "fresh-h1-030",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.011642343339303802,
+          "projection": 0.004460667946093411
+        },
+        "p_relative_l2": {
+          "discretisation": 0.009028559703064494,
+          "projection": 0.0015924428397718917
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0008920141344426441,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9860838779115472,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:2",
+        "grip_to_gauge_ratio:2",
+        "length_to_gauge_ratio:1"
+      ],
+      "slices": [
+        "all",
+        "L_total:1",
+        "W_grip:3",
+        "W_gauge:1",
+        "R_fillet:3",
+        "nominal_axial_strain:1"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.008637759383183317,
+        "p_relative_l2": 0.009714871822611812,
+        "u_relative_l2": 0.001855022254020279
+      },
+      "terms": {
+        "case_id": "fresh-h1-030",
+        "coarse_p_difference": 0.004583025229981976,
+        "coarse_peak_difference": 0.0006533334500113118,
+        "coarse_u_difference": 0.0004527990530165706,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0015924428397718917,
+        "recovery_root_cells": 0.004460667946093411
+      }
+    },
+    {
+      "case_id": "fresh-h1-031",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.00985269136582457,
+          "projection": 0.003774977534798686
+        },
+        "p_relative_l2": {
+          "discretisation": 0.00848315774399792,
+          "projection": 0.0012012401666239008
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0006470327073986751,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9772246994094461,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:1",
+        "grip_to_gauge_ratio:1",
+        "length_to_gauge_ratio:0"
+      ],
+      "slices": [
+        "all",
+        "L_total:1",
+        "W_grip:3",
+        "W_gauge:2",
+        "R_fillet:3",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.0018762779646536464,
+        "p_relative_l2": 0.009407503378571895,
+        "u_relative_l2": 0.000610619140872509
+      },
+      "terms": {
+        "case_id": "fresh-h1-031",
+        "coarse_p_difference": 0.004306171443653767,
+        "coarse_peak_difference": 0.0006945003028261961,
+        "coarse_u_difference": 0.0003284429986795305,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0012012401666239008,
+        "recovery_root_cells": 0.003774977534798686
+      }
+    },
+    {
+      "case_id": "fresh-h1-032",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.016337103022001295,
+          "projection": 0.006259426445211224
+        },
+        "p_relative_l2": {
+          "discretisation": 0.012094486921690541,
+          "projection": 0.0014223867818571035
+        },
+        "u_relative_l2": {
+          "discretisation": 0.00037872225365275045,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9943236001040361,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:0",
+        "grip_to_gauge_ratio:1",
+        "length_to_gauge_ratio:2"
+      ],
+      "slices": [
+        "all",
+        "L_total:2",
+        "W_grip:0",
+        "W_gauge:0",
+        "R_fillet:0",
+        "nominal_axial_strain:2"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.01061497811469959,
+        "p_relative_l2": 0.011285760051751432,
+        "u_relative_l2": 0.0005360272954039165
+      },
+      "terms": {
+        "case_id": "fresh-h1-032",
+        "coarse_p_difference": 0.006139333462787077,
+        "coarse_peak_difference": 0.004014577671080094,
+        "coarse_u_difference": 0.00019224479880850277,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0014223867818571035,
+        "recovery_root_cells": 0.006259426445211224
+      }
+    },
+    {
+      "case_id": "fresh-h1-033",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.01879870416373541,
+          "projection": 0.007202568645109353
+        },
+        "p_relative_l2": {
+          "discretisation": 0.014874577625886296,
+          "projection": 0.0015518906407130742
+        },
+        "u_relative_l2": {
+          "discretisation": 0.00035154452886922166,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9870917820717792,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:0",
+        "grip_to_gauge_ratio:0",
+        "length_to_gauge_ratio:0"
+      ],
+      "slices": [
+        "all",
+        "L_total:2",
+        "W_grip:1",
+        "W_gauge:2",
+        "R_fillet:0",
+        "nominal_axial_strain:2"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.019932592896144144,
+        "p_relative_l2": 0.009804687151424341,
+        "u_relative_l2": 0.0013041454957937535
+      },
+      "terms": {
+        "case_id": "fresh-h1-033",
+        "coarse_p_difference": 0.007550547018216394,
+        "coarse_peak_difference": 0.006632797814093749,
+        "coarse_u_difference": 0.00017844899942600086,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0015518906407130742,
+        "recovery_root_cells": 0.007202568645109353
+      }
+    },
+    {
+      "case_id": "fresh-h1-034",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.012124320841762171,
+          "projection": 0.004645333655847576
+        },
+        "p_relative_l2": {
+          "discretisation": 0.008601929468728934,
+          "projection": 0.0013861975020464559
+        },
+        "u_relative_l2": {
+          "discretisation": 0.000745714791271024,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9984359160643317,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:2",
+        "grip_to_gauge_ratio:2",
+        "length_to_gauge_ratio:3"
+      ],
+      "slices": [
+        "all",
+        "L_total:2",
+        "W_grip:1",
+        "W_gauge:0",
+        "R_fillet:1",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.014543393980945321,
+        "p_relative_l2": 0.008982472942841936,
+        "u_relative_l2": 0.0006697183550201648
+      },
+      "terms": {
+        "case_id": "fresh-h1-034",
+        "coarse_p_difference": 0.004366461659253266,
+        "coarse_peak_difference": 0.0007082795346069516,
+        "coarse_u_difference": 0.00037853542704112896,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0013861975020464559,
+        "recovery_root_cells": 0.004645333655847576
+      }
+    },
+    {
+      "case_id": "fresh-h1-035",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.019037537793023748,
+          "projection": 0.00729407578276772
+        },
+        "p_relative_l2": {
+          "discretisation": 0.010981771072764141,
+          "projection": 0.002489179264051426
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0009425514933600962,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.995786626212736,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:2",
+        "grip_to_gauge_ratio:3",
+        "length_to_gauge_ratio:3"
+      ],
+      "slices": [
+        "all",
+        "L_total:2",
+        "W_grip:3",
+        "W_gauge:0",
+        "R_fillet:1",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.013637278527812763,
+        "p_relative_l2": 0.009866103274461076,
+        "u_relative_l2": 0.0010878709802365667
+      },
+      "terms": {
+        "case_id": "fresh-h1-035",
+        "coarse_p_difference": 0.005574503082621392,
+        "coarse_peak_difference": 0.001152005593833912,
+        "coarse_u_difference": 0.00047845253470055643,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.002489179264051426,
+        "recovery_root_cells": 0.00729407578276772
+      }
+    },
+    {
+      "case_id": "fresh-h1-036",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.014336938318716465,
+          "projection": 0.005493079815600178
+        },
+        "p_relative_l2": {
+          "discretisation": 0.012001087490328152,
+          "projection": 0.0013917216602896865
+        },
+        "u_relative_l2": {
+          "discretisation": 0.00044517498462885155,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9824221697082274,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:0",
+        "grip_to_gauge_ratio:0",
+        "length_to_gauge_ratio:0"
+      ],
+      "slices": [
+        "all",
+        "L_total:2",
+        "W_grip:3",
+        "W_gauge:3",
+        "R_fillet:1",
+        "nominal_axial_strain:1"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.021026349187576874,
+        "p_relative_l2": 0.008857201992175451,
+        "u_relative_l2": 0.0006189896297355347
+      },
+      "terms": {
+        "case_id": "fresh-h1-036",
+        "coarse_p_difference": 0.00609192258392292,
+        "coarse_peak_difference": 0.004244992523093722,
+        "coarse_u_difference": 0.00022597714955779267,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0013917216602896865,
+        "recovery_root_cells": 0.005493079815600178
+      }
+    },
+    {
+      "case_id": "fresh-h1-037",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.013715011958293449,
+          "projection": 0.00525479385375228
+        },
+        "p_relative_l2": {
+          "discretisation": 0.008507605418727745,
+          "projection": 0.0017505676495000557
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0010143173093983267,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9973611020511443,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:2",
+        "grip_to_gauge_ratio:3",
+        "length_to_gauge_ratio:3"
+      ],
+      "slices": [
+        "all",
+        "L_total:2",
+        "W_grip:2",
+        "W_gauge:0",
+        "R_fillet:2",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.01820030087705608,
+        "p_relative_l2": 0.008907468813097575,
+        "u_relative_l2": 0.0005969825344628889
+      },
+      "terms": {
+        "case_id": "fresh-h1-037",
+        "coarse_p_difference": 0.004318581430826266,
+        "coarse_peak_difference": 0.002032648606918762,
+        "coarse_u_difference": 0.000514881882943313,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0017505676495000557,
+        "recovery_root_cells": 0.00525479385375228
+      }
+    },
+    {
+      "case_id": "fresh-h1-038",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.015110367387270266,
+          "projection": 0.005789412792057573
+        },
+        "p_relative_l2": {
+          "discretisation": 0.008675040809140772,
+          "projection": 0.0020757792785954803
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0012139134448797507,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9952653199878515,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:3",
+        "grip_to_gauge_ratio:3",
+        "length_to_gauge_ratio:3"
+      ],
+      "slices": [
+        "all",
+        "L_total:2",
+        "W_grip:3",
+        "W_gauge:0",
+        "R_fillet:2",
+        "nominal_axial_strain:1"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.005339805898713183,
+        "p_relative_l2": 0.009953642921723899,
+        "u_relative_l2": 0.0018343768114541855
+      },
+      "terms": {
+        "case_id": "fresh-h1-038",
+        "coarse_p_difference": 0.00440357401479227,
+        "coarse_peak_difference": 0.002756680111197378,
+        "coarse_u_difference": 0.0006161997182130715,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0020757792785954803,
+        "recovery_root_cells": 0.005789412792057573
+      }
+    },
+    {
+      "case_id": "fresh-h1-039",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.006583060814582665,
+          "projection": 0.0025222455228286074
+        },
+        "p_relative_l2": {
+          "discretisation": 0.004448734326897686,
+          "projection": 0.0005711139641778317
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0002562338498686334,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0089998247315335,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:1",
+        "grip_to_gauge_ratio:0",
+        "length_to_gauge_ratio:1"
+      ],
+      "slices": [
+        "all",
+        "L_total:2",
+        "W_grip:0",
+        "W_gauge:2",
+        "R_fillet:2",
+        "nominal_axial_strain:2"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.0006153905506924565,
+        "p_relative_l2": 0.010150431335180466,
+        "u_relative_l2": 0.0006733842288181201
+      },
+      "terms": {
+        "case_id": "fresh-h1-039",
+        "coarse_p_difference": 0.0022582407750749676,
+        "coarse_peak_difference": 0.0026616558406158505,
+        "coarse_u_difference": 0.000130067944095753,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0005711139641778317,
+        "recovery_root_cells": 0.0025222455228286074
+      }
+    },
+    {
+      "case_id": "fresh-h1-040",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.013124404234715977,
+          "projection": 0.0050285073696229796
+        },
+        "p_relative_l2": {
+          "discretisation": 0.010480900654846177,
+          "projection": 0.0014859078221044835
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0006098310447539836,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9893443690279695,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:1",
+        "grip_to_gauge_ratio:1",
+        "length_to_gauge_ratio:1"
+      ],
+      "slices": [
+        "all",
+        "L_total:2",
+        "W_grip:3",
+        "W_gauge:2",
+        "R_fillet:2",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.0005308969752467142,
+        "p_relative_l2": 0.008305386861339536,
+        "u_relative_l2": 0.0007723512515465435
+      },
+      "terms": {
+        "case_id": "fresh-h1-040",
+        "coarse_p_difference": 0.005320254139515826,
+        "coarse_peak_difference": 0.0018310219629796283,
+        "coarse_u_difference": 0.00030955890596648915,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0014859078221044835,
+        "recovery_root_cells": 0.0050285073696229796
+      }
+    },
+    {
+      "case_id": "fresh-h1-041",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.012825432780232817,
+          "projection": 0.004913958919629432
+        },
+        "p_relative_l2": {
+          "discretisation": 0.00825100069430417,
+          "projection": 0.0016955212836929393
+        },
+        "u_relative_l2": {
+          "discretisation": 0.00111521518318595,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9943155779023369,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:3",
+        "grip_to_gauge_ratio:3",
+        "length_to_gauge_ratio:2"
+      ],
+      "slices": [
+        "all",
+        "L_total:2",
+        "W_grip:3",
+        "W_gauge:0",
+        "R_fillet:3",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.008200614504018107,
+        "p_relative_l2": 0.008243507929513042,
+        "u_relative_l2": 0.0004979621109337978
+      },
+      "terms": {
+        "case_id": "fresh-h1-041",
+        "coarse_p_difference": 0.004188325225535111,
+        "coarse_peak_difference": 0.0024923441317972832,
+        "coarse_u_difference": 0.0005660990777593655,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0016955212836929393,
+        "recovery_root_cells": 0.004913958919629432
+      }
+    },
+    {
+      "case_id": "fresh-h1-042",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.006311445820003332,
+          "projection": 0.0024181784750970624
+        },
+        "p_relative_l2": {
+          "discretisation": 0.004374226418104436,
+          "projection": 0.0006403582110280186
+        },
+        "u_relative_l2": {
+          "discretisation": 0.00040242763514174087,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0032618042516042,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:2",
+        "grip_to_gauge_ratio:0",
+        "length_to_gauge_ratio:1"
+      ],
+      "slices": [
+        "all",
+        "L_total:2",
+        "W_grip:0",
+        "W_gauge:1",
+        "R_fillet:3",
+        "nominal_axial_strain:1"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.021993546460555142,
+        "p_relative_l2": 0.009144361158715048,
+        "u_relative_l2": 0.0011551736069454837
+      },
+      "terms": {
+        "case_id": "fresh-h1-042",
+        "coarse_p_difference": 0.002220419501575856,
+        "coarse_peak_difference": 0.00102868289378856,
+        "coarse_u_difference": 0.00020427798738159434,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0006403582110280186,
+        "recovery_root_cells": 0.0024181784750970624
+      }
+    },
+    {
+      "case_id": "fresh-h1-043",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.006915494574958452,
+          "projection": 0.002649614779677568
+        },
+        "p_relative_l2": {
+          "discretisation": 0.0077271348767322945,
+          "projection": 0.0005600805741410701
+        },
+        "u_relative_l2": {
+          "discretisation": 0.00016862501912994081,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.028405019646944,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:1",
+        "grip_to_gauge_ratio:0",
+        "length_to_gauge_ratio:1"
+      ],
+      "slices": [
+        "all",
+        "L_total:2",
+        "W_grip:0",
+        "W_gauge:2",
+        "R_fillet:3",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.010447778508539752,
+        "p_relative_l2": 0.012333874183382838,
+        "u_relative_l2": 0.0006578790537146726
+      },
+      "terms": {
+        "case_id": "fresh-h1-043",
+        "coarse_p_difference": 0.003922403490727053,
+        "coarse_peak_difference": 0.001641019456680921,
+        "coarse_u_difference": 8.559645641113747e-05,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0005600805741410701,
+        "recovery_root_cells": 0.002649614779677568
+      }
+    },
+    {
+      "case_id": "fresh-h1-044",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.007505872863974063,
+          "projection": 0.0028758133578444685
+        },
+        "p_relative_l2": {
+          "discretisation": 0.005216174719908356,
+          "projection": 0.0006713161306260558
+        },
+        "u_relative_l2": {
+          "discretisation": 0.00026595390438619525,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.994834974508969,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:0",
+        "grip_to_gauge_ratio:0",
+        "length_to_gauge_ratio:0"
+      ],
+      "slices": [
+        "all",
+        "L_total:2",
+        "W_grip:1",
+        "W_gauge:3",
+        "R_fillet:3",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.005182726773985578,
+        "p_relative_l2": 0.00897447778713766,
+        "u_relative_l2": 0.0005971843491921743
+      },
+      "terms": {
+        "case_id": "fresh-h1-044",
+        "coarse_p_difference": 0.002647804426349419,
+        "coarse_peak_difference": 0.003462351990353612,
+        "coarse_u_difference": 0.00013500198192192652,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0006713161306260558,
+        "recovery_root_cells": 0.0028758133578444685
+      }
+    },
+    {
+      "case_id": "fresh-h1-045",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.019335875990278518,
+          "projection": 0.007408381605470697
+        },
+        "p_relative_l2": {
+          "discretisation": 0.012294690800309628,
+          "projection": 0.002310338045380343
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0007046271502380609,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9955943550426533,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:1",
+        "grip_to_gauge_ratio:2",
+        "length_to_gauge_ratio:2"
+      ],
+      "slices": [
+        "all",
+        "L_total:3",
+        "W_grip:2",
+        "W_gauge:0",
+        "R_fillet:0",
+        "nominal_axial_strain:1"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.004931981663818718,
+        "p_relative_l2": 0.01050615275275224,
+        "u_relative_l2": 0.0007128334128978085
+      },
+      "terms": {
+        "case_id": "fresh-h1-045",
+        "coarse_p_difference": 0.006240959797111486,
+        "coarse_peak_difference": 0.0012943302021096563,
+        "coarse_u_difference": 0.0003576787564660208,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.002310338045380343,
+        "recovery_root_cells": 0.007408381605470697
+      }
+    },
+    {
+      "case_id": "fresh-h1-046",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.018806754613111425,
+          "projection": 0.007205653108471811
+        },
+        "p_relative_l2": {
+          "discretisation": 0.013296883355814273,
+          "projection": 0.0017848311457910346
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0004438296793449337,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9953818955569738,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:0",
+        "grip_to_gauge_ratio:1",
+        "length_to_gauge_ratio:2"
+      ],
+      "slices": [
+        "all",
+        "L_total:3",
+        "W_grip:2",
+        "W_gauge:1",
+        "R_fillet:0",
+        "nominal_axial_strain:1"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.007563069124972802,
+        "p_relative_l2": 0.00975879932333359,
+        "u_relative_l2": 0.0005167452416833473
+      },
+      "terms": {
+        "case_id": "fresh-h1-046",
+        "coarse_p_difference": 0.006749686982646839,
+        "coarse_peak_difference": 0.004411561292661751,
+        "coarse_u_difference": 0.00022529425347458563,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0017848311457910346,
+        "recovery_root_cells": 0.007205653108471811
+      }
+    },
+    {
+      "case_id": "fresh-h1-047",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.01926510926623296,
+          "projection": 0.004301637360292072
+        },
+        "p_relative_l2": {
+          "discretisation": 0.0108156855523931,
+          "projection": 0.0005905701042575792
+        },
+        "u_relative_l2": {
+          "discretisation": 8.166356128171511e-05,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.008593710901732,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:0",
+        "grip_to_gauge_ratio:0",
+        "length_to_gauge_ratio:0"
+      ],
+      "slices": [
+        "all",
+        "L_total:3",
+        "W_grip:0",
+        "W_gauge:3",
+        "R_fillet:0",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.010652804208031481,
+        "p_relative_l2": 0.026755371011956942,
+        "u_relative_l2": 0.0015994867849524416
+      },
+      "terms": {
+        "case_id": "fresh-h1-047",
+        "coarse_p_difference": 0.00549019571187467,
+        "coarse_peak_difference": 0.009779243282351755,
+        "coarse_u_difference": 4.145358440696198e-05,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0005905701042575792,
+        "recovery_root_cells": 0.004301637360292072
+      }
+    },
+    {
+      "case_id": "fresh-h1-048",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.02354657234908675,
+          "projection": 0.009021675229535155
+        },
+        "p_relative_l2": {
+          "discretisation": 0.017382528792013883,
+          "projection": 0.002051667902961506
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0004206403445993317,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9900532415200998,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:0",
+        "grip_to_gauge_ratio:0",
+        "length_to_gauge_ratio:0"
+      ],
+      "slices": [
+        "all",
+        "L_total:3",
+        "W_grip:3",
+        "W_gauge:3",
+        "R_fillet:0",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.0176011894946948,
+        "p_relative_l2": 0.013743146952773976,
+        "u_relative_l2": 0.0013201956051927357
+      },
+      "terms": {
+        "case_id": "fresh-h1-048",
+        "coarse_p_difference": 0.008823618676149178,
+        "coarse_peak_difference": 0.008675550928671739,
+        "coarse_u_difference": 0.00021352301756311255,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.002051667902961506,
+        "recovery_root_cells": 0.009021675229535155
+      }
+    },
+    {
+      "case_id": "fresh-h1-049",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.012675202448962215,
+          "projection": 0.00485639940573265
+        },
+        "p_relative_l2": {
+          "discretisation": 0.008788508925420997,
+          "projection": 0.0013342927086986568
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0006777750479960607,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.992600818083293,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:2",
+        "grip_to_gauge_ratio:2",
+        "length_to_gauge_ratio:3"
+      ],
+      "slices": [
+        "all",
+        "L_total:3",
+        "W_grip:1",
+        "W_gauge:0",
+        "R_fillet:1",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.013611574757218702,
+        "p_relative_l2": 0.009797344863903263,
+        "u_relative_l2": 0.0003691004990865576
+      },
+      "terms": {
+        "case_id": "fresh-h1-049",
+        "coarse_p_difference": 0.004461172043360912,
+        "coarse_peak_difference": 0.0005551713996115606,
+        "coarse_u_difference": 0.0003440482477137364,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0013342927086986568,
+        "recovery_root_cells": 0.00485639940573265
+      }
+    },
+    {
+      "case_id": "fresh-h1-050",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.017466380553851923,
+          "projection": 0.0066920998290620395
+        },
+        "p_relative_l2": {
+          "discretisation": 0.010334611910713703,
+          "projection": 0.00220184409675803
+        },
+        "u_relative_l2": {
+          "discretisation": 0.000894836474850441,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9961196734274075,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:1",
+        "grip_to_gauge_ratio:3",
+        "length_to_gauge_ratio:2"
+      ],
+      "slices": [
+        "all",
+        "L_total:3",
+        "W_grip:3",
+        "W_gauge:0",
+        "R_fillet:1",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.002786508131425945,
+        "p_relative_l2": 0.010212439035155096,
+        "u_relative_l2": 0.0017553338168011916
+      },
+      "terms": {
+        "case_id": "fresh-h1-050",
+        "coarse_p_difference": 0.005245995893763301,
+        "coarse_peak_difference": 0.0007494461445613813,
+        "coarse_u_difference": 0.00045423171312205125,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.00220184409675803,
+        "recovery_root_cells": 0.0066920998290620395
+      }
+    },
+    {
+      "case_id": "fresh-h1-051",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.014496868649245704,
+          "projection": 0.005554355804308699
+        },
+        "p_relative_l2": {
+          "discretisation": 0.010476140571065164,
+          "projection": 0.001535093205481059
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0005803440291176875,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9965006329305433,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:1",
+        "grip_to_gauge_ratio:1",
+        "length_to_gauge_ratio:2"
+      ],
+      "slices": [
+        "all",
+        "L_total:3",
+        "W_grip:2",
+        "W_gauge:1",
+        "R_fillet:1",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.00623555760758054,
+        "p_relative_l2": 0.008207213351945762,
+        "u_relative_l2": 0.0006057640446619887
+      },
+      "terms": {
+        "case_id": "fresh-h1-051",
+        "coarse_p_difference": 0.005317837853332571,
+        "coarse_peak_difference": 0.0015786741483488546,
+        "coarse_u_difference": 0.0002945908777247145,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.001535093205481059,
+        "recovery_root_cells": 0.005554355804308699
+      }
+    },
+    {
+      "case_id": "fresh-h1-052",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.01333741215015265,
+          "projection": 0.005110119597759637
+        },
+        "p_relative_l2": {
+          "discretisation": 0.011304507288100996,
+          "projection": 0.0011887199591553118
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0003835822576168823,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9873114094434234,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:0",
+        "grip_to_gauge_ratio:0",
+        "length_to_gauge_ratio:1"
+      ],
+      "slices": [
+        "all",
+        "L_total:3",
+        "W_grip:2",
+        "W_gauge:2",
+        "R_fillet:1",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.005924220894649718,
+        "p_relative_l2": 0.00757862071399506,
+        "u_relative_l2": 0.0005554300011451101
+      },
+      "terms": {
+        "case_id": "fresh-h1-052",
+        "coarse_p_difference": 0.005738328572640099,
+        "coarse_peak_difference": 0.0033077054726976976,
+        "coarse_u_difference": 0.00019471180589689457,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0011887199591553118,
+        "recovery_root_cells": 0.005110119597759637
+      }
+    },
+    {
+      "case_id": "fresh-h1-053",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.011941735867820925,
+          "projection": 0.004408785217490647
+        },
+        "p_relative_l2": {
+          "discretisation": 0.009403251620175627,
+          "projection": 0.000864974930870801
+        },
+        "u_relative_l2": {
+          "discretisation": 0.00022978567350954654,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9945511261937688,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:0",
+        "grip_to_gauge_ratio:0",
+        "length_to_gauge_ratio:0"
+      ],
+      "slices": [
+        "all",
+        "L_total:3",
+        "W_grip:2",
+        "W_gauge:3",
+        "R_fillet:1",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.009726961088558491,
+        "p_relative_l2": 0.009881950217804303,
+        "u_relative_l2": 0.0010460923044960553
+      },
+      "terms": {
+        "case_id": "fresh-h1-053",
+        "coarse_p_difference": 0.004773224172677983,
+        "coarse_peak_difference": 0.006061794856761891,
+        "coarse_u_difference": 0.00011664247386271399,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.000864974930870801,
+        "recovery_root_cells": 0.004408785217490647
+      }
+    },
+    {
+      "case_id": "fresh-h1-054",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.01286542515929906,
+          "projection": 0.004929281670229525
+        },
+        "p_relative_l2": {
+          "discretisation": 0.008214243967093323,
+          "projection": 0.0015348861075407789
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0009276131428469817,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9957451947626824,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:3",
+        "grip_to_gauge_ratio:3",
+        "length_to_gauge_ratio:3"
+      ],
+      "slices": [
+        "all",
+        "L_total:3",
+        "W_grip:2",
+        "W_gauge:0",
+        "R_fillet:2",
+        "nominal_axial_strain:2"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.017706925440061402,
+        "p_relative_l2": 0.009465618672960552,
+        "u_relative_l2": 0.0008616283570210179
+      },
+      "terms": {
+        "case_id": "fresh-h1-054",
+        "coarse_p_difference": 0.004169666988372245,
+        "coarse_peak_difference": 0.001978928579363645,
+        "coarse_u_difference": 0.00047086961565836636,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0015348861075407789,
+        "recovery_root_cells": 0.004929281670229525
+      }
+    },
+    {
+      "case_id": "fresh-h1-055",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.010376506133050419,
+          "projection": 0.003975672847912038
+        },
+        "p_relative_l2": {
+          "discretisation": 0.008811775875416886,
+          "projection": 0.0010210009579671843
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0004778272063495439,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9987143875735289,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:1",
+        "grip_to_gauge_ratio:1",
+        "length_to_gauge_ratio:2"
+      ],
+      "slices": [
+        "all",
+        "L_total:3",
+        "W_grip:1",
+        "W_gauge:1",
+        "R_fillet:2",
+        "nominal_axial_strain:1"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.007755887289372411,
+        "p_relative_l2": 0.008161567508473744,
+        "u_relative_l2": 0.0005518384483093947
+      },
+      "terms": {
+        "case_id": "fresh-h1-055",
+        "coarse_p_difference": 0.004472982677876592,
+        "coarse_peak_difference": 0.0012200371650531523,
+        "coarse_u_difference": 0.00024255188139570756,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0010210009579671843,
+        "recovery_root_cells": 0.003975672847912038
+      }
+    },
+    {
+      "case_id": "fresh-h1-056",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.007038676844081763,
+          "projection": 0.002696811051372323
+        },
+        "p_relative_l2": {
+          "discretisation": 0.005578868060626582,
+          "projection": 0.0007424756774765374
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0006194298825701456,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9981331816032403,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:3",
+        "grip_to_gauge_ratio:1",
+        "length_to_gauge_ratio:3"
+      ],
+      "slices": [
+        "all",
+        "L_total:3",
+        "W_grip:0",
+        "W_gauge:0",
+        "R_fillet:3",
+        "nominal_axial_strain:1"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.01638070422068108,
+        "p_relative_l2": 0.015913897305476012,
+        "u_relative_l2": 0.0022235748574514443
+      },
+      "terms": {
+        "case_id": "fresh-h1-056",
+        "coarse_p_difference": 0.0028319127211302447,
+        "coarse_peak_difference": 0.0009958244683120102,
+        "coarse_u_difference": 0.0003144314124721551,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0007424756774765374,
+        "recovery_root_cells": 0.002696811051372323
+      }
+    },
+    {
+      "case_id": "fresh-h1-057",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.008965249210965325,
+          "projection": 0.003434961383511619
+        },
+        "p_relative_l2": {
+          "discretisation": 0.007048218564407156,
+          "projection": 0.0010786333113353692
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0008260644001380467,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9979479897897386,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:3",
+        "grip_to_gauge_ratio:2",
+        "length_to_gauge_ratio:3"
+      ],
+      "slices": [
+        "all",
+        "L_total:3",
+        "W_grip:1",
+        "W_gauge:0",
+        "R_fillet:3",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.02346101920921257,
+        "p_relative_l2": 0.010933668794846297,
+        "u_relative_l2": 0.0010128384951408997
+      },
+      "terms": {
+        "case_id": "fresh-h1-057",
+        "coarse_p_difference": 0.0035777759210188606,
+        "coarse_peak_difference": 0.0017918921632241722,
+        "coarse_u_difference": 0.00041932203052692725,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0010786333113353692,
+        "recovery_root_cells": 0.003434961383511619
+      }
+    },
+    {
+      "case_id": "fresh-h1-058",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.011979274000088684,
+          "projection": 0.004589760153290684
+        },
+        "p_relative_l2": {
+          "discretisation": 0.008152200280327253,
+          "projection": 0.0015957320757851437
+        },
+        "u_relative_l2": {
+          "discretisation": 0.001039945736529165,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9940975761218386,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:3",
+        "grip_to_gauge_ratio:3",
+        "length_to_gauge_ratio:2"
+      ],
+      "slices": [
+        "all",
+        "L_total:3",
+        "W_grip:3",
+        "W_gauge:0",
+        "R_fillet:3",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.020239856214772728,
+        "p_relative_l2": 0.009852509935106104,
+        "u_relative_l2": 0.0009596996099958227
+      },
+      "terms": {
+        "case_id": "fresh-h1-058",
+        "coarse_p_difference": 0.004138172731130586,
+        "coarse_peak_difference": 0.0021237125727240763,
+        "coarse_u_difference": 0.000527891236816835,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0015957320757851437,
+        "recovery_root_cells": 0.004589760153290684
+      }
+    },
+    {
+      "case_id": "fresh-h1-059",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.012037511625409286,
+          "projection": 0.004612073419697045
+        },
+        "p_relative_l2": {
+          "discretisation": 0.007903203909228976,
+          "projection": 0.0015603124256163164
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0010711935254312693,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9948843733164136,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:3",
+        "grip_to_gauge_ratio:3",
+        "length_to_gauge_ratio:3"
+      ],
+      "slices": [
+        "all",
+        "L_total:3",
+        "W_grip:3",
+        "W_gauge:0",
+        "R_fillet:3",
+        "nominal_axial_strain:1"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.0029724246530986034,
+        "p_relative_l2": 0.00966271741780329,
+        "u_relative_l2": 0.0009367619916615663
+      },
+      "terms": {
+        "case_id": "fresh-h1-059",
+        "coarse_p_difference": 0.004011778634126384,
+        "coarse_peak_difference": 0.002530004610191306,
+        "coarse_u_difference": 0.0005437530585945529,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0015603124256163164,
+        "recovery_root_cells": 0.004612073419697045
+      }
+    },
+    {
+      "case_id": "fresh-h1-060",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.006340146843451411,
+          "projection": 0.0024291750358051384
+        },
+        "p_relative_l2": {
+          "discretisation": 0.004510565191475483,
+          "projection": 0.0006112852533217682
+        },
+        "u_relative_l2": {
+          "discretisation": 0.00039423447994726155,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0028341095072713,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:2",
+        "grip_to_gauge_ratio:1",
+        "length_to_gauge_ratio:2"
+      ],
+      "slices": [
+        "all",
+        "L_total:3",
+        "W_grip:0",
+        "W_gauge:1",
+        "R_fillet:3",
+        "nominal_axial_strain:1"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.005744656452370545,
+        "p_relative_l2": 0.011736315953712363,
+        "u_relative_l2": 0.0013274926847213436
+      },
+      "terms": {
+        "case_id": "fresh-h1-060",
+        "coarse_p_difference": 0.002289627000748976,
+        "coarse_peak_difference": 0.0008595801028733527,
+        "coarse_u_difference": 0.00020011902535393988,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0006112852533217682,
+        "recovery_root_cells": 0.0024291750358051384
+      }
+    },
+    {
+      "case_id": "fresh-h1-061",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.006406572717299307,
+          "projection": 0.0024546255621836427
+        },
+        "p_relative_l2": {
+          "discretisation": 0.004229478725697983,
+          "projection": 0.000571601759951462
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0002864867488344442,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0089516091574757,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:1",
+        "grip_to_gauge_ratio:0",
+        "length_to_gauge_ratio:1"
+      ],
+      "slices": [
+        "all",
+        "L_total:3",
+        "W_grip:0",
+        "W_gauge:2",
+        "R_fillet:3",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.005285532434305837,
+        "p_relative_l2": 0.010220887814717519,
+        "u_relative_l2": 0.0012888315616124467
+      },
+      "terms": {
+        "case_id": "fresh-h1-061",
+        "coarse_p_difference": 0.0021469435155827324,
+        "coarse_peak_difference": 0.0020669671285116274,
+        "coarse_u_difference": 0.0001454247456012407,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.000571601759951462,
+        "recovery_root_cells": 0.0024546255621836427
+      }
+    },
+    {
+      "case_id": "fresh-h1-062",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.011538563281095334,
+          "projection": 0.004420905471684037
+        },
+        "p_relative_l2": {
+          "discretisation": 0.009447599167843762,
+          "projection": 0.0012814398405554114
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0006254694812760797,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9874911457457958,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:1",
+        "grip_to_gauge_ratio:1",
+        "length_to_gauge_ratio:1"
+      ],
+      "slices": [
+        "all",
+        "L_total:3",
+        "W_grip:3",
+        "W_gauge:2",
+        "R_fillet:3",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.001951732818928369,
+        "p_relative_l2": 0.008031344991149469,
+        "u_relative_l2": 0.00145759314386626
+      },
+      "terms": {
+        "case_id": "fresh-h1-062",
+        "coarse_p_difference": 0.004795735618194803,
+        "coarse_peak_difference": 0.0004892959304347986,
+        "coarse_u_difference": 0.00031749719861729934,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0012814398405554114,
+        "recovery_root_cells": 0.004420905471684037
+      }
+    },
+    {
+      "case_id": "fresh-h1-063",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.00943045544514795,
+          "projection": 0.0036132013199800576
+        },
+        "p_relative_l2": {
+          "discretisation": 0.007834628987215993,
+          "projection": 0.0008316201711205057
+        },
+        "u_relative_l2": {
+          "discretisation": 0.00032162068246483324,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 0.9930540173680156,
+      "reported_slices": [
+        "arc_feasibility_ratio:0",
+        "fillet_to_gauge_ratio:1",
+        "grip_to_gauge_ratio:0",
+        "length_to_gauge_ratio:1"
+      ],
+      "slices": [
+        "all",
+        "L_total:3",
+        "W_grip:2",
+        "W_gauge:3",
+        "R_fillet:3",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.002498578166435066,
+        "p_relative_l2": 0.008306355583398697,
+        "u_relative_l2": 0.0007776707694524314
+      },
+      "terms": {
+        "case_id": "fresh-h1-063",
+        "coarse_p_difference": 0.0039769690290436515,
+        "coarse_peak_difference": 0.003336709650618473,
+        "coarse_u_difference": 0.00016325922967758033,
+        "coarse_vertex_count": 261,
+        "recovery_all_cells": 0.0008316201711205057,
+        "recovery_root_cells": 0.0036132013199800576
+      }
+    }
+  ],
+  "coverage": {
+    "case_status": [
+      {
+        "case_id": "fresh-h1-000",
+        "distance_to_train": 3.0242838190541246,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-001",
+        "distance_to_train": 2.7619878546746297,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-002",
+        "distance_to_train": 2.248179453892426,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-003",
+        "distance_to_train": 2.8657087832592865,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-004",
+        "distance_to_train": 1.8174872219355247,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-005",
+        "distance_to_train": 2.0749765557961672,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-006",
+        "distance_to_train": 1.7673192549809773,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-007",
+        "distance_to_train": 2.687713875565485,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-008",
+        "distance_to_train": 2.2784642088114593,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-009",
+        "distance_to_train": 2.2450592377286736,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-010",
+        "distance_to_train": 1.8223744276509173,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-011",
+        "distance_to_train": 2.5084430318208573,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-012",
+        "distance_to_train": 1.842196056443595,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-013",
+        "distance_to_train": 2.1670981468117234,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-014",
+        "distance_to_train": 2.8272364559044525,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-015",
+        "distance_to_train": 2.1310735216146455,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-016",
+        "distance_to_train": 2.3615485468442663,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-017",
+        "distance_to_train": 2.6279308105640276,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-018",
+        "distance_to_train": 2.7990538516544983,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-019",
+        "distance_to_train": 1.7546874796320744,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-020",
+        "distance_to_train": 1.9987398021007023,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-021",
+        "distance_to_train": 2.188889633368298,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-022",
+        "distance_to_train": 1.8586041709927368,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-023",
+        "distance_to_train": 2.359218786570735,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-024",
+        "distance_to_train": 1.989159406287133,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-025",
+        "distance_to_train": 2.0190117680984407,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-026",
+        "distance_to_train": 2.6859420184411293,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-027",
+        "distance_to_train": 1.8081861718711596,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-028",
+        "distance_to_train": 2.883073838789825,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-029",
+        "distance_to_train": 2.222809269622511,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-030",
+        "distance_to_train": 2.2455907163357844,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-031",
+        "distance_to_train": 2.0026219808016195,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-032",
+        "distance_to_train": 2.5250024209718154,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-033",
+        "distance_to_train": 2.0529460520875737,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-034",
+        "distance_to_train": 2.145427509539786,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-035",
+        "distance_to_train": 2.4456904257108785,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-036",
+        "distance_to_train": 2.5034397251891156,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-037",
+        "distance_to_train": 2.194981723463764,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-038",
+        "distance_to_train": 2.320581591220781,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-039",
+        "distance_to_train": 1.6738095537411783,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-040",
+        "distance_to_train": 1.9457761592227627,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-041",
+        "distance_to_train": 2.2092320190175165,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-042",
+        "distance_to_train": 2.0121166047440098,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-043",
+        "distance_to_train": 2.4157775202247453,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-044",
+        "distance_to_train": 2.0394566006706083,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-045",
+        "distance_to_train": 2.0974144494904294,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-046",
+        "distance_to_train": 2.1556853560915656,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-047",
+        "distance_to_train": 2.9261727484250657,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-048",
+        "distance_to_train": 3.107083334031889,
+        "status": "OUT_OF_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-049",
+        "distance_to_train": 2.5060059360943163,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-050",
+        "distance_to_train": 2.5726839204404865,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-051",
+        "distance_to_train": 1.8569568648463433,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-052",
+        "distance_to_train": 2.305099471663504,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-053",
+        "distance_to_train": 2.2328036067838166,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-054",
+        "distance_to_train": 1.993759267897974,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-055",
+        "distance_to_train": 1.6894404106164689,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-056",
+        "distance_to_train": 2.887141508860951,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-057",
+        "distance_to_train": 2.9793113524284416,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-058",
+        "distance_to_train": 2.965426776523512,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-059",
+        "distance_to_train": 2.9596339270500103,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-060",
+        "distance_to_train": 2.623941241238888,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-061",
+        "distance_to_train": 2.60019596845175,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-062",
+        "distance_to_train": 2.4329725411696237,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-063",
+        "distance_to_train": 2.419095874302995,
+        "status": "IN_CALIBRATION"
+      }
+    ],
+    "counts": {
+      "budget_total:absolute_peak_error": {
+        "acceptance_count": 47,
+        "bound": 0.04066698094962479,
+        "covered": 57,
+        "gated": true,
+        "m": 63,
+        "pass": true
+      },
+      "budget_total:p_relative_l2": {
+        "acceptance_count": 47,
+        "bound": 0.025832883322329827,
+        "covered": 56,
+        "gated": true,
+        "m": 63,
+        "pass": true
+      },
+      "budget_total:u_relative_l2": {
+        "acceptance_count": 47,
+        "bound": 0.0022246345141795415,
+        "covered": 46,
+        "gated": false,
+        "m": 63,
+        "pass": false
+      },
+      "reference_terms:absolute_peak_error": {
+        "acceptance_count": 47,
+        "bound": 0.025359640001211988,
+        "covered": 55,
+        "gated": true,
+        "m": 63,
+        "pass": true
+      },
+      "reference_terms:p_relative_l2": {
+        "acceptance_count": 47,
+        "bound": 0.014545820474732355,
+        "covered": 57,
+        "gated": true,
+        "m": 63,
+        "pass": true
+      },
+      "reference_terms:u_relative_l2": {
+        "acceptance_count": 47,
+        "bound": 0.0009674447877789801,
+        "covered": 49,
+        "gated": false,
+        "m": 63,
+        "pass": true
+      }
+    },
+    "in_calibration": 63,
+    "out_of_calibration_case_ids": [
+      "fresh-h1-048"
+    ],
+    "per_check_level": 0.00625,
+    "scores": {
+      "budget_total": {
+        "absolute_peak_error": [
+          0.03495188982889112,
+          0.037166369661536275,
+          0.029408403259334703,
+          0.027897255051236594,
+          0.020939757220952267,
+          0.053109647001624044,
+          0.01981266962688542,
+          0.051916296340775964,
+          0.02251314073197525,
+          0.03570215132742884,
+          0.027569260351949447,
+          0.01886940575694292,
+          0.017546231667614213,
+          0.01828149620692745,
+          0.040989566440870054,
+          0.031880105079272726,
+          0.00884314734651041,
+          0.019774191151946063,
+          0.017306705479100057,
+          0.02529758355616528,
+          0.039090943772147384,
+          0.028676544271907595,
+          0.028860097945672847,
+          0.03223659396042429,
+          0.017745720752462096,
+          0.022131835138370533,
+          0.018619307955610658,
+          0.019183661017971265,
+          0.050092675646503826,
+          0.030208214337804528,
+          0.02474077066858053,
+          0.015503946865276903,
+          0.03321150758191211,
+          0.04593386570498891,
+          0.03131304847855507,
+          0.039968892103604235,
+          0.040856367321893516,
+          0.037170106689101805,
+          0.02623958607804102,
+          0.009720696888103729,
+          0.01868380857958567,
+          0.025940006203880355,
+          0.030723170755655536,
+          0.02001288786317577,
+          0.01556441299580411,
+          0.03167623925956793,
+          0.03357547684655604,
+          0.03421955083455651,
+          0.050169437073316704,
+          0.031143176611913567,
+          0.026944988514339907,
+          0.026286782061134942,
+          0.024371752642562007,
+          0.026077482173870063,
+          0.03550163226958999,
+          0.022108066270334868,
+          0.026116192116135167,
+          0.03586122980368951,
+          0.036808890368152096,
+          0.019622009698204934,
+          0.014513978331627094,
+          0.014146730713788785,
+          0.01791120157170774,
+          0.015542234931563073
+        ],
+        "p_relative_l2": [
+          0.022745789043319645,
+          0.025349963207421947,
+          0.026115274235329493,
+          0.029109910217970953,
+          0.021009286259874558,
+          0.023442437286680974,
+          0.021833482138279656,
+          0.03948594301037692,
+          0.018821523505423942,
+          0.023783260127591133,
+          0.021038611980051927,
+          0.026587597019505513,
+          0.016493324128263303,
+          0.020715920396618983,
+          0.03408873852421753,
+          0.025614231213679898,
+          0.01329610485135701,
+          0.02484123303736186,
+          0.02509474842542846,
+          0.02032087268746892,
+          0.021468544430841136,
+          0.022325580571505084,
+          0.022558787416210327,
+          0.020957330854701865,
+          0.014872150616984714,
+          0.02029466422324158,
+          0.016207729335681934,
+          0.017136358061282917,
+          0.024491338085595917,
+          0.020128232181545476,
+          0.020335874365448196,
+          0.01909190128919372,
+          0.024802633755299078,
+          0.026231155418023712,
+          0.018970599913617325,
+          0.023337053611276644,
+          0.022250011142793288,
+          0.019165641881325374,
+          0.02070446300946015,
+          0.015170279626255985,
+          0.020272195338290194,
+          0.01819002990751015,
+          0.014158945787847502,
+          0.020621089634256202,
+          0.014861968637672071,
+          0.025111181598442212,
+          0.0248405138249389,
+          0.038161626668607625,
+          0.033177343647749366,
+          0.019920146498022914,
+          0.022748895042626827,
+          0.020218447128491985,
+          0.020071847961251367,
+          0.020150176768850732,
+          0.019214748747594653,
+          0.017994344341857815,
+          0.02223524104357913,
+          0.01906052067058882,
+          0.019600442291218503,
+          0.019126233752648585,
+          0.016858166398509615,
+          0.015021968300366964,
+          0.018760383999548644,
+          0.016972604741735196
+        ],
+        "u_relative_l2": [
+          0.0016764112671784994,
+          0.002613242703506787,
+          0.0024165376681754853,
+          0.001560985696606019,
+          0.002331169900652905,
+          0.0018816088855944792,
+          0.0013001817771712803,
+          0.002663343708245786,
+          0.002059730960121177,
+          0.0034802954915499505,
+          0.0019241010575193913,
+          0.003102637734210713,
+          0.0013225088612799094,
+          0.0024216540211380406,
+          0.009732095934982126,
+          0.003243159191707829,
+          0.001212423050376094,
+          0.000949737019061068,
+          0.0044041531678554145,
+          0.0012156283413272534,
+          0.0010218788130487311,
+          0.0019866736155510776,
+          0.0011512905579481275,
+          0.003000394458188181,
+          0.0015593832751151413,
+          0.001191024335360064,
+          0.001890135784615419,
+          0.0014813208186708043,
+          0.0061213274101571714,
+          0.002265501113715475,
+          0.002747036388462923,
+          0.001257651848271184,
+          0.000914749549056667,
+          0.0016556900246629752,
+          0.0014154331462911888,
+          0.002030422473596663,
+          0.0010641646143643862,
+          0.0016112998438612156,
+          0.0030482902563339362,
+          0.0009296180786867535,
+          0.0013821822963005271,
+          0.0016131772941197478,
+          0.0015576012420872244,
+          0.0008265040728446134,
+          0.0008631382535783695,
+          0.0014174605631358693,
+          0.0009605749210282809,
+          0.0016811503462341568,
+          0.0017408359497920675,
+          0.0010468755470826184,
+          0.0026501702916516324,
+          0.0011861080737796763,
+          0.0009390122587619924,
+          0.0012758779780056018,
+          0.0017892414998679996,
+          0.0010296656546589385,
+          0.0028430047400215897,
+          0.0018389028952789464,
+          0.0019996453465249875,
+          0.0020079555170928356,
+          0.0017217271646686053,
+          0.0015753183104468909,
+          0.0020830626251423395,
+          0.0010992914519172645
+        ]
+      },
+      "reference_terms": {
+        "absolute_peak_error": [
+          0.02131102968674642,
+          0.026762948121848845,
+          0.0275285791989857,
+          0.02507840512331849,
+          0.019049379156676975,
+          0.025981494972433433,
+          0.01612906331996842,
+          0.018773203169149807,
+          0.013636319956324996,
+          0.022237751562604144,
+          0.021629615444121418,
+          0.01695096951364279,
+          0.010136138711722536,
+          0.013605668708411643,
+          0.018622628975993705,
+          0.012707172497626039,
+          0.008564144810922311,
+          0.011349428988691469,
+          0.010141982101918552,
+          0.022425658124431213,
+          0.01683453586274168,
+          0.02599902027354189,
+          0.01957552857431858,
+          0.020133592032665407,
+          0.011541804126750441,
+          0.02097897202379718,
+          0.009374054837069759,
+          0.013621378620658792,
+          0.016617297485435813,
+          0.018614390012036956,
+          0.016103011285397213,
+          0.013627668900623256,
+          0.02259652946721252,
+          0.026001272808844764,
+          0.016769654497609747,
+          0.026331613575791467,
+          0.019830018134316642,
+          0.01896980581204573,
+          0.020899780179327837,
+          0.009105306337411273,
+          0.018152911604338955,
+          0.017739391699862248,
+          0.008729624295100394,
+          0.00956510935463602,
+          0.010381686221818532,
+          0.026744257595749214,
+          0.026012407721583235,
+          0.02356674662652503,
+          0.03256824757862191,
+          0.017531601854694864,
+          0.02415848038291396,
+          0.020051224453554402,
+          0.018447531747912287,
+          0.01635052108531157,
+          0.017794706829528585,
+          0.014352178980962457,
+          0.009735487895454085,
+          0.012400210594476943,
+          0.016569034153379368,
+          0.01664958504510633,
+          0.00876932187925655,
+          0.00886119827948295,
+          0.01595946875277937,
+          0.013043656765128009
+        ],
+        "p_relative_l2": [
+          0.01263774011593722,
+          0.014886276134167062,
+          0.01573333540518517,
+          0.014290765936198917,
+          0.011427269923178654,
+          0.013993774163284551,
+          0.01108090490251152,
+          0.015037624388858382,
+          0.009447863924798749,
+          0.012018443208671297,
+          0.01187068993485994,
+          0.011928398980719077,
+          0.0059849234639962196,
+          0.009676558828318214,
+          0.011312336552446301,
+          0.009408502049875696,
+          0.004756077503658331,
+          0.010595272327770026,
+          0.006147531667031619,
+          0.013322349843557572,
+          0.008166604208593387,
+          0.013602079560696678,
+          0.013017564080472053,
+          0.010901772558063063,
+          0.007695433546882799,
+          0.012705083594475764,
+          0.00604330031936589,
+          0.009154210898968774,
+          0.009731041062145831,
+          0.01052148572670562,
+          0.010621002542836386,
+          0.009684397910621822,
+          0.013516873703547644,
+          0.01642646826659937,
+          0.009988126970775389,
+          0.013470950336815567,
+          0.013392809150617838,
+          0.0102581730682278,
+          0.010750820087736252,
+          0.005019848291075518,
+          0.01196680847695066,
+          0.009946521977997108,
+          0.005014584629132454,
+          0.008287215450873365,
+          0.0058874908505344116,
+          0.014605028845689972,
+          0.015081714501605307,
+          0.011406255656650679,
+          0.01943419669497539,
+          0.010122801634119653,
+          0.012536456007471733,
+          0.012011233776546223,
+          0.012493227247256308,
+          0.010268226551046429,
+          0.009749130074634103,
+          0.00983277683338407,
+          0.006321343738103119,
+          0.008126851875742525,
+          0.009747932356112397,
+          0.009463516334845292,
+          0.005121850444797252,
+          0.004801080485649444,
+          0.010729039008399173,
+          0.008666249158336498
+        ],
+        "u_relative_l2": [
+          0.0005893412078512304,
+          0.0008788745576072447,
+          0.000981518666148141,
+          0.0002662008550192714,
+          0.0009341329549367983,
+          0.001149485579936092,
+          0.0004410619272564009,
+          0.00011517995486994093,
+          0.0009112357658977158,
+          0.0013428978258384335,
+          0.0011745257714914034,
+          0.0007344105073389714,
+          0.00024053242016703767,
+          0.0009410371169304159,
+          0.0013415851664720859,
+          0.0007289794159074084,
+          0.0003580079028508875,
+          0.00017108921200322756,
+          0.00044505941106766936,
+          0.0005768134549021754,
+          0.00013591876773268944,
+          0.0011448547067895423,
+          0.00046891331569521883,
+          0.0011828745330243631,
+          0.0004860746430480932,
+          0.0008188266267181023,
+          0.0005856215757149397,
+          0.0009381638942573017,
+          0.001290318154462551,
+          0.001193288461960741,
+          0.0008920141344426441,
+          0.0006470327073986751,
+          0.00037872225365275045,
+          0.00035154452886922166,
+          0.000745714791271024,
+          0.0009425514933600962,
+          0.00044517498462885155,
+          0.0010143173093983267,
+          0.0012139134448797507,
+          0.0002562338498686334,
+          0.0006098310447539836,
+          0.00111521518318595,
+          0.00040242763514174087,
+          0.00016862501912994081,
+          0.00026595390438619525,
+          0.0007046271502380609,
+          0.0004438296793449337,
+          8.166356128171511e-05,
+          0.0004206403445993317,
+          0.0006777750479960607,
+          0.000894836474850441,
+          0.0005803440291176875,
+          0.0003835822576168823,
+          0.00022978567350954654,
+          0.0009276131428469817,
+          0.0004778272063495439,
+          0.0006194298825701456,
+          0.0008260644001380467,
+          0.001039945736529165,
+          0.0010711935254312693,
+          0.00039423447994726155,
+          0.0002864867488344442,
+          0.0006254694812760797,
+          0.00032162068246483324
+        ]
+      }
+    }
+  },
+  "evidence_role": "HOLDOUT",
+  "fem_solve_seconds": [
+    96.05795436099288,
+    96.05923055598396,
+    97.07220669699018,
+    103.33059167600004,
+    82.5523552300001,
+    83.24640574600198,
+    101.35347435000585,
+    103.29289976001019,
+    84.17064850201132,
+    87.15925060599693,
+    87.02619027599576,
+    87.69962083100108,
+    108.38087226400967,
+    87.39635332400212,
+    89.0248193879961,
+    88.31872652799939,
+    110.37040442597936,
+    104.88556134601822,
+    91.19743089101394,
+    110.87250088798464,
+    110.80578921199776,
+    113.40638357700664,
+    90.19362045501475,
+    92.34468406802625,
+    114.54478755698074,
+    114.70665618599742,
+    94.18286163799348,
+    109.54490223602625,
+    93.41114147601184,
+    93.94317588399281,
+    92.61237873497885,
+    93.42397902300581,
+    113.20054012400215,
+    114.97497048700461,
+    92.94805776499561,
+    114.51518082301482,
+    113.2552077859873,
+    92.7178048969945,
+    93.7627919089864,
+    117.58268647099612,
+    94.83709541300777,
+    114.9265820569999,
+    97.36599162899074,
+    114.32984436699189,
+    114.3955858979898,
+    114.94201740299468,
+    114.48407908700756,
+    115.1692373729893,
+    115.13490255601937,
+    114.39667469798587,
+    94.81565425900044,
+    96.91793207699084,
+    113.91980999801308,
+    116.15069585002493,
+    114.90632192400517,
+    112.88431378998212,
+    116.39277695899364,
+    94.27488862798782,
+    94.33390496397624,
+    97.11816428299062,
+    116.23103558600997,
+    113.68575804200373,
+    116.43241127301008,
+    110.27977794999606
+  ],
+  "platform_fingerprint": {
+    "cpu_capability": "AVX2",
+    "machine": "x86_64",
+    "os": "Linux"
+  },
+  "protocol_sha256": "8f001ee726958ce1762007b934c1afff02ea2130f258e8aa94a2c21198f6d653",
+  "schema_version": "1.0",
+  "set": "H1",
+  "workers": 3
+}
