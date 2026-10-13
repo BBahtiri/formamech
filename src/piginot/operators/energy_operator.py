@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import hashlib
 import math
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from dataclasses import asdict, dataclass
 from typing import ClassVar, Final, cast
 
@@ -30,6 +30,17 @@ from torch import nn
 
 from piginot.contracts import MaterialSpec
 from piginot.contracts.canonical import canonical_json_bytes
+from piginot.lifting._checks import (
+    require_same_context as _require_same_context,
+)
+from piginot.lifting._checks import (
+    validate_field as _validate_field,
+)
+from piginot.lifting._checks import (
+    validate_matrix as _validate_matrix,
+)
+from piginot.lifting.base import AffineDirichletLifting, DirichletLifting
+from piginot.lifting.quarter import AxisAlignedTensionLifting
 from piginot.operators.architecture import OperatorOutput
 from piginot.physics import first_piola, plane_stress_closure
 
@@ -115,67 +126,6 @@ class QueryFrame:
         return (
             2.0 * (query_xy - self.origin.unsqueeze(1)) / self.extent.unsqueeze(1) - 1.0
         )
-
-
-@dataclass(frozen=True, slots=True)
-class AffineDirichletLifting:
-    """Exact lifting ``u = offset + scale * phi`` evaluated at query points.
-
-    ``offset`` satisfies every prescribed displacement and ``scale`` vanishes on
-    each constrained component's boundary, so any finite correction ``phi``
-    reproduces the essential conditions exactly.
-    """
-
-    offset: torch.Tensor
-    scale: torch.Tensor
-
-    def __post_init__(self) -> None:
-        _validate_field(self.offset, "offset", trailing=2)
-        _validate_field(self.scale, "scale", trailing=2)
-        if self.offset.shape != self.scale.shape:
-            raise ValueError("offset and scale must have the same shape")
-        _require_same_context(self.offset, self.scale, "offset", "scale")
-
-
-DirichletLifting = Callable[[torch.Tensor], AffineDirichletLifting]
-
-
-@dataclass(frozen=True, slots=True)
-class AxisAlignedTensionLifting:
-    """Lifting for ``u_x(0, y) = 0``, ``u_x(a, y) = d`` and ``u_y(x, 0) = 0``.
-
-    The domain lies in ``[0, a] x [0, b]`` with ``a`` and ``b`` given per sample by
-    ``extent``. Writing ``xi = x / a`` and ``eta = y / b``, the displacement is
-    ``u_x = d * (xi + xi * (1 - xi) * phi_x)`` and ``u_y = d * eta * phi_y``, so the
-    correction ``phi`` is measured in units of the prescribed displacement.
-    """
-
-    extent: torch.Tensor
-    displacement: torch.Tensor
-
-    def __post_init__(self) -> None:
-        _validate_matrix(self.extent, "extent", trailing=2)
-        if bool((self.extent <= 0.0).any().item()):
-            raise ValueError("extent must be strictly positive")
-        if not isinstance(self.displacement, torch.Tensor):
-            raise TypeError("displacement must be a torch.Tensor")
-        if self.displacement.shape != (self.extent.shape[0],):
-            raise ValueError("displacement must have shape (batch,)")
-        _require_same_context(self.extent, self.displacement, "extent", "displacement")
-        if not bool(torch.isfinite(self.displacement).all().item()):
-            raise ValueError("displacement must be finite")
-
-    def __call__(self, query_xy: torch.Tensor) -> AffineDirichletLifting:
-        _validate_field(query_xy, "query_xy", trailing=2)
-        if query_xy.shape[0] != self.extent.shape[0]:
-            raise ValueError("query_xy and lifting must share a batch dimension")
-        _require_same_context(query_xy, self.extent, "query_xy", "extent")
-        xi = query_xy[..., 0] / self.extent[:, 0:1]
-        eta = query_xy[..., 1] / self.extent[:, 1:2]
-        d = self.displacement.unsqueeze(1)
-        offset = torch.stack((d * xi, torch.zeros_like(eta)), dim=-1)
-        scale = torch.stack((d * xi * (1.0 - xi), d * eta), dim=-1)
-        return AffineDirichletLifting(offset, scale)
 
 
 class _NerfEncoding(nn.Module):
@@ -492,47 +442,6 @@ def energy_module_digest(module: EnergyFormOperator) -> str:
     }
     digest = hashlib.blake2b(canonical_json_bytes(payload), digest_size=32)
     return f"blake2b256:{digest.hexdigest()}"
-
-
-def _validate_field(
-    value: torch.Tensor,
-    name: str,
-    *,
-    trailing: int,
-) -> None:
-    if not isinstance(value, torch.Tensor):
-        raise TypeError(f"{name} must be a torch.Tensor")
-    if value.layout is not torch.strided:
-        raise ValueError(f"{name} must be a dense strided tensor")
-    if value.dtype not in (torch.float32, torch.float64):
-        raise ValueError(f"{name} must use float32 or float64")
-    if value.ndim != 3 or value.shape[-1] != trailing or value.numel() == 0:
-        raise ValueError(f"{name} must have shape (batch, count, {trailing})")
-    if not bool(torch.isfinite(value).all().item()):
-        raise ValueError(f"{name} must contain only finite values")
-
-
-def _validate_matrix(value: torch.Tensor, name: str, *, trailing: int) -> None:
-    if not isinstance(value, torch.Tensor):
-        raise TypeError(f"{name} must be a torch.Tensor")
-    if value.layout is not torch.strided:
-        raise ValueError(f"{name} must be a dense strided tensor")
-    if value.dtype not in (torch.float32, torch.float64):
-        raise ValueError(f"{name} must use float32 or float64")
-    if value.ndim != 2 or value.shape[-1] != trailing or value.numel() == 0:
-        raise ValueError(f"{name} must have shape (batch, {trailing})")
-    if not bool(torch.isfinite(value).all().item()):
-        raise ValueError(f"{name} must contain only finite values")
-
-
-def _require_same_context(
-    left: torch.Tensor,
-    right: torch.Tensor,
-    left_name: str,
-    right_name: str,
-) -> None:
-    if left.dtype != right.dtype or left.device != right.device:
-        raise ValueError(f"{left_name} and {right_name} must share dtype and device")
 
 
 __all__ = (
