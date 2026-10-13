@@ -121,6 +121,32 @@ are the unbiased test.
 - The H1 reveal costs one fine and one coarse S10-recipe solve per case:
   about 256 solves for both families on the reference machine.
 
+## Result (G23 PASS, 2026-10-13)
+
+H1 was revealed once per family on the reference machine and scored with the
+unchanged S14 procedure; both sets are burned. One DogBone H1 case lies
+outside the calibration gate (63 of 64 in), every notched case inside (64).
+Covered in-calibration H1 cases against the acceptance count (47 of 63,
+48 of 64 at level 0.05/8):
+
+| Family | Bound | Stress field | Peak | Displacement (reported) |
+|---|---|---|---|---|
+| DogBone | `budget_total` | 56/63 | 57/63 | **46/63** (below 47) |
+| DogBone | `reference_terms` | 57/63 | 55/63 | 49/63 |
+| Notched | `budget_total` | 57/64 | 55/64 | 59/64 |
+| Notched | `reference_terms` | 57/64 | 57/64 | 52/64 |
+
+All eight gated counts pass; every other G23 check passes, `G23.recompute`
+through decision 8 (`artifacts/gates/S23.json`). The Linux suite recorded
+3,337 passed (91.76% branch coverage, `piginot.bounds` 100%); the native
+Windows suite 3,329 passed with 9 reasoned skips.
+
+The reported DogBone displacement budget-total bound (0.22%) covers 73% of
+H1, below its acceptance count. It is not gated, so G23 passes, but it is not
+confirmed: the same pattern appeared at 0.1.0, where the DogBone HOLDOUT
+displacement p90 (0.29%) exceeded the DEVELOPMENT one (0.21%). The DogBone
+DEVELOPMENT cases appear to understate its displacement error on fresh cases.
+
 ## Verification
 
 Gate `G23` (table in `STEPS-v2.0.md` once ratified): protocol first,

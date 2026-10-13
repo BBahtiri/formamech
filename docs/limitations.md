@@ -263,7 +263,7 @@ Release 0.1.0 (S18, [ADR 0032](adr/0032-release-0.1.0.md)) carries these limits:
   the old history (clones, forks, caches) are outside this repository's
   control.
 
-The development line after 0.1.0 (S19–S22, `STEPS-v2.0.md`) is not part of
+The development line after 0.1.0 (S19–S23, `STEPS-v2.0.md`) is not part of
 release 0.1.0 and carries these limits:
 
 - S20 burned both 0.1.0 HOLDOUT sets and committed fresh sealed sets H1 and H2
@@ -289,6 +289,27 @@ release 0.1.0 and carries these limits:
 - Their timings and speed-ups were measured on one Linux reference machine,
   three solves in parallel, one run per case. S21 and S22 recorded no native
   Windows or macOS run.
+
+S23 adds calibrated error bounds ([ADR 0104](adr/0104-s23-calibrated-bounds.md)).
+Their limits:
+
+- A bound is one number per family and quantity, a split-conformal upper bound
+  calibrated on the 64 DEVELOPMENT cases. Its 90% guarantee is marginal, over
+  requests drawn like those cases; it is not a guarantee for a single request
+  and does not adapt to how hard a request is.
+- It bounds the S14 budgeted error, which includes a conservative estimate of
+  the FEM reference's discretisation error; it is not a bound against the
+  continuum solution or against experiments.
+- DEVELOPMENT had been used before, to accept the notched model (ADR 0030); the
+  fresh H1 sets are the unbiased test. On H1 every gated bound covered at
+  least its acceptance count, but the reported DogBone displacement
+  budget-total bound covered 46 of 63 cases and is not confirmed.
+- The calibration gate is a Mahalanobis distance to the TRAIN cases on the
+  varying primitive axes. Requests outside it get no bound; inside it, a
+  request can still be unlike every calibration case in ways the distance
+  does not measure.
+- The gate statistics were computed on one CPU type; on another they agree
+  within 1e-10 relative, not bit for bit (ADR 0104 decision 8).
 
 The S10 production run recorded zero natural FEM failures. Failed-case visibility is
 therefore exercised by one explicitly non-production canary through the same role

@@ -317,8 +317,11 @@ training cases than any calibration case is served with
 sidecars in `bundles/calibration/`, bound to each bundle's manifest; they need
 only `piginot[runtime]`. Without `--bounds` every output is unchanged.
 
-The bounds are tested once on the fresh H1 cases (gate G23); until that test
-has passed, treat them as calibrated but not yet confirmed.
+The bounds were tested once on 64 fresh H1 cases per family (gate G23, PASS):
+the stress-field and peak bounds covered 86–91% of the in-calibration cases
+(about 91% is expected on average with 64 calibration cases). One bound was not
+confirmed: the DogBone `budget_total` displacement bound (0.22%) covered only
+46 of 63 cases (73%); do not rely on it.
 
 ## 2. Train a small model end to end (Example 1)
 

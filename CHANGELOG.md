@@ -16,7 +16,9 @@ Development line S19–S26 (`STEPS-v2.0.md`), forked from `v0.1.0`.
   `serve(..., calibration=...)`; the preregistered protocol and the
   DEVELOPMENT calibration of both bundles (`bundles/calibration/`); the
   single H1 reveal command `campaigns/s23_reveal.py`; gate G23
-  (`campaigns/g23_gate.py`). The H1 coverage test has not been run yet.
+  (`campaigns/g23_gate.py`). G23 PASS: every gated H1 coverage count passed;
+  the reported DogBone displacement bound did not (46 of 63) and is not
+  confirmed.
 - **Verified serving** (S22): `piginot predict --mode fast|certified|exact`,
   FEM recipe sidecars in `bundles/fem-recipes/`, warm-start FEM solves, the
   `verify` extra (ADR 0103).
