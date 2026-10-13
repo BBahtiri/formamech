@@ -1,0 +1,184 @@
+{
+  "schema": "piginot.problem-spec-v1",
+  "name": "notched-v1",
+  "physics": "2d-plane-stress-finite-strain",
+  "parameters": [
+    {
+      "name": "width",
+      "role": "geometry",
+      "lo": 16,
+      "hi": 30,
+      "unit": "mm",
+      "distribution": "uniform"
+    },
+    {
+      "name": "notch_radius",
+      "role": "geometry",
+      "lo": 2,
+      "hi": 8,
+      "unit": "mm",
+      "distribution": "uniform"
+    },
+    {
+      "name": "notch_depth",
+      "role": "geometry",
+      "lo": 1,
+      "hi": 5,
+      "unit": "mm",
+      "distribution": "uniform"
+    },
+    {
+      "name": "nominal_axial_strain",
+      "role": "load",
+      "lo": 0.1,
+      "hi": 0.2,
+      "unit": "1",
+      "distribution": "uniform"
+    },
+    {
+      "name": "elastic_modulus",
+      "role": "material",
+      "lo": 760,
+      "hi": 760,
+      "unit": "MPa",
+      "distribution": "fixed"
+    },
+    {
+      "name": "poisson_ratio",
+      "role": "material",
+      "lo": 0.23,
+      "hi": 0.23,
+      "unit": "1",
+      "distribution": "fixed"
+    }
+  ],
+  "constants": [
+    {
+      "name": "half_length",
+      "value": 25,
+      "unit": "mm"
+    }
+  ],
+  "constraints": [
+    {
+      "name": "net_section_factor",
+      "expression": "width / (width - 2 * notch_depth)",
+      "lo": 1.0714285714285714,
+      "hi": 2.6666666666666665,
+      "unit": "1"
+    },
+    {
+      "name": "notch_sharpness",
+      "expression": "notch_depth / notch_radius",
+      "lo": 0.125,
+      "hi": 2.5,
+      "unit": "1"
+    }
+  ],
+  "geometry": {
+    "reference_mesh_id": "e2fca59e8e5b0de550aefec978e416c67aeda062b7f89271dab68a1189e5c773",
+    "morph_map_sha256": "347839ce209a07d4b923cdd59f7318938776ab39ddd2bda88c0cbb32bad70f79",
+    "regions": [
+      "bottom",
+      "left_symmetry",
+      "notch",
+      "right_end",
+      "top"
+    ],
+    "frame": {
+      "origin": [
+        "0",
+        "0"
+      ],
+      "extent": [
+        "half_length",
+        "0.5 * width"
+      ]
+    }
+  },
+  "material": {
+    "model": "compressible_neo_hookean",
+    "parameters": {
+      "elastic_modulus": "elastic_modulus",
+      "poisson_ratio": "poisson_ratio"
+    }
+  },
+  "boundary_conditions": [
+    {
+      "name": "left_x_symmetry",
+      "region": "left_symmetry",
+      "kind": "symmetry",
+      "components": [
+        "x"
+      ]
+    },
+    {
+      "name": "bottom_y_symmetry",
+      "region": "bottom",
+      "kind": "symmetry",
+      "components": [
+        "y"
+      ]
+    },
+    {
+      "name": "right_end_displacement",
+      "region": "right_end",
+      "kind": "dirichlet",
+      "components": [
+        "x"
+      ],
+      "values": [
+        {
+          "nominal_strain": "nominal_axial_strain"
+        }
+      ]
+    },
+    {
+      "name": "notch_free",
+      "region": "notch",
+      "kind": "traction_free"
+    },
+    {
+      "name": "top_free",
+      "region": "top",
+      "kind": "traction_free"
+    }
+  ],
+  "lifting": {
+    "kind": "quarter",
+    "displacement_scale": "half_length * nominal_axial_strain"
+  },
+  "qois": [
+    {
+      "name": "root_peak_first_piola_frobenius",
+      "field": "P_served",
+      "reduction": "max-frobenius",
+      "region": "notch",
+      "exclude_regions": []
+    }
+  ],
+  "verification": {
+    "quantile": 0.9,
+    "tolerances": {
+      "absolute_peak_error": 0.05,
+      "p_relative_l2": 0.05,
+      "u_relative_l2": 0.02
+    }
+  },
+  "split": {
+    "pilot": 8,
+    "train": 128,
+    "development": 64,
+    "holdout": 64,
+    "reserve": 16
+  },
+  "fem": {
+    "material_name": "notched-v1-reference-material",
+    "element_order": 2,
+    "load_steps": 64,
+    "max_dofs": 100000,
+    "max_newton_iterations": 20,
+    "plane_stress_max_iterations": 32,
+    "solver_tolerance": 1e-10
+  }
+}

@@ -1,0 +1,186 @@
+{
+  "families": {
+    "dogbone-v1": {
+      "adf_problem_hash": "fd4fff5ac9f5372a20a52d152fca9737f4257d33e1742f6c037b3e1b22364d21",
+      "adf_spec": "campaigns/dogbone_v1/problem_spec_adf.json",
+      "development": {
+        "cases": 64,
+        "fem_requests_byte_identical": 64,
+        "frame_bit_identical": 64,
+        "lifting_bit_identical": 64
+      },
+      "envelope": {
+        "constraints": true,
+        "dirichlet": true,
+        "material": true,
+        "mesh_rules": true,
+        "morph_map": true,
+        "qois": true,
+        "ranges": true,
+        "reference_mesh": true
+      },
+      "lifting": {
+        "adf": {
+          "boundary_residual": {
+            "320": 2.095080310979184e-16,
+            "4800": 2.1923900845672624e-16
+          },
+          "conformity": 2.1751533894486142e-16,
+          "kind": "adf",
+          "lifting_verification": {
+            "boundary_refinement_levels": [
+              320,
+              4800
+            ],
+            "max_boundary_residual": 3.3482300013263334e-16,
+            "parameter_range_hash": "c0c3a0b96e96d4fa4496cd84c4ceecbb7a6f1f9b7b8e6d65832f1c2281267f0b",
+            "verification_hash": "ef7c76208fee7340d83f05d8e23136b409d07369859326bae6c675c43808c49c",
+            "verification_id": "dogbone-v1-adf:adf-lifting"
+          },
+          "mutant_miss": 2.028190338273938,
+          "node_residual": 3.3482300013263334e-16,
+          "orientation": 0.0,
+          "parameter_vectors": 89,
+          "passed": true,
+          "problem_hash": "fd4fff5ac9f5372a20a52d152fca9737f4257d33e1742f6c037b3e1b22364d21",
+          "refinements": [
+            320,
+            4800
+          ],
+          "refused_geometries": 0,
+          "thresholds": {
+            "conformity": 1e-09,
+            "exact": 1e-12,
+            "mutant_minimum_miss": 0.001
+          }
+        },
+        "quarter": {
+          "boundary_residual": {},
+          "conformity": null,
+          "kind": "quarter",
+          "lifting_verification": {
+            "boundary_refinement_levels": [
+              320,
+              4800
+            ],
+            "max_boundary_residual": 0.0,
+            "parameter_range_hash": "c0c3a0b96e96d4fa4496cd84c4ceecbb7a6f1f9b7b8e6d65832f1c2281267f0b",
+            "verification_hash": "796cc63e047898b785018484d2c81a4581f44c77fa65e34fd203c09449e0dada",
+            "verification_id": "dogbone-v1:quarter-lifting"
+          },
+          "mutant_miss": 1.9579615640066546,
+          "node_residual": 0.0,
+          "orientation": null,
+          "parameter_vectors": 89,
+          "passed": true,
+          "problem_hash": "71aa6b4da1a316a058c04118c355e2558e6519870b6fc11a6bf39066843e9099",
+          "refinements": [
+            320,
+            4800
+          ],
+          "refused_geometries": 0,
+          "thresholds": {
+            "conformity": 1e-09,
+            "exact": 1e-12,
+            "mutant_minimum_miss": 0.001
+          }
+        }
+      },
+      "passed": true,
+      "problem_hash": "71aa6b4da1a316a058c04118c355e2558e6519870b6fc11a6bf39066843e9099",
+      "spec": "campaigns/dogbone_v1/problem_spec.json"
+    },
+    "notched-v1": {
+      "adf_problem_hash": "b9b24e5ee3fd1d8585a2ff34d5ff35f4d50da0b5d85ade9b688831c1f55f9fa5",
+      "adf_spec": "campaigns/notched_v1/problem_spec_adf.json",
+      "development": {
+        "cases": 64,
+        "fem_requests_byte_identical": 64,
+        "frame_bit_identical": 64,
+        "lifting_bit_identical": 64
+      },
+      "envelope": {
+        "constraints": true,
+        "dirichlet": true,
+        "material": true,
+        "mesh_rules": true,
+        "morph_map": true,
+        "qois": true,
+        "ranges": true,
+        "reference_mesh": true
+      },
+      "lifting": {
+        "adf": {
+          "boundary_residual": {
+            "320": 1.8858540974905214e-16,
+            "4800": 1.8858540974905214e-16
+          },
+          "conformity": 1.4210854715202004e-16,
+          "kind": "adf",
+          "lifting_verification": {
+            "boundary_refinement_levels": [
+              320,
+              4800
+            ],
+            "max_boundary_residual": 1.8858540974905214e-16,
+            "parameter_range_hash": "52e11dab7e6966ac0b58ef6c47ceb1f6ed0a1a19cf23b0269b85d03a345ecf6d",
+            "verification_hash": "70b721b83d28e04284d18bb7c8cdc8d75e2aeef71b0931f499374cdfbadbb48c",
+            "verification_id": "notched-v1-adf:adf-lifting"
+          },
+          "mutant_miss": 2.259670149377502,
+          "node_residual": 1.8858540974905214e-16,
+          "orientation": 0.0,
+          "parameter_vectors": 81,
+          "passed": true,
+          "problem_hash": "b9b24e5ee3fd1d8585a2ff34d5ff35f4d50da0b5d85ade9b688831c1f55f9fa5",
+          "refinements": [
+            320,
+            4800
+          ],
+          "refused_geometries": 0,
+          "thresholds": {
+            "conformity": 1e-09,
+            "exact": 1e-12,
+            "mutant_minimum_miss": 0.001
+          }
+        },
+        "quarter": {
+          "boundary_residual": {},
+          "conformity": null,
+          "kind": "quarter",
+          "lifting_verification": {
+            "boundary_refinement_levels": [
+              320,
+              4800
+            ],
+            "max_boundary_residual": 0.0,
+            "parameter_range_hash": "52e11dab7e6966ac0b58ef6c47ceb1f6ed0a1a19cf23b0269b85d03a345ecf6d",
+            "verification_hash": "2348fa787eaa935cd6939c5a48330f4c50f50afca90014a34827c57e8e08ddca",
+            "verification_id": "notched-v1:quarter-lifting"
+          },
+          "mutant_miss": 1.8884499752088382,
+          "node_residual": 0.0,
+          "orientation": null,
+          "parameter_vectors": 81,
+          "passed": true,
+          "problem_hash": "bd75e2180e94e99adf382e0abf9cfa9892d8edb6511ca129ebe6db138c42e273",
+          "refinements": [
+            320,
+            4800
+          ],
+          "refused_geometries": 0,
+          "thresholds": {
+            "conformity": 1e-09,
+            "exact": 1e-12,
+            "mutant_minimum_miss": 0.001
+          }
+        }
+      },
+      "passed": true,
+      "problem_hash": "bd75e2180e94e99adf382e0abf9cfa9892d8edb6511ca129ebe6db138c42e273",
+      "spec": "campaigns/notched_v1/problem_spec.json"
+    }
+  },
+  "schema_version": "1.0",
+  "step": "S24"
+}
