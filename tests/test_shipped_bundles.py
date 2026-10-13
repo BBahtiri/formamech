@@ -36,11 +36,11 @@ REQUESTS = (
 
 def test_the_shipped_bundles_are_the_gated_ones() -> None:
     assert sorted(path.name for path in BUNDLES.iterdir() if path.is_dir()) == sorted(
-        [*RECORDED, "requests", "fem-recipes", "calibration"]
+        [*RECORDED, "requests", "fem-recipes", "calibration", "h1-results"]
     )
-    # S22 FEM recipes and S23 calibrations: one sidecar per gated bundle,
-    # bound to its manifest
-    for folder in ("fem-recipes", "calibration"):
+    # S22 FEM recipes, S23 calibrations and their H1 results: one sidecar per
+    # gated bundle, bound to its manifest
+    for folder in ("fem-recipes", "calibration", "h1-results"):
         sidecars = sorted((BUNDLES / folder).glob("*.json"))
         assert [p.stem for p in sidecars] == sorted(RECORDED)
         for path in sidecars:

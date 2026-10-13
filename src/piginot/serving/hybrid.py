@@ -26,7 +26,7 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from piginot.bounds import CalibrationError, CalibrationRecord
+from piginot.bounds import CalibrationError, CalibrationRecord, ConfirmedCalibration
 from piginot.bundle import predict
 
 if TYPE_CHECKING:
@@ -262,7 +262,7 @@ def serve(
     request_id: str | None = None,
     backend: Any = None,
     confidence: bool | None = None,
-    calibration: CalibrationRecord | None = None,
+    calibration: CalibrationRecord | ConfirmedCalibration | None = None,
 ) -> VerifiedPrediction:
     """Serve one request in the chosen mode (see the module docstring).
 

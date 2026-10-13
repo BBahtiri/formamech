@@ -152,13 +152,26 @@ def _predict(args: argparse.Namespace) -> int:
     inputs, queries = parse_request(request)
     calibration = None
     if args.bounds or args.calibration is not None:
-        from piginot.bounds import CalibrationError, CalibrationRecord, calibration_path
+        from piginot.bounds import (
+            CalibrationError,
+            CalibrationRecord,
+            ConfirmedCalibration,
+            H1Confirmation,
+            calibration_path,
+            confirmation_path,
+        )
 
         try:
-            calibration = CalibrationRecord.load(
+            record = CalibrationRecord.load(
                 args.calibration or calibration_path(args.bundle),
                 bundle=Path(args.bundle).name,
                 manifest_sha256=bundle.manifest.manifest_sha256,
+            )
+            h1_results = confirmation_path(args.bundle)
+            calibration = (
+                ConfirmedCalibration(record, H1Confirmation.load(h1_results, record))
+                if args.calibration is None and h1_results.is_file()
+                else record
             )
         except CalibrationError as exc:
             print(f"piginot: {exc}", file=sys.stderr)
@@ -368,8 +381,9 @@ def build_parser() -> argparse.ArgumentParser:
         "--calibration",
         type=Path,
         default=None,
-        help="calibration sidecar to use with --bounds "
-        "(default: <bundles>/calibration/<bundle>.json)",
+        help="calibration sidecar to use with --bounds (default: "
+        "<bundles>/calibration/<bundle>.json; bounds not confirmed on H1, listed "
+        "in <bundles>/h1-results/<bundle>.json, are then withheld)",
     )
     predict.set_defaults(handler=_predict)
 

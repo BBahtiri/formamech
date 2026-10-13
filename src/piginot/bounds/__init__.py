@@ -4,6 +4,11 @@ NumPy only: fast serving with ``piginot[runtime]`` can attach bounds without
 the FEM stack.
 """
 
+from piginot.bounds.confirmation import (
+    ConfirmedCalibration,
+    H1Confirmation,
+    confirmation_path,
+)
 from piginot.bounds.conformal import (
     ConformalBound,
     NoFiniteBound,
@@ -29,14 +34,17 @@ __all__ = (
     "OUT_OF_CALIBRATION",
     "CalibrationError",
     "CalibrationRecord",
+    "ConfirmedCalibration",
     "ConformalBound",
     "GateError",
+    "H1Confirmation",
     "MahalanobisGate",
     "NoFiniteBound",
     "acceptance_count",
     "beta_binomial_pmf",
     "calibration_path",
     "case_ids_sha256",
+    "confirmation_path",
     "conformal_rank",
     "split_conformal_bound",
 )

@@ -321,7 +321,8 @@ The bounds were tested once on 64 fresh H1 cases per family (gate G23, PASS):
 the stress-field and peak bounds covered 86–91% of the in-calibration cases
 (about 91% is expected on average with 64 calibration cases). One bound was not
 confirmed: the DogBone `budget_total` displacement bound (0.22%) covered only
-46 of 63 cases (73%); do not rely on it.
+46 of 63 cases (73%). `--bounds` withholds it: the quantity is listed under
+`not_confirmed` with no number. The H1 results are in `bundles/h1-results/`.
 
 ## 2. Train a small model end to end (Example 1)
 

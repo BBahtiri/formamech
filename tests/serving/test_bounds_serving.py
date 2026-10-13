@@ -231,3 +231,14 @@ def test_bounds_need_no_fem_packages(
     )
     assert result.returncode == 0, result.stderr
     assert result.stdout.strip() == IN_CALIBRATION
+
+
+def test_the_cli_withholds_bounds_not_confirmed_on_h1(tmp_path: Path) -> None:
+    out = tmp_path / "out.json"
+    request = ROOT / "bundles" / "requests" / "dogbone-in-domain.json"
+    bundle = ROOT / "bundles" / "dogbone-v1-s13c-cp-freeze"
+    common = ["predict", str(bundle), "--request", str(request), "--output", str(out)]
+    assert main([*common, "--bounds"]) == 0
+    bounds = json.loads(out.read_text())["bounds"]
+    assert bounds["not_confirmed"] == ["u_relative_l2"]
+    assert set(bounds["upper_bounds"]) == {"p_relative_l2", "absolute_peak_error"}
