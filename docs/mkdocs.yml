@@ -63,7 +63,7 @@ nav:
       - "ADR 0103 — Verified serving: fast, certified and exact": adr/0103-s22-verified-serving.md
       - "ADR 0104 — Calibrated error bounds and envelope gating": adr/0104-s23-calibrated-bounds.md
       - "ADR 0105 — Scope of release 0.2.0 and the step sequence S24–S29": adr/0105-v0.2-scope-and-sequence.md
-      - "ADR 0106 — ProblemSpec, exact lifting and FEM requests from the spec (proposed)": adr/0106-s24-problem-spec-and-lifting.md
+      - "ADR 0106 — ProblemSpec, exact lifting and FEM requests from the spec": adr/0106-s24-problem-spec-and-lifting.md
       - "Upstream sources and licences": adr/upstream-sources.md
 
 theme:

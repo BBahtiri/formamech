@@ -1,8 +1,10 @@
 # ADR 0106: ProblemSpec, exact lifting from the spec, FEM requests from the spec (S24)
 
-- Status: Proposed — decisions marked ⚑ and the G24 thresholds await the
-  decision owner's sign-off. No training run (the ADF viability run and the
-  two 400-step replays) starts before it.
+- Status: Accepted — decisions 1–8 and the G24 thresholds accepted by the
+  decision owner on 2026-10-13 (chat: "Accept as written"; harmonic lifting
+  "Defer beyond 0.2.0"; viability run "Full 2,400 steps"; kill rule "Keep
+  untrimmed lines"), before any S24 training run; recorded in
+  `artifacts/problem/S24-PROTOCOL.json`
 - Date: 2026-10-13
 - Step: S24 (gate `G24`), `STEPS-v2.0.md` §7; implementation plan Feature 4
 - Builds on: ADR 0018 (energy-form operator and its quarter lifting),
@@ -140,8 +142,9 @@ the request.
    (`piginot.problem.fem_request`); shipped bundles and sidecars are not
    touched. On the owner machine, a clean 400-step replay of each family's
    registered run at the S24 revision matches the registered step-400 tensors
-   byte for byte; headers may differ only in `run_hash` and
-   `implementation_revision`.
+   byte for byte; the checkpoint manifests and safetensors headers may differ
+   only in `run_hash` and the two file hashes that cover it
+   (`campaigns/s24_replay.py`).
 7. **Run binding.** `TrainingRunBinding` gains an optional
    `problem_spec_hash`, omitted from the canonical form when absent (as the
    S20 platform fingerprint of the execution profile is), so every existing
@@ -151,7 +154,7 @@ the request.
    no change to the energy objective, the operator, the shipped bundles or
    their sidecars; no traction loads.
 
-## Proposed gate G24
+## Gate G24
 
 | Check | Pass condition |
 |---|---|
@@ -172,7 +175,7 @@ the request.
 The plan's `harmonic.smoke` check is dropped with the harmonic lifting
 (decision 3).
 
-## Result before sign-off (cloud, 2026-10-13, no training)
+## Result before the training runs (cloud, 2026-10-13)
 
 `python -m campaigns.s24_regression --write` →
 `artifacts/problem/S24-REGRESSION.json`, both families:
@@ -199,5 +202,10 @@ The `adf` variants' residuals are about 2e-16 of the displacement scale.
 ## Verification
 
 - `tests/contracts/test_problem_spec.py`, `tests/lifting/`,
-  `tests/problem/`, `tests/campaigns/test_problem_specs.py`.
+  `tests/problem/`, `tests/campaigns/test_problem_specs.py`,
+  `tests/campaigns/test_dogbone_s24_adf.py`, `tests/campaigns/test_g24_gate.py`.
 - `campaigns/s24_regression.py` writes `artifacts/problem/S24-REGRESSION.json`.
+- `campaigns/dogbone_v1/s24_adf.py` writes the protocol, trains the viability
+  run and writes `artifacts/problem/S24-ADF-TRAIN-SCREEN.json`;
+  `campaigns/s24_replay.py` writes `artifacts/problem/S24-REPLAY-<family>.json`;
+  `campaigns/g24_gate.py` writes `artifacts/gates/S24.json`.

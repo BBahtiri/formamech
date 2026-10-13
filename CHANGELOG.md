@@ -10,7 +10,7 @@ Development line S19–S29 (`STEPS-v2.0.md`, ADR 0105), forked from `v0.1.0`.
 
 ### Added
 
-- **ProblemSpec and exact liftings from the spec** (S24, ADR 0106 proposed):
+- **ProblemSpec and exact liftings from the spec** (S24, ADR 0106 accepted):
   the contract `piginot.contracts.ProblemSpec` (`piginot.problem-spec-v1`, a
   validated JSON problem description with a BLAKE2b identity); the package
   `piginot.lifting` with the quarter lifting (moved without numerical change)
@@ -19,8 +19,10 @@ Development line S19–S29 (`STEPS-v2.0.md`, ADR 0105), forked from `v0.1.0`.
   verifies a lifting over the parameter box; an optional `problem_spec_hash`
   in run bindings; the two shipped families as specs under `campaigns/`, which
   reproduce every DEVELOPMENT lifting bit for bit and every S10 FEM request
-  byte for byte (`artifacts/problem/S24-REGRESSION.json`). The ADF viability
-  training run waits for the owner's sign-off of ADR 0106.
+  byte for byte (`artifacts/problem/S24-REGRESSION.json`); the preregistered
+  ADF viability run and the 400-step replays (`artifacts/problem/S24-PROTOCOL.json`,
+  `campaigns/dogbone_v1/s24_adf.py`, `campaigns/s24_replay.py`) and gate G24
+  (`campaigns/g24_gate.py`).
 - **Calibrated bounds** (S23, ADR 0104 accepted): the runtime package
   `piginot.bounds` (split-conformal bounds, Mahalanobis calibration gate,
   calibration sidecars), `piginot predict --bounds` and

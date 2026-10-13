@@ -178,5 +178,27 @@ are written at the start of each step (ADR 0105). Each step copies its table
 into this document, with the owner's ratified thresholds, before its first
 run.
 
-S24's proposed table is in ADR 0106 (proposed); it is copied here when the
-owner signs it off, before the ADF viability run.
+### G24 — ProblemSpec, liftings, FEM requests from the spec (ADR 0106, accepted 2026-10-13)
+
+Protocol: `artifacts/problem/S24-PROTOCOL.json`.
+
+| Check | Pass condition |
+|---|---|
+| `G24.protocol-first` | `S24-PROTOCOL.json` committed and this ADR accepted before the viability run's first step |
+| `G24.lifting-exact` | Property tests, 1,000 random feasible parameter vectors and network outputs per kind and family: the Dirichlet data are met at points along every piece, end points included, within 1e-12 of the displacement scale; values and gradients finite at end points and joints |
+| `G24.lifting-reduces` | `adf` with untrimmed lines equals `quarter` within 1e-12 (offset and scale) on 1,000 random points and parameter vectors |
+| `G24.lifting-verified` | Decision 4 for both family specs and their `adf` variants: node and piece residuals ≤ 1e-12; conformity and orientation ≤ 1e-9; every mutant misses by > 1e-3 |
+| `G24.regression-dogbone` | Decision 6: lifting bit-identical on 64 DEVELOPMENT meshes; envelope equal; 64 of 64 FEM requests byte-identical; step-400 replay tensors byte-identical |
+| `G24.regression-notched` | The same for the notched plate |
+| `G24.spec-hash-stable` | Hash unchanged under key order, whitespace, number spelling and UTF-8/UTF-16 encoding; changed by every semantic edit of a leaf |
+| `G24.spec-validation` | Each rejection rule of decision 2 has a failing-spec test |
+| `G24.adf-viability` | Decision 5 guardrails pass; P-field L2 reported |
+| `G24.binding-compat` | A binding without `problem_spec_hash` has exactly the previous canonical fields; the binding, checkpoint and bundle tests pass; G13–G23 records still verify |
+| `G24.anti-scope` | No family token in `src/`; `.[runtime]` imports no FEM module; branch coverage of `piginot.lifting`, `piginot.problem` and the ProblemSpec contract ≥ 90% |
+| `G24.portability` | Suite records on Linux and Windows |
+| `G24.quality` | Full suite, ruff, mypy `--strict`, global coverage ≥ 90.5% |
+
+Kill rule: if the trimmed ADF viability run fails a guardrail, the S28
+compiler offers ADF only with untrimmed lines in 0.2.0; the quarter lifting
+and every shipped bundle are unaffected. The harmonic lifting is deferred
+beyond 0.2.0.

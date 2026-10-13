@@ -4,7 +4,7 @@ A problem specification (`piginot.problem-spec-v1`) describes one 2D
 finite-strain problem as a JSON file: geometry, parameter ranges, material,
 boundary conditions, exact Dirichlet lifting, quantities of interest,
 verification tolerances, DOE budget and FEM settings. It is introduced by
-S24 ([ADR 0106](adr/0106-s24-problem-spec-and-lifting.md), proposed) and is the
+S24 ([ADR 0106](adr/0106-s24-problem-spec-and-lifting.md)) and is the
 input of the one-command compiler planned for S28. The two shipped families
 are written this way in `campaigns/dogbone_v1/problem_spec.json` and
 `campaigns/notched_v1/problem_spec.json`.
