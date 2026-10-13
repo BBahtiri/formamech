@@ -46,7 +46,12 @@ _QUADRATURE = torch.tensor(
 
 
 def _elastic_modulus(material: MaterialSpec) -> float:
-    value = float(material.properties["elastic_modulus"].value)
+    if "elastic_modulus" in material.properties:
+        value = float(material.properties["elastic_modulus"].value)
+    else:
+        from piginot.physics import reference_modulus
+
+        value = reference_modulus(material)
     if not math.isfinite(value) or value <= 0.0:
         raise ValueError("elastic modulus must be finite and positive")
     return value

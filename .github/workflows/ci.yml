@@ -72,6 +72,8 @@ jobs:
         run: python -m pytest tests/bounds --cov=src/piginot/bounds --cov-fail-under=90
       - name: Check S24 lifting coverage
         run: python -m pytest tests/lifting --cov=src/piginot/lifting --cov-fail-under=90
+      - name: Check S25 materials coverage
+        run: python -m pytest tests/materials tests/contracts/test_energy_formula.py --cov=src/piginot/materials --cov=piginot.contracts.energy_formula --cov-fail-under=90
       - name: Check S24 problem coverage
         run: python -m pytest tests/problem tests/contracts/test_problem_spec.py --cov=src/piginot/problem --cov=piginot.contracts.problem_spec --cov-fail-under=90
       - name: Audit dependencies

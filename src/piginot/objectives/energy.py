@@ -30,7 +30,7 @@ import torch
 
 from piginot.contracts import MaterialSpec, hash_spec
 from piginot.operators.energy_operator import embed_plane_stress_deformation
-from piginot.physics import energy_density, plane_stress_closure
+from piginot.physics import energy_density, plane_stress_closure, reference_modulus
 
 POTENTIAL_ENERGY_POLICY_ID: Final = "potential-energy-stratified-triangles-v1"
 
@@ -227,9 +227,10 @@ def plane_stress_potential_energy(
     area = float(reference_area)
     if not math.isfinite(area) or area <= 0.0:
         raise ValueError("reference_area must be finite and positive")
-    if material.properties.get("elastic_modulus") is None:
-        raise ValueError("material must define elastic_modulus")
-    young = float(material.properties["elastic_modulus"].value)
+    if material.properties.get("elastic_modulus") is not None:
+        young = float(material.properties["elastic_modulus"].value)
+    else:
+        young = reference_modulus(material)
 
     identity = torch.eye(
         2, dtype=displacement_gradient.dtype, device=displacement_gradient.device
