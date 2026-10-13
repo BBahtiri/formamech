@@ -1,0 +1,372 @@
+{
+  "gate_id": "G23",
+  "step": "S23",
+  "commit": "e94cb91d4fd9683dc01cf81023e339db9e112105",
+  "timestamp_utc": "2026-10-13T12:47:19Z",
+  "execution_profile": {
+    "python": "3.11.15",
+    "system": "Linux",
+    "machine": "x86_64",
+    "torch": "2.13.0+cu130",
+    "cpu_capability": "AVX2"
+  },
+  "checks": [
+    {
+      "id": "G23.protocol-first",
+      "status": "PASS",
+      "measured": {
+        "protocol_commit": "f2dbe29416acdffbaa96bafcc5b4ba7172dfe8ca",
+        "protocol_commits": 1,
+        "later": {
+          "dogbone-v1:sidecar": "39406cf24004786b508600593288901eeea9f113",
+          "dogbone-v1:evidence": "39406cf24004786b508600593288901eeea9f113",
+          "dogbone-v1:consumed": "d395447c07746c9892fe26bfe6036f3a8330a924",
+          "dogbone-v1:reveal": "d395447c07746c9892fe26bfe6036f3a8330a924",
+          "notched-v1:sidecar": "39406cf24004786b508600593288901eeea9f113",
+          "notched-v1:evidence": "39406cf24004786b508600593288901eeea9f113",
+          "notched-v1:consumed": "d395447c07746c9892fe26bfe6036f3a8330a924",
+          "notched-v1:reveal": "d395447c07746c9892fe26bfe6036f3a8330a924"
+        }
+      },
+      "threshold": "protocol committed once, before the calibrations and the H1 reveals",
+      "comparison": "all"
+    },
+    {
+      "id": "G23.isolation",
+      "status": "PASS",
+      "measured": {
+        "calibration_overlaps": {
+          "dogbone-v1": [],
+          "notched-v1": []
+        },
+        "mutant_tests": {
+          "targets": [
+            "tests/campaigns/test_s23_calibration.py::test_a_burned_holdout_case_is_refused",
+            "tests/campaigns/test_s23_calibration.py::test_a_sealed_case_is_refused"
+          ],
+          "returncode": 0,
+          "summary": "2 passed in 1.60s"
+        }
+      },
+      "threshold": "no burned or sealed ID in a calibration; the calibration path refuses them",
+      "comparison": "all"
+    },
+    {
+      "id": "G23.recompute",
+      "status": "PASS",
+      "measured": {
+        "dogbone-v1": {
+          "byte_exact": false,
+          "binds_bundle": true,
+          "sidecar_exact_fields": true,
+          "evidence_exact_fields": true,
+          "gate_relative_difference": 1.9821500679264485e-16,
+          "evidence_gate_relative_difference": 1.9821500679264485e-16,
+          "gate_within_tolerance": true,
+          "statuses": {
+            "development": true,
+            "h1_smallest_relative_margin": 0.008805823440600956,
+            "h1": true
+          },
+          "pass": true
+        },
+        "notched-v1": {
+          "byte_exact": false,
+          "binds_bundle": true,
+          "sidecar_exact_fields": true,
+          "evidence_exact_fields": true,
+          "gate_relative_difference": 6.762613135684916e-14,
+          "evidence_gate_relative_difference": 6.762613135684916e-14,
+          "gate_within_tolerance": true,
+          "statuses": {
+            "development": true,
+            "h1_smallest_relative_margin": 0.016427174525908146,
+            "h1": true
+          },
+          "pass": true
+        }
+      },
+      "threshold": {
+        "rule": "ADR 0104 decision 8",
+        "exact": "bounds, case IDs, scores, n, k, alpha, hashes; bytes on the calibration's CPU profile",
+        "gate_statistics_relative_tolerance": 1e-10,
+        "statuses": "every calibration case keeps its status; every H1 case is more than 1e-09 (relative) from the gate threshold"
+      },
+      "comparison": "all"
+    },
+    {
+      "id": "G23.gate",
+      "status": "PASS",
+      "measured": {
+        "dogbone-v1": {
+          "calibration_cases_in": 64,
+          "calibration_cases": 64,
+          "constructed_outliers": 4,
+          "outliers_flagged_without_bounds": true,
+          "outlier_distances": [
+            3.534712647759306,
+            3.5057807708563056,
+            3.401790388161517,
+            3.3583595136170876
+          ],
+          "max_calibration_distance": 3.079961734791508
+        },
+        "notched-v1": {
+          "calibration_cases_in": 64,
+          "calibration_cases": 64,
+          "constructed_outliers": 4,
+          "outliers_flagged_without_bounds": true,
+          "outlier_distances": [
+            2.998250063867918,
+            3.108423508558591,
+            3.083520232010066,
+            3.0159282939382543
+          ],
+          "max_calibration_distance": 2.894380944402655
+        }
+      },
+      "threshold": "every calibration case IN_CALIBRATION; constructed in-envelope requests beyond the largest calibration distance served OUT_OF_CALIBRATION, no bound",
+      "comparison": "all"
+    },
+    {
+      "id": "G23.width",
+      "status": "PASS",
+      "measured": {
+        "dogbone-v1": {
+          "absolute_peak_error": 0.04066698094962479,
+          "p_relative_l2": 0.025832883322329827,
+          "u_relative_l2": 0.0022246345141795415
+        },
+        "notched-v1": {
+          "absolute_peak_error": 0.05471164630028005,
+          "p_relative_l2": 0.05413044257925485,
+          "u_relative_l2": 0.006267089530500303
+        }
+      },
+      "threshold": {
+        "dogbone-v1 budget_total at most": {
+          "absolute_peak_error": 0.05,
+          "p_relative_l2": 0.05,
+          "u_relative_l2": 0.02
+        },
+        "notched": "reported"
+      },
+      "comparison": "all"
+    },
+    {
+      "id": "G23.reveal-once",
+      "status": "PASS",
+      "measured": {
+        "dogbone-v1": {
+          "protocol_matches": true,
+          "calibration_matches": true,
+          "cases_are_h1": true,
+          "consumed": true,
+          "burned": true,
+          "after_calibration": true,
+          "second_reveal_refused": true
+        },
+        "notched-v1": {
+          "protocol_matches": true,
+          "calibration_matches": true,
+          "cases_are_h1": true,
+          "consumed": true,
+          "burned": true,
+          "after_calibration": true,
+          "second_reveal_refused": true
+        }
+      },
+      "threshold": "one verified H1 reveal per family after the protocol and the calibration; H1 burned; a second reveal refused",
+      "comparison": "all"
+    },
+    {
+      "id": "G23.coverage",
+      "status": "PASS",
+      "measured": {
+        "dogbone-v1": {
+          "recounts": true,
+          "in_calibration": 63,
+          "counts": {
+            "budget_total:p_relative_l2": {
+              "m": 63,
+              "covered": 56,
+              "acceptance_count": 47,
+              "pass": true
+            },
+            "budget_total:absolute_peak_error": {
+              "m": 63,
+              "covered": 57,
+              "acceptance_count": 47,
+              "pass": true
+            },
+            "reference_terms:p_relative_l2": {
+              "m": 63,
+              "covered": 57,
+              "acceptance_count": 47,
+              "pass": true
+            },
+            "reference_terms:absolute_peak_error": {
+              "m": 63,
+              "covered": 55,
+              "acceptance_count": 47,
+              "pass": true
+            }
+          },
+          "reported": {
+            "budget_total:u_relative_l2": {
+              "m": 63,
+              "covered": 46,
+              "acceptance_count": 47
+            },
+            "reference_terms:u_relative_l2": {
+              "m": 63,
+              "covered": 49,
+              "acceptance_count": 47
+            }
+          }
+        },
+        "notched-v1": {
+          "recounts": true,
+          "in_calibration": 64,
+          "counts": {
+            "budget_total:p_relative_l2": {
+              "m": 64,
+              "covered": 57,
+              "acceptance_count": 48,
+              "pass": true
+            },
+            "budget_total:absolute_peak_error": {
+              "m": 64,
+              "covered": 55,
+              "acceptance_count": 48,
+              "pass": true
+            },
+            "reference_terms:p_relative_l2": {
+              "m": 64,
+              "covered": 57,
+              "acceptance_count": 48,
+              "pass": true
+            },
+            "reference_terms:absolute_peak_error": {
+              "m": 64,
+              "covered": 57,
+              "acceptance_count": 48,
+              "pass": true
+            }
+          },
+          "reported": {
+            "budget_total:u_relative_l2": {
+              "m": 64,
+              "covered": 59,
+              "acceptance_count": 48
+            },
+            "reference_terms:u_relative_l2": {
+              "m": 64,
+              "covered": 52,
+              "acceptance_count": 48
+            }
+          }
+        }
+      },
+      "threshold": {
+        "gated": [
+          "dogbone-v1:budget_total:p_relative_l2",
+          "dogbone-v1:budget_total:absolute_peak_error",
+          "dogbone-v1:reference_terms:p_relative_l2",
+          "dogbone-v1:reference_terms:absolute_peak_error",
+          "notched-v1:budget_total:p_relative_l2",
+          "notched-v1:budget_total:absolute_peak_error",
+          "notched-v1:reference_terms:p_relative_l2",
+          "notched-v1:reference_terms:absolute_peak_error"
+        ],
+        "rule": "covered in-calibration H1 cases >= the smallest c with P(X <= c) >= per_check_level, X ~ BetaBinomial(m, k, n + 1 - k)",
+        "per_check_level": 0.00625
+      },
+      "comparison": "all"
+    },
+    {
+      "id": "G23.compat",
+      "status": "PASS",
+      "measured": {
+        "fast_goldens": {
+          "dogbone-v1-s13c-cp-freeze/dogbone-in-domain.json": true,
+          "notched-v1-cp-freeze/notched-in-domain.json": true,
+          "notched-v1-cp-freeze/notched-out-of-envelope.json": true
+        },
+        "tests": {
+          "targets": [
+            "tests/test_shipped_bundles.py",
+            "tests/serving/test_bounds_serving.py"
+          ],
+          "returncode": 0,
+          "summary": "12 passed in 26.42s"
+        }
+      },
+      "threshold": "without bounds, fast documents equal the S19 goldens; sidecars bind manifests",
+      "comparison": "all"
+    },
+    {
+      "id": "G23.portability",
+      "status": "FAIL",
+      "measured": {
+        "schema_version": "1.0",
+        "tree": "e44426bf65ae5098c9fe00dfff72e8e9bc967bc0",
+        "clean": true,
+        "summary": "",
+        "counts": {},
+        "skips": []
+      },
+      "threshold": "native Windows run of this code tree: 0 failed, 0 errors, every skip has a reason",
+      "comparison": "all"
+    },
+    {
+      "id": "G23.quality",
+      "status": "FAIL",
+      "measured": {
+        "tools": {
+          "ruff_check": 0,
+          "ruff_format": 0,
+          "mypy_strict": 0
+        },
+        "suite": {
+          "schema_version": "1.0",
+          "tree": "ce31953550c2e45585443c9e118b9edacb5a9d24",
+          "commit": "e94cb91d4fd9683dc01cf81023e339db9e112105",
+          "clean": false,
+          "branch_coverage": true,
+          "coverage_percent": 91.76,
+          "bounds_coverage_percent": 100.0,
+          "summary": "3337 passed, 1 skipped in 2421.42s (0:40:21)",
+          "counts": {
+            "passed": 3337,
+            "skipped": 1
+          },
+          "skips": [
+            {
+              "count": 1,
+              "where": "tests/campaigns/test_dogbone_s15_bundle.py:57",
+              "reason": "set PIGINOT_CP_FREEZE_WEIGHTS to the CP-FREEZE model export"
+            }
+          ],
+          "execution_profile": {
+            "python": "3.11.15",
+            "system": "Linux",
+            "machine": "x86_64",
+            "torch": "2.13.0+cu130",
+            "cpu_capability": "AVX2"
+          }
+        }
+      },
+      "threshold": {
+        "tools": "exit 0",
+        "suite": "recorded Linux run of this code tree, clean, 0 failed, 0 errors",
+        "global_branch_coverage_at_least": 90.5,
+        "piginot.bounds_at_least": 90.0
+      },
+      "comparison": "all"
+    }
+  ],
+  "decision_record": "docs/adr/0104-s23-calibrated-bounds.md",
+  "verdict": "FAIL",
+  "verdict_reason": "2 required check(s) not PASS: G23.portability, G23.quality"
+}
