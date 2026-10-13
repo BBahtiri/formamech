@@ -31,7 +31,7 @@ is left free, and a nominal-strain region is perpendicular to its component.
 | `constants` | Optional named values with a unit, usable in expressions |
 | `constraints` | Optional feasibility bounds: `name`, `expression`, `lo`, `hi`, `unit` |
 | `geometry` | `reference_mesh_id`, `morph_map_sha256`, `regions` (boundary tags), `frame` (`origin` and `extent` of the bounding box, as expressions) |
-| `material` | `model` (`compressible_neo_hookean` until S25) and the parameter that sets each property |
+| `material` | `model` (a built-in) or `energy` (a strain-energy formula), the parameter that sets each property, and an optional `stretch_range` for the admission gate (default `[0.6, 1.6]`) |
 | `boundary_conditions` | `name`, `region`, `kind` (`dirichlet`, `symmetry`, `traction_free`, `neumann`), `components` (`x`, `y`), `values` |
 | `lifting` | `kind` (`quarter` or `adf`), `displacement_scale`, and for `adf` the `pieces` of every Dirichlet and symmetry condition |
 | `qois` | `name`, `field` (`P_served`, `sigma`), `reduction` (`max-frobenius`), `region`, `exclude_regions` |
@@ -76,3 +76,39 @@ Dirichlet set for any network output `φ`.
 
 `piginot.problem.verify_lifting` measures a spec's lifting over its parameter
 box on the morphed meshes (ADR 0106 decision 4).
+
+## Materials
+
+A material is either a built-in model or a strain-energy formula
+([ADR 0107](adr/0107-s25-material-registry.md), proposed).
+
+| Model | Properties | Strain energy |
+|---|---|---|
+| `compressible_neo_hookean` | `elastic_modulus`, `poisson_ratio` | `mu/2 (I1 - 3) - mu ln J + lam/2 (ln J)^2` |
+| `mooney_rivlin` | `c10`, `c01`, `bulk_modulus` | `c10 (I1bar - 3) + c01 (I2bar - 3) + K/2 (J - 1)^2` |
+| `yeoh` | `c10`, `c20`, `c30`, `bulk_modulus` | `c10 (I1bar - 3) + c20 (I1bar - 3)^2 + c30 (I1bar - 3)^3 + K/2 (J - 1)^2` |
+| `gent` | `shear_modulus`, `jm`, `bulk_modulus` | `-mu Jm/2 ln(1 - (I1bar - 3)/Jm) + K/2 (J - 1)^2` |
+
+A formula uses numbers, its parameters, the invariants `I1`, `I2`, `J`,
+`I1bar`, `I2bar`, `+ - * /`, `**` or `^` with a numeric exponent (write
+`J^(-2/3)` with parentheses), and `exp`, `log`, `sqrt`. It declares its
+small-strain moduli:
+
+```json
+"material": {
+  "energy": {
+    "energy": "c / 2 * (I1bar - 3) + k / 2 * (J - 1) ^ 2",
+    "parameters": {"c": "MPa", "k": "MPa"},
+    "positive": ["c", "k"],
+    "small_strain": {"shear_modulus": "c", "bulk_modulus": "k"}
+  },
+  "parameters": {"c": "shear", "k": "bulk"}
+}
+```
+
+`piginot.problem.admit_material(spec)` runs the admission gate over the
+material parameters' box: stress-free reference state, objectivity,
+isotropy, stress and tangent against finite differences, the declared
+moduli, a unique plane-stress closure root, ellipticity, and (with
+`fem=True` and the `verify` extra) optimal FEM convergence on a manufactured
+solution.

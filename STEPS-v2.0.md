@@ -202,3 +202,6 @@ Kill rule: if the trimmed ADF viability run fails a guardrail, the S28
 compiler offers ADF only with untrimmed lines in 0.2.0; the quarter lifting
 and every shipped bundle are unaffected. The harmonic lifting is deferred
 beyond 0.2.0.
+
+S25's proposed table is in ADR 0107 (proposed); it is copied here when the
+owner signs it off, before the viability run.

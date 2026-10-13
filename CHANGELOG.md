@@ -10,6 +10,17 @@ Development line S19–S29 (`STEPS-v2.0.md`, ADR 0105), forked from `v0.1.0`.
 
 ### Added
 
+- **Material registry and admission gate** (S25, ADR 0107 proposed):
+  strain-energy formulas as data (`piginot.contracts.energy_formula`, a
+  whitelist parser with unit checks); built-in Mooney–Rivlin, Yeoh and Gent
+  models; `piginot.materials`, which derives stress, tangent and the
+  plane-stress closure of any formula by automatic differentiation; the
+  `piginot.physics` functions, the FEM solver and the energy objective accept
+  every registered model while the Neo-Hookean path stays bit-identical; the
+  admission gate (eight checks, including optimal FEM convergence on a
+  manufactured solution); `material.energy` and `material.stretch_range` in
+  the ProblemSpec. The Mooney–Rivlin viability run waits for the owner's
+  sign-off.
 - **ProblemSpec and exact liftings from the spec** (S24, ADR 0106 accepted):
   the contract `piginot.contracts.ProblemSpec` (`piginot.problem-spec-v1`, a
   validated JSON problem description with a BLAKE2b identity); the package
