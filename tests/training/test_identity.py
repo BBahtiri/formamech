@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from dataclasses import FrozenInstanceError, fields
 
 import pytest
@@ -70,6 +71,7 @@ def test_training_run_binding_has_the_complete_canonical_preimage() -> None:
         "implementation_revision",
         "seed",
         "execution_profile",
+        "problem_spec_hash",
     }
     assert b'"$type":"piginot.training.TrainingRunBinding"' in canonical_json_bytes(
         binding
@@ -179,3 +181,26 @@ def test_from_mapping_rejects_unknown_fields() -> None:
                 "absolute_checkpoint_path": "must-not-enter-run-identity",
             }
         )
+
+
+def test_a_binding_without_a_problem_spec_keeps_its_v1_canonical_form() -> None:
+    binding = _binding()
+    payload = canonical_json_bytes(binding)
+    assert b"problem_spec_hash" not in payload
+    v1_fields = {f.name for f in fields(binding)} - {"problem_spec_hash"}
+    assert set(json.loads(payload)) == v1_fields | {"$type"}
+
+
+def test_a_problem_spec_hash_is_bound_and_validated() -> None:
+    bound = _binding(problem_spec_hash=_HASH_B)
+    assert b'"problem_spec_hash":"' + _HASH_B.encode() in canonical_json_bytes(bound)
+    assert bound.run_hash != _binding().run_hash
+    assert bound.run_hash != _binding(problem_spec_hash=_HASH_A).run_hash
+    assert (
+        TrainingRunBinding.from_mapping(
+            {f.name: getattr(bound, f.name) for f in fields(bound)}
+        )
+        == bound
+    )
+    with pytest.raises(ContractValidationError, match="problem_spec_hash"):
+        _binding(problem_spec_hash="B" * 64)
