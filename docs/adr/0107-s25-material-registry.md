@@ -1,8 +1,9 @@
 # ADR 0107: Material registry, strain-energy formulas and the admission gate (S25)
 
-- Status: Proposed — decisions marked ⚑ and the G25 thresholds await the
-  decision owner's sign-off. Neither the viability run nor its FEM re-solves
-  start before it.
+- Status: Accepted — decisions 1–9 and the G25 thresholds accepted by the
+  decision owner on 2026-10-13 (chat: "Accept as written"; viability material
+  "Mooney–Rivlin"; kill rule "Registry, Neo-Hookean training only"), before
+  any S25 run; recorded in `artifacts/materials/S25-PROTOCOL.json`
 - Date: 2026-10-13
 - Step: S25 (gate `G25`), `STEPS-v2.0.md` §7
 - Builds on: ADR 0004 (S4 physics domain and plane-stress closure), ADR 0002
@@ -105,7 +106,7 @@ a material: it minimises `∫ W` with the closure `P33 = 0`.
    one, S28), no change to the energy objective's form, to the shipped
    bundles or to the S8 records.
 
-## Proposed gate G25
+## Gate G25
 
 | Check | Pass condition |
 |---|---|
@@ -135,3 +136,10 @@ a material: it minimises `∫ W` with the closure `P33 = 0`.
 
 - `tests/contracts/test_energy_formula.py`, `tests/materials/`,
   `tests/problem/test_material.py`, `tests/test_s25_anti_scope.py`.
+- Viability run: `campaigns/dogbone_v1/s25_mooney_rivlin.py` (`protocol`,
+  `references`, `train`, `evaluate`), records
+  `artifacts/materials/S25-MR-REFERENCES.json` and
+  `artifacts/materials/S25-MR-TRAIN-SCREEN.json`; its glue is tested in
+  `tests/campaigns/test_dogbone_s25_mooney_rivlin.py` without training or
+  re-solving.
+- Gate: `campaigns/g25_gate.py`, `tests/campaigns/test_g25_gate.py`.

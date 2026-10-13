@@ -203,5 +203,25 @@ compiler offers ADF only with untrimmed lines in 0.2.0; the quarter lifting
 and every shipped bundle are unaffected. The harmonic lifting is deferred
 beyond 0.2.0.
 
-S25's proposed table is in ADR 0107 (proposed); it is copied here when the
-owner signs it off, before the viability run.
+### G25 — Material registry, formulas and admission (ADR 0107, accepted 2026-10-13)
+
+Protocol: `artifacts/materials/S25-PROTOCOL.json`. Admission thresholds:
+ADR 0107 decision 6.
+
+| Check | Pass condition |
+|---|---|
+| `G25.protocol-first` | `S25-PROTOCOL.json` committed and this ADR accepted before the first FEM re-solve and the viability run |
+| `G25.formula-safety` | The parser refuses every construct outside the grammar (failing-formula tests); no `eval`, `exec`, `compile`, `sympify` or `parse_expr` in the formula path (syntax-tree scan) |
+| `G25.neo-hookean-identity` | Dispatch bit-identical to the closed-form kernels (energy, stress, tangent, closure and its gradient); S19 fast-serving goldens unchanged; the Neo-Hookean formula within 1e-12 of the closed form |
+| `G25.admission` | Every built-in model and the closed-form model admitted (decision 6, all eight checks) at its test parameters over `[0.6, 1.6]` |
+| `G25.admission-mutants` | Each seeded defect fails its check: not stress-free (reference), wrong moduli (moduli), negative shear stiffness (ellipticity, closure), energy undefined in the range, anisotropic energy (symmetry), non-objective energy (objectivity), scaled stress and scaled tangent (consistency) |
+| `G25.fem` | Autograd manufactured fields equal the symbolic S8 fields within 1e-10 for Neo-Hookean; the FEM solver converges at the optimal orders for a formula model |
+| `G25.viability` | Decision 8 guardrails pass |
+| `G25.binding-compat` | Existing run bindings, bundles and G13–G24 records still verify |
+| `G25.anti-scope` | Decision 9 tests; `.[runtime]` imports `piginot.materials` without FEM packages; branch coverage of `piginot.materials` and the formula contract ≥ 90% |
+| `G25.portability` | Suite records on Linux and Windows |
+| `G25.quality` | Full suite, ruff, mypy `--strict`, global coverage ≥ 90.5% |
+
+Kill rule: if the Mooney–Rivlin viability run fails a guardrail, 0.2.0 ships
+the registry and the admission gate and the S28 compiler trains only the
+closed-form Neo-Hookean model.

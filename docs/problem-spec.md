@@ -80,7 +80,7 @@ box on the morphed meshes (ADR 0106 decision 4).
 ## Materials
 
 A material is either a built-in model or a strain-energy formula
-([ADR 0107](adr/0107-s25-material-registry.md), proposed).
+([ADR 0107](adr/0107-s25-material-registry.md)).
 
 | Model | Properties | Strain energy |
 |---|---|---|

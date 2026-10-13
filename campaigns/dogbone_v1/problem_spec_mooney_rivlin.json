@@ -1,0 +1,210 @@
+{
+  "schema": "piginot.problem-spec-v1",
+  "name": "dogbone-v1-mooney-rivlin",
+  "physics": "2d-plane-stress-finite-strain",
+  "parameters": [
+    {
+      "name": "L_total",
+      "role": "geometry",
+      "lo": 40,
+      "hi": 70,
+      "unit": "mm",
+      "distribution": "uniform"
+    },
+    {
+      "name": "W_grip",
+      "role": "geometry",
+      "lo": 16,
+      "hi": 26,
+      "unit": "mm",
+      "distribution": "uniform"
+    },
+    {
+      "name": "W_gauge",
+      "role": "geometry",
+      "lo": 6,
+      "hi": 14,
+      "unit": "mm",
+      "distribution": "uniform"
+    },
+    {
+      "name": "R_fillet",
+      "role": "geometry",
+      "lo": 8,
+      "hi": 20,
+      "unit": "mm",
+      "distribution": "uniform"
+    },
+    {
+      "name": "nominal_axial_strain",
+      "role": "load",
+      "lo": 0.1,
+      "hi": 0.2,
+      "unit": "1",
+      "distribution": "uniform"
+    },
+    {
+      "name": "c10",
+      "role": "material",
+      "lo": 123.57723577235772,
+      "hi": 123.57723577235772,
+      "unit": "MPa",
+      "distribution": "fixed"
+    },
+    {
+      "name": "c01",
+      "role": "material",
+      "lo": 30.89430894308943,
+      "hi": 30.89430894308943,
+      "unit": "MPa",
+      "distribution": "fixed"
+    },
+    {
+      "name": "bulk_modulus",
+      "role": "material",
+      "lo": 469.1358024691358,
+      "hi": 469.1358024691358,
+      "unit": "MPa",
+      "distribution": "fixed"
+    }
+  ],
+  "constraints": [
+    {
+      "name": "arc_feasibility_ratio",
+      "expression": "2 * R_fillet / (W_grip - W_gauge)",
+      "lo": 1.35,
+      "hi": 20,
+      "unit": "1"
+    },
+    {
+      "name": "fillet_to_gauge_ratio",
+      "expression": "R_fillet / W_gauge",
+      "lo": 0.5714285714285714,
+      "hi": 3.3333333333333335,
+      "unit": "1"
+    },
+    {
+      "name": "grip_to_gauge_ratio",
+      "expression": "W_grip / W_gauge",
+      "lo": 1.1428571428571428,
+      "hi": 4.333333333333333,
+      "unit": "1"
+    },
+    {
+      "name": "length_to_gauge_ratio",
+      "expression": "L_total / W_gauge",
+      "lo": 2.857142857142857,
+      "hi": 11.666666666666666,
+      "unit": "1"
+    }
+  ],
+  "geometry": {
+    "reference_mesh_id": "3bfc1043f5aa9e989469adacb0ee1d0b483825ffabcd5dfac4bf9caca580d82c",
+    "morph_map_sha256": "71dbd2f5637be6ce0563c6763095263cb429471bac56ed60175abfd4d9e8c3ce",
+    "regions": [
+      "bottom",
+      "gauge_top",
+      "left_symmetry",
+      "right_arc",
+      "right_grip"
+    ],
+    "frame": {
+      "origin": [
+        "0",
+        "0"
+      ],
+      "extent": [
+        "0.5 * L_total",
+        "0.5 * W_grip"
+      ]
+    }
+  },
+  "material": {
+    "model": "mooney_rivlin",
+    "parameters": {
+      "c10": "c10",
+      "c01": "c01",
+      "bulk_modulus": "bulk_modulus"
+    }
+  },
+  "boundary_conditions": [
+    {
+      "name": "left_x_symmetry",
+      "region": "left_symmetry",
+      "kind": "symmetry",
+      "components": [
+        "x"
+      ]
+    },
+    {
+      "name": "bottom_y_symmetry",
+      "region": "bottom",
+      "kind": "symmetry",
+      "components": [
+        "y"
+      ]
+    },
+    {
+      "name": "right_grip_displacement",
+      "region": "right_grip",
+      "kind": "dirichlet",
+      "components": [
+        "x"
+      ],
+      "values": [
+        {
+          "nominal_strain": "nominal_axial_strain"
+        }
+      ]
+    },
+    {
+      "name": "gauge_top_free",
+      "region": "gauge_top",
+      "kind": "traction_free"
+    },
+    {
+      "name": "right_arc_free",
+      "region": "right_arc",
+      "kind": "traction_free"
+    }
+  ],
+  "lifting": {
+    "kind": "quarter",
+    "displacement_scale": "0.5 * nominal_axial_strain * L_total"
+  },
+  "qois": [
+    {
+      "name": "root_peak_first_piola_frobenius",
+      "field": "P_served",
+      "reduction": "max-frobenius",
+      "region": "right_arc",
+      "exclude_regions": [
+        "right_grip"
+      ]
+    }
+  ],
+  "verification": {
+    "quantile": 0.9,
+    "tolerances": {
+      "absolute_peak_error": 0.05,
+      "p_relative_l2": 0.05,
+      "u_relative_l2": 0.02
+    }
+  },
+  "split": {
+    "pilot": 24,
+    "train": 256,
+    "development": 64,
+    "holdout": 64,
+    "reserve": 32
+  },
+  "fem": {
+    "material_name": "dogbone-mooney-rivlin-reference-material",
+    "element_order": 2,
+    "load_steps": 64,
+    "max_dofs": 100000,
+    "max_newton_iterations": 20,
+    "plane_stress_max_iterations": 32,
+    "solver_tolerance": 1e-10
+  }
+}

@@ -60,11 +60,13 @@ from campaigns.dogbone_v1.s13c_trial import (
 from piginot.contracts import ExecutionProfile, canonical_json_bytes, strict_json_loads
 from piginot.datasets import SemanticBCClass
 from piginot.doe import EvidenceRole
+from piginot.fem import FemRequest, FemResult
 from piginot.operators import (
     EnergyFormOperator,
     OperatorOutput,
     constitutive_in_plane_stress,
 )
+from piginot.physics import reference_modulus
 from piginot.physics._validation import DETERMINANT_MARGIN
 from piginot.training import (
     CheckpointLineage,
@@ -123,6 +125,12 @@ class S13cEvaluation:
     invalid_case_count: int
     minimum_collocation_determinant: float
     development_opened: bool
+
+
+class Reference(Protocol):
+    """The FEM request and result a TRAIN-screen case is scored against."""
+
+    def __call__(self, verified: Any) -> tuple[FemRequest, FemResult]: ...
 
 
 class CaseFactory(Protocol):
@@ -347,11 +355,14 @@ def evaluate_s13c_checkpoint(
     require_final: bool = True,
     case_factory: CaseFactory = geometry_case,
     problem_spec_hash: str | None = None,
+    reference: Reference | None = None,
 ) -> S13cEvaluation:
     """Score one S13c checkpoint on TRAIN evidence and apply frozen selection.
 
     ``case_factory`` builds each case's geometry and lifting; S24's ADF
     viability run passes its own (ADR 0106 decision 5) with its spec hash.
+    ``reference`` replaces each TRAIN-screen case's FEM request and result
+    (S25's re-solves with another material, ADR 0107 decision 8).
     """
 
     protocol = load_committed_s13c_protocol()
@@ -390,8 +401,13 @@ def evaluate_s13c_checkpoint(
     for verified in source.iter_train_screen():
         if verified.case.role is not EvidenceRole.TRAIN:
             raise PermissionError("non-TRAIN evidence cannot enter S13c screening")
+        reference_request, reference_result = (
+            (verified.request, verified.result)
+            if reference is None
+            else reference(verified)
+        )
         tensors = normalize_case_values(
-            prepare_operator_case(verified.case, verified.request, verified.result),
+            prepare_operator_case(verified.case, reference_request, reference_result),
             normalization,
         )
         request = VerifiedS10Request(verified.case, verified.request)
@@ -418,9 +434,9 @@ def evaluate_s13c_checkpoint(
             replace(
                 _case_diagnostics(tensors, predicted_u, predicted_p, determinant),
                 model_strain_energy=float(fine.energy)
-                * float(geometry.material.properties["elastic_modulus"].value)
+                * reference_modulus(geometry.material)
                 * geometry.domain.area,
-                fem_strain_energy=float(verified.result.total_strain_energy),
+                fem_strain_energy=float(reference_result.total_strain_energy),
             )
         )
         interior = _interior_determinants(evaluation_model, source, request, geometry)
