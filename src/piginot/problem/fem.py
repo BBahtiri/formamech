@@ -32,7 +32,8 @@ if TYPE_CHECKING:
 FEM_MATERIAL_MODELS: Final[Mapping[str, str]] = {
     "compressible_neo_hookean": "finite_strain_plane_stress_neo_hookean",
 }
-"""The FEM solver's name of each ProblemSpec material model."""
+"""The FEM solver's name of a closed-form model; a formula model keeps its
+name (the solver resolves it through :mod:`piginot.materials`)."""
 
 
 def _quantity(inputs: Mapping[str, object], name: str) -> CanonicalQuantity:
@@ -56,10 +57,14 @@ def fem_request(
 
     from piginot.fem.models import FemRequest, FemSolverConfig
 
+    if spec.material.energy is not None:
+        from piginot.materials import register
+
+        register(spec.material.energy)
     values = spec.values(inputs)
     material = MaterialSpec(
         name=spec.fem.material_name,
-        model=FEM_MATERIAL_MODELS[spec.material.model],
+        model=FEM_MATERIAL_MODELS.get(spec.material.model, spec.material.model),
         properties={
             prop: _quantity(inputs, name)
             for prop, name in spec.material.parameters.items()

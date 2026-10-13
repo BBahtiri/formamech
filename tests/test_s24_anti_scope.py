@@ -8,7 +8,7 @@ import sys
 import textwrap
 from pathlib import Path
 
-from piginot.contracts.problem_spec import LIFTING_KINDS, MATERIAL_MODELS, PHYSICS
+from piginot.contracts.problem_spec import LIFTING_KINDS, PHYSICS
 
 REPOSITORY = Path(__file__).resolve().parents[1]
 SOURCE = REPOSITORY / "src" / "piginot"
@@ -70,7 +70,6 @@ def test_problem_and_lifting_import_without_fem_packages() -> None:
     )
 
 
-def test_the_step_adds_no_physics_material_or_harmonic_lifting() -> None:
+def test_the_step_adds_no_physics_or_harmonic_lifting() -> None:
     assert PHYSICS == ("2d-plane-stress-finite-strain",)
-    assert set(MATERIAL_MODELS) == {"compressible_neo_hookean"}
     assert LIFTING_KINDS == ("quarter", "adf")

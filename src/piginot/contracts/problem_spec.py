@@ -28,6 +28,13 @@ from pathlib import Path
 from typing import Any, Final, cast
 
 from piginot.contracts.canonical import strict_json_loads
+from piginot.contracts.energy_formula import (
+    BUILTIN_FORMULAS,
+    CLOSED_FORM_MODELS,
+    EnergyFormula,
+    EnergyFormulaError,
+    model_dimensions,
+)
 from piginot.contracts.errors import ContractValidationError
 from piginot.contracts.expressions import DerivedExpression, ExpressionTree
 from piginot.contracts.hashing import hash_spec
@@ -48,11 +55,11 @@ QOI_REDUCTIONS: Final = ("max-frobenius",)
 VERIFIED_QUANTITIES: Final = ("absolute_peak_error", "p_relative_l2", "u_relative_l2")
 SPLIT_ROLES: Final = ("pilot", "train", "development", "holdout", "reserve")
 MATERIAL_MODELS: Final[Mapping[str, Mapping[str, Dimension]]] = {
-    "compressible_neo_hookean": {
-        "elastic_modulus": Dimension.STRESS,
-        "poisson_ratio": Dimension.DIMENSIONLESS,
-    },
+    name: model_dimensions(name) for name in (*CLOSED_FORM_MODELS, *BUILTIN_FORMULAS)
 }
+"""Built-in models and the dimension of each property (S25: the closed-form
+Neo-Hookean model and the built-in formulas)."""
+DEFAULT_STRETCH_RANGE: Final = (0.6, 1.6)
 GEOMETRY_TOLERANCE: Final = 1e-9
 """Relative tolerance of the geometric mesh checks (to the mesh's extent)."""
 
@@ -409,30 +416,62 @@ class Geometry:
 
 @dataclass(frozen=True, slots=True)
 class Material:
-    """The constitutive model and the parameter that sets each property."""
+    """The constitutive model and the parameter that sets each property.
+
+    ``model`` names a built-in model; a user's strain-energy formula is given
+    as ``energy`` and named by its content (``energy-<16 hex>``).
+    ``stretch_range`` is the range of principal stretches the admission gate
+    checks the model over.
+    """
 
     model: str
     parameters: Mapping[str, str]
+    energy: EnergyFormula | None = None
+    stretch_range: tuple[float, float] = DEFAULT_STRETCH_RANGE
 
     def __post_init__(self) -> None:
-        if self.model not in MATERIAL_MODELS:
+        if self.energy is not None and self.model != self.energy.model_name:
+            raise ProblemSpecError(
+                "material", f"a user formula is named {self.energy.model_name!r}"
+            )
+        if self.energy is None and self.model not in MATERIAL_MODELS:
             raise ProblemSpecError(
                 "material",
                 f"model {self.model!r} is not supported; "
-                f"available: {', '.join(MATERIAL_MODELS)}",
+                f"available: {', '.join(MATERIAL_MODELS)}, or an energy formula",
             )
-        expected = set(MATERIAL_MODELS[self.model])
+        expected = set(self.dimensions)
         if set(self.parameters) != expected:
             raise ProblemSpecError(
                 "material",
                 f"{self.model} needs exactly the properties {sorted(expected)}",
             )
+        low, high = self.stretch_range
+        if not 0.0 < low < 1.0 < high:
+            raise ProblemSpecError(
+                "range", "the stretch range must be positive and contain 1"
+            )
 
-    def document(self) -> dict[str, Any]:
-        return {
+    @property
+    def dimensions(self) -> Mapping[str, Dimension]:
+        """The dimension of each property of the model."""
+
+        if self.energy is not None:
+            return {
+                name: unit.dimension for name, unit in self.energy.parameters.items()
+            }
+        return MATERIAL_MODELS[self.model]
+
+    def document(self, canonical: bool = False) -> dict[str, Any]:
+        result: dict[str, Any] = {
             "model": self.model,
             "parameters": dict(sorted(self.parameters.items())),
         }
+        if self.energy is not None:
+            result["energy"] = self.energy.document(canonical)
+        if self.stretch_range != DEFAULT_STRETCH_RANGE:
+            result["stretch_range"] = list(self.stretch_range)
+        return result
 
 
 @dataclass(frozen=True, slots=True)
@@ -816,7 +855,7 @@ class ProblemSpec:
             expression.check(dimensions, Dimension.LENGTH, f"frame entry {axis}")
 
     def _check_material(self) -> None:
-        required = MATERIAL_MODELS[self.material.model]
+        required = self.material.dimensions
         for prop, name in sorted(self.material.parameters.items()):
             try:
                 parameter = self.parameter(name)
@@ -1000,7 +1039,7 @@ class ProblemSpec:
             "constants": [c.document() for c in self.constants],
             "constraints": [c.document(canonical) for c in self.constraints],
             "geometry": self.geometry.document(canonical),
-            "material": self.material.document(),
+            "material": self.material.document(canonical),
             "boundary_conditions": [
                 c.document(canonical) for c in self.boundary_conditions
             ],
@@ -1203,16 +1242,39 @@ def _geometry(value: object) -> Geometry:
 
 
 def _material(value: object) -> Material:
-    body = _fields(value, "material", ("model", "parameters"))
+    body = _fields(
+        value, "material", ("parameters",), ("model", "energy", "stretch_range")
+    )
     parameters = body["parameters"]
     if not isinstance(parameters, Mapping):
         raise ProblemSpecError("type", "material.parameters must be an object")
+    energy = None
+    if "energy" in body:
+        try:
+            energy = EnergyFormula.from_document(body["energy"])
+        except EnergyFormulaError as exc:
+            raise ProblemSpecError("energy", f"material.energy: {exc}") from exc
+    if "model" in body:
+        model = _text(body["model"], "material.model")
+    elif energy is not None:
+        model = energy.model_name
+    else:
+        raise ProblemSpecError("missing-key", "material: give a model or an energy")
+    stretch = body.get("stretch_range", list(DEFAULT_STRETCH_RANGE))
+    items = _list(stretch, "material.stretch_range")
+    if len(items) != 2:
+        raise ProblemSpecError("type", "material.stretch_range holds two numbers")
     return Material(
-        model=_text(body["model"], "material.model"),
+        model=model,
         parameters={
             _text(k, "material property"): _identifier(v, f"material.{k}")
             for k, v in parameters.items()
         },
+        energy=energy,
+        stretch_range=(
+            _number(items[0], "material.stretch_range"),
+            _number(items[1], "material.stretch_range"),
+        ),
     )
 
 
