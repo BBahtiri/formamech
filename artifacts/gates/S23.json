@@ -1,8 +1,8 @@
 {
   "gate_id": "G23",
   "step": "S23",
-  "commit": "e94cb91d4fd9683dc01cf81023e339db9e112105",
-  "timestamp_utc": "2026-10-13T12:47:19Z",
+  "commit": "ede6f6eeb73405c7b6eb5e50db42f3f726c1859e",
+  "timestamp_utc": "2026-10-13T13:16:26Z",
   "execution_profile": {
     "python": "3.11.15",
     "system": "Linux",
@@ -45,7 +45,7 @@
             "tests/campaigns/test_s23_calibration.py::test_a_sealed_case_is_refused"
           ],
           "returncode": 0,
-          "summary": "2 passed in 1.60s"
+          "summary": "2 passed in 1.53s"
         }
       },
       "threshold": "no burned or sealed ID in a calibration; the calibration path refuses them",
@@ -299,7 +299,7 @@
             "tests/serving/test_bounds_serving.py"
           ],
           "returncode": 0,
-          "summary": "12 passed in 26.42s"
+          "summary": "12 passed in 25.84s"
         }
       },
       "threshold": "without bounds, fast documents equal the S19 goldens; sidecars bind manifests",
@@ -307,21 +307,70 @@
     },
     {
       "id": "G23.portability",
-      "status": "FAIL",
+      "status": "PASS",
       "measured": {
         "schema_version": "1.0",
-        "tree": "e44426bf65ae5098c9fe00dfff72e8e9bc967bc0",
+        "tree": "4fd6e12f4394520f538089382b48dc8a0506643f",
         "clean": true,
-        "summary": "",
-        "counts": {},
-        "skips": []
+        "summary": "3329 passed, 9 skipped in 1343.60s (0:22:23)",
+        "counts": {
+          "passed": 3329,
+          "skipped": 9
+        },
+        "skips": [
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_dogbone_s13c_closeout.py:54",
+            "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_dogbone_s13c_evaluate.py:204",
+            "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_dogbone_s13c_evaluate.py:228",
+            "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_dogbone_s13c_protocol.py:159",
+            "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_dogbone_s13c_trial.py:55",
+            "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_dogbone_s13c_trial.py:83",
+            "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_dogbone_s15_bundle.py:57",
+            "reason": "set PIGINOT_CP_FREEZE_WEIGHTS to the CP-FREEZE model export"
+          },
+          {
+            "count": 1,
+            "where": "tests\\store\\test_trees.py:77",
+            "reason": "FIFO unavailable"
+          },
+          {
+            "count": 1,
+            "where": "tests\\verification\\test_core.py:361",
+            "reason": "the OS has no POSIX permission bits (Windows reports 0o666); the owner-only file mode is not enforceable here"
+          }
+        ]
       },
       "threshold": "native Windows run of this code tree: 0 failed, 0 errors, every skip has a reason",
       "comparison": "all"
     },
     {
       "id": "G23.quality",
-      "status": "FAIL",
+      "status": "PASS",
       "measured": {
         "tools": {
           "ruff_check": 0,
@@ -330,9 +379,9 @@
         },
         "suite": {
           "schema_version": "1.0",
-          "tree": "ce31953550c2e45585443c9e118b9edacb5a9d24",
-          "commit": "e94cb91d4fd9683dc01cf81023e339db9e112105",
-          "clean": false,
+          "tree": "7ac0a7c20435436ca9599654621cc0b07a130b88",
+          "commit": "a199e23aa75dccfe8801f8f32fd6b9d9bd8c2d98",
+          "clean": true,
           "branch_coverage": true,
           "coverage_percent": 91.76,
           "bounds_coverage_percent": 100.0,
@@ -367,6 +416,6 @@
     }
   ],
   "decision_record": "docs/adr/0104-s23-calibrated-bounds.md",
-  "verdict": "FAIL",
-  "verdict_reason": "2 required check(s) not PASS: G23.portability, G23.quality"
+  "verdict": "PASS",
+  "verdict_reason": "every required check PASS"
 }

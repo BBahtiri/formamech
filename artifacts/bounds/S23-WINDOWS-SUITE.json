@@ -1,8 +1,57 @@
 {
   "schema_version": "1.0",
-  "tree": "e44426bf65ae5098c9fe00dfff72e8e9bc967bc0",
+  "tree": "4fd6e12f4394520f538089382b48dc8a0506643f",
   "clean": true,
-  "summary": "",
-  "counts": {},
-  "skips": []
+  "summary": "3329 passed, 9 skipped in 1343.60s (0:22:23)",
+  "counts": {
+    "passed": 3329,
+    "skipped": 9
+  },
+  "skips": [
+    {
+      "count": 1,
+      "where": "tests\\campaigns\\test_dogbone_s13c_closeout.py:54",
+      "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+    },
+    {
+      "count": 1,
+      "where": "tests\\campaigns\\test_dogbone_s13c_evaluate.py:204",
+      "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+    },
+    {
+      "count": 1,
+      "where": "tests\\campaigns\\test_dogbone_s13c_evaluate.py:228",
+      "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+    },
+    {
+      "count": 1,
+      "where": "tests\\campaigns\\test_dogbone_s13c_protocol.py:159",
+      "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+    },
+    {
+      "count": 1,
+      "where": "tests\\campaigns\\test_dogbone_s13c_trial.py:55",
+      "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+    },
+    {
+      "count": 1,
+      "where": "tests\\campaigns\\test_dogbone_s13c_trial.py:83",
+      "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+    },
+    {
+      "count": 1,
+      "where": "tests\\campaigns\\test_dogbone_s15_bundle.py:57",
+      "reason": "set PIGINOT_CP_FREEZE_WEIGHTS to the CP-FREEZE model export"
+    },
+    {
+      "count": 1,
+      "where": "tests\\store\\test_trees.py:77",
+      "reason": "FIFO unavailable"
+    },
+    {
+      "count": 1,
+      "where": "tests\\verification\\test_core.py:361",
+      "reason": "the OS has no POSIX permission bits (Windows reports 0o666); the owner-only file mode is not enforceable here"
+    }
+  ]
 }
