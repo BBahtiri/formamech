@@ -138,8 +138,33 @@ in a subprocess instead of installing a fresh `.[runtime]` environment (a real
 install test belongs to the release step); timings ran with three worker
 processes, one run per case.
 
-## 6. Gates G23–G26
+## 6. Gate G23 — calibrated bounds and calibration gate
 
-The checks, thresholds and kill criteria of S23–S26 are specified in the
+Evaluated by `python -m campaigns.g23_gate --write`. Decision record: ADR 0104
+(re-scoped from the implementation plan; accepted 2026-10-13). Protocol and
+ratified thresholds: `artifacts/bounds/S23-PROTOCOL.json`. Bounds: 90%
+(`alpha = 0.1`) split-conformal upper bounds of the S14 budgeted error per
+family and quantity, calibrated on the 64 recorded DEVELOPMENT cases; tested
+once on the fresh H1 set.
+
+| Check | Pass condition |
+|---|---|
+| `G23.protocol-first` | the protocol is committed once, before the calibration evidence, the sidecars and the H1 reveals |
+| `G23.isolation` | the calibration path raises on burned HOLDOUT IDs and on sealed H1/H2 IDs (tests with mutants) |
+| `G23.recompute` | the committed sidecars and calibration evidence equal a fresh calibration byte for byte |
+| `G23.gate` | every calibration case is `IN_CALIBRATION`; constructed requests inside the envelope but beyond the largest calibration distance are `OUT_OF_CALIBRATION` with no bound |
+| `G23.width` | DogBone budget-total bounds ≤ 5% (stress field), 5% (peak), 2% (displacement); notched widths reported |
+| `G23.reveal-once` | per family one H1 reveal, verified against the H1 commitment, written after the protocol and the calibration; H1 is burned afterwards and a second reveal is refused |
+| `G23.coverage` | per family, for `budget_total` and `reference_terms` of `p_relative_l2` and `absolute_peak_error` (eight counts): covered in-calibration H1 cases ≥ the smallest `c` with `P(X ≤ c) ≥ 0.05/8`, `X ~ BetaBinomial(m, k, n + 1 − k)` (48 of 64 for `m = 64`); `u_relative_l2` reported |
+| `G23.compat` | without bounds, fast documents equal the S19 goldens and the bundles are unchanged; every sidecar binds its bundle's manifest |
+| `G23.portability` | native Windows suite of the same code tree: 0 failed, every skip with a reason |
+| `G23.quality` | ruff, ruff format, mypy --strict clean; recorded Linux suite of this code tree with 0 failed; global branch coverage ≥ 90.5%; `piginot.bounds` ≥ 90% |
+
+Kill rule: if a coverage count fails on H1, record FAIL, do not retune on H1,
+and serve without bounds; certificates and exact serving are unaffected.
+
+## 7. Gates G24–G26
+
+The checks, thresholds and kill criteria of S24–S26 are specified in the
 implementation plan, one table per step. Each step copies its table into this
 document, with the owner's ratified thresholds, before its first run.

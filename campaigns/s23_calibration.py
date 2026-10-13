@@ -216,6 +216,28 @@ def protocol_document(root: Path, accepted: str) -> dict[str, Any]:
             "normalised scores on H1: S14 indicator, distance to TRAIN, Mondrian",
             "v0.1.0 models' fresh-holdout budget statistics on H1",
         ],
+        "reveal": {
+            "command": "python -m campaigns.s23_reveal --campaign <id> --reveal <path>",
+            "procedure": (
+                "the H1 coordinates of the private set reveal are verified "
+                "against the commitment in FRESH-HOLDOUTS.json; each H1 case is "
+                "scored with its family's S14 HOLDOUT procedure (ADR 0020): the "
+                "shipped bundle's prediction against the unchanged S10 recipe "
+                "solve, its coarse level and the recovery terms"
+            ),
+            "output": "artifacts/bounds/S23-<campaign>-H1-REVEAL.json",
+            "after": "H1 IDs are burned; a second reveal is refused",
+            "order": "after this protocol and after both calibrations are committed",
+        },
+        "reference_machine": {
+            "cpu_capability": "AVX2",
+            "machine": "x86_64",
+            "os": "Linux",
+        },
+        "viewed_before_protocol": (
+            "the public S14 DEVELOPMENT records and the S21/S22 DEVELOPMENT results; "
+            "no bound was computed and no H1 case was opened before this protocol"
+        ),
         "thresholds_accepted": accepted,
     }
 

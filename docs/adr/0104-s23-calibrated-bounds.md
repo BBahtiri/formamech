@@ -1,7 +1,8 @@
 # ADR 0104: Calibrated error bounds and envelope gating (S23)
 
-- Status: Proposed — decisions 1–4 and 7 are owner DECISIONs (⚑) awaiting
-  sign-off; no calibration or evaluation has been run
+- Status: Accepted — decisions 1–7 and the G23 thresholds accepted by the
+  decision owner on 2026-10-13 (chat: "Ok accepted"), before any calibration
+  or evaluation; recorded in `artifacts/bounds/S23-PROTOCOL.json`
 - Date: 2026-10-12
 - Step: S23 (gate `G23`), `STEPS-v2.0.md` §6; implementation plan Feature 3
 - Builds on: ADR 0020 (S14 error budget), ADR 0101 (H1/H2, burned HOLDOUTs),
