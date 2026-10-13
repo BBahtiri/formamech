@@ -132,29 +132,179 @@ def check_isolation(root: Path, protocol: Mapping[str, Any]) -> dict[str, Any]:
     )
 
 
+GATE_STATISTICS_TOLERANCE = 1e-10
+STATUS_MARGIN = 1e-9
+_EXACT_SIDECAR_FIELDS = (
+    "schema",
+    "bundle",
+    "bundle_manifest_sha256",
+    "campaign_id",
+    "protocol_sha256",
+    "alpha",
+    "n",
+    "k",
+    "calibration_case_ids_sha256",
+    "bounds",
+)
+_EXACT_EVIDENCE_FIELDS = (
+    "schema_version",
+    "campaign_id",
+    "protocol_sha256",
+    "case_ids",
+    "scores",
+    "bounds",
+    "n",
+    "k",
+    "dogbone_width_check",
+)
+
+
+def _gate_numbers(gate_document: Mapping[str, Any]) -> list[float]:
+    return [
+        *(float(v) for v in gate_document["mean"]),
+        *(float(v) for row in gate_document["precision"] for v in row),
+        float(gate_document["max_distance"]),
+    ]
+
+
+def gate_difference(
+    committed: Mapping[str, Any], fresh: Mapping[str, Any]
+) -> float | None:
+    """Largest relative difference of the gate statistics; None if not comparable."""
+
+    if committed["axes"] != fresh["axes"] or len(committed["precision"]) != len(
+        fresh["precision"]
+    ):
+        return None
+    worst = 0.0
+    for a, b in zip(_gate_numbers(committed), _gate_numbers(fresh), strict=True):
+        scale = max(abs(a), abs(b))
+        if scale:
+            worst = max(worst, abs(a - b) / scale)
+    return worst
+
+
+def compare_calibration(
+    committed_sidecar: Mapping[str, Any],
+    fresh_sidecar: Mapping[str, Any],
+    committed_evidence: Mapping[str, Any],
+    fresh_evidence: Mapping[str, Any],
+) -> dict[str, Any]:
+    """ADR 0104 decision 8: exact parts exactly, gate statistics within 1e-10."""
+
+    difference = gate_difference(committed_sidecar["gate"], fresh_sidecar["gate"])
+    evidence_gate = gate_difference(committed_evidence["gate"], fresh_evidence["gate"])
+    return {
+        "sidecar_exact_fields": all(
+            committed_sidecar[k] == fresh_sidecar[k] for k in _EXACT_SIDECAR_FIELDS
+        ),
+        "evidence_exact_fields": all(
+            committed_evidence[k] == fresh_evidence[k] for k in _EXACT_EVIDENCE_FIELDS
+        ),
+        "gate_relative_difference": difference,
+        "evidence_gate_relative_difference": evidence_gate,
+        "gate_within_tolerance": difference is not None
+        and evidence_gate is not None
+        and difference <= GATE_STATISTICS_TOLERANCE
+        and evidence_gate <= GATE_STATISTICS_TOLERANCE,
+    }
+
+
+def _statuses_kept(
+    root: Path,
+    campaign: str,
+    family: Mapping[str, Any],
+    committed: CalibrationRecord,
+    fresh: CalibrationRecord,
+) -> dict[str, Any]:
+    """Every calibration case keeps its status; H1 cases sit clear of the edge."""
+
+    manifest = json.loads(
+        (
+            root / "artifacts/campaigns" / campaign / "public-case-manifest.json"
+        ).read_text("utf-8")
+    )
+    by_id = {c["case_id"]: c for c in manifest["cases"]}
+    development = all(
+        committed.evaluate(by_id[i]["primitive_coordinates"], "budget_total")["status"]
+        == fresh.evaluate(by_id[i]["primitive_coordinates"], "budget_total")["status"]
+        for i in family["calibration_case_ids"]
+    )
+    document = _reveal_document(root, campaign)
+    if document is None:
+        return {"development": development, "h1": "not revealed"}
+    edge = committed.gate.max_distance
+    margins = [
+        abs(float(s["distance_to_train"]) - edge) / edge
+        for s in document["coverage"]["case_status"]
+    ]
+    return {
+        "development": development,
+        "h1_smallest_relative_margin": min(margins),
+        "h1": min(margins) > STATUS_MARGIN,
+    }
+
+
 def check_recompute(root: Path, protocol: Mapping[str, Any]) -> dict[str, Any]:
+    """Byte-exact on the calibration's CPU; elsewhere ADR 0104 decision 8."""
+
+    from piginot.bundle import load_bundle
+
     measured = {}
+    passed = True
     for campaign, family in protocol["families"].items():
         committed = _calibration(root, protocol, campaign)
         fresh, evidence = s23.calibrate(
             root, campaign, committed.bundle_manifest_sha256
         )
-        from piginot.bundle import load_bundle
-
         manifest = load_bundle(root / "bundles" / family["bundle"]).manifest
-        measured[campaign] = {
-            "sidecar": canonical_json_bytes(fresh.document()) + b"\n"
-            == _sidecar(root, protocol, campaign).read_bytes(),
-            "evidence": canonical_json_bytes(evidence) + b"\n"
-            == (root / s23.evidence_path(campaign)).read_bytes(),
+        sidecar_bytes = _sidecar(root, protocol, campaign).read_bytes()
+        evidence_bytes = (root / s23.evidence_path(campaign)).read_bytes()
+        exact = (
+            canonical_json_bytes(fresh.document()) + b"\n" == sidecar_bytes
+            and canonical_json_bytes(evidence) + b"\n" == evidence_bytes
+        )
+        entry: dict[str, Any] = {
+            "byte_exact": exact,
             "binds_bundle": committed.bundle_manifest_sha256
             == manifest.manifest_sha256,
         }
+        if not exact:
+            entry.update(
+                compare_calibration(
+                    json.loads(sidecar_bytes),
+                    fresh.document(),
+                    json.loads(evidence_bytes),
+                    evidence,
+                )
+            )
+            entry["statuses"] = _statuses_kept(root, campaign, family, committed, fresh)
+        statuses = entry.get("statuses", {})
+        ok = entry["binds_bundle"] and (
+            exact
+            or (
+                entry["sidecar_exact_fields"]
+                and entry["evidence_exact_fields"]
+                and entry["gate_within_tolerance"]
+                and statuses.get("development") is True
+                and statuses.get("h1") in (True, "not revealed")
+            )
+        )
+        entry["pass"] = ok
+        passed = passed and ok
+        measured[campaign] = entry
     return check_document(
         "G23.recompute",
-        all(all(v.values()) for v in measured.values()),
+        passed,
         measured,
-        "committed sidecars and evidence equal a fresh calibration byte for byte",
+        {
+            "rule": "ADR 0104 decision 8",
+            "exact": "bounds, case IDs, scores, n, k, alpha, hashes; bytes on the "
+            "calibration's CPU profile",
+            "gate_statistics_relative_tolerance": GATE_STATISTICS_TOLERANCE,
+            "statuses": "every calibration case keeps its status; every H1 case is "
+            f"more than {STATUS_MARGIN:g} (relative) from the gate threshold",
+        },
         "all",
     )
 

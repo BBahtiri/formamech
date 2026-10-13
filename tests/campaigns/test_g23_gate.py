@@ -213,3 +213,50 @@ def test_the_windows_record_is_judged(tmp_path: Path) -> None:
     (root / gate.WINDOWS_PATH).parent.mkdir(parents=True)
     gate.record_windows(root, log, root)
     assert gate.check_portability(root)["status"] == "PASS"
+
+
+def _documents(scale: float = 0.0, bound: float = 0.03) -> tuple[dict, dict]:
+    calibration = _calibration()
+    sidecar = calibration.document()
+    sidecar["gate"]["precision"] = [[1.0 * (1.0 + scale)]]
+    sidecar["gate"]["max_distance"] = 2.0 * (1.0 - scale)
+    sidecar["bounds"]["budget_total"]["p_relative_l2"] = bound
+    evidence = {
+        "schema_version": "1.0",
+        "campaign_id": "dogbone-v1",
+        "protocol_sha256": "e" * 64,
+        "case_ids": ["c"],
+        "scores": {},
+        "bounds": sidecar["bounds"],
+        "n": 64,
+        "k": 59,
+        "dogbone_width_check": None,
+        "gate": sidecar["gate"],
+    }
+    return sidecar, evidence
+
+
+def test_decision_8_accepts_last_bit_gate_differences_only() -> None:
+    committed = _documents()
+    same = gate.compare_calibration(
+        *committed[:1], *_documents(1e-14)[:1], committed[1], _documents(1e-14)[1]
+    )
+    assert same["sidecar_exact_fields"] and same["evidence_exact_fields"]
+    assert same["gate_within_tolerance"]
+    assert 0.0 < same["gate_relative_difference"] < 1e-13
+    drifted = gate.compare_calibration(
+        committed[0], _documents(1e-6)[0], committed[1], _documents(1e-6)[1]
+    )
+    assert not drifted["gate_within_tolerance"]
+    other_bound = gate.compare_calibration(
+        committed[0], _documents(0.0, 0.031)[0], committed[1], _documents(0.0, 0.031)[1]
+    )
+    assert not other_bound["sidecar_exact_fields"]
+    assert not other_bound["evidence_exact_fields"]
+
+
+def test_gates_on_other_axes_are_not_comparable() -> None:
+    first = {"axes": ["x"], "mean": [0.0], "precision": [[1.0]], "max_distance": 1.0}
+    second = {"axes": ["y"], "mean": [0.0], "precision": [[1.0]], "max_distance": 1.0}
+    assert gate.gate_difference(first, second) is None
+    assert gate.gate_difference(first, first) == 0.0

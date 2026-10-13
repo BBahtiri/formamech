@@ -151,7 +151,7 @@ once on the fresh H1 set.
 |---|---|
 | `G23.protocol-first` | the protocol is committed once, before the calibration evidence, the sidecars and the H1 reveals |
 | `G23.isolation` | the calibration path raises on burned HOLDOUT IDs and on sealed H1/H2 IDs (tests with mutants) |
-| `G23.recompute` | the committed sidecars and calibration evidence equal a fresh calibration byte for byte |
+| `G23.recompute` | the committed sidecars and calibration evidence equal a fresh calibration byte for byte on the calibration's CPU profile; elsewhere (ADR 0104 decision 8, amended 2026-10-13) bounds, case IDs, scores, `n`, `k`, `alpha` and hashes exactly, the gate statistics within 1e-10 relative, every calibration case keeping its status and every H1 case more than 1e-9 (relative) from the gate threshold |
 | `G23.gate` | every calibration case is `IN_CALIBRATION`; constructed requests inside the envelope but beyond the largest calibration distance are `OUT_OF_CALIBRATION` with no bound |
 | `G23.width` | DogBone budget-total bounds ≤ 5% (stress field), 5% (peak), 2% (displacement); notched widths reported |
 | `G23.reveal-once` | per family one H1 reveal, verified against the H1 commitment, written after the protocol and the calibration; H1 is burned afterwards and a second reveal is refused |

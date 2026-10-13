@@ -2,7 +2,9 @@
 
 - Status: Accepted — decisions 1–7 and the G23 thresholds accepted by the
   decision owner on 2026-10-13 (chat: "Ok accepted"), before any calibration
-  or evaluation; recorded in `artifacts/bounds/S23-PROTOCOL.json`
+  or evaluation; recorded in `artifacts/bounds/S23-PROTOCOL.json`. Decision 8
+  (recompute across CPUs) accepted on 2026-10-13 after the H1 reveal, when
+  `G23.recompute` failed on the reference machine
 - Date: 2026-10-12
 - Step: S23 (gate `G23`), `STEPS-v2.0.md` §6; implementation plan Feature 3
 - Builds on: ADR 0020 (S14 error budget), ADR 0101 (H1/H2, burned HOLDOUTs),
@@ -87,6 +89,24 @@ are the unbiased test.
    `HOLDOUT_VERIFIED` claim implies. Notched widths are reported only; its
    recorded DEVELOPMENT p90 totals already exceed 5% (5.24%, 5.34%), so its
    bounds will too.
+8. **⚑ Recompute across CPUs (amendment, accepted by the decision owner on
+   2026-10-13).** The calibration was computed in the cloud workspace (Linux
+   x86_64, Python 3.11.17, AVX512); the H1 reveal and the gate ran on the
+   reference machine (AVX2). The bounds are exact arithmetic on recorded terms
+   and recompute identically everywhere, but the gate's TRAIN statistics
+   (mean, covariance inverse, largest calibration distance) go through
+   CPU-dependent NumPy and OpenBLAS kernels and differ in the last bits: at
+   most 7e-14 relative, reproduced in the cloud workspace by forcing AVX2
+   kernels. H1 had already been revealed against the committed calibration,
+   so it cannot be re-issued. In the spirit of ADR 0100 decision 6,
+   `G23.recompute` is therefore judged as follows: byte for byte on the
+   calibration's CPU profile; elsewhere, the bounds, case IDs, scores, `n`,
+   `k`, `alpha`, hashes and gate axes exactly, the gate statistics within a
+   relative 1e-10, every calibration case keeping its calibration status, and
+   every H1 case lying more than 1e-9 (relative) from the gate threshold, so
+   that no status depends on the last bits. Later calibrations (the S26
+   compiler) record their execution profile and compute the gate statistics
+   in a CPU-independent way.
 
 ## Consequences
 
