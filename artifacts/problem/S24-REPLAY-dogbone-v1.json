@@ -1,0 +1,48 @@
+{
+  "bindings_equal_except_revision": true,
+  "comparison_passed": true,
+  "evidence_role": "TRAIN",
+  "exact_files": {
+    "adaptive.json": true,
+    "optimizer.json": true
+  },
+  "family": "dogbone-v1",
+  "manifest_differences": [
+    "model_export_hash",
+    "run_hash",
+    "tensor_payload_hash"
+  ],
+  "model_state_hash": "9492c444ebd97e7b461a40dbd88f5cd4b681b599a043cfb3446f8b491dad9e52",
+  "passed": true,
+  "reference_is_base_revision": true,
+  "reference_matches_amendment": true,
+  "reference_model_state_hash": "9492c444ebd97e7b461a40dbd88f5cd4b681b599a043cfb3446f8b491dad9e52",
+  "reference_revision": "399a14659cec6812e24980ece8f81ab2d94a4753",
+  "reference_run_hash": "eb3c5e155d027e6892438fbb57bff786c744419048a11dfef1fd601ae90e5c29",
+  "registered_profile_comparison": {
+    "expected_to_match": false,
+    "matches_registered": false,
+    "reason": "the registered run was trained on Linux/AVX512; trained weights depend on the CPU instruction set (ADR 0100)",
+    "registered_model_state_hash": "e45edbdc6cd47a0ef754b97a0c7613c5703cdecfafcc9edebb4777c6d1e259f8"
+  },
+  "replay_implementation_revision": "b19458d03b94e041655c6e624c62746e252638a7",
+  "replay_run_hash": "9f0f8d976865a9678af094be66dc7b4b62cdc7015e4ee389ccfeece89199f764",
+  "schema_version": "1.0",
+  "step": 400,
+  "tensor_files": {
+    "model.safetensors": {
+      "differing_metadata": [
+        "run_hash"
+      ],
+      "differing_tensors": [],
+      "tensors": 124
+    },
+    "state.safetensors": {
+      "differing_metadata": [
+        "run_hash"
+      ],
+      "differing_tensors": [],
+      "tensors": 497
+    }
+  }
+}
