@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "tree": "0971f6cda6d65879c784988563f83ebe8d205f20",
+  "commit": "65ad014c277c1aead7d0fbb5d379dc1dbc213eaf",
+  "clean": true,
+  "branch_coverage": true,
+  "coverage_percent": 92.61,
+  "module_coverage_percent": {
+    "src/piginot/materials/": 98.65,
+    "src/piginot/contracts/energy_formula.py": 97.43
+  },
+  "summary": "3694 passed, 1 skipped in 3362.44s (0:56:02)",
+  "counts": {
+    "passed": 3694,
+    "skipped": 1
+  },
+  "skips": [
+    {
+      "count": 1,
+      "where": "tests/campaigns/test_dogbone_s15_bundle.py:57",
+      "reason": "set PIGINOT_CP_FREEZE_WEIGHTS to the CP-FREEZE model export"
+    }
+  ],
+  "execution_profile": {
+    "python": "3.11.15",
+    "system": "Linux",
+    "machine": "x86_64",
+    "torch": "2.13.0+cu130",
+    "cpu_capability": "AVX2"
+  }
+}
