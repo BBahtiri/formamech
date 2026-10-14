@@ -39,6 +39,7 @@ from piginot.lifting import (
     boundary_residual,
 )
 from piginot.operators.architecture import LiftingVerification
+from piginot.problem.expressions import value as expression_value
 from piginot.problem.lifting import build_lifting, dirichlet_piece
 
 EXACT_TOLERANCE = 1e-12
@@ -55,7 +56,7 @@ def box_points(
 
     def feasible(values: Mapping[str, float]) -> bool:
         return all(
-            c.lo <= c.expression.evaluate(spec.scope(values)) <= c.hi
+            c.lo <= expression_value(c.expression, spec.scope(values)) <= c.hi
             for c in spec.constraints
         )
 
@@ -224,7 +225,7 @@ def _data(
                 )
             else:
                 assert value.expression is not None
-                amount = value.expression.evaluate(values)
+                amount = expression_value(value.expression, values)
             result.append((axis, nodes, amount))
     return result
 
@@ -281,7 +282,7 @@ def verify_lifting(
             continue
         measured += 1
         lifting = build_lifting(spec, [values])
-        displacement = spec.lifting.displacement_scale.evaluate(values)
+        displacement = expression_value(spec.lifting.displacement_scale, values)
         data = _data(spec, mesh, values)
         node = max(node, _node_residual(lifting, mesh, data, displacement, generator))
         mutants: list[DirichletLifting] = [_identity(displacement)]

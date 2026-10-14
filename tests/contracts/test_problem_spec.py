@@ -69,17 +69,30 @@ def test_values_and_scope_add_the_constants() -> None:
 
 
 def test_expressions_evaluate_left_to_right_without_eval() -> None:
+    from piginot.problem.expressions import value
+
     expression = Expression.parse("0.5 * a * b - -c / d", "e")
     assert expression.names == {"a", "b", "c", "d"}
-    assert expression.evaluate({"a": 3.0, "b": 4.0, "c": 2.0, "d": 4.0}) == 6.5
-    assert expression.evaluate({"a": 0.1, "b": 0.7, "c": 0.0, "d": 1.0}) == (
+    assert value(expression, {"a": 3.0, "b": 4.0, "c": 2.0, "d": 4.0}) == 6.5
+    assert value(expression, {"a": 0.1, "b": 0.7, "c": 0.0, "d": 1.0}) == (
         (0.5 * 0.1) * 0.7
     )
     assert Expression.parse("+2", "e").constant == 2.0
+    assert Expression.parse("-(2 - 6) / 2 * 3 + 1", "e").constant == 7.0
+    assert Expression.parse("x", "e").constant is None
     assert Expression.parse("(x)", "e") == Expression.parse(" x ", "e")
     with pytest.raises(ZeroDivisionError):
-        Expression.parse("a / b", "e").evaluate({"a": 1.0, "b": 0.0})
-    assert Expression.parse("a + b", "e").evaluate({"a": 1.0, "b": 2.0}) == 3.0
+        value(Expression.parse("a / b", "e"), {"a": 1.0, "b": 0.0})
+    with pytest.raises(ZeroDivisionError):
+        _ = Expression.parse("1 / 0", "e").constant
+    assert value(Expression.parse("a + b", "e"), {"a": 1.0, "b": 2.0}) == 3.0
+
+
+def test_the_contract_folds_constants_only() -> None:
+    from piginot.contracts.problem_spec import _constant_value
+
+    with pytest.raises(ValueError, match="no names"):
+        _constant_value(Expression.parse("x", "e").tree)
 
 
 @pytest.mark.parametrize(

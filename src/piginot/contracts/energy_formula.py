@@ -163,35 +163,6 @@ def stress_power(tree: Tree, powers: Mapping[str, int]) -> float:
     return left + right if operator == "*" else left - right
 
 
-def evaluate(tree: Tree, values: Mapping[str, float]) -> float:
-    """``tree`` in float64 for scalar ``values`` (moduli, checks)."""
-
-    kind = tree[0]
-    if kind == "number":
-        return float(tree[1])
-    if kind == "name":
-        return float(values[cast(str, tree[1])])
-    if kind == "unary":
-        operand = evaluate(cast(Tree, tree[2]), values)
-        return operand if tree[1] == "+" else -operand
-    if kind == "call":
-        argument = evaluate(cast(Tree, tree[2]), values)
-        function = {"exp": math.exp, "log": math.log, "sqrt": math.sqrt}[tree[1]]
-        return function(argument)
-    if kind == "power":
-        return float(evaluate(cast(Tree, tree[1]), values) ** float(tree[2]))
-    left = evaluate(cast(Tree, tree[2]), values)
-    right = evaluate(cast(Tree, tree[3]), values)
-    operator = tree[1]
-    if operator == "+":
-        return left + right
-    if operator == "-":
-        return left - right
-    if operator == "*":
-        return left * right
-    return left / right
-
-
 def _document(tree: Tree) -> list[Any]:
     return [_document(item) if isinstance(item, tuple) else item for item in tree]
 
@@ -252,14 +223,6 @@ class EnergyFormula:
                 raise EnergyFormulaError(f"{label} may use parameters only")
             if stress_power(modulus.tree, powers) != 1.0:
                 raise EnergyFormulaError(f"{label} must be a stress (MPa)")
-
-    def moduli(self, values: Mapping[str, float]) -> tuple[float, float]:
-        """The declared small-strain shear and bulk moduli for ``values``."""
-
-        return (
-            evaluate(self.shear_modulus.tree, values),
-            evaluate(self.bulk_modulus.tree, values),
-        )
 
     def check_values(self, values: Mapping[str, float]) -> None:
         """Refuse missing, extra, non-finite or non-positive parameter values."""
@@ -426,7 +389,6 @@ __all__ = (
     "EnergyFormula",
     "EnergyFormulaError",
     "Formula",
-    "evaluate",
     "model_dimensions",
     "names",
     "parse",

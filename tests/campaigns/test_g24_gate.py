@@ -87,6 +87,8 @@ def _repository(tmp_path: Path) -> Path:
     repo = tmp_path / "repo"
     repo.mkdir()
     run_git(repo, "init", "-q")
+    run_git(repo, "config", "user.name", "t")
+    run_git(repo, "config", "user.email", "t@example.invalid")
     (repo / "a.txt").write_text("a")
     run_git(repo, "add", ".")
     run_git(repo, "commit", "-q", "-m", "a")

@@ -187,6 +187,7 @@ def test_a_changed_or_missing_protocol_is_refused(
     path.write_text(json.dumps({"status": "proposed"}), encoding="utf-8")
     with pytest.raises(RuntimeError, match="not accepted"):
         mr.accepted_protocol(require_committed=False)
+    monkeypatch.setattr(mr, "_committed", lambda path: False)
     with pytest.raises(RuntimeError, match="committed before the run"):
         mr.accepted_protocol()
     path.unlink()

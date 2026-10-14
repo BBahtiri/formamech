@@ -76,6 +76,12 @@ Development line S19–S29 (`STEPS-v2.0.md`, ADR 0105), forked from `v0.1.0`.
   notched trainer, `s13_close` and `s14` start again.
 - Gates G24 and G25 ignore each other's gate and suite records, so one
   suite run serves both.
+- Full-suite findings of S24 and S25: contracts no longer evaluate
+  expressions (the S2 rule; values moved to `piginot.problem.expressions`
+  and `piginot.materials.values`); `piginot.problem.fem` renamed
+  `piginot.problem.requests` (the S5 module rule); the confidence indicator,
+  S14 evaluation code frozen by its protocol, restored unchanged; test
+  repositories set their own Git identity.
 
 ## [0.1.0] - 2026-10-06
 

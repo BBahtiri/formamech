@@ -13,12 +13,12 @@ from piginot.contracts.energy_formula import (
     EnergyFormula,
     EnergyFormulaError,
     Formula,
-    evaluate,
     model_dimensions,
     names,
     parse,
 )
 from piginot.contracts.units import Dimension, Unit
+from piginot.materials.values import formula_moduli, formula_value
 
 
 def _document(**changes: Any) -> dict[str, Any]:
@@ -36,7 +36,7 @@ def test_a_formula_round_trips_and_names_itself() -> None:
     formula = EnergyFormula.from_document(_document())
     assert EnergyFormula.from_document(formula.document()) == formula
     assert formula.model_name == f"energy-{formula.formula_hash[:16]}"
-    assert formula.moduli({"mu": 3.0, "lam": 2.0}) == (3.0, 4.0)
+    assert formula_moduli(formula, {"mu": 3.0, "lam": 2.0}) == (3.0, 4.0)
     assert formula.parameters == {"mu": Unit.MPA, "lam": Unit.MPA}
     assert formula.document()["schema"] == "piginot.energy-formula-v1"
 
@@ -85,10 +85,10 @@ def test_the_whitelist_refuses_everything_else(source: object) -> None:
 def test_the_tree_and_its_evaluation() -> None:
     tree = parse("-a + sqrt(b) * exp(0) / 2 - log(c) + a ^ (-2/3)")
     assert names(tree) == {"a", "b", "c"}
-    value = evaluate(tree, {"a": 8.0, "b": 16.0, "c": math.e})
+    value = formula_value(tree, {"a": 8.0, "b": 16.0, "c": math.e})
     assert value == pytest.approx(-8.0 + 2.0 - 1.0 + 8.0 ** (-2 / 3))
     # As in Python, an unparenthesised exponent binds first: a ** -2 / 3.
-    assert evaluate(parse("a ** -2/3"), {"a": 8.0}) == pytest.approx(8.0**-2 / 3)
+    assert formula_value(parse("a ** -2/3"), {"a": 8.0}) == pytest.approx(8.0**-2 / 3)
     with pytest.raises(EnergyFormulaError, match="number"):
         parse("a ** (b - 1)")
     assert Formula.parse("x").canonical() == ["name", "x"]
@@ -158,7 +158,10 @@ def test_the_builtin_library() -> None:
         Dimension.DIMENSIONLESS
     )
     mooney = BUILTIN_FORMULAS["mooney_rivlin"]
-    assert mooney.moduli({"c10": 1.0, "c01": 2.0, "bulk_modulus": 5.0}) == (6.0, 5.0)
+    assert formula_moduli(mooney, {"c10": 1.0, "c01": 2.0, "bulk_modulus": 5.0}) == (
+        6.0,
+        5.0,
+    )
     assert BUILTIN_FORMULAS["yeoh"].positive == ("c10", "bulk_modulus")
     with pytest.raises(KeyError):
         model_dimensions("ogden")

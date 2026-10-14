@@ -25,12 +25,13 @@ from piginot.lifting import (
     DirichletPiece,
 )
 from piginot.operators.energy_operator import QueryFrame
+from piginot.problem.expressions import value as expression_value
 
 Values = Sequence[Mapping[str, float]]
 
 
 def _column(expressions: Sequence[Expression], values: Values) -> list[list[float]]:
-    return [[e.evaluate(case) for e in expressions] for case in values]
+    return [[expression_value(e, case) for e in expressions] for case in values]
 
 
 def query_frame(
@@ -58,13 +59,13 @@ def _piece_value(
     if value.nominal_strain is not None:
         return case[value.nominal_strain] * start[COMPONENTS.index(component)]
     assert value.expression is not None
-    return value.expression.evaluate(case)
+    return expression_value(value.expression, case)
 
 
 def _point(
     pair: tuple[Expression, Expression], case: Mapping[str, float]
 ) -> list[float]:
-    return [pair[0].evaluate(case), pair[1].evaluate(case)]
+    return [expression_value(pair[0], case), expression_value(pair[1], case)]
 
 
 def dirichlet_piece(
@@ -133,7 +134,7 @@ def build_lifting(
     values = [spec.scope(case) for case in values]
     frame = query_frame(spec, values, dtype)
     displacement = torch.tensor(
-        [spec.lifting.displacement_scale.evaluate(case) for case in values],
+        [expression_value(spec.lifting.displacement_scale, case) for case in values],
         dtype=dtype,
     )
     if spec.lifting.kind == "quarter":

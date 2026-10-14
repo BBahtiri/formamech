@@ -9,7 +9,6 @@
   parameters' box (S25).
 """
 
-from piginot.problem.fem import FEM_MATERIAL_MODELS, fem_request
 from piginot.problem.lifting import adf_pieces, build_lifting, query_frame
 from piginot.problem.material import (
     MaterialAdmission,
@@ -17,6 +16,7 @@ from piginot.problem.material import (
     material_points,
     material_spec,
 )
+from piginot.problem.requests import FEM_MATERIAL_MODELS, fem_request
 from piginot.problem.verification import (
     LiftingEvidence,
     box_points,

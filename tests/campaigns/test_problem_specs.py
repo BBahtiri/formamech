@@ -16,6 +16,7 @@ from piginot.bundle import Bundle, load_bundle
 from piginot.contracts import CanonicalQuantity, ProblemSpec
 from piginot.lifting import AdfLifting, boundary_points, boundary_residual
 from piginot.problem import build_lifting, query_frame
+from piginot.problem.expressions import value as expression_value
 
 REPOSITORY = Path(__file__).resolve().parents[2]
 FAMILIES = {
@@ -40,7 +41,10 @@ def _draws(spec: ProblemSpec, count: int, seed: int) -> list[dict[str, float]]:
     while len(result) < count:
         values = {p.name: generator.uniform(p.lo, p.hi) for p in spec.parameters}
         scoped = spec.scope(values)
-        if all(c.lo <= c.expression.evaluate(scoped) <= c.hi for c in spec.constraints):
+        if all(
+            c.lo <= expression_value(c.expression, scoped) <= c.hi
+            for c in spec.constraints
+        ):
             result.append(values)
     return result
 

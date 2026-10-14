@@ -42,8 +42,9 @@ is left free, and a nominal-strain region is perpendicular to its component.
 ## Expressions and values
 
 Expressions use names of parameters and constants, numbers, `+ - * /` and
-parentheses. They are parsed into a syntax tree and evaluated left to right;
-nothing is passed to `eval`. Units are checked: a frame entry is a length, a
+parentheses. They are parsed into a syntax tree, which the contract stores, and
+evaluated left to right by `piginot.problem.expressions.value`; nothing is
+passed to `eval`. Units are checked: a frame entry is a length, a
 constraint has its declared unit, and a bare number takes the unit expected
 where it stands.
 

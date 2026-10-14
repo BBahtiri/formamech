@@ -25,6 +25,7 @@ from piginot.contracts.problem_spec import (
     region_nodes,
 )
 from piginot.contracts.units import Dimension, Unit
+from piginot.problem.expressions import value as expression_value
 
 if TYPE_CHECKING:
     from piginot.fem.models import FemRequest
@@ -96,7 +97,7 @@ def fem_request(
                 amount = values[value.nominal_strain] * end
             else:
                 assert value.expression is not None
-                amount = value.expression.evaluate(values)
+                amount = expression_value(value.expression, values)
             prescribed.append(CanonicalQuantity(amount, Unit.MM, Dimension.LENGTH))
         conditions.append(
             BoundaryConditionSpec(

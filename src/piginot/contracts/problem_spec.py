@@ -172,17 +172,20 @@ def _tree_names(tree: ExpressionTree) -> set[str]:
     return set()
 
 
-def _tree_value(tree: ExpressionTree, values: Mapping[str, float]) -> float:
+def _constant_value(tree: ExpressionTree) -> float:
+    """Fold an expression without names (validation only; contracts do not
+    evaluate expressions of parameters, ``piginot.problem.expressions`` does)."""
+
     kind = tree[0]
     if kind == "number":
         return float(cast(float, tree[1]))
     if kind == "name":
-        return float(values[cast(str, tree[1])])
+        raise ValueError("a constant expression has no names")
     if kind == "unary":
-        operand = _tree_value(cast(ExpressionTree, tree[2]), values)
+        operand = _constant_value(cast(ExpressionTree, tree[2]))
         return operand if tree[1] == "+" else -operand
-    left = _tree_value(cast(ExpressionTree, tree[2]), values)
-    right = _tree_value(cast(ExpressionTree, tree[3]), values)
+    left = _constant_value(cast(ExpressionTree, tree[2]))
+    right = _constant_value(cast(ExpressionTree, tree[3]))
     operator = tree[1]
     if operator == "+":
         return left + right
@@ -227,7 +230,7 @@ class Expression:
     def constant(self) -> float | None:
         """The value of an expression without names, else ``None``."""
 
-        return None if self.names else _tree_value(self.tree, {})
+        return None if self.names else _constant_value(self.tree)
 
     def check(
         self,
@@ -253,11 +256,6 @@ class Expression:
             )
         except ContractValidationError as exc:
             raise ProblemSpecError("expression", f"{label}: {exc}") from exc
-
-    def evaluate(self, values: Mapping[str, float]) -> float:
-        """The value for ``values``, evaluated left to right in float64."""
-
-        return _tree_value(self.tree, values)
 
     def canonical(self) -> list[Any]:
         return _tree_document(self.tree)

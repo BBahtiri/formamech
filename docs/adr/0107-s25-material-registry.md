@@ -52,7 +52,9 @@ a material: it minimises `∫ W` with the closure `P33 = 0`.
    the SHA-256 of the canonical form (expressions as trees); a user formula
    is registered as model `energy-<first 16 hex>`, so a name never changes
    meaning. Exponents follow Python's precedence: `J^(-2/3)` needs the
-   parentheses.
+   parentheses. The contract stores the tree; scalar values (the declared moduli)
+   are computed by `piginot.materials.values` (S2: contracts do not
+   evaluate).
 4. **Stress, tangent and closure by automatic differentiation.** `P = dW/dF`
    by reverse mode (differentiable, for training and the served stress); the
    tangent by one reverse pass per stress component; the closure by a
@@ -67,6 +69,12 @@ a material: it minimises `∫ W` with the closure `P33 = 0`.
    by Young's modulus. A formula model uses
    `E0 = 9 K0 mu0 / (3 K0 + mu0)` of its declared moduli
    (`piginot.physics.reference_modulus`); Neo-Hookean keeps `E`.
+   *Implementation note (2026-10-14):* the confidence indicator
+   (`piginot.verification.confidence`) is S14 evaluation code frozen by
+   `S14-PROTOCOL.json`, so it is left unchanged and still reads
+   `elastic_modulus`; no formula model is served before S28, which gives
+   the indicator its scale outside the frozen file. The objectives use
+   `reference_modulus` as decided.
 6. **⚑ Admission gate** (`piginot.materials.admission`,
    `piginot.problem.admit_material`). A model is trained only if it passes,
    over a declared range of principal stretches (default `[0.6, 1.6]`, set

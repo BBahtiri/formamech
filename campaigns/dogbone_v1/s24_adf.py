@@ -73,6 +73,7 @@ from piginot.contracts import ProblemSpec, canonical_json_bytes
 from piginot.doe import EvidenceRole
 from piginot.lifting import DirichletLifting
 from piginot.problem import build_lifting
+from piginot.problem.expressions import value as expression_value
 from piginot.training import (
     EnergyTrainingResult,
     TrainingPopulation,
@@ -119,7 +120,7 @@ def adf_geometry_case(
     base = geometry_case(verified, normalization, dtype=dtype)
     coordinates = verified.case.primitive_coordinates
     values = {name: float(coordinates[name]) for name in LIFTING_INPUTS}
-    scale = load_spec().lifting.displacement_scale.evaluate(values)
+    scale = expression_value(load_spec().lifting.displacement_scale, values)
     expected = base.prescribed_displacement_mm
     if abs(scale - expected) > DISPLACEMENT_TOLERANCE * abs(expected):
         raise ValueError(f"{base.case_id}: spec displacement scale differs from S10")

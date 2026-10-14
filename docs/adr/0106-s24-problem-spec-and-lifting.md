@@ -61,7 +61,8 @@ the request.
 
    Values are expressions over the parameters and constants, parsed by the S2
    safe parser (names, numbers, `+ − * /`) and evaluated left to right in
-   float64, never by `eval`; a bare number is a constant in the expected unit.
+   float64, never by `eval` (by `piginot.problem.expressions`; the contract
+   only stores the tree, S2); a bare number is a constant in the expected unit.
    A Dirichlet value is either an expression or a nominal strain
    (`u_c = ε × the region's coordinate along c`, the rule of ADR 0103's
    recipes). Identity: BLAKE2b-256 in the `problem` domain over the RFC 8785
@@ -141,7 +142,7 @@ the request.
    bit for bit on the 64 DEVELOPMENT meshes; the parameter ranges and
    constraints equal the bundle's envelope; the FEM requests built from the
    spec equal the S10 requests of the 64 DEVELOPMENT cases byte for byte
-   (`piginot.problem.fem_request`); shipped bundles and sidecars are not
+   (`piginot.problem.fem_request`, module `piginot.problem.requests`); shipped bundles and sidecars are not
    touched. On the owner machine, a clean 400-step replay of each family's
    registered run at the S24 revision matches the registered step-400 tensors
    byte for byte; the checkpoint manifests and safetensors headers may differ

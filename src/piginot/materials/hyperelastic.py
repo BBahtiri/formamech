@@ -23,6 +23,7 @@ from piginot.contracts.energy_formula import (
     EnergyFormulaError,
     Tree,
 )
+from piginot.materials.values import formula_moduli
 from piginot.physics._validation import (
     determinant_is_admissible,
     require_admissible,
@@ -157,7 +158,7 @@ class FormulaMaterial:
     def moduli(self) -> tuple[float, float]:
         """Declared small-strain shear and bulk moduli in MPa."""
 
-        return self.formula.moduli(self.values)
+        return formula_moduli(self.formula, self.values)
 
     # ---------------------------------------------------------------- energy
 
