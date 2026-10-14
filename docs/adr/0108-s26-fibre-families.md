@@ -1,7 +1,9 @@
 # ADR 0108: Anisotropic hyperelastic models with in-plane fibre families (S26)
 
-- Status: Proposed — the decisions marked ⚑ and the G26 thresholds wait for
-  the decision owner; no S26 run before they are accepted and recorded in
+- Status: Accepted — decisions 1–10 and the G26 thresholds accepted by the
+  decision owner on 2026-10-14 (chat: "Accept as written"; angle unit
+  "Degrees, new unit deg"; viability material "±30°, k1=50 MPa, k2=2"; kill
+  rule "Registry, isotropic training only"), before any S26 run; recorded in
   `artifacts/materials/S26-PROTOCOL.json`
 - Date: 2026-10-14
 - Step: S26 (gate `G26`), `STEPS-v2.0.md` §7
@@ -122,7 +124,7 @@ transverse stretch at 1.2 falls from 0.957 to 0.938.
     (S28), no change to the isotropic formulas, their hashes or the S25
     records.
 
-## Gate G26 (proposed)
+## Gate G26
 
 | Check | Pass condition |
 |---|---|
@@ -150,6 +152,34 @@ transverse stretch at 1.2 falls from 0.957 to 0.938.
 - A single off-axis family needs a geometry without symmetry conditions
   (S27, S28).
 
+## Implementation notes (2026-10-14)
+
+- A family's angle is a `deg` parameter or its negative
+  (`"b": "-fibre_angle"`), which writes the `±β` pair of `hgo` and `goh`.
+  The formula language also gained `bounds` (`goh`: `kappa_d ∈ [0, 1/3]`).
+  Both keys are absent from formulas without them, so every S25 identity is
+  unchanged.
+- "Families with their parameters" (decision 5) is read as: two families may
+  be swapped by a symmetry rotation when they share their angle parameter
+  (`β` and `−β`). Families with separate angle parameters are each mapped to
+  themselves, which any energy in `I4`, `I5` satisfies.
+- The FEM check's field is the S8 field at half amplitude on an equibiaxial
+  stretch of 1.2 (smallest `I4` 1.10, for fibres at 90°). It is solved by
+  Newton at full load from the field's interpolant (the S22 warm start):
+  load stepping scales the data through states where fibres cross the switch.
+  Measured orders, displacement and first Piola: `hgo` 3.016 / 1.980,
+  `hgo_single` 3.016 / 1.974, `goh` 3.007 / 1.994.
+- The `material-symmetry` rule is checked on the spec's parameter ranges, so
+  it needs no mesh; both in-plane reflections map an angle `θ` to `−θ`.
+
 ## Verification
 
-To be listed when implemented.
+- `tests/contracts/test_energy_formula_fibres.py`, `tests/materials/test_fibres.py`,
+  `tests/problem/test_material_symmetry.py`, `tests/test_s26_anti_scope.py`.
+- Viability run: `campaigns/dogbone_v1/s26_hgo.py` (the S25 recipe as
+  `campaigns/dogbone_v1/material_run.py`), records
+  `artifacts/materials/S26-HGO-REFERENCES.json` and
+  `artifacts/materials/S26-HGO-TRAIN-SCREEN.json`; tested in
+  `tests/campaigns/test_dogbone_s26_hgo.py`.
+- Gate: `campaigns/g26_gate.py`, `tests/campaigns/test_g26_gate.py`; fast
+  goldens at their recorded thread count (`campaigns/fast_goldens.py`).

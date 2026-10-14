@@ -89,6 +89,9 @@ A material is either a built-in model or a strain-energy formula
 | `mooney_rivlin` | `c10`, `c01`, `bulk_modulus` | `c10 (I1bar - 3) + c01 (I2bar - 3) + K/2 (J - 1)^2` |
 | `yeoh` | `c10`, `c20`, `c30`, `bulk_modulus` | `c10 (I1bar - 3) + c20 (I1bar - 3)^2 + c30 (I1bar - 3)^3 + K/2 (J - 1)^2` |
 | `gent` | `shear_modulus`, `jm`, `bulk_modulus` | `-mu Jm/2 ln(1 - (I1bar - 3)/Jm) + K/2 (J - 1)^2` |
+| `hgo` | `shear_modulus`, `bulk_modulus`, `k1`, `k2`, `fibre_angle` (deg) | `mu/2 (I1bar - 3) + K/2 (J - 1)^2 + sum over a, b of k1/(2 k2) (exp(k2 ramp(I4 - 1)^2) - 1)`, families at ±`fibre_angle` |
+| `hgo_single` | as `hgo` | one family at `fibre_angle` |
+| `goh` | as `hgo`, and `kappa_d` in [0, 1/3] | fibre strain `kappa_d (I1 - 3) + (1 - 3 kappa_d)(I4 - 1)` in place of `I4 - 1` |
 
 A formula uses numbers, its parameters, the invariants `I1`, `I2`, `J`,
 `I1bar`, `I2bar`, `+ - * /`, `**` or `^` with a numeric exponent (write
@@ -107,9 +110,29 @@ small-strain moduli:
 }
 ```
 
+A formula may declare up to two in-plane fibre families
+([ADR 0108](adr/0108-s26-fibre-families.md)), each at the angle of a `deg`
+parameter (or its negative) from the x axis. Each family `<label>` adds the
+full invariants `I4<label> = a·C a` and `I5<label> = a·C² a`, and
+`ramp(x) = max(x, 0)` switches a fibre off in compression. A fibre term must
+carry no load at the reference state:
+
+```json
+"energy": {
+  "energy": "mu / 2 * (I1bar - 3) + k / 2 * (J - 1) ^ 2 + c * ramp(I4a - 1) ^ 2 + c * ramp(I4b - 1) ^ 2",
+  "parameters": {"mu": "MPa", "k": "MPa", "c": "MPa", "beta": "deg"},
+  "small_strain": {"shear_modulus": "mu", "bulk_modulus": "k"},
+  "fibres": {"a": "beta", "b": "-beta"}
+}
+```
+
+A symmetry boundary condition needs a material symmetric about its plane
+(rule `material-symmetry`): every family needs a mirror family at the
+negative angle, as `±beta` or a single family at 0° or 90°.
+
 `piginot.problem.admit_material(spec)` runs the admission gate over the
 material parameters' box: stress-free reference state, objectivity,
-isotropy, stress and tangent against finite differences, the declared
+isotropy (or, with fibres, the declared symmetry rotations), stress and tangent against finite differences, the declared
 moduli, a unique plane-stress closure root, ellipticity, and (with
 `fem=True` and the `verify` extra) optimal FEM convergence on a manufactured
 solution.

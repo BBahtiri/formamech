@@ -1,0 +1,140 @@
+{
+  "accepted": {
+    "answers": {
+      "ADR 0108": "Accept as written",
+      "angle unit": "Degrees, new unit deg",
+      "kill rule": "Registry, isotropic training only",
+      "viability material": "\u00b130\u00b0, k1=50 MPa, k2=2"
+    },
+    "by": "decision owner",
+    "on": "2026-10-14"
+  },
+  "decision_record": "docs/adr/0108-s26-fibre-families.md",
+  "schema_version": "1.0",
+  "status": "accepted",
+  "step": "S26",
+  "viability": {
+    "campaign": "dogbone-v1",
+    "changed": "material: HGO; the run binding binds problem_spec_hash",
+    "closed_evidence": [
+      "DEVELOPMENT",
+      "HOLDOUT",
+      "H1",
+      "H2"
+    ],
+    "evaluation": {
+      "cases": 64,
+      "guardrail_limits": {
+        "maximum_median_absolute_peak_error": 0.08085713846866197,
+        "maximum_p90_absolute_peak_error": 0.13634630217960156,
+        "maximum_p_relative_l2": 0.1958359567178783,
+        "maximum_u_relative_l2": 0.03805483752564062,
+        "minimum_median_signed_peak_error": -0.06986168963209696,
+        "required_invalid_collocation_points": 0
+      },
+      "population": "TRAIN-screen",
+      "reported": {
+        "s13c_p_relative_l2": 0.009086612004752744
+      },
+      "rule": "the frozen S13 guardrails of the S13c protocol (campaigns.dogbone_v1.s13c_evaluate.failed_guardrails) against the HGO re-solves"
+    },
+    "initial_weights_hash": "902356fefd76f04627bc3f150f1ca0f0df1325bb3fa4263d286b2b5fa623a461",
+    "kill_rule": "if a guardrail fails, 0.2.0 keeps fibre formulas in the registry and the admission gate, but the S28 compiler trains isotropic models only",
+    "material": {
+      "fibres": "two in-plane families at +30 and -30 degrees from the loading axis; quarter-model symmetric",
+      "matrix_matches": "small-strain E = 760 MPa, nu = 0.23 (fibres carry no load at the reference)",
+      "model": "hgo",
+      "properties": {
+        "bulk_modulus": 469.1358024691358,
+        "fibre_angle": 30.0,
+        "k1": 50.0,
+        "k2": 2.0,
+        "shear_modulus": 308.9430894308943
+      }
+    },
+    "optimizer_steps": 2400,
+    "problem_spec_hash": "af812fd8c825fedd038d7a0245a7fb8f7abe69269910d0ceabc71ad98c77c1ae",
+    "references": {
+      "cases": [
+        "candidate-000238",
+        "candidate-000254",
+        "candidate-000272",
+        "candidate-000319",
+        "candidate-000328",
+        "candidate-000378",
+        "candidate-000444",
+        "candidate-000452",
+        "candidate-000500",
+        "candidate-000557",
+        "candidate-000558",
+        "candidate-000726",
+        "candidate-000736",
+        "candidate-000757",
+        "candidate-000843",
+        "candidate-000874",
+        "candidate-000921",
+        "candidate-001026",
+        "candidate-001072",
+        "candidate-001108",
+        "candidate-001161",
+        "candidate-001189",
+        "candidate-001319",
+        "candidate-001379",
+        "candidate-001455",
+        "candidate-001462",
+        "candidate-001525",
+        "candidate-001534",
+        "candidate-001548",
+        "candidate-001561",
+        "candidate-001682",
+        "candidate-001836",
+        "candidate-001843",
+        "candidate-001927",
+        "candidate-002016",
+        "candidate-002093",
+        "candidate-002191",
+        "candidate-002249",
+        "candidate-002265",
+        "candidate-002307",
+        "candidate-002409",
+        "candidate-002488",
+        "candidate-002763",
+        "candidate-002917",
+        "candidate-002931",
+        "candidate-003034",
+        "candidate-003053",
+        "candidate-003099",
+        "candidate-003295",
+        "candidate-003352",
+        "candidate-003387",
+        "candidate-003423",
+        "candidate-003445",
+        "candidate-003458",
+        "candidate-003510",
+        "candidate-003559",
+        "candidate-003640",
+        "candidate-003645",
+        "candidate-003774",
+        "candidate-003791",
+        "candidate-003856",
+        "candidate-003884",
+        "candidate-003940",
+        "candidate-004012"
+      ],
+      "fem_material_name": "dogbone-hgo-reference-material",
+      "rule": "each TRAIN-screen S10 request with the material replaced, solved by the reference FEM solver"
+    },
+    "s13c_protocol_hash": "2f854e95bfe2f67a872e0f558246b4049f6697f6ff1ea7740ec03de54344c60e",
+    "s13c_protocol_sha256": "b4cfa71f13383434d87d38a4d8df06b117c4e27a33e0d83e08e24a379d82f098",
+    "seed": 13101,
+    "spec": "campaigns/dogbone_v1/problem_spec_hgo.json",
+    "unchanged": [
+      "TRAIN-fit population and S10 source bindings",
+      "normalization",
+      "architecture and initial weights",
+      "objective form and trainer configuration",
+      "sampler plan and seed",
+      "lifting (quarter) and execution profile"
+    ]
+  }
+}

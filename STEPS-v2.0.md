@@ -225,3 +225,28 @@ ADR 0107 decision 6.
 Kill rule: if the Mooney–Rivlin viability run fails a guardrail, 0.2.0 ships
 the registry and the admission gate and the S28 compiler trains only the
 closed-form Neo-Hookean model.
+
+### G26 — Fibre families (ADR 0108, accepted 2026-10-14)
+
+Protocol: `artifacts/materials/S26-PROTOCOL.json`. Admission: ADR 0107
+decision 6 with ADR 0108 decision 5.
+
+| Check | Pass condition |
+|---|---|
+| `G26.protocol-first` | `S26-PROTOCOL.json` committed once, with this ADR accepted, before the first re-solve and the viability run |
+| `G26.formula-safety` | Every malformed fibre construct is refused (undeclared family, a third family, an angle that is not an angle parameter, `ramp` of a stress, `I4` of an unknown label); no `eval`, `exec`, `compile` in the formula path |
+| `G26.isotropic-identity` | Identities of the S25 built-ins and of every formula without fibres unchanged; S25 admission reports unchanged; Neo-Hookean dispatch bit-identical; S19 fast goldens equal at their recorded thread count (`campaigns/fast_goldens.py`) |
+| `G26.fibre-kernels` | `hgo` stress equals its closed form within 1e-12; zero fibre stress wherever `I4 ≤ 1`; the `hgo` closure root equals the matrix's within 1e-12 |
+| `G26.admission` | `hgo`, `hgo_single` and `goh` admitted at their test parameters over `[0.6, 1.6]`, and the viability material, all eight checks |
+| `G26.admission-mutants` | An energy whose fibre direction differs from the declared angle fails symmetry; a fibre term without switch fails moduli; `k1 < 0` fails ellipticity; the S25 mutants still fail |
+| `G26.fem` | Fibres in tension: displacement L2 order within 0.15 of 3, first-Piola L2 order within 0.2 of 2 (ADR 0002) |
+| `G26.material-symmetry` | A quarter-model spec with one family at 30° is refused (`material-symmetry`); `±β` and 0° pass |
+| `G26.viability` | Decision 8 guardrails pass |
+| `G26.binding-compat` | Existing run bindings, bundles, family spec hashes and G13–G25 records still verify |
+| `G26.anti-scope` | Decision 10 tests; branch coverage of `piginot.materials` and the formula contract ≥ 90% |
+| `G26.portability` | Suite records on Linux and Windows |
+| `G26.quality` | Full suite, ruff, mypy `--strict`, global coverage ≥ 90.5% |
+
+Kill rule: if the HGO viability run fails a guardrail, 0.2.0 keeps fibre
+formulas in the registry and the admission gate, but the S28 compiler trains
+isotropic models only.
