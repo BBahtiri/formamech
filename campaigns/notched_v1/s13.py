@@ -31,7 +31,6 @@ from typing import ClassVar, Final
 
 import torch
 
-from campaigns.dogbone_v1.s10_production import default_s10_execution_profile
 from campaigns.dogbone_v1.s13_pilot import _absolute_directory, _git_provenance
 from campaigns.dogbone_v1.s13c_trial import (
     _log_writer,
@@ -384,6 +383,29 @@ def train_cases() -> tuple[PublishedCase, ...]:
     return cases
 
 
+# The S10 execution profile the notched requests were planned under (S17).
+# The request plan and the TRAIN-fit geometry snapshot of S13-PROTOCOL.json
+# bind it; they identify the public dataset and must not follow the live
+# environment, which reports piginot 0.2.0.dev0 since the S19 fork. Training
+# itself binds its own profile (``execution_profile``).
+S10_PROFILE: Final = ExecutionProfile(
+    python_version="3.11.15",
+    library_versions={
+        "numpy": "2.2.6",
+        "piginot": "0.1.0",
+        "rfc8785": "0.1.4",
+        "scikit-fem": "12.0.2",
+        "scipy": "1.17.1",
+        "torch": "2.13.0",
+    },
+    blas_threads=1,
+    device="cpu",
+    dtype="float64",
+    rng_algorithm="none",
+    seed=0,
+)
+
+
 def geometry_snapshot_hash(
     fit_case_ids: Sequence[str], profile: ExecutionProfile
 ) -> str:
@@ -423,7 +445,7 @@ def build_protocol(*, initial_weights_hash: str | None = None) -> NotchedS13Prot
     fit_ids, screen_ids = split_train_cases(cases)
     fit_cases = tuple(case for case in cases if case.case_id in set(fit_ids))
     normalization = fit_normalization(fit_cases)
-    profile = default_s10_execution_profile()
+    profile = S10_PROFILE
     model = build_initial_operator()
     observed = model_state_hash(model)
     pinned = (
@@ -747,7 +769,7 @@ def train_geometry(
             PublishedCaseStatus.ACTIVE
         ):
             raise PermissionError(f"{case.role.value} evidence cannot enter S13")
-    requests = requests_for(case_ids, default_s10_execution_profile())
+    requests = requests_for(case_ids, S10_PROFILE)
     return tuple(
         geometry_case(
             case.case_id,
@@ -766,7 +788,7 @@ def training_cases(
 ) -> tuple[NotchedGeometryCase, ...]:
     """Geometry of the TRAIN-fit cases; no FEM result is read."""
 
-    profile = default_s10_execution_profile()
+    profile = S10_PROFILE
     if (
         geometry_snapshot_hash(protocol.fit_case_ids, profile)
         != protocol.dataset_snapshot_hash
