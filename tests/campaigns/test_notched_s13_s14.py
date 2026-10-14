@@ -7,7 +7,10 @@ from campaigns.dogbone_v1.s14_reference import nested_vertex_map
 from campaigns.notched_v1 import family, s13_close, s14
 from piginot.operators import ENERGY_G11_MINIMUM_PARAMETER_VECTORS
 from piginot.verification import REGISTERED_FAMILIES
-from tests.platform_support import requires_pinned_initial_weights
+from tests.platform_support import (
+    requires_linux_request_plan,
+    requires_pinned_initial_weights,
+)
 
 
 def test_the_g11_lifting_population_covers_the_box() -> None:
@@ -58,6 +61,7 @@ def test_slices_and_families_are_campaign_scoped() -> None:
     }
 
 
+@requires_linux_request_plan
 def test_the_dataset_identity_does_not_follow_the_live_environment() -> None:
     """The S17 request plan and snapshot rebuild on the 0.2.0 line (piginot
     0.2.0.dev0, any Python patch release): the plan binds the S10 profile."""
