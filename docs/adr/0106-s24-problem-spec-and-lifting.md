@@ -226,6 +226,49 @@ replay revision, not only S24's. `S24-PROTOCOL.json` stays as committed;
 before the replay records (`campaigns/s24_replay.py`,
 `campaigns/g24_gate.py`).
 
+## Result of the owner runs (Linux/AVX2, 2026-10-14)
+
+**ADF viability run (decision 5).** A first attempt (run `72b93efd…`,
+revision `35f9bae`) stopped after 67 of 2,400 steps, before its first
+checkpoint; it left no checkpoint and was never evaluated. The registered run
+is `04649318…` at revision `b19458d`, 2,400 steps, scored on the 64
+TRAIN-screen cases by the frozen S13 guardrails
+(`artifacts/problem/S24-ADF-TRAIN-SCREEN.json`):
+
+| Metric | `adf` (trimmed pieces) | `quarter` (S13c) | Frozen limit |
+|---|---|---|---|
+| Median absolute root-peak error | 1.48% | 0.83% | ≤ 8.09% |
+| p90 absolute root-peak error | 3.02% | 1.69% | ≤ 13.63% |
+| Median signed root-peak error | −1.00% | −0.29% | ≥ −6.99% |
+| P-field relative L2 | 2.04% | 0.91% | ≤ 19.58% |
+| u-field relative L2 | 0.16% | 0.08% | ≤ 3.81% |
+| Invalid interior points (minimum det F) | 0 (0.983) | 0 (0.990) | 0 |
+
+Every guardrail passes, so the kill rule does not apply: trimmed pieces and
+arcs are offered in 0.2.0. Both liftings meet the boundary data exactly; on
+this family the operator trained with the trimmed ADF lifting has about twice
+the error of the one trained with `quarter`, whose blending suits this
+axis-aligned geometry. Which lifting the compiler prefers where both apply is
+left to S28. DEVELOPMENT, HOLDOUT, H1 and H2 stayed closed.
+
+**Replays (decision 6, amendment 1).** Both 400-step replays are
+byte-identical to the same-CPU `v0.2.0-base` runs: 124 model tensors and 497
+state tensors equal, `optimizer.json` and `adaptive.json` identical, the
+manifests differing only in `run_hash`, `model_export_hash` and
+`tensor_payload_hash`, the run bindings only in `implementation_revision`.
+
+| Family | Replay revision | Reference run | Model state at step 400 |
+|---|---|---|---|
+| DogBone | `b19458d` | `eb3c5e15…` (G19 straight run) | `9492c444…` |
+| Notched plate | `17167fc` | `aa0c5618…` (new, `399a146`) | `6a3a755b…` |
+
+The replay revisions contain all of S19–S25, including the S25 material
+dispatch, so Neo-Hookean training is bit-for-bit unchanged on real data for
+both families. The notched replay needed one fix first: the notched S13
+protocol rebuild had bound the live package version, which the S19 fork
+changed, so the notched trainer could not start on the 0.2.0 line
+(`campaigns/notched_v1/s13.py`, `S10_PROFILE`).
+
 ## Consequences
 
 - S27 and S28 take a ProblemSpec as their input; S25 replaces the material

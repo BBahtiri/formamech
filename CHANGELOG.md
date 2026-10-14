@@ -21,8 +21,9 @@ Development line S19–S29 (`STEPS-v2.0.md`, ADR 0105), forked from `v0.1.0`.
   manufactured solution); `material.energy` and `material.stretch_range` in
   the ProblemSpec; the preregistered Mooney–Rivlin viability run
   (`artifacts/materials/S25-PROTOCOL.json`,
-  `campaigns/dogbone_v1/s25_mooney_rivlin.py`) and gate G25
-  (`campaigns/g25_gate.py`).
+  `campaigns/dogbone_v1/s25_mooney_rivlin.py`), which passes every frozen
+  guardrail at the accuracy of the Neo-Hookean run (P-field L2 0.93%
+  against 0.91%), and gate G25 (`campaigns/g25_gate.py`).
 - **ProblemSpec and exact liftings from the spec** (S24, ADR 0106 accepted):
   the contract `piginot.contracts.ProblemSpec` (`piginot.problem-spec-v1`, a
   validated JSON problem description with a BLAKE2b identity); the package
@@ -33,9 +34,11 @@ Development line S19–S29 (`STEPS-v2.0.md`, ADR 0105), forked from `v0.1.0`.
   in run bindings; the two shipped families as specs under `campaigns/`, which
   reproduce every DEVELOPMENT lifting bit for bit and every S10 FEM request
   byte for byte (`artifacts/problem/S24-REGRESSION.json`); the preregistered
-  ADF viability run and the 400-step replays (`artifacts/problem/S24-PROTOCOL.json`,
-  `campaigns/dogbone_v1/s24_adf.py`, `campaigns/s24_replay.py`) and gate G24
-  (`campaigns/g24_gate.py`).
+  ADF viability run, which passes every frozen guardrail (P-field L2 2.04%),
+  and the 400-step replays, byte-identical to same-CPU runs of the v0.2.0
+  base for both families (`artifacts/problem/S24-PROTOCOL.json`, amendment
+  `S24-REPLAY-AMENDMENT.json`, `campaigns/dogbone_v1/s24_adf.py`,
+  `campaigns/s24_replay.py`) and gate G24 (`campaigns/g24_gate.py`).
 - **Calibrated bounds** (S23, ADR 0104 accepted): the runtime package
   `piginot.bounds` (split-conformal bounds, Mahalanobis calibration gate,
   calibration sidecars), `piginot predict --bounds` and
@@ -64,6 +67,15 @@ Development line S19–S29 (`STEPS-v2.0.md`, ADR 0105), forked from `v0.1.0`.
   release; `piginot predict` documents `--tolerance` and the other serving
   options, and refuses `--escalate` or `--tolerance` where they would be
   ignored. Native Windows runs of S21–S22 are still to be recorded.
+
+### Fixed
+
+- The notched S13 protocol could not be rebuilt on the 0.2.0 line: its
+  request plan bound the live package version (0.2.0.dev0 since the S19
+  fork). It now binds the S10 profile the dataset was planned under, so the
+  notched trainer, `s13_close` and `s14` start again.
+- Gates G24 and G25 ignore each other's gate and suite records, so one
+  suite run serves both.
 
 ## [0.1.0] - 2026-10-06
 

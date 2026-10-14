@@ -122,6 +122,34 @@ a material: it minimises `∫ W` with the closure `P33 = 0`.
 | `G25.portability` | Suite records on Linux and Windows |
 | `G25.quality` | Full suite, ruff, mypy `--strict`, global coverage ≥ 90.5% |
 
+## Result of the viability run (Linux/AVX2, 2026-10-14)
+
+The 64 TRAIN-screen S10 requests were re-solved with Mooney–Rivlin at
+revision `80dff0c` (index `artifacts/materials/S25-MR-REFERENCES.json`); the
+registered run `9da65236…` was trained at revision `2db0142` for 2,400
+steps, with the training batches' minimum det F between 0.974 and 0.996 at
+the six checkpoints, and scored against the re-solves by the frozen S13 guardrails
+(`artifacts/materials/S25-MR-TRAIN-SCREEN.json`):
+
+| Metric | Mooney–Rivlin (S25) | Neo-Hookean (S13c) | Frozen limit |
+|---|---|---|---|
+| Median absolute root-peak error | 0.70% | 0.83% | ≤ 8.09% |
+| p90 absolute root-peak error | 1.73% | 1.69% | ≤ 13.63% |
+| Median signed root-peak error | −0.32% | −0.29% | ≥ −6.99% |
+| P-field relative L2 | 0.93% | 0.91% | ≤ 19.58% |
+| u-field relative L2 | 0.084% | 0.08% | ≤ 3.81% |
+| Invalid interior points (minimum det F) | 0 (0.990) | 0 (0.990) | 0 |
+
+The model's strain energy is within 9.2e-5 (median) of the FEM energy.
+Every guardrail passes, so the kill rule does not apply: the S28 compiler may
+train any admitted formula model. The Mooney–Rivlin task is not a relabelled
+Neo-Hookean one: at the hardest corner of the box (20% strain, gauge 6 mm) the
+reference solution's peak |P| is 9.4% and its strain energy 5.7% below
+Neo-Hookean's, and its solve took 423 s against 122 s (cloud, one core). The
+S24 same-CPU replays, at revisions that contain this step's dispatch, are
+byte-identical to the base runs (ADR 0106, result). DEVELOPMENT, HOLDOUT,
+H1 and H2 stayed closed.
+
 ## Consequences
 
 - A user can name a built-in model or write a formula in the problem spec;
