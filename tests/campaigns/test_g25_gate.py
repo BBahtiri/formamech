@@ -43,6 +43,48 @@ def test_clean_ignores_only_the_gate_record_files(tmp_path: Path) -> None:
     assert not gate.clean(repo)
 
 
+def test_one_suite_serves_both_gates(tmp_path: Path) -> None:
+    from campaigns import g24_gate
+
+    repo = _repository(tmp_path)
+    for record in (
+        g24_gate.SUITE_PATH,
+        g24_gate.GATE_PATH,
+        gate.SUITE_PATH,
+        gate.WINDOWS_PATH,
+        gate.GATE_PATH,
+    ):
+        (repo / record).parent.mkdir(parents=True, exist_ok=True)
+        (repo / record).write_text("{}")
+    assert gate.clean(repo) and g24_gate.clean(repo)
+    tree = run_git(repo, "rev-parse", "HEAD^{tree}")
+    _commit(repo, "records")
+    assert gate._same_code(repo, tree) and g24_gate._same_code(repo, tree)
+    (repo / "b.txt").write_text("b")
+    _commit(repo, "code")
+    assert not gate._same_code(repo, tree)
+
+
+@pytest.mark.parametrize(
+    ("path", "record"),
+    [
+        ("artifacts/gates/S24.json", True),
+        ("artifacts/gates/S25.json", True),
+        ("artifacts/problem/S24-SUITE.json", True),
+        ("artifacts/materials/S25-WINDOWS-SUITE.json", True),
+        ("artifacts/gates/S23.json", False),
+        ("artifacts/serving/S22-SUITE.json", False),
+        ("artifacts/materials/S25-PROTOCOL.json", False),
+        ("artifacts/materials/S25-MR-TRAIN-SCREEN.json", False),
+        ("src/piginot/materials/registry.py", False),
+    ],
+)
+def test_gate_records(path: str, record: bool) -> None:
+    from campaigns.g24_gate import is_gate_record
+
+    assert is_gate_record(path) is record
+
+
 def test_module_coverage_counts_lines_and_branches() -> None:
     report = {
         "files": {

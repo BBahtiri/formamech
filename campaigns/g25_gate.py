@@ -10,8 +10,9 @@ quality (Linux run)::
     python -m campaigns.g25_gate --record-windows PYTEST_LOG WINDOWS_CLONE
     python -m campaigns.g25_gate --write
 
-A record command checks that the tree is clean apart from the gate's own
-record files, so recording twice needs no ``git restore``.
+A record command checks that the tree is clean apart from the gate and suite
+records of S24 and later (``is_gate_record``), so recording twice needs no
+``git restore`` and one suite run can be recorded for G24 and G25.
 """
 
 from __future__ import annotations
@@ -29,6 +30,7 @@ from campaigns import g19_gate
 from campaigns.dogbone_v1 import s25_mooney_rivlin as mr
 from campaigns.g19_gate import execution_profile, not_run, read_text_any
 from campaigns.g20_gate import _git, _pytest, _tree, parse_pytest_log
+from campaigns.g24_gate import is_gate_record
 from campaigns.notched_v1.gate_io import (
     check_document,
     git_head,
@@ -74,11 +76,10 @@ def _ancestor_or_same(root: Path, earlier: str, later: str | None) -> bool:
 def clean(root: Path) -> bool:
     """No change in the tree apart from the gate's own record files."""
 
-    own = {path.as_posix() for path in GATE_FILES}
     lines = _git(
         root, "status", "--porcelain", "--untracked-files=all"
     ).stdout.splitlines()
-    return all(line[3:].strip('"') in own for line in lines)
+    return all(is_gate_record(line[3:].strip('"')) for line in lines)
 
 
 def check_protocol_first(root: Path) -> dict[str, Any]:
@@ -303,11 +304,10 @@ def _listing(root: Path, tree: str) -> dict[str, str] | None:
     listed = _git(root, "ls-tree", "-r", tree)
     if listed.returncode != 0:
         return None
-    excluded = {p.as_posix() for p in GATE_FILES}
     entries = {}
     for line in listed.stdout.splitlines():
         meta, path = line.split("\t", 1)
-        if path not in excluded:
+        if not is_gate_record(path):
             entries[path] = meta
     return entries
 

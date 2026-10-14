@@ -11,8 +11,9 @@ binding-compat, anti-scope, portability (native Windows run) and quality
     python -m campaigns.g24_gate --record-windows PYTEST_LOG WINDOWS_CLONE
     python -m campaigns.g24_gate --write
 
-A record command checks that the tree is clean apart from the gate's own
-record files, so recording twice needs no ``git restore``.
+A record command checks that the tree is clean apart from the gate and suite
+records of S24 and later (``is_gate_record``), so recording twice needs no
+``git restore`` and one suite run can be recorded for G24 and G25.
 """
 
 from __future__ import annotations
@@ -20,6 +21,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import subprocess
 import sys
 from collections.abc import Mapping, Sequence
@@ -50,6 +52,21 @@ GATE_PATH = Path("artifacts/gates/S24.json")
 SUITE_PATH = OUTPUT / "S24-SUITE.json"
 WINDOWS_PATH = OUTPUT / "S24-WINDOWS-SUITE.json"
 GATE_FILES = (GATE_PATH, SUITE_PATH, WINDOWS_PATH)
+# The records of the S24 and later gates: a gate document or a suite record.
+# They are written after the code tree is fixed, so neither the clean check
+# nor the code-tree comparison counts them; one suite run then serves G24
+# and G25 together.
+_GATE_RECORD = re.compile(
+    r"artifacts/(gates/S(2[4-9])\.json|[a-z-]+/S(2[4-9])-(WINDOWS-)?SUITE\.json)\Z"
+)
+
+
+def is_gate_record(path: str) -> bool:
+    """A gate document or suite record of S24 or later."""
+
+    return bool(_GATE_RECORD.match(path))
+
+
 GLOBAL_COVERAGE = 90.5
 MODULE_COVERAGE = 90.0
 COVERED_MODULES = (
@@ -84,11 +101,10 @@ def _ancestor_or_same(root: Path, earlier: str, later: str | None) -> bool:
 def clean(root: Path) -> bool:
     """No change in the tree apart from the gate's own record files."""
 
-    own = {path.as_posix() for path in GATE_FILES}
     lines = _git(
         root, "status", "--porcelain", "--untracked-files=all"
     ).stdout.splitlines()
-    return all(line[3:].strip('"') in own for line in lines)
+    return all(is_gate_record(line[3:].strip('"')) for line in lines)
 
 
 def check_protocol_first(root: Path) -> dict[str, Any]:
@@ -350,11 +366,10 @@ def _listing(root: Path, tree: str) -> dict[str, str] | None:
     listed = _git(root, "ls-tree", "-r", tree)
     if listed.returncode != 0:
         return None
-    excluded = {p.as_posix() for p in GATE_FILES}
     entries = {}
     for line in listed.stdout.splitlines():
         meta, path = line.split("\t", 1)
-        if path not in excluded:
+        if not is_gate_record(path):
             entries[path] = meta
     return entries
 
