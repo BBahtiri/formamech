@@ -13,7 +13,25 @@ import math
 from collections.abc import Mapping
 from typing import cast
 
-from piginot.contracts.energy_formula import EnergyFormula, Tree
+from piginot.contracts.energy_formula import EnergyFormula, Tree, fibre_angle
+
+
+def _ramp(value: float) -> float:
+    return max(value, 0.0)
+
+
+def fibre_directions(
+    formula: EnergyFormula, values: Mapping[str, float]
+) -> dict[str, tuple[float, float, float]]:
+    """Each family's unit direction ``(cos θ, sin θ, 0)`` for ``values``
+    (angles in degrees from the x axis)."""
+
+    directions = {}
+    for label, reference in formula.fibres.items():
+        sign, name = fibre_angle(reference)
+        angle = math.radians(sign * values[name])
+        directions[label] = (math.cos(angle), math.sin(angle), 0.0)
+    return directions
 
 
 def formula_value(tree: Tree, values: Mapping[str, float]) -> float:
@@ -29,7 +47,12 @@ def formula_value(tree: Tree, values: Mapping[str, float]) -> float:
         return operand if tree[1] == "+" else -operand
     if kind == "call":
         argument = formula_value(cast(Tree, tree[2]), values)
-        function = {"exp": math.exp, "log": math.log, "sqrt": math.sqrt}[tree[1]]
+        function = {
+            "exp": math.exp,
+            "log": math.log,
+            "sqrt": math.sqrt,
+            "ramp": _ramp,
+        }[tree[1]]
         return function(argument)
     if kind == "power":
         return float(formula_value(cast(Tree, tree[1]), values) ** float(tree[2]))
@@ -56,4 +79,4 @@ def formula_moduli(
     )
 
 
-__all__ = ("formula_moduli", "formula_value")
+__all__ = ("fibre_directions", "formula_moduli", "formula_value")

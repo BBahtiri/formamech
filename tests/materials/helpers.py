@@ -19,26 +19,46 @@ NEO_HOOKEAN_FORMULA = EnergyFormula.from_document(
     }
 )
 
+_FIBRES = {
+    "shear_modulus": 300.0,
+    "bulk_modulus": 500.0,
+    "k1": 50.0,
+    "k2": 2.0,
+    "fibre_angle": 30.0,
+}
 BUILTIN_VALUES = {
     "mooney_rivlin": {"c10": 120.0, "c01": 30.0, "bulk_modulus": 500.0},
     "yeoh": {"c10": 150.0, "c20": -5.0, "c30": 1.0, "bulk_modulus": 500.0},
     "gent": {"shear_modulus": 300.0, "jm": 20.0, "bulk_modulus": 500.0},
+    "hgo": dict(_FIBRES),
+    "hgo_single": dict(_FIBRES),
+    "goh": {**_FIBRES, "kappa_d": 0.1},
 }
 
 
 def quantity(value: float, unit: Unit) -> CanonicalQuantity:
-    dimension = Dimension.STRESS if unit is Unit.MPA else Dimension.DIMENSIONLESS
+    dimension = {
+        Unit.MPA: Dimension.STRESS,
+        Unit.DEG: Dimension.ANGLE,
+    }.get(unit, Dimension.DIMENSIONLESS)
     return CanonicalQuantity(value, unit, dimension)
 
 
+def _unit(model: str, name: str) -> Unit:
+    from piginot.materials import formula_for
+
+    formula = formula_for(model)
+    if formula is not None:
+        return formula.parameters[name]
+    return Unit.ONE if name == "poisson_ratio" else Unit.MPA
+
+
 def material(model: str, values: dict[str, float]) -> MaterialSpec:
-    dimensionless = {"jm", "poisson_ratio"}
     return MaterialSpec(
         name=f"test-{model}",
         model=model,
         properties={
-            name: quantity(value, Unit.ONE if name in dimensionless else Unit.MPA)
-            for name, value in values.items()
+            name: quantity(value, _unit(model, name)) for name, value in values.items()
         },
     )
 

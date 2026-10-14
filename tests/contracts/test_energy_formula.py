@@ -102,7 +102,7 @@ def test_the_tree_and_its_evaluation() -> None:
         ({"energy": "mu + I1"}, "same unit"),
         ({"energy": "mu * I3"}, "unknown name"),
         ({"energy": "mu * (I1 - 3)"}, "not used"),
-        ({"parameters": {"mu": "GPa", "lam": "MPa"}}, "'MPa' or '1'"),
+        ({"parameters": {"mu": "GPa", "lam": "MPa"}}, "'MPa', '1' or 'deg'"),
         ({"parameters": {"I1": "MPa", "lam": "MPa"}}, "not allowed"),
         ({"parameters": []}, "objects"),
         ({"positive": ["nu"]}, "unknown parameters"),
@@ -147,7 +147,14 @@ def test_parameter_values_are_checked() -> None:
 
 
 def test_the_builtin_library() -> None:
-    assert set(BUILTIN_FORMULAS) == {"mooney_rivlin", "yeoh", "gent"}
+    assert set(BUILTIN_FORMULAS) == {
+        "mooney_rivlin",
+        "yeoh",
+        "gent",
+        "hgo",
+        "hgo_single",
+        "goh",
+    }
     assert set(CLOSED_FORM_MODELS) == {"compressible_neo_hookean"}
     assert model_dimensions("gent") == {
         "shear_modulus": Dimension.STRESS,

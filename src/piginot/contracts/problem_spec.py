@@ -33,6 +33,7 @@ from piginot.contracts.energy_formula import (
     CLOSED_FORM_MODELS,
     EnergyFormula,
     EnergyFormulaError,
+    fibre_angle,
     model_dimensions,
 )
 from piginot.contracts.errors import ContractValidationError
@@ -820,6 +821,7 @@ class ProblemSpec:
         self._check_geometry(dimensions)
         self._check_material()
         self._check_boundary_conditions(dimensions)
+        self._check_material_symmetry()
         self._check_lifting(dimensions)
         regions = set(self.geometry.regions)
         _unique((q.name for q in self.qois), "QoI")
@@ -869,6 +871,56 @@ class ProblemSpec:
                     "material",
                     f"{prop}: {name!r} must be a material parameter of dimension "
                     f"{required[prop].value}",
+                )
+
+    def _check_material_symmetry(self) -> None:
+        """ADR 0108 decision 6: a symmetry condition needs a material symmetric
+        under the reflection across its plane.
+
+        Both in-plane reflections map a fibre angle to its negative, so every
+        family needs a mirror family at the negative angle over the whole
+        parameter box: the same angle parameter with the opposite sign, or
+        fixed angles that sum to a multiple of 180 degrees (0 and 90 degrees
+        mirror themselves).
+        """
+
+        formula = self.material.energy or BUILTIN_FORMULAS.get(self.material.model)
+        if formula is None or not formula.fibres:
+            return
+        planes = sorted(
+            {
+                component
+                for condition in self.boundary_conditions
+                if condition.kind == "symmetry"
+                for component in condition.components
+            }
+        )
+        if not planes:
+            return
+        families = []
+        for label, reference in formula.fibres.items():
+            sign, prop = fibre_angle(reference)
+            families.append(
+                (label, sign, prop, self.parameter(self.material.parameters[prop]))
+            )
+
+        def mirrored(sign: int, prop: str, parameter: ParameterRange) -> bool:
+            for _, other_sign, other_prop, other in families:
+                if other_prop == prop and other_sign == -sign:
+                    return True
+                fixed = parameter.lo == parameter.hi and other.lo == other.hi
+                total = other_sign * other.lo + sign * parameter.lo
+                if fixed and abs(math.remainder(total, 180.0)) <= 1e-9:
+                    return True
+            return False
+
+        for label, sign, prop, parameter in families:
+            if not mirrored(sign, prop, parameter):
+                raise ProblemSpecError(
+                    "material-symmetry",
+                    f"the symmetry condition(s) on {', '.join(planes)} need a "
+                    "material symmetric about that plane; fibre family "
+                    f"{label!r} has no mirror family at the negative angle",
                 )
 
     def _check_boundary_conditions(self, dimensions: Mapping[str, Dimension]) -> None:

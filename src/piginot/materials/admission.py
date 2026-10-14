@@ -292,6 +292,95 @@ def check_isotropy(
     )
 
 
+def half_turn(axis: tuple[float, float, float]) -> torch.Tensor:
+    """The rotation by π about the unit ``axis``: ``2 n n^T - I``."""
+
+    n = torch.tensor(axis, dtype=torch.float64)
+    n = n / torch.linalg.norm(n)
+    return 2.0 * torch.outer(n, n) - torch.eye(3, dtype=torch.float64)
+
+
+def symmetry_group(material: MaterialSpec) -> dict[str, torch.Tensor] | None:
+    """The declared symmetry rotations of a fibre material (ADR 0108 d. 5).
+
+    The rotations by π about ``e3``, ``e1``, ``e2``, each fibre axis and its
+    in-plane normal that map every family's axis onto the axis of a family
+    with the same angle parameter (itself, or its ``±`` partner). ``None`` for
+    a material without fibres (isotropic).
+    """
+
+    from piginot.contracts.energy_formula import fibre_angle
+    from piginot.materials.registry import formula_for, resolve
+
+    formula = formula_for(material.model)
+    if formula is None or not formula.fibres:
+        return None
+    directions = resolve(material).directions
+    parameter = {label: fibre_angle(ref)[1] for label, ref in formula.fibres.items()}
+    axes: dict[str, tuple[float, float, float]] = {
+        "e3": (0.0, 0.0, 1.0),
+        "e1": (1.0, 0.0, 0.0),
+        "e2": (0.0, 1.0, 0.0),
+    }
+    for label, (c, s_, _) in directions.items():
+        axes[f"a_{label}"] = (c, s_, 0.0)
+        axes[f"n_{label}"] = (-s_, c, 0.0)
+    vectors = {
+        label: torch.tensor(direction, dtype=torch.float64)
+        for label, direction in directions.items()
+    }
+
+    def maps_families(rotation: torch.Tensor) -> bool:
+        # Q a_i = ±a_j (unit vectors: |Q a_i . a_j| = 1) for a family j with
+        # the same angle parameter, for every family i.
+        return all(
+            any(
+                parameter[other] == parameter[label]
+                and abs(abs(float((rotation @ vector) @ vectors[other])) - 1.0) <= 1e-12
+                for other in vectors
+            )
+            for label, vector in vectors.items()
+        )
+
+    group: dict[str, torch.Tensor] = {}
+    for name, axis in axes.items():
+        rotation = half_turn(axis)
+        duplicate = any(
+            torch.allclose(rotation, kept, atol=1e-12) for kept in group.values()
+        )
+        if not duplicate and maps_families(rotation):
+            group[name] = rotation
+    return group
+
+
+def check_group_symmetry(
+    kernel: Kernel,
+    deformation: torch.Tensor,
+    group: Mapping[str, torch.Tensor],
+    shear: float,
+) -> CheckResult:
+    """``W(FQ) = W(F)`` and ``P(FQ) = P(F) Q`` for each declared rotation."""
+
+    energy = kernel.energy(deformation)
+    stress = kernel.stress(deformation)
+    scale = max(shear, float(energy.abs().max()), float(stress.abs().max()))
+    measured = 0.0
+    for rotation in group.values():
+        rotated = deformation @ rotation
+        measured = max(
+            measured,
+            _relative(kernel.energy(rotated) - energy, scale),
+            _relative(kernel.stress(rotated) - stress @ rotation, scale),
+        )
+    return CheckResult(
+        "symmetry",
+        measured,
+        SYMMETRY_TOLERANCE,
+        measured <= SYMMETRY_TOLERANCE,
+        {"symmetry": "fibre-reinforced", "rotations": sorted(group)},
+    )
+
+
 def _central(
     function: Callable[[torch.Tensor], torch.Tensor], deformation: torch.Tensor
 ) -> torch.Tensor:
@@ -484,9 +573,15 @@ def admit(
     planar = deformations_2d(generator, grid, stretch_range)
     scale = abs(shear) if shear else 1.0
     checks = [check_reference(evaluator, scale)]
+    group = symmetry_group(material)
     for check in (check_objectivity, check_isotropy):
         try:
-            checks.append(check(evaluator, deformation, rotation, scale))
+            if check is check_isotropy and group is not None:
+                checks.append(
+                    check_group_symmetry(evaluator, deformation, group, scale)
+                )
+            else:
+                checks.append(check(evaluator, deformation, rotation, scale))
         except PhysicsError as exc:
             checks.append(_failed(check.__name__[6:], str(exc)))
     try:

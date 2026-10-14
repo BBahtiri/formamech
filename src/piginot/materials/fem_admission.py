@@ -9,6 +9,15 @@ differentiation of the material's own kernel, ``b = -Div P(I + grad u)``,
 so the check applies to any registered model. The reference solver must
 converge at the optimal P2 orders: displacement L2 order 3 and first-Piola
 L2 order 2, with the S8 tolerances (0.15 and 0.2, ADR 0002).
+
+A material with fibre families (S26, ADR 0108 decision 5) is checked on the
+``fibre_tension`` field instead: the S8 field at half amplitude on top of an
+equibiaxial stretch of 1.2, which keeps every in-plane fibre in tension
+(``I4 >= 1.05`` is verified on a grid before solving), so the solution is
+smooth and the optimal orders apply; the compression branch is the matrix.
+That field is solved by Newton at full load from its own interpolant (the S22
+warm start): load stepping would scale the data through states where fibres
+cross the switch, where Newton's tangent jumps.
 """
 
 from __future__ import annotations
@@ -30,6 +39,10 @@ DISPLACEMENT_ORDER_TOLERANCE = 0.15
 STRESS_ORDER_TOLERANCE = 0.2
 LEVELS = (3, 4)
 CASE = "strongly_varying_f33"
+FIBRE_CASE = "fibre_tension"
+FIBRE_PRESTRETCH = 1.2
+FIBRE_AMPLITUDE = 0.5
+FIBRE_MINIMUM_I4 = 1.05
 BOUNDARY_TYPES = {tag: "dirichlet" for tag in ("left", "right", "top", "bottom")}
 
 
@@ -38,6 +51,45 @@ def _displacement(points: torch.Tensor) -> torch.Tensor:
     return torch.stack(
         (0.2 * x**2 * (1.0 + y / 2.0), -0.15 * y**2 * (1.0 - x / 4.0)), dim=0
     )
+
+
+def _fibre_displacement(points: torch.Tensor) -> torch.Tensor:
+    stretch = (FIBRE_PRESTRETCH - 1.0) * torch.stack((points[0], points[1]), dim=0)
+    return stretch + FIBRE_AMPLITUDE * _displacement(points)
+
+
+_FIELDS = {CASE: _displacement, FIBRE_CASE: _fibre_displacement}
+
+
+def case_for(material: MaterialSpec) -> str:
+    """The manufactured field of ``material``: fibres need ``fibre_tension``."""
+
+    from piginot.materials.registry import formula_for
+
+    formula = formula_for(material.model)
+    return FIBRE_CASE if formula is not None and formula.fibres else CASE
+
+
+def minimum_fibre_i4(material: MaterialSpec, points_per_side: int = 41) -> float:
+    """The smallest ``I4`` of any family over the field on a grid of the square."""
+
+    from piginot.materials.registry import resolve
+
+    directions = resolve(material).directions
+    axis = torch.linspace(0.0, 1.0, points_per_side, dtype=torch.float64)
+    x, y = torch.meshgrid(axis, axis, indexing="ij")
+    flat = torch.stack((x.reshape(-1), y.reshape(-1)), dim=-1).requires_grad_(True)
+    u = _FIELDS[case_for(material)](flat.T)
+    rows = [
+        torch.autograd.grad(u[i].sum(), flat, retain_graph=True)[0] for i in range(2)
+    ]
+    deformation = torch.eye(2, dtype=torch.float64) + torch.stack(rows, dim=-2)
+    smallest = math.inf
+    for c, s_, _ in directions.values():
+        a = torch.tensor((c, s_), dtype=torch.float64)
+        stretched = deformation @ a
+        smallest = min(smallest, float((stretched * stretched).sum(dim=-1).min()))
+    return smallest
 
 
 def _points(reference_points: Any) -> torch.Tensor:
@@ -58,8 +110,11 @@ class AutogradManufacturedSolution:
     material: MaterialSpec
     name: str = CASE
 
+    def _field(self, points: torch.Tensor) -> torch.Tensor:
+        return _FIELDS[self.name](points)
+
     def displacement(self, reference_points: Any) -> Any:
-        return _displacement(_points(reference_points)).numpy()
+        return self._field(_points(reference_points)).numpy()
 
     def _fields(self, reference_points: Any, *, body: bool) -> dict[str, torch.Tensor]:
         from piginot.physics import first_piola, plane_stress_closure
@@ -67,7 +122,7 @@ class AutogradManufacturedSolution:
         points = _points(reference_points)
         shape = points.shape[1:]
         flat = points.reshape(2, -1).T.clone().requires_grad_(True)
-        u = _displacement(flat.T)
+        u = self._field(flat.T)
         rows = [
             torch.autograd.grad(u[i].sum(), flat, create_graph=body, retain_graph=True)[
                 0
@@ -129,7 +184,7 @@ class _Provider:
         return hash_spec(
             {
                 "provider_kind": f"{self.kind}-autograd-v1",
-                "case_name": CASE,
+                "case_name": self.solution.name,
                 "material": self.solution.material,
             },
             "recipe",
@@ -141,7 +196,23 @@ class _Provider:
         return self.solution.body_force(reference_points)
 
 
-def solve_level(material: MaterialSpec, level: int) -> tuple[float, float, float]:
+def _interpolant(request: Any, solution: AutogradManufacturedSolution) -> Any:
+    """The manufactured displacement at the request's P2 DOFs (full vector)."""
+
+    from piginot.fem.backend import _build_basis
+
+    _, basis, _ = _build_basis(request)
+    x_dofs, y_dofs = (np.asarray(d, dtype=np.int64) for d in basis.split_indices())
+    values = solution.displacement(np.asarray(basis.doflocs[:, x_dofs]))
+    initial = np.empty(basis.N, dtype=np.float64)
+    initial[x_dofs] = values[0]
+    initial[y_dofs] = values[1]
+    return initial
+
+
+def solve_level(
+    material: MaterialSpec, level: int, case: str | None = None
+) -> tuple[float, float, float]:
     """``(h_max, displacement L2 error, first-Piola L2 error)`` at one level."""
 
     from piginot.fem.backend import ScikitFemBackend
@@ -153,7 +224,8 @@ def solve_level(material: MaterialSpec, level: int) -> tuple[float, float, float
     )
     from piginot.fem.verification_norms import compute_verification_norms
 
-    solution = AutogradManufacturedSolution(material)
+    case = case_for(material) if case is None else case
+    solution = AutogradManufacturedSolution(material, case)
     displacement = _Provider("displacement", solution)
     body = _Provider("body-force", solution)
     mesh = unit_square_verification_mesh(level)
@@ -162,7 +234,7 @@ def solve_level(material: MaterialSpec, level: int) -> tuple[float, float, float
     )
     load = LoadSpec("manufactured_body_force", "body_force")
     request = FemRequest(
-        request_id=f"s25-{CASE}-{material.model}-l{level}-p2",
+        request_id=f"s25-{case}-{material.model}-l{level}-p2",
         mesh=mesh,
         material=material,
         boundary_conditions=(condition,),
@@ -184,7 +256,10 @@ def solve_level(material: MaterialSpec, level: int) -> tuple[float, float, float
         body_force_providers=(body,),
         dirichlet_field_providers=(displacement,),
     )
-    attempt = backend.solve_many((request,))[0]
+    if case == FIBRE_CASE:
+        attempt = backend.solve_from(request, _interpolant(request, solution), (1.0,))
+    else:
+        attempt = backend.solve_many((request,))[0]
     if not attempt.success or attempt.result is None:
         raise RuntimeError(f"manufactured solve failed: {attempt.message}")
     norms = compute_verification_norms(
@@ -202,10 +277,18 @@ def solve_level(material: MaterialSpec, level: int) -> tuple[float, float, float
 def check_fem(material: MaterialSpec, levels: tuple[int, int] = LEVELS) -> CheckResult:
     """Admission check 8 for ``material``."""
 
+    case = case_for(material)
+    detail: dict[str, Any] = {"case": case}
+    if case == FIBRE_CASE:
+        smallest = minimum_fibre_i4(material)
+        detail["minimum_fibre_i4"] = smallest
+        if smallest < FIBRE_MINIMUM_I4:
+            detail["error"] = f"a fibre is not in tension (I4 = {smallest:.4f})"
+            return CheckResult("fem", math.inf, 0.0, False, detail)
     try:
-        coarse, fine = (solve_level(material, level) for level in levels)
+        coarse, fine = (solve_level(material, level, case) for level in levels)
     except RuntimeError as exc:
-        return CheckResult("fem", math.inf, 0.0, False, {"error": str(exc)})
+        return CheckResult("fem", math.inf, 0.0, False, {**detail, "error": str(exc)})
     ratio = math.log(coarse[0] / fine[0])
     displacement = math.log(coarse[1] / fine[1]) / ratio
     stress = math.log(coarse[2] / fine[2]) / ratio
@@ -219,7 +302,7 @@ def check_fem(material: MaterialSpec, levels: tuple[int, int] = LEVELS) -> Check
         1.0,
         deviation <= 1.0,
         {
-            "case": CASE,
+            **detail,
             "levels": list(levels),
             "displacement_l2_order": displacement,
             "first_piola_l2_order": stress,
@@ -232,8 +315,11 @@ def check_fem(material: MaterialSpec, levels: tuple[int, int] = LEVELS) -> Check
 __all__ = (
     "BOUNDARY_TYPES",
     "CASE",
+    "FIBRE_CASE",
     "LEVELS",
     "AutogradManufacturedSolution",
+    "case_for",
     "check_fem",
+    "minimum_fibre_i4",
     "solve_level",
 )

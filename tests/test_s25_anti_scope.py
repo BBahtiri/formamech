@@ -37,13 +37,18 @@ def test_formulas_are_never_evaluated_as_code() -> None:
                 assert not module.startswith("sympy"), path.name
 
 
-def test_only_isotropic_hyperelastic_models() -> None:
-    assert SYMMETRIES == ("isotropic",)
+def test_only_hyperelastic_models_isotropic_or_with_in_plane_fibres() -> None:
+    # S25 shipped the isotropic models; S26 (ADR 0108) adds in-plane fibre
+    # families and nothing else.
+    assert SYMMETRIES == ("isotropic", "fibre-reinforced")
     assert set(MATERIAL_MODELS) == {
         "compressible_neo_hookean",
         "mooney_rivlin",
         "yeoh",
         "gent",
+        "hgo",
+        "hgo_single",
+        "goh",
     }
 
 

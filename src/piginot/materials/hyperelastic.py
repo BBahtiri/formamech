@@ -23,7 +23,7 @@ from piginot.contracts.energy_formula import (
     EnergyFormulaError,
     Tree,
 )
-from piginot.materials.values import formula_moduli
+from piginot.materials.values import fibre_directions, formula_moduli
 from piginot.physics._validation import (
     determinant_is_admissible,
     require_admissible,
@@ -40,7 +40,10 @@ _FUNCTIONS: Mapping[str, Callable[[torch.Tensor], torch.Tensor]] = {
     "exp": torch.exp,
     "log": torch.log,
     "sqrt": torch.sqrt,
+    "ramp": torch.relu,
 }
+"""``ramp`` is ``relu``: its derivative at 0 is 0, so a switched fibre term
+carries no load and no stiffness at ``I4 = 1`` (ADR 0108 decision 5)."""
 CLOSURE_TOLERANCE = 16.0
 """Newton stops when its ``log F33`` step is below this many machine
 epsilons (relative, at least 1); the energy's rounding error is larger than
@@ -104,6 +107,23 @@ def invariants(deformation: torch.Tensor) -> dict[str, torch.Tensor]:
     }
 
 
+def fibre_invariants(
+    deformation: torch.Tensor, directions: Mapping[str, tuple[float, float, float]]
+) -> dict[str, torch.Tensor]:
+    """``I4<label> = a.C a`` and ``I5<label> = a.C^2 a`` of each family."""
+
+    if not directions:
+        return {}
+    cauchy_green = deformation.transpose(-2, -1) @ deformation
+    result: dict[str, torch.Tensor] = {}
+    for label, direction in directions.items():
+        a = torch.tensor(direction, dtype=deformation.dtype, device=deformation.device)
+        stretched = cauchy_green @ a
+        result[f"I4{label}"] = (stretched * a).sum(dim=-1)
+        result[f"I5{label}"] = (stretched * stretched).sum(dim=-1)
+    return result
+
+
 def embed(deformation_2d: torch.Tensor, f33: torch.Tensor) -> torch.Tensor:
     """The 3D deformation ``[[F2, 0], [0, F33]]``."""
 
@@ -130,7 +150,10 @@ def material_values(formula: EnergyFormula, material: MaterialSpec) -> dict[str,
     values: dict[str, float] = {}
     for name, unit in formula.parameters.items():
         quantity = material.properties[name]
-        expected = Dimension.STRESS if unit is Unit.MPA else Dimension.DIMENSIONLESS
+        expected = {
+            Unit.MPA: Dimension.STRESS,
+            Unit.DEG: Dimension.ANGLE,
+        }.get(unit, Dimension.DIMENSIONLESS)
         if quantity.unit is not unit or quantity.dimension is not expected:
             raise InvalidMaterialError(f"{name} must use the unit {unit.value}")
         values[name] = float(quantity.value)
@@ -160,11 +183,18 @@ class FormulaMaterial:
 
         return formula_moduli(self.formula, self.values)
 
+    @property
+    def directions(self) -> dict[str, tuple[float, float, float]]:
+        """Unit direction of each fibre family (S26)."""
+
+        return fibre_directions(self.formula, self.values)
+
     # ---------------------------------------------------------------- energy
 
     def _energy(self, deformation: torch.Tensor) -> torch.Tensor:
         variables: dict[str, Any] = dict(self.values)
         variables.update(invariants(deformation))
+        variables.update(fibre_invariants(deformation, self.directions))
         energy = torch_value(self.formula.energy.tree, variables)
         if not isinstance(energy, torch.Tensor):
             energy = torch.full(
@@ -392,6 +422,7 @@ __all__ = (
     "CLOSURE_TOLERANCE",
     "FormulaMaterial",
     "embed",
+    "fibre_invariants",
     "invariants",
     "material_values",
     "torch_value",

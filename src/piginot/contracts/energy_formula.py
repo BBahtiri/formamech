@@ -17,6 +17,13 @@ and ``sqrt`` must be dimensionless.
 Each formula declares its small-strain shear and bulk moduli as expressions
 of its parameters; the admission gate checks them against the tangent at the
 reference state.
+
+Fibre families (S26, ADR 0108): ``"fibres": {"a": "beta", "b": "-beta"}``
+declares at most two in-plane families at the angle of a ``deg`` parameter
+(or its negative) from the x axis. Each family ``<label>`` adds the full
+invariants ``I4<label> = a.C a`` and ``I5<label> = a.C^2 a``; ``ramp(x) =
+max(x, 0)`` writes the tension-only switch. A formula without fibres keeps
+its S25 canonical form and identity.
 """
 
 from __future__ import annotations
@@ -34,9 +41,11 @@ from piginot.contracts.units import Dimension, Unit
 
 SCHEMA: Final = "piginot.energy-formula-v1"
 INVARIANTS: Final = ("I1", "I2", "J", "I1bar", "I2bar")
-FUNCTIONS: Final = ("exp", "log", "sqrt")
-SYMMETRIES: Final = ("isotropic",)
-_UNITS: Final = {"MPa": Unit.MPA, "1": Unit.ONE}
+FUNCTIONS: Final = ("exp", "log", "sqrt", "ramp")
+SYMMETRIES: Final = ("isotropic", "fibre-reinforced")
+MAX_FIBRE_FAMILIES: Final = 2
+FIBRE_INVARIANTS: Final = ("I4", "I5")
+_UNITS: Final = {"MPa": Unit.MPA, "1": Unit.ONE, "deg": Unit.DEG}
 _STRESS: Final = {Unit.MPA: 1, Unit.ONE: 0}
 
 Tree = tuple[Any, ...]
@@ -104,7 +113,7 @@ def _tree(node: ast.AST) -> Tree:
         return ("call", node.func.id, _tree(node.args[0]))
     raise EnergyFormulaError(
         "a formula allows numbers, names, + - * /, ** with a numeric exponent, "
-        "exp, log, sqrt and parentheses"
+        "exp, log, sqrt, ramp and parentheses"
     )
 
 
@@ -163,6 +172,39 @@ def stress_power(tree: Tree, powers: Mapping[str, int]) -> float:
     return left + right if operator == "*" else left - right
 
 
+def fibre_angle(reference: str) -> tuple[int, str]:
+    """``(sign, parameter)`` of a family's angle reference (``beta``, ``-beta``)."""
+
+    if isinstance(reference, str):
+        sign, name = (
+            (-1, reference[1:]) if reference.startswith("-") else (1, reference)
+        )
+        if name.isidentifier() and name.isascii():
+            return sign, name
+    raise EnergyFormulaError(
+        f"a fibre angle is a parameter or its negative, not {reference!r}"
+    )
+
+
+def _label(label: object) -> bool:
+    """A family label: 1-8 lowercase ASCII letters or digits, a letter first."""
+
+    return (
+        isinstance(label, str)
+        and 1 <= len(label) <= 8
+        and label.isascii()
+        and label.isalnum()
+        and label == label.lower()
+        and label[0].isalpha()
+    )
+
+
+def fibre_invariant_names(labels: Sequence[str]) -> tuple[str, ...]:
+    """``I4<label>`` and ``I5<label>`` of each family."""
+
+    return tuple(f"{kind}{label}" for label in labels for kind in FIBRE_INVARIANTS)
+
+
 def _document(tree: Tree) -> list[Any]:
     return [_document(item) if isinstance(item, tuple) else item for item in tree]
 
@@ -196,36 +238,93 @@ class EnergyFormula:
     bulk_modulus: Formula
     positive: tuple[str, ...] = ()
     symmetry: str = "isotropic"
+    fibres: Mapping[str, str] = field(default_factory=dict)
+    bounds: Mapping[str, tuple[float, float]] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if self.symmetry not in SYMMETRIES:
             raise EnergyFormulaError(f"symmetry must be one of {SYMMETRIES}")
+        if (self.symmetry == "fibre-reinforced") != bool(self.fibres):
+            raise EnergyFormulaError(
+                "symmetry is 'fibre-reinforced' exactly when fibres are declared"
+            )
+        reserved = (*INVARIANTS, *FUNCTIONS, *self.fibre_invariants)
         for name, unit in self.parameters.items():
-            if not name.isidentifier() or name in INVARIANTS or name in FUNCTIONS:
+            if not name.isidentifier() or name in reserved:
                 raise EnergyFormulaError(f"parameter name {name!r} is not allowed")
-            if unit not in _STRESS:
-                raise EnergyFormulaError(f"{name}: the unit must be MPa or 1")
+            if unit not in _STRESS and unit is not Unit.DEG:
+                raise EnergyFormulaError(f"{name}: the unit must be MPa, 1 or deg")
         unknown = sorted(set(self.positive) - set(self.parameters))
         if unknown:
             raise EnergyFormulaError(f"positive names unknown parameters {unknown}")
-        powers = {name: _STRESS[unit] for name, unit in self.parameters.items()}
-        energy_powers = {**powers, **dict.fromkeys(INVARIANTS, 0)}
+        angles = self._check_fibres()
+        self._check_bounds()
+        powers = {
+            name: _STRESS[unit]
+            for name, unit in self.parameters.items()
+            if unit is not Unit.DEG
+        }
+        energy_powers = {
+            **powers,
+            **dict.fromkeys((*INVARIANTS, *self.fibre_invariants), 0),
+        }
         if stress_power(self.energy.tree, energy_powers) != 1.0:
             raise EnergyFormulaError("the strain energy must be a stress (MPa)")
-        unused = sorted(set(self.parameters) - names(self.energy.tree))
+        unused = sorted(set(self.parameters) - names(self.energy.tree) - angles)
         if unused:
             raise EnergyFormulaError(f"parameters not used by the energy: {unused}")
         for label, modulus in (
             ("shear_modulus", self.shear_modulus),
             ("bulk_modulus", self.bulk_modulus),
         ):
-            if names(modulus.tree) & set(INVARIANTS):
+            if names(modulus.tree) & {*INVARIANTS, *self.fibre_invariants}:
                 raise EnergyFormulaError(f"{label} may use parameters only")
             if stress_power(modulus.tree, powers) != 1.0:
                 raise EnergyFormulaError(f"{label} must be a stress (MPa)")
 
+    @property
+    def fibre_invariants(self) -> tuple[str, ...]:
+        """``I4<label>`` and ``I5<label>`` of every declared family."""
+
+        return fibre_invariant_names(tuple(self.fibres))
+
+    def _check_fibres(self) -> set[str]:
+        """Validate the families; the angle parameters they use."""
+
+        if len(self.fibres) > MAX_FIBRE_FAMILIES:
+            raise EnergyFormulaError(
+                f"at most {MAX_FIBRE_FAMILIES} fibre families may be declared"
+            )
+        used: set[str] = set()
+        for label, reference in self.fibres.items():
+            if not _label(label):
+                raise EnergyFormulaError(
+                    f"fibre label {label!r} must be a lowercase name of 1-8 "
+                    "letters or digits"
+                )
+            _, name = fibre_angle(reference)
+            if self.parameters.get(name) is not Unit.DEG:
+                raise EnergyFormulaError(
+                    f"fibre {label}: {name!r} is not a parameter in deg"
+                )
+            used.add(name)
+        angles = {n for n, unit in self.parameters.items() if unit is Unit.DEG}
+        if angles - used:
+            raise EnergyFormulaError(
+                f"deg parameters must be fibre angles: {sorted(angles - used)}"
+            )
+        return angles
+
+    def _check_bounds(self) -> None:
+        for name, (lo, hi) in self.bounds.items():
+            if name not in self.parameters or self.parameters[name] is Unit.DEG:
+                raise EnergyFormulaError(f"bounds name an unknown parameter {name!r}")
+            if not (math.isfinite(lo) and math.isfinite(hi) and lo <= hi):
+                raise EnergyFormulaError(f"{name}: bounds must be finite, lo <= hi")
+
     def check_values(self, values: Mapping[str, float]) -> None:
-        """Refuse missing, extra, non-finite or non-positive parameter values."""
+        """Refuse missing, extra, non-finite, non-positive or out-of-bounds
+        parameter values."""
 
         if set(values) != set(self.parameters):
             raise EnergyFormulaError(
@@ -236,12 +335,15 @@ class EnergyFormula:
                 raise EnergyFormulaError(f"{name} must be finite")
             if name in self.positive and value <= 0.0:
                 raise EnergyFormulaError(f"{name} must be positive")
+            lo, hi = self.bounds.get(name, (-math.inf, math.inf))
+            if not lo <= value <= hi:
+                raise EnergyFormulaError(f"{name} must lie in [{lo}, {hi}]")
 
     def document(self, canonical: bool = False) -> dict[str, Any]:
         def text(formula: Formula) -> Any:
             return formula.canonical() if canonical else formula.source
 
-        return {
+        document: dict[str, Any] = {
             "schema": SCHEMA,
             "energy": text(self.energy),
             "parameters": {
@@ -254,6 +356,14 @@ class EnergyFormula:
             },
             "symmetry": self.symmetry,
         }
+        # Additive keys (S26): absent when empty, so S25 identities stay.
+        if self.fibres:
+            document["fibres"] = dict(sorted(self.fibres.items()))
+        if self.bounds:
+            document["bounds"] = {
+                name: [lo, hi] for name, (lo, hi) in sorted(self.bounds.items())
+            }
+        return document
 
     @property
     def formula_hash(self) -> str:
@@ -278,6 +388,8 @@ class EnergyFormula:
             "positive",
             "small_strain",
             "symmetry",
+            "fibres",
+            "bounds",
         }
         unknown = sorted(set(document) - allowed)
         if unknown:
@@ -300,18 +412,38 @@ class EnergyFormula:
         units = {}
         for name, unit in parameters.items():
             if unit not in _UNITS:
-                raise EnergyFormulaError(f"{name}: the unit must be 'MPa' or '1'")
+                raise EnergyFormulaError(
+                    f"{name}: the unit must be 'MPa', '1' or 'deg'"
+                )
             units[str(name)] = _UNITS[unit]
         positive = document.get("positive", [])
         if not isinstance(positive, Sequence) or isinstance(positive, str):
             raise EnergyFormulaError("positive must be a list of parameter names")
+        fibres = document.get("fibres", {})
+        if not isinstance(fibres, Mapping):
+            raise EnergyFormulaError("fibres must map labels to angle parameters")
+        bounds = document.get("bounds", {})
+        if not isinstance(bounds, Mapping):
+            raise EnergyFormulaError("bounds must map parameters to [lo, hi]")
+        pairs: dict[str, tuple[float, float]] = {}
+        for name, pair in bounds.items():
+            if (
+                not isinstance(pair, Sequence)
+                or isinstance(pair, str)
+                or len(pair) != 2
+            ):
+                raise EnergyFormulaError(f"bounds of {name!r} must be [lo, hi]")
+            pairs[str(name)] = (_number(pair[0]), _number(pair[1]))
+        default = "fibre-reinforced" if fibres else "isotropic"
         return cls(
             energy=Formula.parse(document["energy"]),
             parameters=units,
             shear_modulus=Formula.parse(small["shear_modulus"]),
             bulk_modulus=Formula.parse(small["bulk_modulus"]),
             positive=tuple(str(name) for name in positive),
-            symmetry=str(document.get("symmetry", "isotropic")),
+            symmetry=str(document.get("symmetry", default)),
+            fibres={str(k): v for k, v in fibres.items()},
+            bounds=pairs,
         )
 
 
@@ -321,6 +453,7 @@ def _builtin(
     positive: Sequence[str],
     shear: str,
     bulk: str,
+    **extra: Any,
 ) -> EnergyFormula:
     return EnergyFormula.from_document(
         {
@@ -328,8 +461,29 @@ def _builtin(
             "parameters": dict(parameters),
             "positive": list(positive),
             "small_strain": {"shear_modulus": shear, "bulk_modulus": bulk},
+            **extra,
         }
     )
+
+
+_MATRIX: Final = "shear_modulus / 2 * (I1bar - 3) + bulk_modulus / 2 * (J - 1) ** 2"
+
+
+def _hgo_term(strain: str) -> str:
+    return f" + k1 / (2 * k2) * (exp(k2 * ramp({strain}) ** 2) - 1)"
+
+
+def _goh_strain(label: str) -> str:
+    return f"kappa_d * (I1 - 3) + (1 - 3 * kappa_d) * (I4{label} - 1)"
+
+
+_HGO_PARAMETERS: Final = {
+    "shear_modulus": "MPa",
+    "bulk_modulus": "MPa",
+    "k1": "MPa",
+    "k2": "1",
+    "fibre_angle": "deg",
+}
 
 
 BUILTIN_FORMULAS: Final[Mapping[str, EnergyFormula]] = {
@@ -355,6 +509,33 @@ BUILTIN_FORMULAS: Final[Mapping[str, EnergyFormula]] = {
         ("shear_modulus", "jm", "bulk_modulus"),
         "shear_modulus",
         "bulk_modulus",
+    ),
+    # S26 (ADR 0108 decision 2): neo-Hookean matrix and HGO fibres in the full
+    # invariant I4, switched off in compression; k1 is left to admission.
+    "hgo": _builtin(
+        _MATRIX + _hgo_term("I4a - 1") + _hgo_term("I4b - 1"),
+        _HGO_PARAMETERS,
+        ("shear_modulus", "bulk_modulus", "k2"),
+        "shear_modulus",
+        "bulk_modulus",
+        fibres={"a": "fibre_angle", "b": "-fibre_angle"},
+    ),
+    "hgo_single": _builtin(
+        _MATRIX + _hgo_term("I4a - 1"),
+        _HGO_PARAMETERS,
+        ("shear_modulus", "bulk_modulus", "k2"),
+        "shear_modulus",
+        "bulk_modulus",
+        fibres={"a": "fibre_angle"},
+    ),
+    "goh": _builtin(
+        _MATRIX + _hgo_term(_goh_strain("a")) + _hgo_term(_goh_strain("b")),
+        {**_HGO_PARAMETERS, "kappa_d": "1"},
+        ("shear_modulus", "bulk_modulus", "k2"),
+        "shear_modulus",
+        "bulk_modulus",
+        fibres={"a": "fibre_angle", "b": "-fibre_angle"},
+        bounds={"kappa_d": [0.0, 1.0 / 3.0]},
     ),
 }
 """The built-in formula models (decoupled isochoric and volumetric parts, with
@@ -388,7 +569,12 @@ __all__ = (
     "SCHEMA",
     "EnergyFormula",
     "EnergyFormulaError",
+    "FIBRE_INVARIANTS",
     "Formula",
+    "MAX_FIBRE_FAMILIES",
+    "SYMMETRIES",
+    "fibre_angle",
+    "fibre_invariant_names",
     "model_dimensions",
     "names",
     "parse",
