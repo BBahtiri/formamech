@@ -153,3 +153,136 @@ def test_lifting_verified_needs_committed_and_recomputed_passes() -> None:
     bad = {**good, "notched-v1": family(False)}
     assert gate.check_lifting_verified(good, good)["status"] == "PASS"
     assert gate.check_lifting_verified(good, bad)["status"] == "FAIL"
+
+
+# ------------------------------------------------- amendment 1 (same-CPU)
+
+_BASE = "399a14659cec6812e24980ece8f81ab2d94a4753"
+
+
+def _amendment() -> dict[str, Any]:
+    return json.loads((replay.REPOSITORY / replay.AMENDMENT_PATH).read_text())
+
+
+def _protocol(family: str) -> dict[str, Any]:
+    document = json.loads(
+        (replay.REPOSITORY / "artifacts/problem/S24-PROTOCOL.json").read_text()
+    )
+    return document["replays"][family]  # type: ignore[no-any-return]
+
+
+def _bindings(revision: str = _BASE, **change: Any) -> tuple[dict[str, Any], ...]:
+    recipe = {"seed": 13101, "trainer_config_hash": "c" * 64}
+    reference = {**recipe, "implementation_revision": revision, **change}
+    replayed = {**recipe, "implementation_revision": "f" * 40}
+    return reference, replayed
+
+
+def test_the_amendment_names_the_base_revision_and_the_g19_reference() -> None:
+    amendment = _amendment()
+    assert amendment["reference_revision"] == _BASE
+    assert amendment["accepted"]["answer"] == "Same-CPU reference"
+    dogbone = amendment["families"]["dogbone-v1"]
+    assert dogbone["reference_model_state_hash"].startswith("9492c444")
+    assert amendment["families"]["notched-v1"]["reference_model_state_hash"] is None
+    assert set(amendment["families"]) == set(replay.FAMILIES)
+
+
+def test_a_same_cpu_replay_of_the_base_run_passes(tmp_path: Path) -> None:
+    comparison = replay.compare(
+        _checkpoint(tmp_path / "a"), _checkpoint(tmp_path / "b", run_hash="2" * 64)
+    )
+    verdict = replay.judge(
+        comparison, *_bindings(), "notched-v1", _amendment(), _protocol("notched-v1")
+    )
+    assert verdict["passed"], verdict
+    assert verdict["registered_profile_comparison"]["expected_to_match"] is False
+
+
+@pytest.mark.parametrize(
+    ("revision", "change", "family", "failed"),
+    [
+        ("e" * 40, {}, "notched-v1", "reference_is_base_revision"),
+        (_BASE, {"seed": 1}, "notched-v1", "bindings_equal_except_revision"),
+        (_BASE, {}, "dogbone-v1", "reference_matches_amendment"),
+    ],
+    ids=["revision", "binding", "g19-hash"],
+)
+def test_a_reference_off_the_amendment_fails(
+    tmp_path: Path, revision: str, change: dict[str, Any], family: str, failed: str
+) -> None:
+    comparison = replay.compare(
+        _checkpoint(tmp_path / "a"), _checkpoint(tmp_path / "b", run_hash="2" * 64)
+    )
+    verdict = replay.judge(
+        comparison,
+        *_bindings(revision, **change),
+        family,
+        _amendment(),
+        _protocol(family),
+    )
+    assert not verdict["passed"] and verdict[failed] is False
+
+
+def test_a_missing_binding_fails(tmp_path: Path) -> None:
+    comparison = replay.compare(
+        _checkpoint(tmp_path / "a"), _checkpoint(tmp_path / "b")
+    )
+    verdict = replay.judge(
+        comparison, None, None, "notched-v1", _amendment(), _protocol("notched-v1")
+    )
+    assert not verdict["passed"] and verdict["reference_revision"] is None
+
+
+def test_the_command_reads_the_run_bindings(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    reference = _checkpoint(tmp_path / "base" / "checkpoint-step-0400")
+    replayed = _checkpoint(tmp_path / "new" / "checkpoint-step-0400", run_hash="2" * 64)
+    first, second = _bindings()
+    (reference.parent / "run-binding.json").write_text(json.dumps(first))
+    (replayed.parent / "run-binding.json").write_text(json.dumps(second))
+    code = replay.main(
+        [
+            "--family",
+            "notched-v1",
+            "--reference",
+            str(reference),
+            "--replay",
+            str(replayed),
+        ]
+    )
+    record = json.loads(capsys.readouterr().out)
+    assert code == 0 and record["passed"] and record["comparison_passed"]
+    assert record["replay_implementation_revision"] == "f" * 40
+
+
+def test_the_amendment_must_precede_the_replay_records(tmp_path: Path) -> None:
+    repo = _repository(tmp_path)
+    amendment = repo / replay.AMENDMENT_PATH
+    amendment.parent.mkdir(parents=True)
+    amendment.write_text("{}")
+    run_git(repo, "add", ".")
+    run_git(repo, "commit", "-q", "-m", "amendment")
+    assert not gate._amendment_order(repo)["passed"]
+    for family in replay.FAMILIES:
+        (repo / replay.replay_path(family)).write_text("{}")
+    run_git(repo, "add", ".")
+    run_git(repo, "commit", "-q", "-m", "records")
+    order = gate._amendment_order(repo)
+    assert order["passed"], order
+    amendment.write_text('{"edited": true}')
+    run_git(repo, "add", ".")
+    run_git(repo, "commit", "-q", "-m", "edit")
+    assert not gate._amendment_order(repo)["passed"]
+
+
+def test_records_committed_with_the_amendment_fail(tmp_path: Path) -> None:
+    repo = _repository(tmp_path)
+    (repo / replay.AMENDMENT_PATH).parent.mkdir(parents=True)
+    (repo / replay.AMENDMENT_PATH).write_text("{}")
+    for family in replay.FAMILIES:
+        (repo / replay.replay_path(family)).write_text("{}")
+    run_git(repo, "add", ".")
+    run_git(repo, "commit", "-q", "-m", "together")
+    assert not gate._amendment_order(repo)["passed"]

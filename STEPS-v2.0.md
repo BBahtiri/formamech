@@ -188,7 +188,7 @@ Protocol: `artifacts/problem/S24-PROTOCOL.json`.
 | `G24.lifting-exact` | Property tests, 1,000 random feasible parameter vectors and network outputs per kind and family: the Dirichlet data are met at points along every piece, end points included, within 1e-12 of the displacement scale; values and gradients finite at end points and joints |
 | `G24.lifting-reduces` | `adf` with untrimmed lines equals `quarter` within 1e-12 (offset and scale) on 1,000 random points and parameter vectors |
 | `G24.lifting-verified` | Decision 4 for both family specs and their `adf` variants: node and piece residuals ≤ 1e-12; conformity and orientation ≤ 1e-9; every mutant misses by > 1e-3 |
-| `G24.regression-dogbone` | Decision 6: lifting bit-identical on 64 DEVELOPMENT meshes; envelope equal; 64 of 64 FEM requests byte-identical; step-400 replay tensors byte-identical |
+| `G24.regression-dogbone` | Decision 6: lifting bit-identical on 64 DEVELOPMENT meshes; envelope equal; 64 of 64 FEM requests byte-identical; step-400 replay tensors byte-identical to the same-CPU v0.2.0-base run (ADR 0106 amendment 1) |
 | `G24.regression-notched` | The same for the notched plate |
 | `G24.spec-hash-stable` | Hash unchanged under key order, whitespace, number spelling and UTF-8/UTF-16 encoding; changed by every semantic edit of a leaf |
 | `G24.spec-validation` | Each rejection rule of decision 2 has a failing-spec test |

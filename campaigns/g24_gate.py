@@ -110,7 +110,8 @@ def clean(root: Path) -> bool:
 def check_protocol_first(root: Path) -> dict[str, Any]:
     threshold = (
         "S24-PROTOCOL.json committed once, with ADR 0106 accepted, in a revision "
-        "the ADF run and both replays were trained from"
+        "the ADF run and both replays were trained from; S24-REPLAY-AMENDMENT.json "
+        "committed once, before the replay records"
     )
     commits = _git(
         root, "log", "--format=%H", "--", s24_adf.PROTOCOL_PATH.as_posix()
@@ -132,18 +133,61 @@ def check_protocol_first(root: Path) -> dict[str, Any]:
         return not_run(
             "G24.protocol-first", "a run record or its revision is missing", threshold
         )
+    amendment = _amendment_order(root)
     passed = (
         len(commits) == 1
         and "- Status: Accepted" in adr
         and all(_ancestor_or_same(root, first, rev) for rev in revisions.values())
+        and amendment["passed"]
     )
     return check_document(
         "G24.protocol-first",
         passed,
-        {"protocol_commit": first, "protocol_commits": len(commits), "runs": revisions},
+        {
+            "protocol_commit": first,
+            "protocol_commits": len(commits),
+            "runs": revisions,
+            "replay_amendment": amendment,
+        },
         threshold,
         "all",
     )
+
+
+def _amendment_order(root: Path) -> dict[str, Any]:
+    """Amendment 1 committed once, before every replay record was committed."""
+
+    commits = _git(
+        root, "log", "--format=%H", "--", replay.AMENDMENT_PATH.as_posix()
+    ).stdout.split()
+    first = commits[-1] if commits else None
+    records: dict[str, str | None] = {}
+    for family in replay.FAMILIES:
+        added = _git(
+            root,
+            "log",
+            "--diff-filter=A",
+            "--format=%H",
+            "--",
+            replay.replay_path(family).as_posix(),
+        ).stdout.split()
+        records[family] = added[-1] if added else None
+    passed = (
+        first is not None
+        and len(commits) == 1
+        and all(
+            record is not None
+            and record != first
+            and _ancestor_or_same(root, first, record)
+            for record in records.values()
+        )
+    )
+    return {
+        "amendment_commit": first,
+        "amendment_commits": len(commits),
+        "replay_record_commits": records,
+        "passed": passed,
+    }
 
 
 def _tests(check_id: str, threshold: str, *targets: str) -> dict[str, Any]:
@@ -221,7 +265,8 @@ def check_regression(
     threshold = (
         "spec equals the bundle; lifting and frame bit-identical and FEM requests "
         "byte-identical on 64 of 64 DEVELOPMENT cases; 400-step replay tensors "
-        "byte-identical"
+        "byte-identical to a v0.2.0-base run of the same recipe on the same CPU, "
+        "run bindings equal except the revision (ADR 0106 amendment 1)"
     )
     record = _json(root, replay.replay_path(campaign))
     if record is None:
@@ -235,9 +280,13 @@ def check_regression(
             key: record[key]
             for key in (
                 "passed",
-                "registered_matches_protocol",
+                "reference_revision",
+                "reference_is_base_revision",
+                "bindings_equal_except_revision",
+                "reference_matches_amendment",
                 "manifest_differences",
                 "model_state_hash",
+                "registered_profile_comparison",
             )
         },
     }
@@ -255,6 +304,9 @@ def check_regression(
             )
         )
         and record["passed"] is True
+        and record["reference_is_base_revision"] is True
+        and record["bindings_equal_except_revision"] is True
+        and record["reference_matches_amendment"] is True
     )
     return check_document(check_id, passed, measured, threshold, "all")
 

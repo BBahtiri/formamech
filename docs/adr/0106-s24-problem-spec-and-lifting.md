@@ -4,7 +4,9 @@
   decision owner on 2026-10-13 (chat: "Accept as written"; harmonic lifting
   "Defer beyond 0.2.0"; viability run "Full 2,400 steps"; kill rule "Keep
   untrimmed lines"), before any S24 training run; recorded in
-  `artifacts/problem/S24-PROTOCOL.json`
+  `artifacts/problem/S24-PROTOCOL.json`; amendment 1 (replay reference)
+  accepted on 2026-10-14, before any replay comparison, recorded in
+  `artifacts/problem/S24-REPLAY-AMENDMENT.json`
 - Date: 2026-10-13
 - Step: S24 (gate `G24`), `STEPS-v2.0.md` §7; implementation plan Feature 4
 - Builds on: ADR 0018 (energy-form operator and its quarter lifting),
@@ -162,7 +164,7 @@ the request.
 | `G24.lifting-exact` | Property tests, 1,000 random feasible parameter vectors and network outputs per kind and family: the Dirichlet data are met at points along every piece, end points included, within 1e-12 of the displacement scale; values and gradients finite at end points and joints |
 | `G24.lifting-reduces` | `adf` with untrimmed lines equals `quarter` within 1e-12 (offset and scale) on 1,000 random points and parameter vectors |
 | `G24.lifting-verified` | Decision 4 for both family specs and their `adf` variants: node and piece residuals ≤ 1e-12; conformity and orientation ≤ 1e-9; every mutant misses by > 1e-3 |
-| `G24.regression-dogbone` | Decision 6: lifting bit-identical on 64 DEVELOPMENT meshes; envelope equal; 64 of 64 FEM requests byte-identical; step-400 replay tensors byte-identical |
+| `G24.regression-dogbone` | Decision 6: lifting bit-identical on 64 DEVELOPMENT meshes; envelope equal; 64 of 64 FEM requests byte-identical; step-400 replay tensors byte-identical to the same-CPU v0.2.0-base run (amendment 1) |
 | `G24.regression-notched` | The same for the notched plate |
 | `G24.spec-hash-stable` | Hash unchanged under key order, whitespace, number spelling and UTF-8/UTF-16 encoding; changed by every semantic edit of a leaf |
 | `G24.spec-validation` | Each rejection rule of decision 2 has a failing-spec test |
@@ -189,6 +191,40 @@ The plan's `harmonic.smoke` check is dropped with the harmonic lifting
 | Lifting verification, `quarter` and `adf` | passed | passed |
 
 The `adf` variants' residuals are about 2e-16 of the displacement scale.
+
+## Amendment 1 — replay reference on the same CPU (2026-10-14)
+
+Accepted by the decision owner on 2026-10-14 (chat: "Same-CPU reference"),
+before any replay comparison was made.
+
+Decision 6 required a 400-step replay on the owner machine to match the
+registered step-400 tensors. The registered runs were trained on
+Linux/AVX512, and trained weights depend on the CPU instruction set: on the
+owner machine (Linux/AVX2) the S13c recipe gives model state `9492c444…` at
+step 400, against `e45edbdc…` registered (ADR 0100, decision 5 and
+findings). The registered rule therefore cannot pass on that machine,
+whatever the code.
+
+The replay reference becomes a 400-step run of the same recipe at the v0.2.0
+base revision (`399a146`, tag `v0.2.0-base`) on the same machine:
+
+- DogBone: the `G19.resume` straight run (`artifacts/gates/S19.json`, model
+  state `9492c444…`, run `eb3c5e15…`);
+- notched: a new 400-step run in the `v0.2.0-base` checkout.
+
+The rule is otherwise unchanged: every tensor of `model.safetensors` and
+`state.safetensors` equal, `optimizer.json` and `adaptive.json`
+byte-identical, manifest fields equal except `run_hash`,
+`model_export_hash` and `tensor_payload_hash`, and safetensors metadata equal
+except `run_hash`. In addition, the two run bindings must be equal except
+`implementation_revision`, and the reference's revision must be the base
+revision. The registered AVX512 hashes are reported beside each record and
+are required only on that profile. The comparison is stronger than the
+registered one in one respect: it covers every change from S19 to the
+replay revision, not only S24's. `S24-PROTOCOL.json` stays as committed;
+`G24.protocol-first` also requires the amendment to be committed once,
+before the replay records (`campaigns/s24_replay.py`,
+`campaigns/g24_gate.py`).
 
 ## Consequences
 
