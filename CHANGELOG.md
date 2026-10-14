@@ -10,6 +10,16 @@ Development line S19–S29 (`STEPS-v2.0.md`, ADR 0105), forked from `v0.1.0`.
 
 ### Added
 
+- **Anisotropic models with in-plane fibre families** (S26, ADR 0108
+  accepted): fibre families in the formula language (full invariants `I4`,
+  `I5` per family, `ramp` as the tension-only switch, angles in the new unit
+  `deg`); built-in `hgo`, `hgo_single` and `goh`; admission against the
+  declared symmetry rotations and an FEM check with fibres in tension; the
+  ProblemSpec rule `material-symmetry` for quarter models; the preregistered
+  HGO viability run (`artifacts/materials/S26-PROTOCOL.json`,
+  `campaigns/dogbone_v1/s26_hgo.py`) and gate G26 (`campaigns/g26_gate.py`).
+  The S19 fast goldens are now compared at their recorded thread count
+  (`campaigns/fast_goldens.py`).
 - **Material registry and admission gate** (S25, ADR 0107 accepted):
   strain-energy formulas as data (`piginot.contracts.energy_formula`, a
   whitelist parser with unit checks); built-in Mooney–Rivlin, Yeoh and Gent
