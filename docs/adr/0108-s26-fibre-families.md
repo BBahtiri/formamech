@@ -172,6 +172,37 @@ transverse stretch at 1.2 falls from 0.957 to 0.938.
 - The `material-symmetry` rule is checked on the spec's parameter ranges, so
   it needs no mesh; both in-plane reflections map an angle `θ` to `−θ`.
 
+## Amendment 1: reference initialization (2026-10-23)
+
+Accepted by the decision owner on 2026-10-23 (chat: "Accept the amendment"),
+after `candidate-001561` failed the cold reference solve at load step 1 within
+20 Newton iterations, before any re-solve under this amended procedure. This
+is a reference-solver failure, not a viability guardrail result or the kill
+rule of decision 9. The original `S26-PROTOCOL.json` remains unchanged; the
+separate `artifacts/materials/S26-REFERENCE-AMENDMENT.json` records this change.
+
+All 64 TRAIN-screen references now use the same procedure: solve the existing
+compressible neo-Hookean law with the HGO material's small-strain moduli, then
+start the full HGO solve at load factor 1 from that converged displacement.
+For matrix moduli `mu` and `K`, the initializer has
+`E = 9*K*mu/(3*K+mu)` and `nu = (3*K-2*mu)/(2*(3*K+mu))`. Its finite-strain
+energy is not the HGO matrix energy; only its converged displacement is used.
+The final result is the HGO solution. Either failed solve remains an error.
+
+Meshes, loads, boundary conditions, execution profiles, Newton iteration
+limits, absolute residual tolerances and plane-stress settings stay unchanged.
+The full-load schedule replaces the cold HGO continuation schedule. Training,
+evidence boundaries, guardrails and the kill rule stay unchanged.
+
+Start in a fresh reference directory. A binding written before solving
+permits resume only at the same implementation revision with identical
+amendment and request hashes. Retain both initializer and HGO results; the
+reference index binds their request, result and file hashes. References and
+the screen record bind the amendment hash. G26 verifies the original protocol
+was committed once and the accepted amendment was committed once after it and
+before the amended reference run. Training may precede this reference-only
+amendment. Do not mix partial cold results with amended results.
+
 ## Verification
 
 - `tests/contracts/test_energy_formula_fibres.py`, `tests/materials/test_fibres.py`,

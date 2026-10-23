@@ -11,7 +11,7 @@ from typing import Any
 import pytest
 import torch
 
-from campaigns.dogbone_v1 import material_run, s26_hgo
+from campaigns.dogbone_v1 import material_run, s26_hgo, s26_references
 from campaigns.dogbone_v1.family import compiled_family
 from campaigns.dogbone_v1.material_run import MaterialViability
 from campaigns.dogbone_v1.s10_requests import _load_public_sources
@@ -27,7 +27,7 @@ from campaigns.dogbone_v1.s13c_protocol import (
     energy_config,
     load_s13c_normalization,
 )
-from campaigns.dogbone_v1.s25_mooney_rivlin import encode_result, reference_entry
+from campaigns.dogbone_v1.s25_mooney_rivlin import encode_result
 from piginot.contracts import ExecutionProfile, canonical_json_bytes
 from piginot.contracts.units import Dimension
 from piginot.physics import reference_modulus
@@ -240,14 +240,15 @@ def test_the_binding_binds_the_spec_and_the_evaluator_checks_it() -> None:
 def test_the_reference_loader_checks_index_and_files(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from campaigns.dogbone_v1.s25_mooney_rivlin import solve_reference
     from tests.campaigns.test_dogbone_s25_mooney_rivlin import _plate_request
 
-    request = _plate_request("plate-a")
-    payload = solve_reference(request)
+    request = RUN.request(_plate_request("plate-a"))
+    initial, payload = s26_references.solve_reference(request)
     monkeypatch.setattr(MaterialViability, "request", lambda self, item: item)
+    (tmp_path / "initializers").mkdir()
+    (tmp_path / "initializers" / "plate-a.json").write_bytes(initial)
     (tmp_path / "plate-a.json").write_bytes(payload)
-    index = {"plate-a": reference_entry(request, payload)}
+    index = {"plate-a": s26_references.reference_entry(request, payload, tmp_path)}
     document = RUN.references_document(index, _REVISION)
     assert document["step"] == "S26"
     loader = RUN.reference_loader(tmp_path, document)

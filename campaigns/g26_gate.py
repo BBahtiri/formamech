@@ -29,6 +29,11 @@ from typing import Any
 
 from campaigns import fast_goldens
 from campaigns.dogbone_v1.s26_hgo import RUN
+from campaigns.dogbone_v1.s26_references import (
+    AMENDMENT_PATH,
+    accepted_amendment,
+    amendment_digest,
+)
 from campaigns.g19_gate import execution_profile, not_run, read_text_any
 from campaigns.g20_gate import _git, _pytest, _tree, parse_pytest_log
 from campaigns.g25_gate import (
@@ -63,7 +68,9 @@ _FIBRES = "tests/materials/test_fibres.py"
 def check_protocol_first(root: Path) -> dict[str, Any]:
     threshold = (
         "S26-PROTOCOL.json committed once, with ADR 0108 accepted, in a revision "
-        "the reference re-solves and the viability run descend from"
+        "the reference re-solves and the viability run descend from; the accepted "
+        "reference amendment committed once after the protocol and no later than "
+        "the reference re-solves"
     )
     commits = _git(
         root, "log", "--format=%H", "--", RUN.protocol_path.as_posix()
@@ -84,15 +91,36 @@ def check_protocol_first(root: Path) -> dict[str, Any]:
         return not_run(
             "G26.protocol-first", "a run record or its revision is missing", threshold
         )
+    try:
+        accepted_amendment(root)
+    except (OSError, ValueError, RuntimeError) as exc:
+        return check_document(
+            "G26.protocol-first", False, {"amendment_error": str(exc)}, threshold, "all"
+        )
+    amendment_commits = _git(
+        root, "log", "--format=%H", "--", AMENDMENT_PATH.as_posix()
+    ).stdout.split()
+    amendment_first = amendment_commits[-1] if amendment_commits else None
     passed = (
         len(commits) == 1
         and "- Status: Accepted" in adr
         and all(_ancestor_or_same(root, first, rev) for rev in revisions.values())
+        and len(amendment_commits) == 1
+        and amendment_first is not None
+        and amendment_first != first
+        and _ancestor_or_same(root, first, amendment_first)
+        and _ancestor_or_same(root, amendment_first, revisions["references"])
     )
     return check_document(
         "G26.protocol-first",
         passed,
-        {"protocol_commit": first, "protocol_commits": len(commits), "runs": revisions},
+        {
+            "protocol_commit": first,
+            "protocol_commits": len(commits),
+            "reference_amendment_commit": amendment_first,
+            "reference_amendment_commits": len(amendment_commits),
+            "runs": revisions,
+        },
         threshold,
         "all",
     )
@@ -204,7 +232,8 @@ def check_material_symmetry() -> dict[str, Any]:
 def check_viability(root: Path) -> dict[str, Any]:
     threshold = (
         "the registered HGO run passes the frozen S13 guardrails on the 64 "
-        "TRAIN-screen re-solves at step 2400; DEVELOPMENT closed"
+        "TRAIN-screen re-solves at step 2400; both records bind the accepted "
+        "reference amendment; DEVELOPMENT closed"
     )
     references = _json(root, RUN.references_path)
     record = _json(root, RUN.screen_path)
@@ -212,6 +241,13 @@ def check_viability(root: Path) -> dict[str, Any]:
         return not_run(
             "G26.viability", "references or the viability run not recorded", threshold
         )
+    try:
+        accepted_amendment(root)
+    except (OSError, ValueError, RuntimeError) as exc:
+        return check_document(
+            "G26.viability", False, {"amendment_error": str(exc)}, threshold, "all"
+        )
+    reference_amendment_sha256 = amendment_digest(root)
     protocol = _json(root, RUN.protocol_path)
     assert protocol is not None
     digest = _digest(root, RUN.protocol_path)
@@ -221,6 +257,8 @@ def check_viability(root: Path) -> dict[str, Any]:
         record["passed"] is True
         and record["protocol_sha256"] == digest
         and references["protocol_sha256"] == digest
+        and record.get("reference_amendment_sha256") == reference_amendment_sha256
+        and references.get("reference_amendment_sha256") == reference_amendment_sha256
         and record["references_sha256"]
         == hashlib.sha256(canonical_json_bytes(references)).hexdigest()
         and sorted(references["cases"]) == sorted(cases)

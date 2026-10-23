@@ -292,6 +292,23 @@ class MaterialViability:
 
     # ---------------------------------------------------------- references
 
+    def solve_reference_cases(
+        self,
+        requests: Mapping[str, FemRequest],
+        output: Path,
+        *,
+        workers: int,
+        progress: Progress | None,
+        implementation_revision: str,
+        require_committed: bool,
+    ) -> dict[str, dict[str, str]]:
+        return solve_references(requests, output, workers=workers, progress=progress)
+
+    def stored_reference_entry(
+        self, request: FemRequest, payload: bytes, directory: Path
+    ) -> dict[str, str]:
+        return reference_entry(request, payload)
+
     def references_document(
         self, index: Mapping[str, dict[str, str]], implementation_revision: str
     ) -> dict[str, Any]:
@@ -339,7 +356,14 @@ class MaterialViability:
         }
         if source.development_opened:
             raise RuntimeError("DEVELOPMENT labels must remain closed")
-        index = solve_references(requests, output, workers=workers, progress=progress)
+        index = self.solve_reference_cases(
+            requests,
+            output,
+            workers=workers,
+            progress=progress,
+            implementation_revision=provenance.head,
+            require_committed=require_committed,
+        )
         document = self.references_document(index, provenance.head)
         (output / INDEX_NAME).write_bytes(canonical_json_bytes(document) + b"\n")
         return document
@@ -358,7 +382,10 @@ class MaterialViability:
             case_id = verified.case.case_id
             request = self.request(verified.request)
             payload = (directory / f"{case_id}.json").read_bytes()
-            if reference_entry(request, payload) != cases[case_id]:
+            if (
+                self.stored_reference_entry(request, payload, directory)
+                != cases[case_id]
+            ):
                 raise ValueError(f"{case_id}: the reference differs from its index")
             return request, _decode_stored_result(request, payload)
 

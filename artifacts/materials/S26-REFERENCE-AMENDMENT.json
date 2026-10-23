@@ -1,0 +1,31 @@
+{
+  "accepted": {
+    "answer": "Accept the amendment",
+    "before": "any reference re-solve under this amended procedure",
+    "by": "decision owner",
+    "on": "2026-10-23"
+  },
+  "amends": "artifacts/materials/S26-PROTOCOL.json, viability.references",
+  "cache_rule": "fresh output directory; resume only with an identical amendment hash, implementation revision and request hashes; retain both initializer and final HGO results",
+  "decision_record": "docs/adr/0108-s26-fibre-families.md, amendment 1",
+  "hgo_load_factors": [
+    1.0
+  ],
+  "initializer": {
+    "elastic_modulus": "9*K*mu/(3*K+mu)",
+    "model": "compressible_neo_hookean",
+    "other_request_fields": "unchanged, including mesh, loads and solver config",
+    "poisson_ratio": "(3*K-2*mu)/(2*(3*K+mu))"
+  },
+  "protocol_sha256": "de9d0320ca6f0eef231786a93364ef8272ed22a3aa7f4a0774a6176363248ce4",
+  "reason": "candidate-001561 failed the cold HGO reference solve at load step 1 within the registered 20 Newton iterations; no viability guardrail result was used to select this procedure",
+  "rule": "all 64 TRAIN-screen cases: solve a compressible neo-Hookean initializer with matching small-strain E and nu, then solve the full HGO request at load factor 1 from its converged displacement",
+  "schema_version": "1.0",
+  "status": "accepted",
+  "step": "S26",
+  "unchanged": [
+    "HGO material, mesh, loads, boundary conditions and execution profile",
+    "solver tolerance, Newton iteration limit and plane-stress closure",
+    "training recipe, populations, evidence boundaries and guardrails"
+  ]
+}
