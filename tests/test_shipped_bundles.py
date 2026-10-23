@@ -36,14 +36,16 @@ REQUESTS = (
 
 def test_the_shipped_bundles_are_the_gated_ones() -> None:
     assert sorted(path.name for path in BUNDLES.iterdir() if path.is_dir()) == sorted(
-        [*RECORDED, "requests", "fem-recipes"]
+        [*RECORDED, "requests", "fem-recipes", "calibration", "h1-results"]
     )
-    # S22 FEM recipe sidecars: one per gated bundle, bound to its manifest
-    recipes = sorted((BUNDLES / "fem-recipes").glob("*.json"))
-    assert [p.stem for p in recipes] == sorted(RECORDED)
-    for path in recipes:
-        document = json.loads(path.read_text("utf-8"))
-        assert document["bundle_manifest_sha256"] == RECORDED[path.stem][0]
+    # S22 FEM recipes, S23 calibrations and their H1 results: one sidecar per
+    # gated bundle, bound to its manifest
+    for folder in ("fem-recipes", "calibration", "h1-results"):
+        sidecars = sorted((BUNDLES / folder).glob("*.json"))
+        assert [p.stem for p in sidecars] == sorted(RECORDED)
+        for path in sidecars:
+            document = json.loads(path.read_text("utf-8"))
+            assert document["bundle_manifest_sha256"] == RECORDED[path.stem][0]
     for name, (manifest, claim) in RECORDED.items():
         bundle = load_bundle(BUNDLES / name)
         assert bundle.manifest.manifest_sha256 == manifest

@@ -28,6 +28,11 @@ PINNED_WEIGHTS_REASON = (
     "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; "
     "Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
 )
+NOTCHED_PLAN_REASON = (
+    "the notched S10 requests rebuilt on Windows differ from the Linux ones the "
+    "S13 protocol was planned from, although the profile is pinned; notched "
+    "training, which needs them, runs on Linux only (ADR 0100 findings)"
+)
 
 
 @functools.cache
@@ -62,6 +67,9 @@ requires_posix_modes = pytest.mark.skipif(
 )
 requires_pinned_initial_weights = pytest.mark.skipif(
     not pinned_initial_weights_supported(), reason=PINNED_WEIGHTS_REASON
+)
+requires_linux_request_plan = pytest.mark.skipif(
+    sys.platform == "win32", reason=NOTCHED_PLAN_REASON
 )
 
 

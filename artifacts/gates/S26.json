@@ -1,0 +1,501 @@
+{
+  "gate_id": "G26",
+  "step": "S26",
+  "commit": "a2091ace9667718980dac001e0464350245dbfed",
+  "timestamp_utc": "2026-10-23T17:59:48Z",
+  "execution_profile": {
+    "python": "3.11.15",
+    "system": "Linux",
+    "machine": "x86_64",
+    "torch": "2.13.0+cu130",
+    "cpu_capability": "AVX2"
+  },
+  "checks": [
+    {
+      "id": "G26.protocol-first",
+      "status": "PASS",
+      "measured": {
+        "protocol_commit": "3c13c93e599f27d836b81587fbf568a6b62da594",
+        "protocol_commits": 1,
+        "reference_amendment_commit": "39f7a489dd33d153c43863128bde792ef41241e6",
+        "reference_amendment_commits": 1,
+        "runs": {
+          "references": "39f7a489dd33d153c43863128bde792ef41241e6",
+          "viability": "d75830d35f630179b4075d0996cfef56acafc8dc"
+        }
+      },
+      "threshold": "S26-PROTOCOL.json committed once, with ADR 0108 accepted, in a revision the reference re-solves and the viability run descend from; the accepted reference amendment committed once after the protocol and no later than the reference re-solves",
+      "comparison": "all"
+    },
+    {
+      "id": "G26.formula-safety",
+      "status": "PASS",
+      "measured": {
+        "targets": [
+          "tests/contracts/test_energy_formula_fibres.py",
+          "tests/contracts/test_energy_formula.py",
+          "tests/test_s25_anti_scope.py::test_formulas_are_never_evaluated_as_code"
+        ],
+        "returncode": 0,
+        "summary": "63 passed in 1.42s"
+      },
+      "threshold": "every malformed fibre construct is refused; no eval, exec or compile in the formula path (syntax-tree scan)",
+      "comparison": "all"
+    },
+    {
+      "id": "G26.isotropic-identity",
+      "status": "PASS",
+      "measured": {
+        "tests": {
+          "targets": [
+            "tests/test_s26_anti_scope.py::test_the_isotropic_identities_are_unchanged",
+            "tests/test_s25_anti_scope.py::test_the_neo_hookean_path_is_bit_identical",
+            "tests/materials/test_hyperelastic.py::test_a_neo_hookean_formula_equals_the_closed_form",
+            "tests/materials/test_admission.py::test_every_builtin_model_is_admitted"
+          ],
+          "returncode": 0,
+          "summary": "9 passed in 2.09s"
+        },
+        "fast_goldens": {
+          "profile": "AVX2|x86_64|3.11.15|Linux|2.13.0+cu130",
+          "threads": 8,
+          "documents": {
+            "dogbone-v1-s13c-cp-freeze/dogbone-in-domain.json": true,
+            "notched-v1-cp-freeze/notched-in-domain.json": true,
+            "notched-v1-cp-freeze/notched-out-of-envelope.json": true
+          }
+        }
+      },
+      "threshold": "S25 formula identities unchanged; Neo-Hookean dispatch bit-identical; S19 fast goldens equal at their recorded thread count",
+      "comparison": "all"
+    },
+    {
+      "id": "G26.fibre-kernels",
+      "status": "PASS",
+      "measured": {
+        "targets": [
+          "tests/materials/test_fibres.py::test_the_hgo_stress_equals_its_closed_form",
+          "tests/materials/test_fibres.py::test_fibres_carry_nothing_in_compression",
+          "tests/materials/test_fibres.py::test_in_plane_fibres_leave_the_closure_root_alone"
+        ],
+        "returncode": 0,
+        "summary": "3 passed in 1.53s"
+      },
+      "threshold": "hgo stress equals its closed form within 1e-12; zero fibre stress where I4 <= 1; the hgo closure root equals the matrix's within 1e-12",
+      "comparison": "all"
+    },
+    {
+      "id": "G26.admission",
+      "status": "PASS",
+      "measured": {
+        "tests": {
+          "targets": [
+            "tests/materials/test_fibres.py::test_the_fibre_builtins_are_admitted",
+            "tests/materials/test_fibres.py::test_the_declared_symmetry_group"
+          ],
+          "returncode": 0,
+          "summary": "8 passed in 1.90s"
+        },
+        "viability_material": {
+          "problem_hash": "af812fd8c825fedd038d7a0245a7fb8f7abe69269910d0ceabc71ad98c77c1ae",
+          "model": "hgo",
+          "points": [
+            {
+              "bulk_modulus": 469.1358024691358,
+              "fibre_angle": 30.0,
+              "k1": 50.0,
+              "k2": 2.0,
+              "shear_modulus": 308.9430894308943
+            }
+          ],
+          "reports": [
+            {
+              "model": "hgo",
+              "stretch_range": [
+                0.6,
+                1.6
+              ],
+              "shear_modulus": 308.9430894308943,
+              "bulk_modulus": 469.1358024691358,
+              "checks": [
+                {
+                  "name": "reference",
+                  "measured": 1.839931715757733e-16,
+                  "threshold": 1e-10,
+                  "passed": true,
+                  "detail": {}
+                },
+                {
+                  "name": "objectivity",
+                  "measured": 3.0610315259877876e-15,
+                  "threshold": 1e-10,
+                  "passed": true,
+                  "detail": {}
+                },
+                {
+                  "name": "symmetry",
+                  "measured": 1.1253792374955101e-17,
+                  "threshold": 1e-10,
+                  "passed": true,
+                  "detail": {
+                    "symmetry": "fibre-reinforced",
+                    "rotations": [
+                      "e1",
+                      "e2",
+                      "e3"
+                    ]
+                  }
+                },
+                {
+                  "name": "consistency",
+                  "measured": 1.1667749481341433e-10,
+                  "threshold": 1e-06,
+                  "passed": true,
+                  "detail": {
+                    "stress": 1.0716999983220592e-10,
+                    "tangent": 1.1667749481341433e-10
+                  }
+                },
+                {
+                  "name": "moduli",
+                  "measured": 2.423324698802868e-16,
+                  "threshold": 1e-08,
+                  "passed": true,
+                  "detail": {
+                    "shear_modulus": 308.9430894308943,
+                    "bulk_modulus": 469.1358024691358
+                  }
+                },
+                {
+                  "name": "closure",
+                  "measured": 7.911706377758253e-15,
+                  "threshold": 1e-10,
+                  "passed": true,
+                  "detail": {
+                    "deformations": 144,
+                    "unique_increasing_root": 144
+                  }
+                },
+                {
+                  "name": "ellipticity",
+                  "measured": 0.8216617198286894,
+                  "threshold": 1e-06,
+                  "passed": true,
+                  "detail": {
+                    "directions": 180
+                  }
+                }
+              ],
+              "passed": true
+            }
+          ],
+          "fem": [
+            {
+              "name": "fem",
+              "measured": 0.10778089043907535,
+              "threshold": 1.0,
+              "passed": true,
+              "detail": {
+                "case": "fibre_tension",
+                "minimum_fibre_i4": 1.338838796737994,
+                "levels": [
+                  3,
+                  4
+                ],
+                "displacement_l2_order": 3.0161671335658613,
+                "first_piola_l2_order": 1.9798257976771625,
+                "displacement_order_tolerance": 0.15,
+                "stress_order_tolerance": 0.2
+              }
+            }
+          ],
+          "passed": true
+        }
+      },
+      "threshold": "hgo, hgo_single and goh admitted (all eight checks) over [0.6, 1.6]; the viability material admitted",
+      "comparison": "all"
+    },
+    {
+      "id": "G26.admission-mutants",
+      "status": "PASS",
+      "measured": {
+        "targets": [
+          "tests/materials/test_fibres.py::test_a_fibre_direction_other_than_declared_fails_symmetry",
+          "tests/materials/test_fibres.py::test_a_fibre_term_without_switch_fails_moduli",
+          "tests/materials/test_fibres.py::test_softening_fibres_fail_ellipticity",
+          "tests/materials/test_admission.py"
+        ],
+        "returncode": 0,
+        "summary": "19 passed in 3.19s"
+      },
+      "threshold": "a fibre direction other than declared fails symmetry; a fibre term without switch fails moduli; k1 < 0 fails ellipticity; S25 mutants fail",
+      "comparison": "all"
+    },
+    {
+      "id": "G26.fem",
+      "status": "PASS",
+      "measured": {
+        "targets": [
+          "tests/materials/test_fibres.py::test_the_fem_check_keeps_fibres_in_tension",
+          "tests/materials/test_fibres.py::test_a_field_with_fibres_in_compression_is_refused",
+          "tests/materials/test_fem_admission.py"
+        ],
+        "returncode": 0,
+        "summary": "5 passed in 49.60s"
+      },
+      "threshold": "fibres in tension: displacement L2 order within 0.15 of 3, first-Piola L2 order within 0.2 of 2",
+      "comparison": "all"
+    },
+    {
+      "id": "G26.material-symmetry",
+      "status": "PASS",
+      "measured": {
+        "targets": [
+          "tests/problem/test_material_symmetry.py"
+        ],
+        "returncode": 0,
+        "summary": "8 passed in 1.76s"
+      },
+      "threshold": "a quarter-model spec with one family at 30 degrees is refused (material-symmetry); +-beta and 0 degrees pass",
+      "comparison": "all"
+    },
+    {
+      "id": "G26.viability",
+      "status": "PASS",
+      "measured": {
+        "checkpoint_manifest_hash": "8cdc623521c892afb830778b08bfc739dace917b1cb9bef538543da7cdd37155",
+        "checkpoint_step": 2400,
+        "development_opened": false,
+        "evidence_role": "TRAIN",
+        "failed_guardrails": [],
+        "guardrail_limits": {
+          "maximum_median_absolute_peak_error": 0.08085713846866197,
+          "maximum_p90_absolute_peak_error": 0.13634630217960156,
+          "maximum_p_relative_l2": 0.1958359567178783,
+          "maximum_u_relative_l2": 0.03805483752564062,
+          "minimum_median_signed_peak_error": -0.06986168963209696,
+          "required_invalid_collocation_points": 0
+        },
+        "implementation_revision": "d75830d35f630179b4075d0996cfef56acafc8dc",
+        "median_relative_energy_gap": 0.00010814133302448895,
+        "metrics": {
+          "invalid_collocation_points": 0,
+          "median_absolute_peak_error": 0.008439167991197538,
+          "median_signed_peak_error": 0.004061177222923306,
+          "p90_absolute_peak_error": 0.02512662284035663,
+          "p_relative_l2": 0.009805335999301779,
+          "u_relative_l2": 0.0009395526838879032
+        },
+        "minimum_collocation_determinant": 0.989140646903057,
+        "model_state_hash": "35b05e5053731445e1c972cfc7cb5da62462830ea9799e13e72a7e0e1bfbc6d1",
+        "passed": true,
+        "problem_spec_hash": "af812fd8c825fedd038d7a0245a7fb8f7abe69269910d0ceabc71ad98c77c1ae",
+        "protocol_sha256": "de9d0320ca6f0eef231786a93364ef8272ed22a3aa7f4a0774a6176363248ce4",
+        "reference_amendment_sha256": "1d6bf7bd7971ce9c2026eaf0aa978ee416825d957730c802d04957d118f2dd77",
+        "references_sha256": "4f23a37e2a12f4da2841da1a56d26dce28f91aec7f213c6a468a5ac43fc5b609",
+        "run_hash": "d76c62eda3de5a6df00887d9da9ceb96783573f0e03825d283043beec45d642e",
+        "s13c_p_relative_l2": 0.009086612004752744,
+        "schema_version": "1.0",
+        "step": "S26"
+      },
+      "threshold": "the registered HGO run passes the frozen S13 guardrails on the 64 TRAIN-screen re-solves at step 2400; both records bind the accepted reference amendment; DEVELOPMENT closed",
+      "comparison": "all"
+    },
+    {
+      "id": "G26.binding-compat",
+      "status": "PASS",
+      "measured": {
+        "tests": {
+          "targets": [
+            "tests/training/test_identity.py",
+            "tests/training/test_checkpoint.py",
+            "tests/test_shipped_bundles.py",
+            "tests/campaigns/test_problem_specs.py",
+            "tests/campaigns/test_dogbone_s25_mooney_rivlin.py::test_the_committed_protocol_is_the_rebuild_and_accepted",
+            "tests/campaigns/test_dogbone_s24_adf.py::test_the_committed_protocol_is_the_rebuild_and_accepted"
+          ],
+          "returncode": 0,
+          "summary": "82 passed in 9.76s"
+        }
+      },
+      "threshold": "existing run bindings, checkpoints, bundles, family spec hashes and the S24/S25 protocols still verify",
+      "comparison": "all"
+    },
+    {
+      "id": "G26.anti-scope",
+      "status": "PASS",
+      "measured": {
+        "tests": {
+          "targets": [
+            "tests/test_s26_anti_scope.py",
+            "tests/test_s25_anti_scope.py",
+            "tests/test_s24_anti_scope.py",
+            "tests/test_no_fixture_names.py"
+          ],
+          "returncode": 0,
+          "summary": "17 passed in 5.13s"
+        },
+        "module_coverage_percent": {
+          "src/piginot/materials/": 98.86,
+          "src/piginot/contracts/energy_formula.py": 97.6
+        }
+      },
+      "threshold": "in-plane fibres only, at most two families, S25 identities unchanged; branch coverage of piginot.materials and the formula contract >= 90% each",
+      "comparison": "all"
+    },
+    {
+      "id": "G26.portability",
+      "status": "PASS",
+      "measured": {
+        "schema_version": "1.0",
+        "tree": "d0f1d275e32a207c926ede56e897069ca38ffca0",
+        "clean": true,
+        "summary": "3803 passed, 16 skipped in 1879.71s (0:31:19)",
+        "counts": {
+          "passed": 3803,
+          "skipped": 16
+        },
+        "skips": [
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_dogbone_s13c_closeout.py:54",
+            "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_dogbone_s13c_evaluate.py:204",
+            "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_dogbone_s13c_evaluate.py:228",
+            "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_dogbone_s13c_protocol.py:159",
+            "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_dogbone_s13c_trial.py:55",
+            "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_dogbone_s13c_trial.py:83",
+            "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_dogbone_s15_bundle.py:57",
+            "reason": "set PIGINOT_CP_FREEZE_WEIGHTS to the CP-FREEZE model export"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_dogbone_s24_adf.py:194",
+            "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_dogbone_s25_mooney_rivlin.py:233",
+            "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_dogbone_s26_hgo.py:230",
+            "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_fast_goldens.py:51",
+            "reason": "the AVX512 goldens are reproduced on AVX512 only"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_fast_goldens.py:59",
+            "reason": "no S19 golden was recorded for this execution profile"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_notched_s13_s14.py:64",
+            "reason": "the notched S10 requests rebuilt on Windows differ from the Linux ones the S13 protocol was planned from, although the profile is pinned; notched training, which needs them, runs on Linux only (ADR 0100 findings)"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_notched_s13_s14.py:86",
+            "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+          },
+          {
+            "count": 1,
+            "where": "tests\\store\\test_trees.py:77",
+            "reason": "FIFO unavailable"
+          },
+          {
+            "count": 1,
+            "where": "tests\\verification\\test_core.py:361",
+            "reason": "the OS has no POSIX permission bits (Windows reports 0o666); the owner-only file mode is not enforceable here"
+          }
+        ]
+      },
+      "threshold": "native Windows run of this code tree: 0 failed, 0 errors, every skip has a reason",
+      "comparison": "all"
+    },
+    {
+      "id": "G26.quality",
+      "status": "PASS",
+      "measured": {
+        "tools": {
+          "ruff_check": 0,
+          "ruff_format": 0,
+          "mypy_strict": 0
+        },
+        "suite": {
+          "schema_version": "1.0",
+          "tree": "d0f1d275e32a207c926ede56e897069ca38ffca0",
+          "commit": "a2091ace9667718980dac001e0464350245dbfed",
+          "clean": true,
+          "branch_coverage": true,
+          "coverage_percent": 92.69,
+          "module_coverage_percent": {
+            "src/piginot/materials/": 98.86,
+            "src/piginot/contracts/energy_formula.py": 97.6
+          },
+          "summary": "3817 passed, 2 skipped in 3383.27s (0:56:23)",
+          "counts": {
+            "passed": 3817,
+            "skipped": 2
+          },
+          "skips": [
+            {
+              "count": 1,
+              "where": "tests/campaigns/test_dogbone_s15_bundle.py:57",
+              "reason": "set PIGINOT_CP_FREEZE_WEIGHTS to the CP-FREEZE model export"
+            },
+            {
+              "count": 1,
+              "where": "tests/campaigns/test_fast_goldens.py:51",
+              "reason": "the AVX512 goldens are reproduced on AVX512 only"
+            }
+          ],
+          "execution_profile": {
+            "python": "3.11.15",
+            "system": "Linux",
+            "machine": "x86_64",
+            "torch": "2.13.0+cu130",
+            "cpu_capability": "AVX2"
+          }
+        }
+      },
+      "threshold": {
+        "tools": "exit 0",
+        "suite": "recorded Linux run of this code tree, clean, 0 failed, 0 errors",
+        "global_branch_coverage_at_least": 90.5
+      },
+      "comparison": "all"
+    }
+  ],
+  "decision_record": "docs/adr/0108-s26-fibre-families.md",
+  "verdict": "PASS",
+  "verdict_reason": "every required check PASS"
+}

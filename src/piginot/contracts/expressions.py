@@ -30,6 +30,7 @@ _DIMENSION_VECTORS: dict[Dimension, DimensionVector] = {
     Dimension.STRESS: (-2, 1),
     Dimension.MOMENT: (1, 1),
     Dimension.ENERGY: (1, 1),
+    Dimension.ANGLE: (0, 0),
 }
 _VECTOR_DIMENSIONS: dict[DimensionVector, frozenset[Dimension]] = {}
 for _dimension, _vector in _DIMENSION_VECTORS.items():
@@ -111,6 +112,10 @@ def _combine(
             left_vector[0] + right_vector[0],
             left_vector[1] + right_vector[1],
         )
+        if left_vector == (0, 0) and right_vector == (0, 0):
+            # A plain number scales an angle; anything else stays dimensionless.
+            tagged = (left_dimensions | right_dimensions) - {Dimension.DIMENSIONLESS}
+            return vector, tagged or frozenset({Dimension.DIMENSIONLESS})
         if left_vector == (0, 0):
             return vector, right_dimensions
         if right_vector == (0, 0):

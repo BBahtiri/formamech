@@ -3,6 +3,7 @@
 from piginot.contracts.canonical import canonical_json_bytes, strict_json_loads
 from piginot.contracts.expressions import DerivedExpression
 from piginot.contracts.hashing import HASH_DOMAINS, HashDomain, hash_spec
+from piginot.contracts.problem_spec import ProblemSpec, ProblemSpecError
 from piginot.contracts.profile import ExecutionProfile
 from piginot.contracts.specs import (
     BoundaryConditionSpec,
@@ -41,6 +42,8 @@ __all__ = (
     "MaterialSpec",
     "ParameterSpec",
     "ProblemFamilySpec",
+    "ProblemSpec",
+    "ProblemSpecError",
     "QoISpec",
     "Quantity",
     "ToleranceSpec",

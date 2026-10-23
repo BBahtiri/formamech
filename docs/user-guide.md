@@ -202,7 +202,8 @@ figure.savefig("prediction.png", dpi=150, bbox_inches="tight")
 
 ## Certified and exact predictions (0.2.0.dev, S22)
 
-`piginot predict` takes `--mode`:
+`piginot predict` takes `--mode` (from the development line; not in release
+0.1.0):
 
 | Mode | You get | Needs |
 | --- | --- | --- |
@@ -215,10 +216,113 @@ piginot predict bundles/notched-v1-cp-freeze --request bundles/requests/notched-
 piginot predict bundles/notched-v1-cp-freeze --request bundles/requests/notched-in-domain.json --mode exact
 ```
 
-`--escalate` with `--tolerance` turns a certified request into an exact one
-when its certificate is not good enough. The FEM problem comes from the
-bundle's recipe in `bundles/fem-recipes/`. A failed solve is reported as
-`solve_failed`, never as a silent result.
+The FEM problem comes from the bundle's recipe in `bundles/fem-recipes/`: the
+same mesh, element order and solver settings as the bundle's FEM reference
+data. A request the bundle refuses is refused in every mode, before any FEM
+work.
+
+**What `certified` measures.** The certificate takes one Newton step of that
+FEM problem, starting from the prediction:
+
+| Field | Meaning |
+| --- | --- |
+| `verdict` | `OK`; or `INDEFINITE` / `INADMISSIBLE` (a guard failed, no estimate is given) |
+| `eta_energy` | size of the Newton step in the energy norm |
+| `indicators.p_l2_change` | relative L2 change of the first Piola stress along the step |
+| `indicators.u_l2_change` | the same for the displacement |
+| `guards` | which checks passed: admissible states, positive curvature, energy decrease, positive definite tangent |
+
+On the 64 DEVELOPMENT cases of each family, one step landed on the converged
+FEM solution: the step size matched the true distance to it (median ratio
+1.000), so `p_l2_change` is the prediction's stress error against that
+solution. `--corrected` returns the displacement after the step; its peak
+stress was within 0.01% (DogBone) and 0.06% (notched) of the converged
+solution on those cases.
+
+**What `exact` returns.** The FEM solution converged from the prediction: warm
+Newton at full load, then a short continuation, then the cold load-stepped
+solve, then an explicit `solve_failed`. `attempts` lists every rung tried. The
+output holds the displacement at the FEM nodes and the total potential energy.
+On DEVELOPMENT every case converged on the first rung and matched a cold solve
+within 1e-13 (relative).
+
+**What neither measures.** Both modes compare against the FEM solution on the
+recipe's mesh, not against the exact solution of the continuum problem. That
+mesh has its own discretisation error, which the S14 error budgets include as
+the reference term; for the notched plate it is about half of each case's
+budget. Neither mode extends a bundle beyond its envelope.
+
+**Escalation.** With `--escalate`, a certified request whose certificate is
+not `OK`, or whose `p_l2_change` exceeds `--tolerance`, is solved exactly:
+
+```bash
+piginot predict bundles/notched-v1-cp-freeze --request bundles/requests/notched-in-domain.json --mode certified --escalate --tolerance 0.01
+```
+
+`--tolerance 0.01` accepts at most a 1% change of the stress field. The
+response then has `"escalated": true` and the `exact` result.
+
+**Cost.** On the reference machine (Linux x86_64, AVX2), with three solves in
+parallel, a certificate took about 0.5–0.7 s, an exact solve about 5.5 s and a
+cold FEM solve about 190 s. Other machines and loads change these numbers.
+
+**Exit codes.** `0` served, `2` refused, `1` an error or `solve_failed`.
+
+From Python:
+
+```python
+from piginot.bundle import load_bundle
+from piginot.serving import load_recipe, serve
+
+bundle = load_bundle("bundles/notched-v1-cp-freeze")
+recipe = load_recipe(bundle, "bundles/notched-v1-cp-freeze")
+served = serve(bundle, inputs, mode="certified", recipe=recipe, corrected=True)
+print(served.path.value, served.certificate["indicators"]["p_l2_change"])
+```
+
+`inputs` comes from `parse_request` as in the example above.
+
+## Calibrated error bounds (0.2.0.dev, S23)
+
+`--bounds` attaches calibrated 90% upper bounds to a served request, in any
+mode ([ADR 0104](adr/0104-s23-calibrated-bounds.md)). They bound the S14
+budgeted error, the quantity the claim levels and their tolerances are about:
+the prediction's error against the FEM reference plus that reference's own
+discretisation and projection terms.
+
+```bash
+piginot predict bundles/dogbone-v1-s13c-cp-freeze --request bundles/requests/dogbone-in-domain.json --bounds
+```
+
+| Mode | `bounds.kind` | What is bounded |
+| --- | --- | --- |
+| `fast` | `budget_total` | the whole budgeted error of the prediction |
+| `certified`, `exact` | `reference_terms` | only what the FEM mesh adds; the certificate measures the rest |
+
+The bounds are one number per family and quantity, calibrated on the 64
+DEVELOPMENT cases of each bundle:
+
+| Bundle | Bound | Stress field | Peak stress | Displacement |
+| --- | --- | --- | --- | --- |
+| DogBone | `budget_total` | 2.58% | 4.07% | 0.22% |
+| DogBone | `reference_terms` | 1.45% | 2.54% | 0.10% |
+| Notched | `budget_total` | 5.41% | 5.47% | 0.63% |
+| Notched | `reference_terms` | 3.11% | 3.26% | 0.13% |
+
+Read them as: at least 90% of requests drawn like the calibration cases lie
+within the bound. It is a guarantee over requests, not for one particular
+request. A request that is inside the bundle's envelope but further from the
+training cases than any calibration case is served with
+`"status": "OUT_OF_CALIBRATION"` and no bound. The bounds come from the
+sidecars in `bundles/calibration/`, bound to each bundle's manifest; they need
+only `piginot[runtime]`. Without `--bounds` every output is unchanged.
+
+The bounds were tested once on 64 fresh H1 cases per family (gate G23, PASS):
+the stress-field and peak bounds covered 86–91% of the in-calibration cases
+(about 91% is expected on average with 64 calibration cases). One bound was not
+confirmed: the DogBone `budget_total` displacement bound (0.22%) covered only
+46 of 63 cases (73%). `--bounds` withholds it: the quantity is listed under
+`not_confirmed` with no number. The H1 results are in `bundles/h1-results/`.
 
 ## 2. Train a small model end to end (Example 1)
 

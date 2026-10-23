@@ -1,4 +1,4 @@
-# PI-GINOT v2 — Steps S19–S26 with Quality Gates
+# PI-GINOT v2 — Steps S19–S29 with Quality Gates
 
 **Extends:** `STEPS-v1.0.md`. Its gate policy (§0) applies unchanged: `NOT_RUN`
 is never `PASS`, thresholds only tighten, every gate writes
@@ -6,7 +6,9 @@ is never `PASS`, thresholds only tighten, every gate writes
 are per module.
 
 **Plan:** "PI-GINOT S19–S26 implementation plan: top 5 features" (Claude Doc,
-10 Oct 2026). Decision records of this line start at ADR 0100 (ADR 0100).
+10 Oct 2026), extended to S29 for release 0.2.0 by ADR 0105 (user-defined
+hyperelastic materials and the release). Decision records of this line start
+at ADR 0100.
 
 ---
 
@@ -37,12 +39,17 @@ are per module.
 | **S21** | Per-prediction physics certificate | 1 | 1.5 wk | S20 | `G21` |
 | **S22** | Verified serving with Newton warm start | 1 | 1.5 wk | S21 | `G22` |
 | **S23** | Calibrated conformal bounds and envelope gating | 3 | 1 wk | S20, S22 | `G23` ⚑ |
-| **S24** | ProblemSpec and generalized exact BC lifting | 4 | 2–3 wk | S20 | `G24` ⚑ |
-| **S25** | Cross-family geometry encoder | 2 | 4–6 wk | S20, S23, S24 | `G25` ⚑ |
-| **S26** | One-command campaign compiler and evidence report | 5 | 2–3 wk | S23, S24 | `G26` ⚑ |
+| **S24** | ProblemSpec, generalized exact BC lifting, FEM recipes from the spec | 4 | 2–3 wk | S20 | `G24` ⚑ |
+| **S25** | Material registry: isotropic hyperelastic models, energy formula, admission gate | 6 | 2.5–3.5 wk | S24 | `G25` ⚑ |
+| **S26** | Anisotropic hyperelastic models with in-plane fibre families | 6 | 1.5–2 wk | S25 | `G26` ⚑ |
+| **S27** | Cross-family geometry encoder (the plan's S25) | 2 | 4–6 wk | S20, S23, S24 | `G27` ⚑ |
+| **S28** | One-command campaign compiler and evidence report, with a material stage (the plan's S26) | 5 | 2.5–3.5 wk | S23, S24, S26 | `G28` ⚑ |
+| **S29** | Release 0.2.0 | — | 1–2 wk | S28 | `G29` ⚑ |
 
-⚑ = the step needs a signed owner decision (ADR 0101, 0104–0107).
-S24 may run in parallel with S21–S23, and S26 with S25, in separate clones.
+⚑ = the step needs a signed owner decision (ADR 0101, 0104, 0106–0111).
+Feature 6 is user-defined hyperelastic materials (ADR 0105). S27 may run in
+parallel with S25, S26 and S28, in separate clones; S29 does not wait for S27
+if S27's kill rule fires. After S29 the line is feature-frozen (ADR 0105).
 
 ## 2. Gate G19 — fork and baseline lock
 
@@ -80,8 +87,166 @@ Decision record: ADR 0101. Post-mortem protocol:
 | `G20.binding` | run binding v2 records operating system and CPU capability; every v1 binding and gate artifact still verifies |
 | `G20.quality` | ruff, ruff format, mypy --strict clean; new modules ≥ 90% branch coverage; global ≥ 90.5% |
 
-## 4. Gates G21–G26
+## 4. Gate G21 — per-prediction physics certificate
 
-The checks, thresholds and kill criteria of S20–S26 are specified in the
-implementation plan, one table per step. Each step copies its table into this
-document, with the owner's ratified thresholds, before its first run.
+Evaluated by `python -m campaigns.g21_gate --write`. Decision record: ADR 0102.
+Protocol and ratified thresholds: `artifacts/certify/S21-PROTOCOL.json`
+(64 DEVELOPMENT cases per family, reference machine of ADR 0101 decision 3).
+
+| Check | Pass condition |
+|---|---|
+| `G21.protocol-first` | the protocol is committed once, before both results files |
+| `G21.reference-machine` | both results ran on Linux x86_64 with AVX2 |
+| `G21.recompute` | the records cover the protocol's cases in order; the summaries recompute exactly |
+| `G21.integrity` | every certificate `OK`; recomputed references reproduce the S14 coarse terms within 1e-6 relative; mesh identity; vertex gap and Dirichlet deviation ≤ 1e-9 |
+| `G21.rank` | Spearman(η, true energy-norm error) ≥ 0.8 per family |
+| `G21.effectivity` | η / true error in [0.5, 2.0] for ≥ 90% of cases per family |
+| `G21.stress` | Spearman(stress change along the step, true stress error) ≥ 0.7 per family |
+| `G21.versus-s14` | the certificate ranks the stress error at least as well as the S14 indicator |
+| `G21.cost` | median certificate time ≤ 10% of a cold S10-recipe FEM solve |
+| `G21.determinism` | a re-issued certificate equals the recorded one byte for byte |
+| `G21.quality` | ruff, ruff format, mypy --strict clean; recorded Linux suite of this code tree with 0 failed; global branch coverage ≥ 90.5%; `piginot.certify` ≥ 90% |
+
+Kill rule: Spearman < 0.6 on both families would have made η an acquisition
+signal only. Not triggered (1.000 on both).
+
+Changes from the implementation plan: the plan's `consistency` (energy drop
+against η²/2) and `guards` (constructed bad states) are covered by
+`tests/certify` inside `G21.quality` rather than gated separately; the
+reaction-force and P-field QoI ranks are reported, not gated; there is no
+native Windows check (see the S22 follow-up in the changelog).
+
+## 5. Gate G22 — verified serving
+
+Evaluated by `python -m campaigns.g22_gate --write`. Decision record: ADR 0103.
+Protocol and ratified thresholds: `artifacts/serving/S22-PROTOCOL.json`
+(64 DEVELOPMENT cases per family, reference machine).
+
+| Check | Pass condition |
+|---|---|
+| `G22.protocol-first` | the protocol is committed once, before both results files |
+| `G22.reference-machine` | both results ran on Linux x86_64 with AVX2 |
+| `G22.recompute` | the records cover the protocol's cases in order; the summaries recompute exactly |
+| `G22.integrity` | every cold solve succeeds; the recipes rebuild every S10 request byte for byte |
+| `G22.never-silent` | every exact request converges on some rung of the solve ladder or returns an explicit `solve_failed` |
+| `G22.equivalence` | exact results equal cold solves within 1e-6 relative |
+| `G22.speedup` | median speed-up of exact over cold ≥ 10× per family (plan: 3×) |
+| `G22.correction` | median corrected peak-stress error ≤ 0.1 × the operator's, per family |
+| `G22.fast-unchanged` | fast-mode documents of the example requests equal the S19 goldens |
+| `G22.light-install` | without the FEM packages, fast serves and the other modes raise `MissingExtraError` naming `piginot[verify]` |
+| `G22.old-bundles` | the gated v0.1.0 bundles load unchanged and their recipes bind their manifests |
+| `G22.determinism` | an exact result hash and a certified document re-served under the protocol's conditions equal the recorded ones |
+| `G22.quality` | as `G21.quality`, with `piginot.serving` ≥ 90% |
+
+Changes from the implementation plan: bundle schema v2 is replaced by FEM
+recipe sidecars (`bundles/fem-recipes/`, bound to each manifest hash), so the
+shipped bundles stay byte-identical; `G22.light-install` blocks the FEM imports
+in a subprocess instead of installing a fresh `.[runtime]` environment (a real
+install test belongs to the release step); timings ran with three worker
+processes, one run per case.
+
+## 6. Gate G23 — calibrated bounds and calibration gate
+
+Evaluated by `python -m campaigns.g23_gate --write`. Decision record: ADR 0104
+(re-scoped from the implementation plan; accepted 2026-10-13). Protocol and
+ratified thresholds: `artifacts/bounds/S23-PROTOCOL.json`. Bounds: 90%
+(`alpha = 0.1`) split-conformal upper bounds of the S14 budgeted error per
+family and quantity, calibrated on the 64 recorded DEVELOPMENT cases; tested
+once on the fresh H1 set.
+
+| Check | Pass condition |
+|---|---|
+| `G23.protocol-first` | the protocol is committed once, before the calibration evidence, the sidecars and the H1 reveals |
+| `G23.isolation` | the calibration path raises on burned HOLDOUT IDs and on sealed H1/H2 IDs (tests with mutants) |
+| `G23.recompute` | the committed sidecars and calibration evidence equal a fresh calibration byte for byte on the calibration's CPU profile; elsewhere (ADR 0104 decision 8, amended 2026-10-13) bounds, case IDs, scores, `n`, `k`, `alpha` and hashes exactly, the gate statistics within 1e-10 relative, every calibration case keeping its status and every H1 case more than 1e-9 (relative) from the gate threshold |
+| `G23.gate` | every calibration case is `IN_CALIBRATION`; constructed requests inside the envelope but beyond the largest calibration distance are `OUT_OF_CALIBRATION` with no bound |
+| `G23.width` | DogBone budget-total bounds ≤ 5% (stress field), 5% (peak), 2% (displacement); notched widths reported |
+| `G23.reveal-once` | per family one H1 reveal, verified against the H1 commitment, written after the protocol and the calibration; H1 is burned afterwards and a second reveal is refused |
+| `G23.coverage` | per family, for `budget_total` and `reference_terms` of `p_relative_l2` and `absolute_peak_error` (eight counts): covered in-calibration H1 cases ≥ the smallest `c` with `P(X ≤ c) ≥ 0.05/8`, `X ~ BetaBinomial(m, k, n + 1 − k)` (48 of 64 for `m = 64`); `u_relative_l2` reported |
+| `G23.compat` | without bounds, fast documents equal the S19 goldens and the bundles are unchanged; every sidecar binds its bundle's manifest |
+| `G23.portability` | native Windows suite of the same code tree: 0 failed, every skip with a reason |
+| `G23.quality` | ruff, ruff format, mypy --strict clean; recorded Linux suite of this code tree with 0 failed; global branch coverage ≥ 90.5%; `piginot.bounds` ≥ 90% |
+
+Kill rule: if a coverage count fails on H1, record FAIL, do not retune on H1,
+and serve without bounds; certificates and exact serving are unaffected.
+
+## 7. Gates G24–G29
+
+The checks, thresholds and kill criteria of S24, S27 and S28 are specified in
+the implementation plan's S24, S25 and S26 sections; those of S25, S26 and S29
+are written at the start of each step (ADR 0105). Each step copies its table
+into this document, with the owner's ratified thresholds, before its first
+run.
+
+### G24 — ProblemSpec, liftings, FEM requests from the spec (ADR 0106, accepted 2026-10-13)
+
+Protocol: `artifacts/problem/S24-PROTOCOL.json`.
+
+| Check | Pass condition |
+|---|---|
+| `G24.protocol-first` | `S24-PROTOCOL.json` committed and this ADR accepted before the viability run's first step |
+| `G24.lifting-exact` | Property tests, 1,000 random feasible parameter vectors and network outputs per kind and family: the Dirichlet data are met at points along every piece, end points included, within 1e-12 of the displacement scale; values and gradients finite at end points and joints |
+| `G24.lifting-reduces` | `adf` with untrimmed lines equals `quarter` within 1e-12 (offset and scale) on 1,000 random points and parameter vectors |
+| `G24.lifting-verified` | Decision 4 for both family specs and their `adf` variants: node and piece residuals ≤ 1e-12; conformity and orientation ≤ 1e-9; every mutant misses by > 1e-3 |
+| `G24.regression-dogbone` | Decision 6: lifting bit-identical on 64 DEVELOPMENT meshes; envelope equal; 64 of 64 FEM requests byte-identical; step-400 replay tensors byte-identical to the same-CPU v0.2.0-base run (ADR 0106 amendment 1) |
+| `G24.regression-notched` | The same for the notched plate |
+| `G24.spec-hash-stable` | Hash unchanged under key order, whitespace, number spelling and UTF-8/UTF-16 encoding; changed by every semantic edit of a leaf |
+| `G24.spec-validation` | Each rejection rule of decision 2 has a failing-spec test |
+| `G24.adf-viability` | Decision 5 guardrails pass; P-field L2 reported |
+| `G24.binding-compat` | A binding without `problem_spec_hash` has exactly the previous canonical fields; the binding, checkpoint and bundle tests pass; G13–G23 records still verify |
+| `G24.anti-scope` | No family token in `src/`; `.[runtime]` imports no FEM module; branch coverage of `piginot.lifting`, `piginot.problem` and the ProblemSpec contract ≥ 90% |
+| `G24.portability` | Suite records on Linux and Windows |
+| `G24.quality` | Full suite, ruff, mypy `--strict`, global coverage ≥ 90.5% |
+
+Kill rule: if the trimmed ADF viability run fails a guardrail, the S28
+compiler offers ADF only with untrimmed lines in 0.2.0; the quarter lifting
+and every shipped bundle are unaffected. The harmonic lifting is deferred
+beyond 0.2.0.
+
+### G25 — Material registry, formulas and admission (ADR 0107, accepted 2026-10-13)
+
+Protocol: `artifacts/materials/S25-PROTOCOL.json`. Admission thresholds:
+ADR 0107 decision 6.
+
+| Check | Pass condition |
+|---|---|
+| `G25.protocol-first` | `S25-PROTOCOL.json` committed and this ADR accepted before the first FEM re-solve and the viability run |
+| `G25.formula-safety` | The parser refuses every construct outside the grammar (failing-formula tests); no `eval`, `exec`, `compile`, `sympify` or `parse_expr` in the formula path (syntax-tree scan) |
+| `G25.neo-hookean-identity` | Dispatch bit-identical to the closed-form kernels (energy, stress, tangent, closure and its gradient); S19 fast-serving goldens unchanged; the Neo-Hookean formula within 1e-12 of the closed form |
+| `G25.admission` | Every built-in model and the closed-form model admitted (decision 6, all eight checks) at its test parameters over `[0.6, 1.6]` |
+| `G25.admission-mutants` | Each seeded defect fails its check: not stress-free (reference), wrong moduli (moduli), negative shear stiffness (ellipticity, closure), energy undefined in the range, anisotropic energy (symmetry), non-objective energy (objectivity), scaled stress and scaled tangent (consistency) |
+| `G25.fem` | Autograd manufactured fields equal the symbolic S8 fields within 1e-10 for Neo-Hookean; the FEM solver converges at the optimal orders for a formula model |
+| `G25.viability` | Decision 8 guardrails pass |
+| `G25.binding-compat` | Existing run bindings, bundles and G13–G24 records still verify |
+| `G25.anti-scope` | Decision 9 tests; `.[runtime]` imports `piginot.materials` without FEM packages; branch coverage of `piginot.materials` and the formula contract ≥ 90% |
+| `G25.portability` | Suite records on Linux and Windows |
+| `G25.quality` | Full suite, ruff, mypy `--strict`, global coverage ≥ 90.5% |
+
+Kill rule: if the Mooney–Rivlin viability run fails a guardrail, 0.2.0 ships
+the registry and the admission gate and the S28 compiler trains only the
+closed-form Neo-Hookean model.
+
+### G26 — Fibre families (ADR 0108, accepted 2026-10-14)
+
+Protocol: `artifacts/materials/S26-PROTOCOL.json`. Admission: ADR 0107
+decision 6 with ADR 0108 decision 5.
+
+| Check | Pass condition |
+|---|---|
+| `G26.protocol-first` | `S26-PROTOCOL.json` committed once, with this ADR accepted, before the first re-solve and the viability run |
+| `G26.formula-safety` | Every malformed fibre construct is refused (undeclared family, a third family, an angle that is not an angle parameter, `ramp` of a stress, `I4` of an unknown label); no `eval`, `exec`, `compile` in the formula path |
+| `G26.isotropic-identity` | Identities of the S25 built-ins and of every formula without fibres unchanged; S25 admission reports unchanged; Neo-Hookean dispatch bit-identical; S19 fast goldens equal at their recorded thread count (`campaigns/fast_goldens.py`) |
+| `G26.fibre-kernels` | `hgo` stress equals its closed form within 1e-12; zero fibre stress wherever `I4 ≤ 1`; the `hgo` closure root equals the matrix's within 1e-12 |
+| `G26.admission` | `hgo`, `hgo_single` and `goh` admitted at their test parameters over `[0.6, 1.6]`, and the viability material, all eight checks |
+| `G26.admission-mutants` | An energy whose fibre direction differs from the declared angle fails symmetry; a fibre term without switch fails moduli; `k1 < 0` fails ellipticity; the S25 mutants still fail |
+| `G26.fem` | Fibres in tension: displacement L2 order within 0.15 of 3, first-Piola L2 order within 0.2 of 2 (ADR 0002) |
+| `G26.material-symmetry` | A quarter-model spec with one family at 30° is refused (`material-symmetry`); `±β` and 0° pass |
+| `G26.viability` | Decision 8 guardrails pass |
+| `G26.binding-compat` | Existing run bindings, bundles, family spec hashes and G13–G25 records still verify |
+| `G26.anti-scope` | Decision 10 tests; branch coverage of `piginot.materials` and the formula contract ≥ 90% |
+| `G26.portability` | Suite records on Linux and Windows |
+| `G26.quality` | Full suite, ruff, mypy `--strict`, global coverage ≥ 90.5% |
+
+Kill rule: if the HGO viability run fails a guardrail, 0.2.0 keeps fibre
+formulas in the registry and the admission gate, but the S28 compiler trains
+isotropic models only.

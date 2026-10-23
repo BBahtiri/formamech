@@ -1,0 +1,48 @@
+{
+  "bindings_equal_except_revision": true,
+  "comparison_passed": true,
+  "evidence_role": "TRAIN",
+  "exact_files": {
+    "adaptive.json": true,
+    "optimizer.json": true
+  },
+  "family": "notched-v1",
+  "manifest_differences": [
+    "model_export_hash",
+    "run_hash",
+    "tensor_payload_hash"
+  ],
+  "model_state_hash": "6a3a755ba9e3ecff5b01505cf268cd74dbefe41b9d3264ba14e03a894ef3b8c4",
+  "passed": true,
+  "reference_is_base_revision": true,
+  "reference_matches_amendment": true,
+  "reference_model_state_hash": "6a3a755ba9e3ecff5b01505cf268cd74dbefe41b9d3264ba14e03a894ef3b8c4",
+  "reference_revision": "399a14659cec6812e24980ece8f81ab2d94a4753",
+  "reference_run_hash": "aa0c5618d70255d55dda47d74107346fb19c95de1dbc30208790fe1fb6358531",
+  "registered_profile_comparison": {
+    "expected_to_match": false,
+    "matches_registered": false,
+    "reason": "the registered run was trained on Linux/AVX512; trained weights depend on the CPU instruction set (ADR 0100)",
+    "registered_model_state_hash": "cc503ef6cc78109b0d11826b8c3e3f6162cc87bf7859fa7ff7f452717274333c"
+  },
+  "replay_implementation_revision": "17167fc25552c327839d1eb9e3526061555481b4",
+  "replay_run_hash": "105baa421821d63949c06b9caf39a19284bb9e964ce9fccb762a5f2d0c8837c0",
+  "schema_version": "1.0",
+  "step": 400,
+  "tensor_files": {
+    "model.safetensors": {
+      "differing_metadata": [
+        "run_hash"
+      ],
+      "differing_tensors": [],
+      "tensors": 124
+    },
+    "state.safetensors": {
+      "differing_metadata": [
+        "run_hash"
+      ],
+      "differing_tensors": [],
+      "tensors": 497
+    }
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "accepted": {
+    "answers": {
+      "ADR 0106": "Accept as written",
+      "harmonic lifting": "Defer beyond 0.2.0",
+      "kill rule": "Keep untrimmed lines",
+      "viability run": "Full 2,400 steps"
+    },
+    "by": "decision owner",
+    "on": "2026-10-13"
+  },
+  "decision_record": "docs/adr/0106-s24-problem-spec-and-lifting.md",
+  "replays": {
+    "dogbone-v1": {
+      "command": "python -m campaigns.dogbone_v1.s13c_trial --s10-run-root <S10> --run-root <new> --stop-after 400",
+      "model_state_hash": "e45edbdc6cd47a0ef754b97a0c7613c5703cdecfafcc9edebb4777c6d1e259f8",
+      "run": "registered S13c run",
+      "run_hash": "0ca34e327d9220ccb6030c4f669fac028938beb086fb17e49818815e8dcbce43",
+      "target_step": 400
+    },
+    "notched-v1": {
+      "command": "python -m campaigns.notched_v1.s13 train --run-root <new> --stop-after 400",
+      "model_state_hash": "cc503ef6cc78109b0d11826b8c3e3f6162cc87bf7859fa7ff7f452717274333c",
+      "run": "registered notched S13 run",
+      "run_hash": "e5451350d82db80249e19b11479f6101fca87498aa966947f7566e93aa0eab1f",
+      "target_step": 400
+    },
+    "rule": "every tensor of model.safetensors and state.safetensors equal and every manifest field equal except run_hash, model_export_hash and tensor_payload_hash (they hash the run hash); compared by campaigns.s24_replay"
+  },
+  "schema_version": "1.0",
+  "status": "accepted",
+  "step": "S24",
+  "viability": {
+    "base_problem_spec_hash": "71aa6b4da1a316a058c04118c355e2558e6519870b6fc11a6bf39066843e9099",
+    "base_spec": "campaigns/dogbone_v1/problem_spec.json",
+    "campaign": "dogbone-v1",
+    "changed": "lifting: adf, trimmed pieces of the spec; the run binding binds problem_spec_hash",
+    "closed_evidence": [
+      "DEVELOPMENT",
+      "HOLDOUT",
+      "H1",
+      "H2"
+    ],
+    "evaluation": {
+      "cases": 64,
+      "guardrail_limits": {
+        "maximum_median_absolute_peak_error": 0.08085713846866197,
+        "maximum_p90_absolute_peak_error": 0.13634630217960156,
+        "maximum_p_relative_l2": 0.1958359567178783,
+        "maximum_u_relative_l2": 0.03805483752564062,
+        "minimum_median_signed_peak_error": -0.06986168963209696,
+        "required_invalid_collocation_points": 0
+      },
+      "population": "TRAIN-screen",
+      "reported": {
+        "s13c_p_relative_l2": 0.009086612004752744
+      },
+      "rule": "the frozen S13 guardrails of the S13c protocol (campaigns.dogbone_v1.s13c_evaluate.failed_guardrails)"
+    },
+    "initial_weights_hash": "902356fefd76f04627bc3f150f1ca0f0df1325bb3fa4263d286b2b5fa623a461",
+    "kill_rule": "if a guardrail fails, trimmed pieces and arcs are not offered in 0.2.0; untrimmed lines stay; shipped bundles unaffected",
+    "optimizer_steps": 2400,
+    "problem_spec_hash": "fd4fff5ac9f5372a20a52d152fca9737f4257d33e1742f6c037b3e1b22364d21",
+    "s13c_protocol_hash": "2f854e95bfe2f67a872e0f558246b4049f6697f6ff1ea7740ec03de54344c60e",
+    "s13c_protocol_sha256": "b4cfa71f13383434d87d38a4d8df06b117c4e27a33e0d83e08e24a379d82f098",
+    "seed": 13101,
+    "spec": "campaigns/dogbone_v1/problem_spec_adf.json",
+    "unchanged": [
+      "TRAIN-fit population and S10 source bindings",
+      "normalization",
+      "architecture and initial weights",
+      "objective and trainer configuration",
+      "sampler plan and seed",
+      "execution profile"
+    ]
+  }
+}

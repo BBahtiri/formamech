@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0",
+  "tree": "7ac0a7c20435436ca9599654621cc0b07a130b88",
+  "commit": "a199e23aa75dccfe8801f8f32fd6b9d9bd8c2d98",
+  "clean": true,
+  "branch_coverage": true,
+  "coverage_percent": 91.76,
+  "bounds_coverage_percent": 100.0,
+  "summary": "3337 passed, 1 skipped in 2421.42s (0:40:21)",
+  "counts": {
+    "passed": 3337,
+    "skipped": 1
+  },
+  "skips": [
+    {
+      "count": 1,
+      "where": "tests/campaigns/test_dogbone_s15_bundle.py:57",
+      "reason": "set PIGINOT_CP_FREEZE_WEIGHTS to the CP-FREEZE model export"
+    }
+  ],
+  "execution_profile": {
+    "python": "3.11.15",
+    "system": "Linux",
+    "machine": "x86_64",
+    "torch": "2.13.0+cu130",
+    "cpu_capability": "AVX2"
+  }
+}

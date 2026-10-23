@@ -1,0 +1,3615 @@
+{
+  "bundle": "notched-v1-cp-freeze",
+  "bundle_manifest_sha256": "3749f4be4761a55582dd07f90e3cc5950b8231357162366d79dc47463dddcc99",
+  "calibration_sha256": "baf2e430ede2d8287c88d4316454a071eae1b2c719e48a98efb9af2cc86d2c21",
+  "campaign_id": "notched-v1",
+  "cases": [
+    {
+      "case_id": "fresh-h1-000",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.02585365073052891,
+          "projection": 0.009905613306716058
+        },
+        "p_relative_l2": {
+          "discretisation": 0.03419589088574333,
+          "projection": 0.0014497491176380401
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0007215736005126327,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0494257463549006,
+      "reported_slices": [
+        "net_section_factor:0",
+        "notch_sharpness:0"
+      ],
+      "slices": [
+        "all",
+        "width:1",
+        "notch_radius:0",
+        "notch_depth:0",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.03723345207990533,
+        "p_relative_l2": 0.02210187471383963,
+        "u_relative_l2": 0.0030028224200597743
+      },
+      "terms": {
+        "case_id": "fresh-h1-000",
+        "coarse_p_difference": 0.01735832024657022,
+        "coarse_peak_difference": 8.926536524600092e-05,
+        "coarse_u_difference": 0.00036628101548864605,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0014497491176380401,
+        "recovery_root_cells": 0.009905613306716058
+      }
+    },
+    {
+      "case_id": "fresh-h1-001",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.03980285182587931,
+          "projection": 0.015250134799187477
+        },
+        "p_relative_l2": {
+          "discretisation": 0.048745421673339,
+          "projection": 0.002184222919155442
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0012708805340885376,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0472277126654768,
+      "reported_slices": [
+        "net_section_factor:0",
+        "notch_sharpness:0"
+      ],
+      "slices": [
+        "all",
+        "width:3",
+        "notch_radius:0",
+        "notch_depth:0",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.02625108273150005,
+        "p_relative_l2": 0.024125643590626702,
+        "u_relative_l2": 0.002666294410699912
+      },
+      "terms": {
+        "case_id": "fresh-h1-001",
+        "coarse_p_difference": 0.02474386886971523,
+        "coarse_peak_difference": 0.005023013900687162,
+        "coarse_u_difference": 0.0006451170223799683,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.002184222919155442,
+        "recovery_root_cells": 0.015250134799187477
+      }
+    },
+    {
+      "case_id": "fresh-h1-002",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.013212197741043272,
+          "projection": 0.00506214472836907
+        },
+        "p_relative_l2": {
+          "discretisation": 0.018918271897952393,
+          "projection": 0.0008329553282038297
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0004057143201109304,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.060473068797363,
+      "reported_slices": [
+        "net_section_factor:0",
+        "notch_sharpness:0"
+      ],
+      "slices": [
+        "all",
+        "width:1",
+        "notch_radius:1",
+        "notch_depth:0",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.011089855817403882,
+        "p_relative_l2": 0.018459428889434703,
+        "u_relative_l2": 0.002167679921496983
+      },
+      "terms": {
+        "case_id": "fresh-h1-002",
+        "coarse_p_difference": 0.009603183704544362,
+        "coarse_peak_difference": 0.0017302385596450012,
+        "coarse_u_difference": 0.0002059463553862591,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0008329553282038297,
+        "recovery_root_cells": 0.00506214472836907
+      }
+    },
+    {
+      "case_id": "fresh-h1-003",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.008004784512313031,
+          "projection": 0.0030669672460969474
+        },
+        "p_relative_l2": {
+          "discretisation": 0.012219088157252422,
+          "projection": 0.0005986892271379596
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0003238620824134815,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0527451626916218,
+      "reported_slices": [
+        "net_section_factor:0",
+        "notch_sharpness:0"
+      ],
+      "slices": [
+        "all",
+        "width:1",
+        "notch_radius:2",
+        "notch_depth:0",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.016016491464612946,
+        "p_relative_l2": 0.01305610184397303,
+        "u_relative_l2": 0.001984809893365483
+      },
+      "terms": {
+        "case_id": "fresh-h1-003",
+        "coarse_p_difference": 0.006202582820940316,
+        "coarse_peak_difference": 0.0020817174347735313,
+        "coarse_u_difference": 0.00016439699614897538,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0005986892271379596,
+        "recovery_root_cells": 0.0030669672460969474
+      }
+    },
+    {
+      "case_id": "fresh-h1-004",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.004491180830516675,
+          "projection": 0.001720758938895278
+        },
+        "p_relative_l2": {
+          "discretisation": 0.007197030744665673,
+          "projection": 0.0004223001089762999
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0003440457037022767,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.054104276082205,
+      "reported_slices": [
+        "net_section_factor:0",
+        "notch_sharpness:0"
+      ],
+      "slices": [
+        "all",
+        "width:0",
+        "notch_radius:3",
+        "notch_depth:0",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.0023049285655193934,
+        "p_relative_l2": 0.01806398136590056,
+        "u_relative_l2": 0.004445837228016936
+      },
+      "terms": {
+        "case_id": "fresh-h1-004",
+        "coarse_p_difference": 0.0036533150988150623,
+        "coarse_peak_difference": 0.0018128359156961693,
+        "coarse_u_difference": 0.00017464248918897294,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0004223001089762999,
+        "recovery_root_cells": 0.001720758938895278
+      }
+    },
+    {
+      "case_id": "fresh-h1-005",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.02041185389915428,
+          "projection": 0.00782063367783689
+        },
+        "p_relative_l2": {
+          "discretisation": 0.027408241801001734,
+          "projection": 0.0015682777529396385
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0009132192903603321,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0283704345987759,
+      "reported_slices": [
+        "net_section_factor:0",
+        "notch_sharpness:1"
+      ],
+      "slices": [
+        "all",
+        "width:2",
+        "notch_radius:0",
+        "notch_depth:1",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.0025707262003672113,
+        "p_relative_l2": 0.016012241148642543,
+        "u_relative_l2": 0.001688026425126318
+      },
+      "terms": {
+        "case_id": "fresh-h1-005",
+        "coarse_p_difference": 0.013912813096955195,
+        "coarse_peak_difference": 0.005598006627547042,
+        "coarse_u_difference": 0.00046356309155346805,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0015682777529396385,
+        "recovery_root_cells": 0.00782063367783689
+      }
+    },
+    {
+      "case_id": "fresh-h1-006",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.018571588794991892,
+          "projection": 0.007115551262449001
+        },
+        "p_relative_l2": {
+          "discretisation": 0.025873802270648335,
+          "projection": 0.0013218629859524471
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0007076524439426832,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0375866749883793,
+      "reported_slices": [
+        "net_section_factor:0",
+        "notch_sharpness:0"
+      ],
+      "slices": [
+        "all",
+        "width:2",
+        "notch_radius:1",
+        "notch_depth:1",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.01717655298127842,
+        "p_relative_l2": 0.015217325246469052,
+        "u_relative_l2": 0.002013625797557117
+      },
+      "terms": {
+        "case_id": "fresh-h1-006",
+        "coarse_p_difference": 0.013133909782054993,
+        "coarse_peak_difference": 0.003110899002722608,
+        "coarse_u_difference": 0.0003592144385495854,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0013218629859524471,
+        "recovery_root_cells": 0.007115551262449001
+      }
+    },
+    {
+      "case_id": "fresh-h1-007",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.006925820889052805,
+          "projection": 0.0026535712218593126
+        },
+        "p_relative_l2": {
+          "discretisation": 0.010445765242408395,
+          "projection": 0.0006626662712455011
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0005678293587672902,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0411275546047847,
+      "reported_slices": [
+        "net_section_factor:0",
+        "notch_sharpness:0"
+      ],
+      "slices": [
+        "all",
+        "width:1",
+        "notch_radius:2",
+        "notch_depth:1",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.0036223621448848967,
+        "p_relative_l2": 0.013153307807646949,
+        "u_relative_l2": 0.0016715071083266587
+      },
+      "terms": {
+        "case_id": "fresh-h1-007",
+        "coarse_p_difference": 0.005302418904775835,
+        "coarse_peak_difference": 0.003388784624539949,
+        "coarse_u_difference": 0.0002882382531813656,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0006626662712455011,
+        "recovery_root_cells": 0.0026535712218593126
+      }
+    },
+    {
+      "case_id": "fresh-h1-008",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.0061531203341493226,
+          "projection": 0.002357517369405871
+        },
+        "p_relative_l2": {
+          "discretisation": 0.009635275688340023,
+          "projection": 0.0006383902217046619
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0005154911790992065,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0517303226192158,
+      "reported_slices": [
+        "net_section_factor:0",
+        "notch_sharpness:0"
+      ],
+      "slices": [
+        "all",
+        "width:2",
+        "notch_radius:3",
+        "notch_depth:1",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.012258012544767632,
+        "p_relative_l2": 0.015137379087050234,
+        "u_relative_l2": 0.0019676429500860774
+      },
+      "terms": {
+        "case_id": "fresh-h1-008",
+        "coarse_p_difference": 0.004891002887482245,
+        "coarse_peak_difference": 0.0027370188683782347,
+        "coarse_u_difference": 0.0002616706492889373,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0006383902217046619,
+        "recovery_root_cells": 0.002357517369405871
+      }
+    },
+    {
+      "case_id": "fresh-h1-009",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.020136017384169123,
+          "projection": 0.005137123123219688
+        },
+        "p_relative_l2": {
+          "discretisation": 0.01720080609862266,
+          "projection": 0.0012423017047715574
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0013634753515840018,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0184290212758789,
+      "reported_slices": [
+        "net_section_factor:2",
+        "notch_sharpness:2"
+      ],
+      "slices": [
+        "all",
+        "width:0",
+        "notch_radius:0",
+        "notch_depth:2",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.014058478858807465,
+        "p_relative_l2": 0.0256265419141759,
+        "u_relative_l2": 0.002628852793401525
+      },
+      "terms": {
+        "case_id": "fresh-h1-009",
+        "coarse_p_difference": 0.008731373654123178,
+        "coarse_peak_difference": 0.010221328621405646,
+        "coarse_u_difference": 0.0006921194678091379,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0012423017047715574,
+        "recovery_root_cells": 0.005137123123219688
+      }
+    },
+    {
+      "case_id": "fresh-h1-010",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.011963485520795717,
+          "projection": 0.0037086417579143
+        },
+        "p_relative_l2": {
+          "discretisation": 0.013477923562027741,
+          "projection": 0.0009718159565035116
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0009274916485699177,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0276523088243865,
+      "reported_slices": [
+        "net_section_factor:1",
+        "notch_sharpness:1"
+      ],
+      "slices": [
+        "all",
+        "width:1",
+        "notch_radius:1",
+        "notch_depth:2",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.0003452322554299907,
+        "p_relative_l2": 0.014776745545394345,
+        "u_relative_l2": 0.0017158068906824953
+      },
+      "terms": {
+        "case_id": "fresh-h1-010",
+        "coarse_p_difference": 0.006841585564481087,
+        "coarse_peak_difference": 0.006072835289744019,
+        "coarse_u_difference": 0.00047080794343650644,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0009718159565035116,
+        "recovery_root_cells": 0.0037086417579143
+      }
+    },
+    {
+      "case_id": "fresh-h1-011",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.011238693404343221,
+          "projection": 0.004306012798598936
+        },
+        "p_relative_l2": {
+          "discretisation": 0.01618096936939628,
+          "projection": 0.0010341814882840858
+        },
+        "u_relative_l2": {
+          "discretisation": 0.000731865859249481,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0366965163247615,
+      "reported_slices": [
+        "net_section_factor:0",
+        "notch_sharpness:0"
+      ],
+      "slices": [
+        "all",
+        "width:2",
+        "notch_radius:1",
+        "notch_depth:2",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.02180913565258139,
+        "p_relative_l2": 0.01630659183081897,
+        "u_relative_l2": 0.0020813429801109134
+      },
+      "terms": {
+        "case_id": "fresh-h1-011",
+        "coarse_p_difference": 0.008213690035226538,
+        "coarse_peak_difference": 0.004727999980973031,
+        "coarse_u_difference": 0.0003715055123093812,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0010341814882840858,
+        "recovery_root_cells": 0.004306012798598936
+      }
+    },
+    {
+      "case_id": "fresh-h1-012",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.0076069916823797495,
+          "projection": 0.0018146688791483715
+        },
+        "p_relative_l2": {
+          "discretisation": 0.0069678160052909855,
+          "projection": 0.0005521103867924055
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0008232079635718179,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.039218284042216,
+      "reported_slices": [
+        "net_section_factor:1",
+        "notch_sharpness:0"
+      ],
+      "slices": [
+        "all",
+        "width:0",
+        "notch_radius:2",
+        "notch_depth:2",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.014032417991816449,
+        "p_relative_l2": 0.014856675294127876,
+        "u_relative_l2": 0.0013537508303637744
+      },
+      "terms": {
+        "case_id": "fresh-h1-012",
+        "coarse_p_difference": 0.0035369624392340027,
+        "coarse_peak_difference": 0.0038614170976546953,
+        "coarse_u_difference": 0.0004178720627268111,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0005521103867924055,
+        "recovery_root_cells": 0.0018146688791483715
+      }
+    },
+    {
+      "case_id": "fresh-h1-013",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.009898538790854495,
+          "projection": 0.0037925435980285423
+        },
+        "p_relative_l2": {
+          "discretisation": 0.014763380920189386,
+          "projection": 0.000970819688952833
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0006676557311006856,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0374891426228159,
+      "reported_slices": [
+        "net_section_factor:0",
+        "notch_sharpness:0"
+      ],
+      "slices": [
+        "all",
+        "width:3",
+        "notch_radius:2",
+        "notch_depth:2",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.025637143290410187,
+        "p_relative_l2": 0.020312735050718705,
+        "u_relative_l2": 0.004170602078583023
+      },
+      "terms": {
+        "case_id": "fresh-h1-013",
+        "coarse_p_difference": 0.007494101989943851,
+        "coarse_peak_difference": 0.0038959814217553947,
+        "coarse_u_difference": 0.00033891153862978965,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.000970819688952833,
+        "recovery_root_cells": 0.0037925435980285423
+      }
+    },
+    {
+      "case_id": "fresh-h1-014",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.004935234997530233,
+          "projection": 0.0011605767806954599
+        },
+        "p_relative_l2": {
+          "discretisation": 0.004734914787472031,
+          "projection": 0.0003903832808050851
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0006608530470071504,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0457733050259073,
+      "reported_slices": [
+        "net_section_factor:1",
+        "notch_sharpness:0"
+      ],
+      "slices": [
+        "all",
+        "width:0",
+        "notch_radius:3",
+        "notch_depth:2",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.012830391939762629,
+        "p_relative_l2": 0.019232777251090998,
+        "u_relative_l2": 0.0024700134866818546
+      },
+      "terms": {
+        "case_id": "fresh-h1-014",
+        "coarse_p_difference": 0.002403510044402046,
+        "coarse_peak_difference": 0.0025051954302183926,
+        "coarse_u_difference": 0.00033545839949601544,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0003903832808050851,
+        "recovery_root_cells": 0.0011605767806954599
+      }
+    },
+    {
+      "case_id": "fresh-h1-015",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.016106004242882253,
+          "projection": 0.0033643850177533523
+        },
+        "p_relative_l2": {
+          "discretisation": 0.011813889176400194,
+          "projection": 0.0009685908348912423
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0013710894893913562,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0225523757663,
+      "reported_slices": [
+        "net_section_factor:2",
+        "notch_sharpness:2"
+      ],
+      "slices": [
+        "all",
+        "width:0",
+        "notch_radius:0",
+        "notch_depth:3",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.008908272622886371,
+        "p_relative_l2": 0.01896729114546913,
+        "u_relative_l2": 0.0030122409576657998
+      },
+      "terms": {
+        "case_id": "fresh-h1-015",
+        "coarse_p_difference": 0.005996898059086393,
+        "coarse_peak_difference": 0.008175636671513834,
+        "coarse_u_difference": 0.0006959845123813991,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0009685908348912423,
+        "recovery_root_cells": 0.0033643850177533523
+      }
+    },
+    {
+      "case_id": "fresh-h1-016",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.022582575919338325,
+          "projection": 0.007948712517348277
+        },
+        "p_relative_l2": {
+          "discretisation": 0.02586431621096291,
+          "projection": 0.0018022409483923344
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0014091737180454695,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0151084613594346,
+      "reported_slices": [
+        "net_section_factor:1",
+        "notch_sharpness:3"
+      ],
+      "slices": [
+        "all",
+        "width:1",
+        "notch_radius:0",
+        "notch_depth:3",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.026231918420838017,
+        "p_relative_l2": 0.02198467828016419,
+        "u_relative_l2": 0.0021083093522168425
+      },
+      "terms": {
+        "case_id": "fresh-h1-016",
+        "coarse_p_difference": 0.013129094523331426,
+        "coarse_peak_difference": 0.011463236507278337,
+        "coarse_u_difference": 0.0007153166081449084,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0018022409483923344,
+        "recovery_root_cells": 0.007948712517348277
+      }
+    },
+    {
+      "case_id": "fresh-h1-017",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.018329451443219017,
+          "projection": 0.0070227783307352555
+        },
+        "p_relative_l2": {
+          "discretisation": 0.023723458440765306,
+          "projection": 0.0017441363796528407
+        },
+        "u_relative_l2": {
+          "discretisation": 0.001266128767881689,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0178285679925947,
+      "reported_slices": [
+        "net_section_factor:1",
+        "notch_sharpness:2"
+      ],
+      "slices": [
+        "all",
+        "width:2",
+        "notch_radius:0",
+        "notch_depth:3",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.021297108782646002,
+        "p_relative_l2": 0.020630940410251174,
+        "u_relative_l2": 0.003104564124644721
+      },
+      "terms": {
+        "case_id": "fresh-h1-017",
+        "coarse_p_difference": 0.01204236469074381,
+        "coarse_peak_difference": 0.009211120177100596,
+        "coarse_u_difference": 0.0006427049583155782,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0017441363796528407,
+        "recovery_root_cells": 0.0070227783307352555
+      }
+    },
+    {
+      "case_id": "fresh-h1-018",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.030866730492998883,
+          "projection": 0.011826333522221795
+        },
+        "p_relative_l2": {
+          "discretisation": 0.03748314752678921,
+          "projection": 0.002663357220572715
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0016392294461458328,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.015414930260428,
+      "reported_slices": [
+        "net_section_factor:1",
+        "notch_sharpness:3"
+      ],
+      "slices": [
+        "all",
+        "width:3",
+        "notch_radius:0",
+        "notch_depth:3",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.049826348853706785,
+        "p_relative_l2": 0.03775816234816799,
+        "u_relative_l2": 0.00670810503626131
+      },
+      "terms": {
+        "case_id": "fresh-h1-018",
+        "coarse_p_difference": 0.019026978439994523,
+        "coarse_peak_difference": 0.010268031110249988,
+        "coarse_u_difference": 0.0008320961655562603,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.002663357220572715,
+        "recovery_root_cells": 0.011826333522221795
+      }
+    },
+    {
+      "case_id": "fresh-h1-019",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.01192202858857833,
+          "projection": 0.00205096946250853
+        },
+        "p_relative_l2": {
+          "discretisation": 0.007745639557557624,
+          "projection": 0.0007106169766755377
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0013282026347503618,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0265674012510184,
+      "reported_slices": [
+        "net_section_factor:2",
+        "notch_sharpness:1"
+      ],
+      "slices": [
+        "all",
+        "width:0",
+        "notch_radius:2",
+        "notch_depth:3",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.026370570525320464,
+        "p_relative_l2": 0.0195982730524728,
+        "u_relative_l2": 0.00353270795040339
+      },
+      "terms": {
+        "case_id": "fresh-h1-019",
+        "coarse_p_difference": 0.003931796729724682,
+        "coarse_peak_difference": 0.006051791161714888,
+        "coarse_u_difference": 0.000674214535406275,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0007106169766755377,
+        "recovery_root_cells": 0.00205096946250853
+      }
+    },
+    {
+      "case_id": "fresh-h1-020",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.011627335242065138,
+          "projection": 0.00295114535348325
+        },
+        "p_relative_l2": {
+          "discretisation": 0.010931360211952361,
+          "projection": 0.0009102026809412194
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0009945263372189222,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0315681588757377,
+      "reported_slices": [
+        "net_section_factor:1",
+        "notch_sharpness:1"
+      ],
+      "slices": [
+        "all",
+        "width:2",
+        "notch_radius:2",
+        "notch_depth:3",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.010843506465495952,
+        "p_relative_l2": 0.018161616918208914,
+        "u_relative_l2": 0.0014787470028402438
+      },
+      "terms": {
+        "case_id": "fresh-h1-020",
+        "coarse_p_difference": 0.005548913813173788,
+        "coarse_peak_difference": 0.005902200630489918,
+        "coarse_u_difference": 0.0005048357041720418,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0009102026809412194,
+        "recovery_root_cells": 0.00295114535348325
+      }
+    },
+    {
+      "case_id": "fresh-h1-021",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.009515520072624187,
+          "projection": 0.0015466785557518756
+        },
+        "p_relative_l2": {
+          "discretisation": 0.006173903919463097,
+          "projection": 0.000587240446216873
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0011746354959034566,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0264493545435502,
+      "reported_slices": [
+        "net_section_factor:2",
+        "notch_sharpness:1"
+      ],
+      "slices": [
+        "all",
+        "width:0",
+        "notch_radius:3",
+        "notch_depth:3",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.031050723841819106,
+        "p_relative_l2": 0.02082216859331574,
+        "u_relative_l2": 0.0026844423574184303
+      },
+      "terms": {
+        "case_id": "fresh-h1-021",
+        "coarse_p_difference": 0.0031339613804381205,
+        "coarse_peak_difference": 0.0048302132348346126,
+        "coarse_u_difference": 0.0005962616730474399,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.000587240446216873,
+        "recovery_root_cells": 0.0015466785557518756
+      }
+    },
+    {
+      "case_id": "fresh-h1-022",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.006750938814499561,
+          "projection": 0.0016103381358898315
+        },
+        "p_relative_l2": {
+          "discretisation": 0.006475390009287438,
+          "projection": 0.0005467737140905189
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0007599335824658093,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0458067289043176,
+      "reported_slices": [
+        "net_section_factor:1",
+        "notch_sharpness:0"
+      ],
+      "slices": [
+        "all",
+        "width:1",
+        "notch_radius:3",
+        "notch_depth:3",
+        "nominal_axial_strain:0"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.0081748592279898,
+        "p_relative_l2": 0.01585443884996286,
+        "u_relative_l2": 0.0026732787704306506
+      },
+      "terms": {
+        "case_id": "fresh-h1-022",
+        "coarse_p_difference": 0.003287000004714436,
+        "coarse_peak_difference": 0.003426872494669828,
+        "coarse_u_difference": 0.0003857530875460961,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0005467737140905189,
+        "recovery_root_cells": 0.0016103381358898315
+      }
+    },
+    {
+      "case_id": "fresh-h1-023",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.03586715625174246,
+          "projection": 0.013742205460437725
+        },
+        "p_relative_l2": {
+          "discretisation": 0.04338225485722091,
+          "projection": 0.0018604942651954987
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0011822784938217118,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0720359948771825,
+      "reported_slices": [
+        "net_section_factor:0",
+        "notch_sharpness:0"
+      ],
+      "slices": [
+        "all",
+        "width:3",
+        "notch_radius:0",
+        "notch_depth:0",
+        "nominal_axial_strain:1"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.03260941644641199,
+        "p_relative_l2": 0.0344937891435331,
+        "u_relative_l2": 0.0054327481067153885
+      },
+      "terms": {
+        "case_id": "fresh-h1-023",
+        "coarse_p_difference": 0.022021449166101985,
+        "coarse_peak_difference": 0.007522163224216921,
+        "coarse_u_difference": 0.0006001413674221887,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0018604942651954987,
+        "recovery_root_cells": 0.013742205460437725
+      }
+    },
+    {
+      "case_id": "fresh-h1-024",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.008792442892413427,
+          "projection": 0.0033687520660587848
+        },
+        "p_relative_l2": {
+          "discretisation": 0.012706241510753197,
+          "projection": 0.0007290421585868825
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0005672156140517492,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0490648742907358,
+      "reported_slices": [
+        "net_section_factor:0",
+        "notch_sharpness:0"
+      ],
+      "slices": [
+        "all",
+        "width:0",
+        "notch_radius:0",
+        "notch_depth:1",
+        "nominal_axial_strain:1"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.01855898732068712,
+        "p_relative_l2": 0.01579059943045154,
+        "u_relative_l2": 0.001926987436155926
+      },
+      "terms": {
+        "case_id": "fresh-h1-024",
+        "coarse_p_difference": 0.006449868787184364,
+        "coarse_peak_difference": 0.00412297890180138,
+        "coarse_u_difference": 0.0002879267076404818,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0007290421585868825,
+        "recovery_root_cells": 0.0033687520660587848
+      }
+    },
+    {
+      "case_id": "fresh-h1-025",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.004610963997823161,
+          "projection": 0.0017666528727291807
+        },
+        "p_relative_l2": {
+          "discretisation": 0.007312064887245923,
+          "projection": 0.0004811481609578519
+        },
+        "u_relative_l2": {
+          "discretisation": 0.00045569152064508,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0609587412158545,
+      "reported_slices": [
+        "net_section_factor:0",
+        "notch_sharpness:0"
+      ],
+      "slices": [
+        "all",
+        "width:1",
+        "notch_radius:3",
+        "notch_depth:1",
+        "nominal_axial_strain:1"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.006172380550745527,
+        "p_relative_l2": 0.012609645414160122,
+        "u_relative_l2": 0.0018578976068311809
+      },
+      "terms": {
+        "case_id": "fresh-h1-025",
+        "coarse_p_difference": 0.003711708064591839,
+        "coarse_peak_difference": 0.002225158103312317,
+        "coarse_u_difference": 0.00023131549271323857,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0004811481609578519,
+        "recovery_root_cells": 0.0017666528727291807
+      }
+    },
+    {
+      "case_id": "fresh-h1-026",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.024879473726223837,
+          "projection": 0.005654875140647836
+        },
+        "p_relative_l2": {
+          "discretisation": 0.0185565213700879,
+          "projection": 0.001452065955552164
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0017047288889697895,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.014734089301033,
+      "reported_slices": [
+        "net_section_factor:2",
+        "notch_sharpness:3"
+      ],
+      "slices": [
+        "all",
+        "width:0",
+        "notch_radius:0",
+        "notch_depth:3",
+        "nominal_axial_strain:1"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.0344253955192226,
+        "p_relative_l2": 0.023121421949993747,
+        "u_relative_l2": 0.0014510588221718762
+      },
+      "terms": {
+        "case_id": "fresh-h1-026",
+        "coarse_p_difference": 0.009419553994968478,
+        "coarse_peak_difference": 0.012629174480316668,
+        "coarse_u_difference": 0.0008653446136902485,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.001452065955552164,
+        "recovery_root_cells": 0.005654875140647836
+      }
+    },
+    {
+      "case_id": "fresh-h1-027",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.036146857891604184,
+          "projection": 0.01384937083969509
+        },
+        "p_relative_l2": {
+          "discretisation": 0.04360629423819352,
+          "projection": 0.002810828888546008
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0016106668479400335,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.023010360363242,
+      "reported_slices": [
+        "net_section_factor:0",
+        "notch_sharpness:3"
+      ],
+      "slices": [
+        "all",
+        "width:3",
+        "notch_radius:0",
+        "notch_depth:3",
+        "nominal_axial_strain:1"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.04978294518145477,
+        "p_relative_l2": 0.03875699625193392,
+        "u_relative_l2": 0.004675198241159637
+      },
+      "terms": {
+        "case_id": "fresh-h1-027",
+        "coarse_p_difference": 0.022135174740199756,
+        "coarse_peak_difference": 0.0069032655358866124,
+        "coarse_u_difference": 0.0008175973847411338,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.002810828888546008,
+        "recovery_root_cells": 0.01384937083969509
+      }
+    },
+    {
+      "case_id": "fresh-h1-028",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.00920560935257649,
+          "projection": 0.0018093758569455328
+        },
+        "p_relative_l2": {
+          "discretisation": 0.006878697424230423,
+          "projection": 0.0006011133887135093
+        },
+        "u_relative_l2": {
+          "discretisation": 0.001056434315461452,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0393167288563234,
+      "reported_slices": [
+        "net_section_factor:2",
+        "notch_sharpness:1"
+      ],
+      "slices": [
+        "all",
+        "width:0",
+        "notch_radius:2",
+        "notch_depth:3",
+        "nominal_axial_strain:1"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.014856089742792991,
+        "p_relative_l2": 0.015120031081295646,
+        "u_relative_l2": 0.0013018658809921739
+      },
+      "terms": {
+        "case_id": "fresh-h1-028",
+        "coarse_p_difference": 0.003491724580827626,
+        "coarse_peak_difference": 0.004672898148515985,
+        "coarse_u_difference": 0.0005362610738383006,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0006011133887135093,
+        "recovery_root_cells": 0.0018093758569455328
+      }
+    },
+    {
+      "case_id": "fresh-h1-029",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.008662919311690786,
+          "projection": 0.00229487842784138
+        },
+        "p_relative_l2": {
+          "discretisation": 0.008880397165933885,
+          "projection": 0.0007291605063392223
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0008267639255695692,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0433593658746911,
+      "reported_slices": [
+        "net_section_factor:1",
+        "notch_sharpness:0"
+      ],
+      "slices": [
+        "all",
+        "width:2",
+        "notch_radius:3",
+        "notch_depth:3",
+        "nominal_axial_strain:1"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.003795586864176595,
+        "p_relative_l2": 0.016857619036380733,
+        "u_relative_l2": 0.00193171684293981
+      },
+      "terms": {
+        "case_id": "fresh-h1-029",
+        "coarse_p_difference": 0.0045078158202710075,
+        "coarse_peak_difference": 0.004397420970401415,
+        "coarse_u_difference": 0.0004196771195784615,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0007291605063392223,
+        "recovery_root_cells": 0.00229487842784138
+      }
+    },
+    {
+      "case_id": "fresh-h1-030",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.0053345025784066165,
+          "projection": 0.0020438707196960217
+        },
+        "p_relative_l2": {
+          "discretisation": 0.008292787044894426,
+          "projection": 0.00039393350218317857
+        },
+        "u_relative_l2": {
+          "discretisation": 0.00021376265585714647,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0931608303477167,
+      "reported_slices": [
+        "net_section_factor:0",
+        "notch_sharpness:0"
+      ],
+      "slices": [
+        "all",
+        "width:0",
+        "notch_radius:3",
+        "notch_depth:0",
+        "nominal_axial_strain:2"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.010036262762659422,
+        "p_relative_l2": 0.011390472829285781,
+        "u_relative_l2": 0.0018751184135257259
+      },
+      "terms": {
+        "case_id": "fresh-h1-030",
+        "coarse_p_difference": 0.0042095365710123995,
+        "coarse_peak_difference": 0.0015222704322180515,
+        "coarse_u_difference": 0.00010850896236403374,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.00039393350218317857,
+        "recovery_root_cells": 0.0020438707196960217
+      }
+    },
+    {
+      "case_id": "fresh-h1-031",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.011848681549932582,
+          "projection": 0.004539724731774936
+        },
+        "p_relative_l2": {
+          "discretisation": 0.016257004554934958,
+          "projection": 0.0009994580786925203
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0007845363261041446,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.044435639207683,
+      "reported_slices": [
+        "net_section_factor:0",
+        "notch_sharpness:1"
+      ],
+      "slices": [
+        "all",
+        "width:0",
+        "notch_radius:0",
+        "notch_depth:1",
+        "nominal_axial_strain:2"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.010438168763872218,
+        "p_relative_l2": 0.014600056293008855,
+        "u_relative_l2": 0.001152575693563588
+      },
+      "terms": {
+        "case_id": "fresh-h1-031",
+        "coarse_p_difference": 0.008252286576109116,
+        "coarse_peak_difference": 0.0058103049681222626,
+        "coarse_u_difference": 0.00039824178990058106,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0009994580786925203,
+        "recovery_root_cells": 0.004539724731774936
+      }
+    },
+    {
+      "case_id": "fresh-h1-032",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.021801401916684723,
+          "projection": 0.008353027554285335
+        },
+        "p_relative_l2": {
+          "discretisation": 0.02907013699073165,
+          "projection": 0.001672724305386003
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0009365016765911655,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0483244848341524,
+      "reported_slices": [
+        "net_section_factor:0",
+        "notch_sharpness:1"
+      ],
+      "slices": [
+        "all",
+        "width:3",
+        "notch_radius:0",
+        "notch_depth:1",
+        "nominal_axial_strain:2"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.011092108763750969,
+        "p_relative_l2": 0.01694570507246039,
+        "u_relative_l2": 0.002027666210675235
+      },
+      "terms": {
+        "case_id": "fresh-h1-032",
+        "coarse_p_difference": 0.014756414716107436,
+        "coarse_peak_difference": 0.004598388526341899,
+        "coarse_u_difference": 0.00047538156172140386,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.001672724305386003,
+        "recovery_root_cells": 0.008353027554285335
+      }
+    },
+    {
+      "case_id": "fresh-h1-033",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.007759411281196158,
+          "projection": 0.00297295451386826
+        },
+        "p_relative_l2": {
+          "discretisation": 0.011610713406626122,
+          "projection": 0.0007125866443143808
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0005500059433968852,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0667502843797656,
+      "reported_slices": [
+        "net_section_factor:0",
+        "notch_sharpness:0"
+      ],
+      "slices": [
+        "all",
+        "width:2",
+        "notch_radius:2",
+        "notch_depth:1",
+        "nominal_axial_strain:2"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.026919464536634578,
+        "p_relative_l2": 0.013626972544503865,
+        "u_relative_l2": 0.0019308005855427181
+      },
+      "terms": {
+        "case_id": "fresh-h1-033",
+        "coarse_p_difference": 0.005893763150571636,
+        "coarse_peak_difference": 0.003398612496757236,
+        "coarse_u_difference": 0.0002791908342116169,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0007125866443143808,
+        "recovery_root_cells": 0.00297295451386826
+      }
+    },
+    {
+      "case_id": "fresh-h1-034",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.027822621089305544,
+          "projection": 0.010660008080193696
+        },
+        "p_relative_l2": {
+          "discretisation": 0.03431583428387402,
+          "projection": 0.002178745106131828
+        },
+        "u_relative_l2": {
+          "discretisation": 0.001322279099521357,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0248532659284437,
+      "reported_slices": [
+        "net_section_factor:0",
+        "notch_sharpness:2"
+      ],
+      "slices": [
+        "all",
+        "width:2",
+        "notch_radius:0",
+        "notch_depth:2",
+        "nominal_axial_strain:2"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.010027645766551385,
+        "p_relative_l2": 0.027220657589707507,
+        "u_relative_l2": 0.0015011171775546515
+      },
+      "terms": {
+        "case_id": "fresh-h1-034",
+        "coarse_p_difference": 0.017419205220240618,
+        "coarse_peak_difference": 0.008740926756509214,
+        "coarse_u_difference": 0.0006712076647316533,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.002178745106131828,
+        "recovery_root_cells": 0.010660008080193696
+      }
+    },
+    {
+      "case_id": "fresh-h1-035",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.0064663329607662235,
+          "projection": 0.0023547028315566948
+        },
+        "p_relative_l2": {
+          "discretisation": 0.009454331239714696,
+          "projection": 0.0006974618055197043
+        },
+        "u_relative_l2": {
+          "discretisation": 0.00062710976053121,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0616986179048107,
+      "reported_slices": [
+        "net_section_factor:0",
+        "notch_sharpness:0"
+      ],
+      "slices": [
+        "all",
+        "width:3",
+        "notch_radius:3",
+        "notch_depth:2",
+        "nominal_axial_strain:2"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.013737920971803512,
+        "p_relative_l2": 0.0186637782051227,
+        "u_relative_l2": 0.00320927707107129
+      },
+      "terms": {
+        "case_id": "fresh-h1-035",
+        "coarse_p_difference": 0.004799152913560759,
+        "coarse_peak_difference": 0.0032824025181554433,
+        "coarse_u_difference": 0.0003183298276808173,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0006974618055197043,
+        "recovery_root_cells": 0.0023547028315566948
+      }
+    },
+    {
+      "case_id": "fresh-h1-036",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.02352096453094047,
+          "projection": 0.0059588367999331366
+        },
+        "p_relative_l2": {
+          "discretisation": 0.0194602173212478,
+          "projection": 0.001505821718509823
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0015767542173684083,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0181235479923472,
+      "reported_slices": [
+        "net_section_factor:2",
+        "notch_sharpness:3"
+      ],
+      "slices": [
+        "all",
+        "width:1",
+        "notch_radius:0",
+        "notch_depth:3",
+        "nominal_axial_strain:2"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.032909215422990655,
+        "p_relative_l2": 0.022210865576126695,
+        "u_relative_l2": 0.0014389977349568229
+      },
+      "terms": {
+        "case_id": "fresh-h1-036",
+        "coarse_p_difference": 0.009878282904186702,
+        "coarse_peak_difference": 0.011939575904030697,
+        "coarse_u_difference": 0.0008003828514560449,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.001505821718509823,
+        "recovery_root_cells": 0.0059588367999331366
+      }
+    },
+    {
+      "case_id": "fresh-h1-037",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.01149065539157463,
+          "projection": 0.0026030308637704177
+        },
+        "p_relative_l2": {
+          "discretisation": 0.009532972186769345,
+          "projection": 0.0007980698677938579
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0010780602392755948,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0362229963631302,
+      "reported_slices": [
+        "net_section_factor:1",
+        "notch_sharpness:1"
+      ],
+      "slices": [
+        "all",
+        "width:1",
+        "notch_radius:1",
+        "notch_depth:3",
+        "nominal_axial_strain:2"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.028429593557975426,
+        "p_relative_l2": 0.016546353748978698,
+        "u_relative_l2": 0.001813479297577194
+      },
+      "terms": {
+        "case_id": "fresh-h1-037",
+        "coarse_p_difference": 0.0048390721760250485,
+        "coarse_peak_difference": 0.005832819995723162,
+        "coarse_u_difference": 0.0005472387001398958,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0007980698677938579,
+        "recovery_root_cells": 0.0026030308637704177
+      }
+    },
+    {
+      "case_id": "fresh-h1-038",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.016348061433803726,
+          "projection": 0.006263625070422884
+        },
+        "p_relative_l2": {
+          "discretisation": 0.022707842735714925,
+          "projection": 0.0009214687991530503
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0003888897419150673,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0996858260436635,
+      "reported_slices": [
+        "net_section_factor:0",
+        "notch_sharpness:0"
+      ],
+      "slices": [
+        "all",
+        "width:0",
+        "notch_radius:0",
+        "notch_depth:0",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.002265964803694813,
+        "p_relative_l2": 0.021485074273447594,
+        "u_relative_l2": 0.002915917383680266
+      },
+      "terms": {
+        "case_id": "fresh-h1-038",
+        "coarse_p_difference": 0.01152682372371316,
+        "coarse_peak_difference": 0.0026139391677231553,
+        "coarse_u_difference": 0.00019740596036297835,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0009214687991530503,
+        "recovery_root_cells": 0.006263625070422884
+      }
+    },
+    {
+      "case_id": "fresh-h1-039",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.029643541592213406,
+          "projection": 0.011357678770962991
+        },
+        "p_relative_l2": {
+          "discretisation": 0.037920310754136634,
+          "projection": 0.0016651040667155672
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0008366088978386324,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0721863699176004,
+      "reported_slices": [
+        "net_section_factor:0",
+        "notch_sharpness:0"
+      ],
+      "slices": [
+        "all",
+        "width:2",
+        "notch_radius:0",
+        "notch_depth:0",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.008071067161915855,
+        "p_relative_l2": 0.01899658672758749,
+        "u_relative_l2": 0.001235959280414253
+      },
+      "terms": {
+        "case_id": "fresh-h1-039",
+        "coarse_p_difference": 0.01924888870768357,
+        "coarse_peak_difference": 0.00015698691428142004,
+        "coarse_u_difference": 0.00042467456743077787,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0016651040667155672,
+        "recovery_root_cells": 0.011357678770962991
+      }
+    },
+    {
+      "case_id": "fresh-h1-040",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.006319827961316081,
+          "projection": 0.0024213900234927514
+        },
+        "p_relative_l2": {
+          "discretisation": 0.009677165348100309,
+          "projection": 0.0004639289332772466
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0002638082640037927,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.1053560560564877,
+      "reported_slices": [
+        "net_section_factor:0",
+        "notch_sharpness:0"
+      ],
+      "slices": [
+        "all",
+        "width:0",
+        "notch_radius:1",
+        "notch_depth:0",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.010496849731506518,
+        "p_relative_l2": 0.012385139233549045,
+        "u_relative_l2": 0.0010490961868287684
+      },
+      "terms": {
+        "case_id": "fresh-h1-040",
+        "coarse_p_difference": 0.004912266674162593,
+        "coarse_peak_difference": 0.0020500278068577593,
+        "coarse_u_difference": 0.00013391282436740748,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0004639289332772466,
+        "recovery_root_cells": 0.0024213900234927514
+      }
+    },
+    {
+      "case_id": "fresh-h1-041",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.01988263012051104,
+          "projection": 0.007617865946555954
+        },
+        "p_relative_l2": {
+          "discretisation": 0.026287732509422183,
+          "projection": 0.0011043683723115608
+        },
+        "u_relative_l2": {
+          "discretisation": 0.000573087829442994,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.1008310043673515,
+      "reported_slices": [
+        "net_section_factor:0",
+        "notch_sharpness:0"
+      ],
+      "slices": [
+        "all",
+        "width:2",
+        "notch_radius:1",
+        "notch_depth:0",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.025503762027961136,
+        "p_relative_l2": 0.020295773014979642,
+        "u_relative_l2": 0.002042904253754021
+      },
+      "terms": {
+        "case_id": "fresh-h1-041",
+        "coarse_p_difference": 0.013344026654529027,
+        "coarse_peak_difference": 0.000383772742450202,
+        "coarse_u_difference": 0.0002909075276360376,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0011043683723115608,
+        "recovery_root_cells": 0.007617865946555954
+      }
+    },
+    {
+      "case_id": "fresh-h1-042",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.006773329559509925,
+          "projection": 0.0025951454250995884
+        },
+        "p_relative_l2": {
+          "discretisation": 0.01044813003160684,
+          "projection": 0.0005826406010970792
+        },
+        "u_relative_l2": {
+          "discretisation": 0.00039149472074517295,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.088631175463025,
+      "reported_slices": [
+        "net_section_factor:0",
+        "notch_sharpness:0"
+      ],
+      "slices": [
+        "all",
+        "width:2",
+        "notch_radius:2",
+        "notch_depth:0",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.005793278526365952,
+        "p_relative_l2": 0.01069700446329489,
+        "u_relative_l2": 0.0009650424729797634
+      },
+      "terms": {
+        "case_id": "fresh-h1-042",
+        "coarse_p_difference": 0.005303619305384183,
+        "coarse_peak_difference": 0.002418891150726582,
+        "coarse_u_difference": 0.00019872828464221977,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0005826406010970792,
+        "recovery_root_cells": 0.0025951454250995884
+      }
+    },
+    {
+      "case_id": "fresh-h1-043",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.0032208466037073227,
+          "projection": 0.0012340408443323077
+        },
+        "p_relative_l2": {
+          "discretisation": 0.005190384642554378,
+          "projection": 0.0002922949265010829
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0002503433027540953,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.1074835482490746,
+      "reported_slices": [
+        "net_section_factor:0",
+        "notch_sharpness:0"
+      ],
+      "slices": [
+        "all",
+        "width:0",
+        "notch_radius:3",
+        "notch_depth:0",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.01033744249412217,
+        "p_relative_l2": 0.01346368079289474,
+        "u_relative_l2": 0.0016826009656477248
+      },
+      "terms": {
+        "case_id": "fresh-h1-043",
+        "coarse_p_difference": 0.002634713016525065,
+        "coarse_peak_difference": 0.0012329654565864405,
+        "coarse_u_difference": 0.00012707781865690118,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0002922949265010829,
+        "recovery_root_cells": 0.0012340408443323077
+      }
+    },
+    {
+      "case_id": "fresh-h1-044",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.006366002321215902,
+          "projection": 0.0024390813491248667
+        },
+        "p_relative_l2": {
+          "discretisation": 0.009886443564337793,
+          "projection": 0.0005345028513807314
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0003258272632373364,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.1061949244891318,
+      "reported_slices": [
+        "net_section_factor:0",
+        "notch_sharpness:0"
+      ],
+      "slices": [
+        "all",
+        "width:3",
+        "notch_radius:3",
+        "notch_depth:0",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.020120292548789224,
+        "p_relative_l2": 0.013868091905903901,
+        "u_relative_l2": 0.0028419392412020743
+      },
+      "terms": {
+        "case_id": "fresh-h1-044",
+        "coarse_p_difference": 0.005018499271237459,
+        "coarse_peak_difference": 0.0019407513539396553,
+        "coarse_u_difference": 0.00016539454986666823,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0005345028513807314,
+        "recovery_root_cells": 0.0024390813491248667
+      }
+    },
+    {
+      "case_id": "fresh-h1-045",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.019671809862888207,
+          "projection": 0.007537091901489735
+        },
+        "p_relative_l2": {
+          "discretisation": 0.02659844621023901,
+          "projection": 0.0013750580775597286
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0007274175288560676,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0612531410300032,
+      "reported_slices": [
+        "net_section_factor:0",
+        "notch_sharpness:1"
+      ],
+      "slices": [
+        "all",
+        "width:2",
+        "notch_radius:0",
+        "notch_depth:1",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.015037536847670514,
+        "p_relative_l2": 0.013984672240766542,
+        "u_relative_l2": 0.0022066641675263514
+      },
+      "terms": {
+        "case_id": "fresh-h1-045",
+        "coarse_p_difference": 0.013501749345298991,
+        "coarse_peak_difference": 0.003920308779726906,
+        "coarse_u_difference": 0.00036924747657668405,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0013750580775597286,
+        "recovery_root_cells": 0.007537091901489735
+      }
+    },
+    {
+      "case_id": "fresh-h1-046",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.011815441586768527,
+          "projection": 0.004526989113704417
+        },
+        "p_relative_l2": {
+          "discretisation": 0.01677246513162078,
+          "projection": 0.0009452583927775113
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0006150441267399867,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0638023814828872,
+      "reported_slices": [
+        "net_section_factor:0",
+        "notch_sharpness:0"
+      ],
+      "slices": [
+        "all",
+        "width:1",
+        "notch_radius:1",
+        "notch_depth:1",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.018613244315179103,
+        "p_relative_l2": 0.013197602379698909,
+        "u_relative_l2": 0.0009846566339469132
+      },
+      "terms": {
+        "case_id": "fresh-h1-046",
+        "coarse_p_difference": 0.008513941691178062,
+        "coarse_peak_difference": 0.004418837818189508,
+        "coarse_u_difference": 0.0003122051404771506,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0009452583927775113,
+        "recovery_root_cells": 0.004526989113704417
+      }
+    },
+    {
+      "case_id": "fresh-h1-047",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.009092456990744034,
+          "projection": 0.0034836999964536534
+        },
+        "p_relative_l2": {
+          "discretisation": 0.013644436930961583,
+          "projection": 0.0008176935155460696
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0005284817716981567,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0833758932424142,
+      "reported_slices": [
+        "net_section_factor:0",
+        "notch_sharpness:0"
+      ],
+      "slices": [
+        "all",
+        "width:3",
+        "notch_radius:2",
+        "notch_depth:1",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.0009089257171774313,
+        "p_relative_l2": 0.015267193610644637,
+        "u_relative_l2": 0.002383037214344411
+      },
+      "terms": {
+        "case_id": "fresh-h1-047",
+        "coarse_p_difference": 0.006926110117239382,
+        "coarse_peak_difference": 0.0031295184418772375,
+        "coarse_u_difference": 0.00026826485873002875,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0008176935155460696,
+        "recovery_root_cells": 0.0034836999964536534
+      }
+    },
+    {
+      "case_id": "fresh-h1-048",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.014583575758014474,
+          "projection": 0.0033592901040127073
+        },
+        "p_relative_l2": {
+          "discretisation": 0.011609762144482711,
+          "projection": 0.0008869296327527475
+        },
+        "u_relative_l2": {
+          "discretisation": 0.001237499498780928,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0330790179518492,
+      "reported_slices": [
+        "net_section_factor:2",
+        "notch_sharpness:2"
+      ],
+      "slices": [
+        "all",
+        "width:0",
+        "notch_radius:0",
+        "notch_depth:2",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.005116809714130698,
+        "p_relative_l2": 0.01969121104606716,
+        "u_relative_l2": 0.0011077885987021377
+      },
+      "terms": {
+        "case_id": "fresh-h1-048",
+        "coarse_p_difference": 0.005893280276387163,
+        "coarse_peak_difference": 0.007402830334017499,
+        "coarse_u_difference": 0.0006281723344065624,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0008869296327527475,
+        "recovery_root_cells": 0.0033592901040127073
+      }
+    },
+    {
+      "case_id": "fresh-h1-049",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.017293769348025668,
+          "projection": 0.006625965267442785
+        },
+        "p_relative_l2": {
+          "discretisation": 0.02318018579068834,
+          "projection": 0.0013966192554413417
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0008686137663805149,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0506679792032574,
+      "reported_slices": [
+        "net_section_factor:0",
+        "notch_sharpness:1"
+      ],
+      "slices": [
+        "all",
+        "width:2",
+        "notch_radius:0",
+        "notch_depth:2",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.013706348630071323,
+        "p_relative_l2": 0.01580329407058468,
+        "u_relative_l2": 0.0017289250324454223
+      },
+      "terms": {
+        "case_id": "fresh-h1-049",
+        "coarse_p_difference": 0.011766591771923015,
+        "coarse_peak_difference": 0.005890430230612896,
+        "coarse_u_difference": 0.00044092069359417,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0013966192554413417,
+        "recovery_root_cells": 0.006625965267442785
+      }
+    },
+    {
+      "case_id": "fresh-h1-050",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.009034767438459122,
+          "projection": 0.0023437102718332635
+        },
+        "p_relative_l2": {
+          "discretisation": 0.008616751573672213,
+          "projection": 0.0006355469306654378
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0008655488319413085,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0533566009890267,
+      "reported_slices": [
+        "net_section_factor:1",
+        "notch_sharpness:1"
+      ],
+      "slices": [
+        "all",
+        "width:0",
+        "notch_radius:1",
+        "notch_depth:2",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.014658774040777688,
+        "p_relative_l2": 0.013719925925349832,
+        "u_relative_l2": 0.0008812991005415519
+      },
+      "terms": {
+        "case_id": "fresh-h1-050",
+        "coarse_p_difference": 0.004373985570391987,
+        "coarse_peak_difference": 0.004586176364700062,
+        "coarse_u_difference": 0.0004393648893103089,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0006355469306654378,
+        "recovery_root_cells": 0.0023437102718332635
+      }
+    },
+    {
+      "case_id": "fresh-h1-051",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.007581188945875709,
+          "projection": 0.0022725886190236625
+        },
+        "p_relative_l2": {
+          "discretisation": 0.008660509650316704,
+          "projection": 0.0006206127127004551
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0007226932632247369,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0682042066861488,
+      "reported_slices": [
+        "net_section_factor:1",
+        "notch_sharpness:0"
+      ],
+      "slices": [
+        "all",
+        "width:1",
+        "notch_radius:2",
+        "notch_depth:2",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.0023535269449152007,
+        "p_relative_l2": 0.011344129690740324,
+        "u_relative_l2": 0.0009567195495474058
+      },
+      "terms": {
+        "case_id": "fresh-h1-051",
+        "coarse_p_difference": 0.004396197792038936,
+        "coarse_peak_difference": 0.003848319261865842,
+        "coarse_u_difference": 0.0003668493721952979,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0006206127127004551,
+        "recovery_root_cells": 0.0022725886190236625
+      }
+    },
+    {
+      "case_id": "fresh-h1-052",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.006692189712122182,
+          "projection": 0.0014989955917678152
+        },
+        "p_relative_l2": {
+          "discretisation": 0.005888356002673938,
+          "projection": 0.0004950830941469224
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0008229294624428543,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.068294684518308,
+      "reported_slices": [
+        "net_section_factor:1",
+        "notch_sharpness:0"
+      ],
+      "slices": [
+        "all",
+        "width:0",
+        "notch_radius:3",
+        "notch_depth:2",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.011529891891115005,
+        "p_relative_l2": 0.01283863504161383,
+        "u_relative_l2": 0.0012607911794714737
+      },
+      "terms": {
+        "case_id": "fresh-h1-052",
+        "coarse_p_difference": 0.0029890131993268723,
+        "coarse_peak_difference": 0.0033970506152904475,
+        "coarse_u_difference": 0.00041773069159535753,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0004950830941469224,
+        "recovery_root_cells": 0.0014989955917678152
+      }
+    },
+    {
+      "case_id": "fresh-h1-053",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.004952649535200382,
+          "projection": 0.0013927221499550153
+        },
+        "p_relative_l2": {
+          "discretisation": 0.005693412464507926,
+          "projection": 0.00044168042558060343
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0006066849831724731,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0822702678720573,
+      "reported_slices": [
+        "net_section_factor:0",
+        "notch_sharpness:0"
+      ],
+      "slices": [
+        "all",
+        "width:1",
+        "notch_radius:3",
+        "notch_depth:2",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.000737262897163217,
+        "p_relative_l2": 0.011975500294746233,
+        "u_relative_l2": 0.0013013724107600144
+      },
+      "terms": {
+        "case_id": "fresh-h1-053",
+        "coarse_p_difference": 0.002890057088582704,
+        "coarse_peak_difference": 0.0025140352970560317,
+        "coarse_u_difference": 0.00030796192039211836,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.00044168042558060343,
+        "recovery_root_cells": 0.0013927221499550153
+      }
+    },
+    {
+      "case_id": "fresh-h1-054",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.018660801957477543,
+          "projection": 0.0033101466147560225
+        },
+        "p_relative_l2": {
+          "discretisation": 0.011411836161782294,
+          "projection": 0.000978519362039307
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0018665076334006376,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0255694430890192,
+      "reported_slices": [
+        "net_section_factor:3",
+        "notch_sharpness:3"
+      ],
+      "slices": [
+        "all",
+        "width:0",
+        "notch_radius:0",
+        "notch_depth:3",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.02895006078884543,
+        "p_relative_l2": 0.022867710500389733,
+        "u_relative_l2": 0.0022353378230319013
+      },
+      "terms": {
+        "case_id": "fresh-h1-054",
+        "coarse_p_difference": 0.0057928102344072556,
+        "coarse_peak_difference": 0.009472488303288094,
+        "coarse_u_difference": 0.0009474658037566688,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.000978519362039307,
+        "recovery_root_cells": 0.0033101466147560225
+      }
+    },
+    {
+      "case_id": "fresh-h1-055",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.022500857187706273,
+          "projection": 0.004310661479517065
+        },
+        "p_relative_l2": {
+          "discretisation": 0.014379616814040872,
+          "projection": 0.0011676255516110516
+        },
+        "u_relative_l2": {
+          "discretisation": 0.001887950085983736,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0206298725655232,
+      "reported_slices": [
+        "net_section_factor:3",
+        "notch_sharpness:3"
+      ],
+      "slices": [
+        "all",
+        "width:0",
+        "notch_radius:0",
+        "notch_depth:3",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.05859653169583925,
+        "p_relative_l2": 0.028904770301064937,
+        "u_relative_l2": 0.004780177656968905
+      },
+      "terms": {
+        "case_id": "fresh-h1-055",
+        "coarse_p_difference": 0.007299297875147651,
+        "coarse_peak_difference": 0.011421754917617398,
+        "coarse_u_difference": 0.0009583502974536731,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0011676255516110516,
+        "recovery_root_cells": 0.004310661479517065
+      }
+    },
+    {
+      "case_id": "fresh-h1-056",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.014763983971511739,
+          "projection": 0.0024766721168451456
+        },
+        "p_relative_l2": {
+          "discretisation": 0.008873746665877305,
+          "projection": 0.0007915992223457089
+        },
+        "u_relative_l2": {
+          "discretisation": 0.001761471662960495,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.036657387858112,
+      "reported_slices": [
+        "net_section_factor:3",
+        "notch_sharpness:2"
+      ],
+      "slices": [
+        "all",
+        "width:0",
+        "notch_radius:0",
+        "notch_depth:3",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.0013143416710061373,
+        "p_relative_l2": 0.021331131245957525,
+        "u_relative_l2": 0.001013840892859879
+      },
+      "terms": {
+        "case_id": "fresh-h1-056",
+        "coarse_p_difference": 0.004504439931917414,
+        "coarse_peak_difference": 0.007494408107366365,
+        "coarse_u_difference": 0.0008941480522642106,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0007915992223457089,
+        "recovery_root_cells": 0.0024766721168451456
+      }
+    },
+    {
+      "case_id": "fresh-h1-057",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.018209712551379573,
+          "projection": 0.005889130801410892
+        },
+        "p_relative_l2": {
+          "discretisation": 0.019626482521130105,
+          "projection": 0.001399309737525814
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0012263271966141782,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.030073100404489,
+      "reported_slices": [
+        "net_section_factor:1",
+        "notch_sharpness:2"
+      ],
+      "slices": [
+        "all",
+        "width:1",
+        "notch_radius:0",
+        "notch_depth:3",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.010440018096657516,
+        "p_relative_l2": 0.016024588280381363,
+        "u_relative_l2": 0.0011663424568868655
+      },
+      "terms": {
+        "case_id": "fresh-h1-057",
+        "coarse_p_difference": 0.00996268148280716,
+        "coarse_peak_difference": 0.009243508909329732,
+        "coarse_u_difference": 0.0006225011150325778,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.001399309737525814,
+        "recovery_root_cells": 0.005889130801410892
+      }
+    },
+    {
+      "case_id": "fresh-h1-058",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.01571296812261275,
+          "projection": 0.006020294299851629
+        },
+        "p_relative_l2": {
+          "discretisation": 0.020513336594771732,
+          "projection": 0.001394602873116926
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0010634898080528177,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0379286970130763,
+      "reported_slices": [
+        "net_section_factor:1",
+        "notch_sharpness:2"
+      ],
+      "slices": [
+        "all",
+        "width:2",
+        "notch_radius:0",
+        "notch_depth:3",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.001858483907163495,
+        "p_relative_l2": 0.015475003565737446,
+        "u_relative_l2": 0.0014746976111645735
+      },
+      "terms": {
+        "case_id": "fresh-h1-058",
+        "coarse_p_difference": 0.010412861215620168,
+        "coarse_peak_difference": 0.007808888581968763,
+        "coarse_u_difference": 0.0005398425421587907,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.001394602873116926,
+        "recovery_root_cells": 0.006020294299851629
+      }
+    },
+    {
+      "case_id": "fresh-h1-059",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.011830406516920505,
+          "projection": 0.001859278002301387
+        },
+        "p_relative_l2": {
+          "discretisation": 0.007012523746735231,
+          "projection": 0.0006558539868143653
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0016377242020238151,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0415342004402213,
+      "reported_slices": [
+        "net_section_factor:3",
+        "notch_sharpness:1"
+      ],
+      "slices": [
+        "all",
+        "width:0",
+        "notch_radius:1",
+        "notch_depth:3",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.024062483014425286,
+        "p_relative_l2": 0.020815813933168982,
+        "u_relative_l2": 0.0018462605403823447
+      },
+      "terms": {
+        "case_id": "fresh-h1-059",
+        "coarse_p_difference": 0.0035596567242310814,
+        "coarse_peak_difference": 0.006005282495898733,
+        "coarse_u_difference": 0.0008313320822455915,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0006558539868143653,
+        "recovery_root_cells": 0.001859278002301387
+      }
+    },
+    {
+      "case_id": "fresh-h1-060",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.01479239974883655,
+          "projection": 0.004103499923311383
+        },
+        "p_relative_l2": {
+          "discretisation": 0.014341429778067237,
+          "projection": 0.0011294968540071031
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0011355472285202357,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0331128339450062,
+      "reported_slices": [
+        "net_section_factor:1",
+        "notch_sharpness:2"
+      ],
+      "slices": [
+        "all",
+        "width:2",
+        "notch_radius:1",
+        "notch_depth:3",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.022567026204063496,
+        "p_relative_l2": 0.017873968674776006,
+        "u_relative_l2": 0.0015535931848620261
+      },
+      "terms": {
+        "case_id": "fresh-h1-060",
+        "coarse_p_difference": 0.0072799135929275316,
+        "coarse_peak_difference": 0.007508832359815507,
+        "coarse_u_difference": 0.0005764199129544344,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0011294968540071031,
+        "recovery_root_cells": 0.004103499923311383
+      }
+    },
+    {
+      "case_id": "fresh-h1-061",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.008610184330363127,
+          "projection": 0.001814969867451647
+        },
+        "p_relative_l2": {
+          "discretisation": 0.006990907246282046,
+          "projection": 0.0006121682985822628
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0009634045384651345,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0609501474462086,
+      "reported_slices": [
+        "net_section_factor:1",
+        "notch_sharpness:1"
+      ],
+      "slices": [
+        "all",
+        "width:1",
+        "notch_radius:2",
+        "notch_depth:3",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.020067472922298654,
+        "p_relative_l2": 0.015406697141490136,
+        "u_relative_l2": 0.0017349816417404163
+      },
+      "terms": {
+        "case_id": "fresh-h1-061",
+        "coarse_p_difference": 0.0035486838813614447,
+        "coarse_peak_difference": 0.004370651944346765,
+        "coarse_u_difference": 0.0004890378367843323,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0006121682985822628,
+        "recovery_root_cells": 0.001814969867451647
+      }
+    },
+    {
+      "case_id": "fresh-h1-062",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.007923277989883832,
+          "projection": 0.001123812408018648
+        },
+        "p_relative_l2": {
+          "discretisation": 0.004674385378675858,
+          "projection": 0.0004615977833540498
+        },
+        "u_relative_l2": {
+          "discretisation": 0.0013788139864886306,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0530052784771753,
+      "reported_slices": [
+        "net_section_factor:3",
+        "notch_sharpness:0"
+      ],
+      "slices": [
+        "all",
+        "width:0",
+        "notch_radius:3",
+        "notch_depth:3",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.0023921424295356977,
+        "p_relative_l2": 0.02437087006057725,
+        "u_relative_l2": 0.0051712173151248755
+      },
+      "terms": {
+        "case_id": "fresh-h1-062",
+        "coarse_p_difference": 0.0023727844561806386,
+        "coarse_peak_difference": 0.004021968522783671,
+        "coarse_u_difference": 0.0006999055768977821,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0004615977833540498,
+        "recovery_root_cells": 0.001123812408018648
+      }
+    },
+    {
+      "case_id": "fresh-h1-063",
+      "components": {
+        "absolute_peak_error": {
+          "discretisation": 0.007375544229371076,
+          "projection": 0.0016046723117789533
+        },
+        "p_relative_l2": {
+          "discretisation": 0.006436949779376297,
+          "projection": 0.0005709741097554576
+        },
+        "u_relative_l2": {
+          "discretisation": 0.000841291840810616,
+          "projection": 0.0
+        }
+      },
+      "minimum_vertex_determinant": 1.0620718990234959,
+      "reported_slices": [
+        "net_section_factor:1",
+        "notch_sharpness:0"
+      ],
+      "slices": [
+        "all",
+        "width:2",
+        "notch_radius:3",
+        "notch_depth:3",
+        "nominal_axial_strain:3"
+      ],
+      "surrogate": {
+        "absolute_peak_error": 0.005542073929659224,
+        "p_relative_l2": 0.0175474042449165,
+        "u_relative_l2": 0.0021864929987452718
+      },
+      "terms": {
+        "case_id": "fresh-h1-063",
+        "coarse_p_difference": 0.0032674871976529425,
+        "coarse_peak_difference": 0.0037439310808990234,
+        "coarse_u_difference": 0.0004270516958429523,
+        "coarse_vertex_count": 225,
+        "recovery_all_cells": 0.0005709741097554576,
+        "recovery_root_cells": 0.0016046723117789533
+      }
+    }
+  ],
+  "coverage": {
+    "case_status": [
+      {
+        "case_id": "fresh-h1-000",
+        "distance_to_train": 2.302727393134853,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-001",
+        "distance_to_train": 2.462369101734071,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-002",
+        "distance_to_train": 1.9517881680663034,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-003",
+        "distance_to_train": 2.123194007220938,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-004",
+        "distance_to_train": 2.4431038936613887,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-005",
+        "distance_to_train": 1.6114912004681752,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-006",
+        "distance_to_train": 1.8574583860005338,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-007",
+        "distance_to_train": 1.4619705911244218,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-008",
+        "distance_to_train": 2.2675270368172464,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-009",
+        "distance_to_train": 1.9909447533300713,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-010",
+        "distance_to_train": 1.3730486828176873,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-011",
+        "distance_to_train": 1.2564113405257824,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-012",
+        "distance_to_train": 1.6721426830692403,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-013",
+        "distance_to_train": 2.417185523517613,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-014",
+        "distance_to_train": 2.5899848072859406,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-015",
+        "distance_to_train": 1.8251490429395325,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-016",
+        "distance_to_train": 1.623627495340555,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-017",
+        "distance_to_train": 1.9950997190808373,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-018",
+        "distance_to_train": 2.38784897488611,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-019",
+        "distance_to_train": 1.9370476387423283,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-020",
+        "distance_to_train": 1.802496651900168,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-021",
+        "distance_to_train": 2.52129868153115,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-022",
+        "distance_to_train": 2.1176332606264796,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-023",
+        "distance_to_train": 2.7868734107999646,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-024",
+        "distance_to_train": 1.7349907359551395,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-025",
+        "distance_to_train": 1.8811364894644236,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-026",
+        "distance_to_train": 1.8487528964108133,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-027",
+        "distance_to_train": 2.291123885742313,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-028",
+        "distance_to_train": 1.4450697450529106,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-029",
+        "distance_to_train": 1.7982152385809913,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-030",
+        "distance_to_train": 2.1986153962114257,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-031",
+        "distance_to_train": 1.2080143718732794,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-032",
+        "distance_to_train": 1.980098404166816,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-033",
+        "distance_to_train": 0.9051882013070652,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-034",
+        "distance_to_train": 1.5232470575054382,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-035",
+        "distance_to_train": 2.5906049009691734,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-036",
+        "distance_to_train": 1.7531170188113787,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-037",
+        "distance_to_train": 1.1636751977366877,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-038",
+        "distance_to_train": 2.84683444348449,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-039",
+        "distance_to_train": 2.3084090687776957,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-040",
+        "distance_to_train": 2.4317878136263342,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-041",
+        "distance_to_train": 2.309213167319366,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-042",
+        "distance_to_train": 1.679245255079315,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-043",
+        "distance_to_train": 2.8188070205177005,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-044",
+        "distance_to_train": 2.6331707934392288,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-045",
+        "distance_to_train": 1.9871555743499583,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-046",
+        "distance_to_train": 1.4550296379563092,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-047",
+        "distance_to_train": 2.467532032294629,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-048",
+        "distance_to_train": 1.7722266383386662,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-049",
+        "distance_to_train": 1.7309773753892657,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-050",
+        "distance_to_train": 1.6545460165793786,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-051",
+        "distance_to_train": 1.4322236292554178,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-052",
+        "distance_to_train": 1.8155240572696398,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-053",
+        "distance_to_train": 2.1699135868899178,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-054",
+        "distance_to_train": 2.2867870491444227,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-055",
+        "distance_to_train": 2.2078089501185723,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-056",
+        "distance_to_train": 2.196429498592643,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-057",
+        "distance_to_train": 1.847906815790627,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-058",
+        "distance_to_train": 1.6611831986194612,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-059",
+        "distance_to_train": 2.0547045614513286,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-060",
+        "distance_to_train": 1.646064803726288,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-061",
+        "distance_to_train": 1.954846944818947,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-062",
+        "distance_to_train": 2.6029104607846576,
+        "status": "IN_CALIBRATION"
+      },
+      {
+        "case_id": "fresh-h1-063",
+        "distance_to_train": 2.6476142164131184,
+        "status": "IN_CALIBRATION"
+      }
+    ],
+    "counts": {
+      "budget_total:absolute_peak_error": {
+        "acceptance_count": 48,
+        "bound": 0.05471164630028005,
+        "covered": 55,
+        "gated": true,
+        "m": 64,
+        "pass": true
+      },
+      "budget_total:p_relative_l2": {
+        "acceptance_count": 48,
+        "bound": 0.05413044257925485,
+        "covered": 57,
+        "gated": true,
+        "m": 64,
+        "pass": true
+      },
+      "budget_total:u_relative_l2": {
+        "acceptance_count": 48,
+        "bound": 0.006267089530500303,
+        "covered": 59,
+        "gated": false,
+        "m": 64,
+        "pass": true
+      },
+      "reference_terms:absolute_peak_error": {
+        "acceptance_count": 48,
+        "bound": 0.03255380364006724,
+        "covered": 57,
+        "gated": true,
+        "m": 64,
+        "pass": true
+      },
+      "reference_terms:p_relative_l2": {
+        "acceptance_count": 48,
+        "bound": 0.03109526051472677,
+        "covered": 57,
+        "gated": true,
+        "m": 64,
+        "pass": true
+      },
+      "reference_terms:u_relative_l2": {
+        "acceptance_count": 48,
+        "bound": 0.0013439305285302982,
+        "covered": 52,
+        "gated": false,
+        "m": 64,
+        "pass": true
+      }
+    },
+    "in_calibration": 64,
+    "out_of_calibration_case_ids": [],
+    "per_check_level": 0.00625,
+    "scores": {
+      "budget_total": {
+        "absolute_peak_error": [
+          0.0729927161171503,
+          0.08130406935656684,
+          0.029364198286816225,
+          0.027088243223022928,
+          0.008516868334931347,
+          0.030803213777358382,
+          0.042863693038719314,
+          0.013201754255797015,
+          0.020768650248322827,
+          0.03933161936619628,
+          0.01601735953414001,
+          0.03735384185552355,
+          0.023454078553344568,
+          0.03932822567929323,
+          0.01892620371798832,
+          0.028378661883521977,
+          0.056763206857524624,
+          0.04664933855660028,
+          0.09251941286892745,
+          0.04034356857640732,
+          0.025421987061044343,
+          0.04211292247019517,
+          0.016536136178379193,
+          0.08221877815859217,
+          0.030720182279159333,
+          0.012549997421297868,
+          0.06495974438609427,
+          0.09977917391275404,
+          0.025871074952315016,
+          0.014753384603708761,
+          0.01741463606076206,
+          0.026826575045579733,
+          0.041246538234721034,
+          0.037651830331699,
+          0.048510274936050625,
+          0.02255895676412643,
+          0.06238901675386426,
+          0.04252327981332047,
+          0.024877651307921425,
+          0.049072287525092254,
+          0.019238067716315352,
+          0.05300425809502813,
+          0.015161753510975467,
+          0.014792329942161802,
+          0.02892537621912999,
+          0.04224643861204846,
+          0.03495567501565205,
+          0.01348508270437512,
+          0.02305967557615788,
+          0.03762608324553978,
+          0.02603725175107007,
+          0.012207304509814573,
+          0.019721077195005002,
+          0.007082634582318614,
+          0.050921009361078996,
+          0.0854080503630626,
+          0.01855499775936302,
+          0.03453886144944798,
+          0.023591746329627874,
+          0.03775216753364718,
+          0.04146292587621143,
+          0.03049262712011343,
+          0.011439232827438178,
+          0.014522290470809255
+        ],
+        "p_relative_l2": [
+          0.057747514717221005,
+          0.07505528818312114,
+          0.03821065611559093,
+          0.025873879228363414,
+          0.025683312219542533,
+          0.04498876070258392,
+          0.04241299050306983,
+          0.024261739321300844,
+          0.025411044997094918,
+          0.04406964971757012,
+          0.0292264850639256,
+          0.03352174268849934,
+          0.022376601686211268,
+          0.036046935659860925,
+          0.024358075319368115,
+          0.031749771156760566,
+          0.04965123543951944,
+          0.04609853523066933,
+          0.07790466709552991,
+          0.02805452958670596,
+          0.030003179811102496,
+          0.027583312958995708,
+          0.02287660257334082,
+          0.07973653826594951,
+          0.02922588309979162,
+          0.020402858462363897,
+          0.04313000927563382,
+          0.08517411937867345,
+          0.022599841894239577,
+          0.026467176708653842,
+          0.02007719337636339,
+          0.03185651892663633,
+          0.04768856636857804,
+          0.025950272595444367,
+          0.06371523697971335,
+          0.028815571250357098,
+          0.04317690461588432,
+          0.0268773958035419,
+          0.04511438580831557,
+          0.05858200154843969,
+          0.022526233514926598,
+          0.04768787389671338,
+          0.02172777509599881,
+          0.0189463603619502,
+          0.024289038321622426,
+          0.04195817652856528,
+          0.030915325904097204,
+          0.029729324057152288,
+          0.03218790282330262,
+          0.04038009911671436,
+          0.022972224429687483,
+          0.02062525205375748,
+          0.01922207413843469,
+          0.01811059318483476,
+          0.03525806602421133,
+          0.04445201266671686,
+          0.030996477134180536,
+          0.03705038053903728,
+          0.037382943033626104,
+          0.028484191666718575,
+          0.03334489530685034,
+          0.023009772686354447,
+          0.029506853222607158,
+          0.024555328134048253
+        ],
+        "u_relative_l2": [
+          0.003724396020572407,
+          0.00393717494478845,
+          0.0025733942416079135,
+          0.0023086719757789646,
+          0.004789882931719213,
+          0.0026012457154866503,
+          0.0027212782414998,
+          0.0022393364670939488,
+          0.0024831341291852837,
+          0.003992328144985527,
+          0.002643298539252413,
+          0.0028132088393603943,
+          0.0021769587939355923,
+          0.004838257809683708,
+          0.003130866533689005,
+          0.0043833304470571564,
+          0.003517483070262312,
+          0.00437069289252641,
+          0.008347334482407143,
+          0.004860910585153751,
+          0.002473273340059166,
+          0.003859077853321887,
+          0.00343321235289646,
+          0.0066150266005371005,
+          0.002494203050207675,
+          0.002313589127476261,
+          0.0031557877111416657,
+          0.00628586508909967,
+          0.0023583001964536257,
+          0.002758480768509379,
+          0.002088881069382872,
+          0.0019371120196677327,
+          0.0029641678872664007,
+          0.0024808065289396034,
+          0.0028233962770760086,
+          0.0038363868316024998,
+          0.0030157519523252314,
+          0.002891539536852789,
+          0.0033048071255953335,
+          0.0020725681782528854,
+          0.001312904450832561,
+          0.0026159920831970154,
+          0.0013565371937249364,
+          0.0019329442684018201,
+          0.0031677665044394106,
+          0.002934081696382419,
+          0.0015997007606868999,
+          0.0029115189860425676,
+          0.002345288097483066,
+          0.002597538798825937,
+          0.0017468479324828604,
+          0.0016794128127721427,
+          0.002083720641914328,
+          0.0019080573939324877,
+          0.004101845456432539,
+          0.006668127742952641,
+          0.002775312555820374,
+          0.0023926696535010437,
+          0.002538187419217391,
+          0.00348398474240616,
+          0.002689140413382262,
+          0.0026983861802055507,
+          0.006550031301613506,
+          0.003027784839555888
+        ]
+      },
+      "reference_terms": {
+        "absolute_peak_error": [
+          0.03575926403724497,
+          0.05505298662506679,
+          0.01827434246941234,
+          0.011071751758409978,
+          0.006211939769411953,
+          0.02823248757699117,
+          0.025687140057440893,
+          0.009579392110912119,
+          0.008510637703555193,
+          0.02527314050738881,
+          0.015672127278710018,
+          0.015544706202942158,
+          0.009421660561528121,
+          0.013691082388883037,
+          0.006095811778225693,
+          0.019470389260635605,
+          0.0305312884366866,
+          0.025352229773954273,
+          0.042693064015220675,
+          0.013972998051086859,
+          0.014578480595548388,
+          0.011062198628376064,
+          0.008361276950389393,
+          0.04960936171218018,
+          0.012161194958472211,
+          0.006377616870552341,
+          0.030534348866871674,
+          0.049996228731299275,
+          0.011014985209522023,
+          0.010957797739532166,
+          0.007378373298102639,
+          0.01638840628170752,
+          0.030154429470970058,
+          0.010732365795064418,
+          0.03848262916949924,
+          0.008821035792322919,
+          0.029479801330873606,
+          0.014093686255345047,
+          0.02261168650422661,
+          0.0410012203631764,
+          0.008741217984808832,
+          0.027500496067066994,
+          0.009368474984609514,
+          0.004454887448039631,
+          0.008805083670340769,
+          0.027208901764377943,
+          0.016342430700472945,
+          0.012576156987197688,
+          0.01794286586202718,
+          0.023919734615468452,
+          0.011378477710292385,
+          0.009853777564899371,
+          0.008191185303889997,
+          0.0063453716851553975,
+          0.021970948572233567,
+          0.02681151866722334,
+          0.017240656088356884,
+          0.024098843352790465,
+          0.02173326242246438,
+          0.013689684519221892,
+          0.018895899672147932,
+          0.010425154197814774,
+          0.00904709039790248,
+          0.00898021654115003
+        ],
+        "p_relative_l2": [
+          0.03564564000338137,
+          0.05092964459249444,
+          0.019751227226156222,
+          0.012817777384390381,
+          0.007619330853641973,
+          0.02897651955394137,
+          0.027195665256600783,
+          0.011108431513653896,
+          0.010273665910044685,
+          0.01844310780339422,
+          0.014449739518531252,
+          0.017215150857680366,
+          0.007519926392083391,
+          0.01573420060914222,
+          0.005125298068277116,
+          0.012782480011291437,
+          0.027666557159355242,
+          0.025467594820418146,
+          0.04014650474736193,
+          0.008456256534233162,
+          0.01184156289289358,
+          0.00676114436567997,
+          0.007022163723377957,
+          0.04524274912241641,
+          0.01343528366934008,
+          0.0077932130482037745,
+          0.020008587325640065,
+          0.046417123126739526,
+          0.007479810812943933,
+          0.009609557672273106,
+          0.008686720547077604,
+          0.017256462633627477,
+          0.03074286129611765,
+          0.012323300050940502,
+          0.036494579390005846,
+          0.0101517930452344,
+          0.020966039039757623,
+          0.010331042054563203,
+          0.023629311534867976,
+          0.0395854148208522,
+          0.010141094281377555,
+          0.027392100881733744,
+          0.01103077063270392,
+          0.005482679569055461,
+          0.010420946415718524,
+          0.02797350428779874,
+          0.017717723524398293,
+          0.014462130446507652,
+          0.012496691777235459,
+          0.024576805046129684,
+          0.00925229850433765,
+          0.009281122363017159,
+          0.006383439096820861,
+          0.00613509289008853,
+          0.012390355523821601,
+          0.015547242365651925,
+          0.009665345888223013,
+          0.021025792258655918,
+          0.02190793946788866,
+          0.007668377733549596,
+          0.01547092663207434,
+          0.007603075544864309,
+          0.005135983162029907,
+          0.0070079238891317544
+        ],
+        "u_relative_l2": [
+          0.0007215736005126327,
+          0.0012708805340885376,
+          0.0004057143201109304,
+          0.0003238620824134815,
+          0.0003440457037022767,
+          0.0009132192903603321,
+          0.0007076524439426832,
+          0.0005678293587672902,
+          0.0005154911790992065,
+          0.0013634753515840018,
+          0.0009274916485699177,
+          0.000731865859249481,
+          0.0008232079635718179,
+          0.0006676557311006856,
+          0.0006608530470071504,
+          0.0013710894893913562,
+          0.0014091737180454695,
+          0.001266128767881689,
+          0.0016392294461458328,
+          0.0013282026347503618,
+          0.0009945263372189222,
+          0.0011746354959034566,
+          0.0007599335824658093,
+          0.0011822784938217118,
+          0.0005672156140517492,
+          0.00045569152064508,
+          0.0017047288889697895,
+          0.0016106668479400335,
+          0.001056434315461452,
+          0.0008267639255695692,
+          0.00021376265585714647,
+          0.0007845363261041446,
+          0.0009365016765911655,
+          0.0005500059433968852,
+          0.001322279099521357,
+          0.00062710976053121,
+          0.0015767542173684083,
+          0.0010780602392755948,
+          0.0003888897419150673,
+          0.0008366088978386324,
+          0.0002638082640037927,
+          0.000573087829442994,
+          0.00039149472074517295,
+          0.0002503433027540953,
+          0.0003258272632373364,
+          0.0007274175288560676,
+          0.0006150441267399867,
+          0.0005284817716981567,
+          0.001237499498780928,
+          0.0008686137663805149,
+          0.0008655488319413085,
+          0.0007226932632247369,
+          0.0008229294624428543,
+          0.0006066849831724731,
+          0.0018665076334006376,
+          0.001887950085983736,
+          0.001761471662960495,
+          0.0012263271966141782,
+          0.0010634898080528177,
+          0.0016377242020238151,
+          0.0011355472285202357,
+          0.0009634045384651345,
+          0.0013788139864886306,
+          0.000841291840810616
+        ]
+      }
+    }
+  },
+  "evidence_role": "HOLDOUT",
+  "fem_solve_seconds": [
+    75.82651722698938,
+    75.30007747400668,
+    75.21785117097897,
+    83.18975004000822,
+    81.48994237999432,
+    83.57049417498638,
+    80.37802288599778,
+    82.8968620809901,
+    82.08848448700155,
+    80.83193672201014,
+    83.15315692400327,
+    80.60249953897437,
+    81.11192399001447,
+    81.00603741701343,
+    82.15910687099677,
+    80.5978733219963,
+    81.20929154398618,
+    81.19539923302364,
+    83.29871925100451,
+    83.02160253201146,
+    83.553089619003,
+    79.9543487179908,
+    83.14798524900107,
+    81.07354338798905,
+    79.43040235200897,
+    84.10138456599088,
+    81.25848145000055,
+    80.78297547099646,
+    81.32975442399038,
+    90.15478154201992,
+    78.27988287701737,
+    79.09807236501365,
+    80.04631899198284,
+    76.77248514301027,
+    77.92687800401472,
+    95.53205968500697,
+    76.83280647001811,
+    83.30710441901465,
+    77.9804164369998,
+    77.07263680599863,
+    77.34737800000585,
+    77.17744287400274,
+    79.814339028002,
+    77.54936446601641,
+    83.91591450601118,
+    79.77448262000689,
+    77.219194092002,
+    86.19073922900134,
+    78.29467197298072,
+    77.78415878798114,
+    78.08507452101912,
+    85.04076168400934,
+    94.34222051099641,
+    95.01839516399195,
+    79.0626654580119,
+    76.60102545999689,
+    86.6337810010009,
+    77.71404190297471,
+    77.91747254200163,
+    91.59034471999621,
+    81.95444316900102,
+    95.04527904401766,
+    92.74118034899584,
+    87.32452688599005
+  ],
+  "platform_fingerprint": {
+    "cpu_capability": "AVX2",
+    "machine": "x86_64",
+    "os": "Linux"
+  },
+  "protocol_sha256": "8f001ee726958ce1762007b934c1afff02ea2130f258e8aa94a2c21198f6d653",
+  "schema_version": "1.0",
+  "set": "H1",
+  "workers": 3
+}

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import ClassVar
 
 from piginot.contracts import ExecutionProfile, hash_spec
@@ -48,6 +48,9 @@ class TrainingRunBinding(SpecContract):
     implementation_revision: str
     seed: int
     execution_profile: ExecutionProfile
+    problem_spec_hash: str | None = field(default=None, metadata={"omit_if_none": True})
+    """The ProblemSpec a run was built from (binding v2, ADR 0106); absent in
+    v1 bindings, whose canonical form and run hash it leaves unchanged."""
 
     def __post_init__(self) -> None:
         for field_name in (
@@ -93,6 +96,8 @@ class TrainingRunBinding(SpecContract):
             raise ContractValidationError(
                 "execution profile seed must match the training run seed"
             )
+        if self.problem_spec_hash is not None:
+            _content_hash(self.problem_spec_hash, "problem_spec_hash")
 
     @property
     def execution_profile_hash(self) -> str:

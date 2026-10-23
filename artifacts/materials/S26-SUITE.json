@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0",
+  "tree": "d0f1d275e32a207c926ede56e897069ca38ffca0",
+  "commit": "a2091ace9667718980dac001e0464350245dbfed",
+  "clean": true,
+  "branch_coverage": true,
+  "coverage_percent": 92.69,
+  "module_coverage_percent": {
+    "src/piginot/materials/": 98.86,
+    "src/piginot/contracts/energy_formula.py": 97.6
+  },
+  "summary": "3817 passed, 2 skipped in 3383.27s (0:56:23)",
+  "counts": {
+    "passed": 3817,
+    "skipped": 2
+  },
+  "skips": [
+    {
+      "count": 1,
+      "where": "tests/campaigns/test_dogbone_s15_bundle.py:57",
+      "reason": "set PIGINOT_CP_FREEZE_WEIGHTS to the CP-FREEZE model export"
+    },
+    {
+      "count": 1,
+      "where": "tests/campaigns/test_fast_goldens.py:51",
+      "reason": "the AVX512 goldens are reproduced on AVX512 only"
+    }
+  ],
+  "execution_profile": {
+    "python": "3.11.15",
+    "system": "Linux",
+    "machine": "x86_64",
+    "torch": "2.13.0+cu130",
+    "cpu_capability": "AVX2"
+  }
+}

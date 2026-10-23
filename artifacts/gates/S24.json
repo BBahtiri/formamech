@@ -1,0 +1,443 @@
+{
+  "gate_id": "G24",
+  "step": "S24",
+  "commit": "65ad014c277c1aead7d0fbb5d379dc1dbc213eaf",
+  "timestamp_utc": "2026-10-14T19:41:44Z",
+  "execution_profile": {
+    "python": "3.11.15",
+    "system": "Linux",
+    "machine": "x86_64",
+    "torch": "2.13.0+cu130",
+    "cpu_capability": "AVX2"
+  },
+  "checks": [
+    {
+      "id": "G24.protocol-first",
+      "status": "PASS",
+      "measured": {
+        "protocol_commit": "0e32e4898e9266d19260097369cd035f8dc9978d",
+        "protocol_commits": 1,
+        "runs": {
+          "adf-viability": "b19458d03b94e041655c6e624c62746e252638a7",
+          "dogbone-v1": "b19458d03b94e041655c6e624c62746e252638a7",
+          "notched-v1": "17167fc25552c327839d1eb9e3526061555481b4"
+        },
+        "replay_amendment": {
+          "amendment_commit": "b19458d03b94e041655c6e624c62746e252638a7",
+          "amendment_commits": 1,
+          "replay_record_commits": {
+            "dogbone-v1": "a0e7503de01d32e548935c1bfacfb31733a775d9",
+            "notched-v1": "57ff6c0a563af9c0f28f18086aa6b589f0eeae05"
+          },
+          "passed": true
+        }
+      },
+      "threshold": "S24-PROTOCOL.json committed once, with ADR 0106 accepted, in a revision the ADF run and both replays were trained from; S24-REPLAY-AMENDMENT.json committed once, before the replay records",
+      "comparison": "all"
+    },
+    {
+      "id": "G24.lifting-exact",
+      "status": "PASS",
+      "measured": {
+        "targets": [
+          "tests/lifting/test_adf.py",
+          "tests/campaigns/test_problem_specs.py::test_both_liftings_meet_the_data_for_a_thousand_parameter_vectors"
+        ],
+        "returncode": 0,
+        "summary": "16 passed in 1.90s"
+      },
+      "threshold": "1,000 random parameter vectors and corrections per kind and family: data met within 1e-12 of the displacement scale; finite values and gradients",
+      "comparison": "all"
+    },
+    {
+      "id": "G24.lifting-reduces",
+      "status": "PASS",
+      "measured": {
+        "targets": [
+          "tests/lifting/test_adf.py::test_untrimmed_lines_reduce_to_the_quarter_lifting",
+          "tests/lifting/test_quarter.py"
+        ],
+        "returncode": 0,
+        "summary": "3 passed in 1.35s"
+      },
+      "threshold": "adf with untrimmed lines equals quarter within 1e-12 on 1,000 vectors",
+      "comparison": "all"
+    },
+    {
+      "id": "G24.lifting-verified",
+      "status": "PASS",
+      "measured": {
+        "dogbone-v1": {
+          "quarter": {
+            "committed": true,
+            "recomputed": true,
+            "parameter_vectors": 89
+          },
+          "adf": {
+            "committed": true,
+            "recomputed": true,
+            "parameter_vectors": 89
+          }
+        },
+        "notched-v1": {
+          "quarter": {
+            "committed": true,
+            "recomputed": true,
+            "parameter_vectors": 81
+          },
+          "adf": {
+            "committed": true,
+            "recomputed": true,
+            "parameter_vectors": 81
+          }
+        }
+      },
+      "threshold": "node and piece residuals <= 1e-12; conformity and orientation <= 1e-9; every mutant misses by > 1e-3; committed and recomputed",
+      "comparison": "all"
+    },
+    {
+      "id": "G24.regression-dogbone",
+      "status": "PASS",
+      "measured": {
+        "envelope": {
+          "ranges": true,
+          "constraints": true,
+          "reference_mesh": true,
+          "morph_map": true,
+          "mesh_rules": true,
+          "material": true,
+          "qois": true,
+          "dirichlet": true
+        },
+        "development": {
+          "cases": 64,
+          "lifting_bit_identical": 64,
+          "frame_bit_identical": 64,
+          "fem_requests_byte_identical": 64
+        },
+        "committed_development": {
+          "cases": 64,
+          "fem_requests_byte_identical": 64,
+          "frame_bit_identical": 64,
+          "lifting_bit_identical": 64
+        },
+        "replay": {
+          "passed": true,
+          "reference_revision": "399a14659cec6812e24980ece8f81ab2d94a4753",
+          "reference_is_base_revision": true,
+          "bindings_equal_except_revision": true,
+          "reference_matches_amendment": true,
+          "manifest_differences": [
+            "model_export_hash",
+            "run_hash",
+            "tensor_payload_hash"
+          ],
+          "model_state_hash": "9492c444ebd97e7b461a40dbd88f5cd4b681b599a043cfb3446f8b491dad9e52",
+          "registered_profile_comparison": {
+            "expected_to_match": false,
+            "matches_registered": false,
+            "reason": "the registered run was trained on Linux/AVX512; trained weights depend on the CPU instruction set (ADR 0100)",
+            "registered_model_state_hash": "e45edbdc6cd47a0ef754b97a0c7613c5703cdecfafcc9edebb4777c6d1e259f8"
+          }
+        }
+      },
+      "threshold": "spec equals the bundle; lifting and frame bit-identical and FEM requests byte-identical on 64 of 64 DEVELOPMENT cases; 400-step replay tensors byte-identical to a v0.2.0-base run of the same recipe on the same CPU, run bindings equal except the revision (ADR 0106 amendment 1)",
+      "comparison": "all"
+    },
+    {
+      "id": "G24.regression-notched",
+      "status": "PASS",
+      "measured": {
+        "envelope": {
+          "ranges": true,
+          "constraints": true,
+          "reference_mesh": true,
+          "morph_map": true,
+          "mesh_rules": true,
+          "material": true,
+          "qois": true,
+          "dirichlet": true
+        },
+        "development": {
+          "cases": 64,
+          "lifting_bit_identical": 64,
+          "frame_bit_identical": 64,
+          "fem_requests_byte_identical": 64
+        },
+        "committed_development": {
+          "cases": 64,
+          "fem_requests_byte_identical": 64,
+          "frame_bit_identical": 64,
+          "lifting_bit_identical": 64
+        },
+        "replay": {
+          "passed": true,
+          "reference_revision": "399a14659cec6812e24980ece8f81ab2d94a4753",
+          "reference_is_base_revision": true,
+          "bindings_equal_except_revision": true,
+          "reference_matches_amendment": true,
+          "manifest_differences": [
+            "model_export_hash",
+            "run_hash",
+            "tensor_payload_hash"
+          ],
+          "model_state_hash": "6a3a755ba9e3ecff5b01505cf268cd74dbefe41b9d3264ba14e03a894ef3b8c4",
+          "registered_profile_comparison": {
+            "expected_to_match": false,
+            "matches_registered": false,
+            "reason": "the registered run was trained on Linux/AVX512; trained weights depend on the CPU instruction set (ADR 0100)",
+            "registered_model_state_hash": "cc503ef6cc78109b0d11826b8c3e3f6162cc87bf7859fa7ff7f452717274333c"
+          }
+        }
+      },
+      "threshold": "spec equals the bundle; lifting and frame bit-identical and FEM requests byte-identical on 64 of 64 DEVELOPMENT cases; 400-step replay tensors byte-identical to a v0.2.0-base run of the same recipe on the same CPU, run bindings equal except the revision (ADR 0106 amendment 1)",
+      "comparison": "all"
+    },
+    {
+      "id": "G24.spec-hash-stable",
+      "status": "PASS",
+      "measured": {
+        "targets": [
+          "tests/contracts/test_problem_spec.py::test_hash_is_stable_under_formatting",
+          "tests/contracts/test_problem_spec.py::test_every_semantic_leaf_edit_changes_the_hash"
+        ],
+        "returncode": 0,
+        "summary": "3 passed in 0.11s"
+      },
+      "threshold": "hash unchanged under key order, whitespace, number and expression spelling and Unicode encoding; changed by every semantic leaf edit",
+      "comparison": "all"
+    },
+    {
+      "id": "G24.spec-validation",
+      "status": "PASS",
+      "measured": {
+        "targets": [
+          "tests/contracts/test_problem_spec.py"
+        ],
+        "returncode": 0,
+        "summary": "119 passed in 1.17s"
+      },
+      "threshold": "every rejection rule of ADR 0106 decision 2 has a failing-spec test",
+      "comparison": "all"
+    },
+    {
+      "id": "G24.adf-viability",
+      "status": "PASS",
+      "measured": {
+        "checkpoint_manifest_hash": "b3011040e50c1f183afd89bbc655968420780d3777382f66fdb33c18896e1528",
+        "checkpoint_step": 2400,
+        "development_opened": false,
+        "evidence_role": "TRAIN",
+        "failed_guardrails": [],
+        "guardrail_limits": {
+          "maximum_median_absolute_peak_error": 0.08085713846866197,
+          "maximum_p90_absolute_peak_error": 0.13634630217960156,
+          "maximum_p_relative_l2": 0.1958359567178783,
+          "maximum_u_relative_l2": 0.03805483752564062,
+          "minimum_median_signed_peak_error": -0.06986168963209696,
+          "required_invalid_collocation_points": 0
+        },
+        "implementation_revision": "b19458d03b94e041655c6e624c62746e252638a7",
+        "median_relative_energy_gap": 0.0003844466391126085,
+        "metrics": {
+          "invalid_collocation_points": 0,
+          "median_absolute_peak_error": 0.014814077127326975,
+          "median_signed_peak_error": -0.010036688888639787,
+          "p90_absolute_peak_error": 0.03024702040367652,
+          "p_relative_l2": 0.02036065195924193,
+          "u_relative_l2": 0.0016347743002545784
+        },
+        "minimum_collocation_determinant": 0.9825559198234203,
+        "model_state_hash": "0a4c7be1217db392a0e71744179e234d341df9c1c3dab7a639e42af5f1463c05",
+        "passed": true,
+        "problem_spec_hash": "fd4fff5ac9f5372a20a52d152fca9737f4257d33e1742f6c037b3e1b22364d21",
+        "protocol_sha256": "5d1c0074389585305eb52eafa94c61fe570a4438796a1b12aed57aba4d2aa3c6",
+        "run_hash": "04649318713be590818e702c00c3a16ed6bf5a6c8c08093895c0ce798b22718b",
+        "s13c_p_relative_l2": 0.009086612004752744,
+        "schema_version": "1.0",
+        "step": "S24"
+      },
+      "threshold": "registered ADF run passes the frozen S13 guardrails on TRAIN-screen; P-field L2 reported against S13c",
+      "comparison": "all"
+    },
+    {
+      "id": "G24.binding-compat",
+      "status": "PASS",
+      "measured": {
+        "tests": {
+          "targets": [
+            "tests/training/test_identity.py",
+            "tests/training/test_checkpoint.py",
+            "tests/test_shipped_bundles.py"
+          ],
+          "returncode": 0,
+          "summary": "68 passed in 3.65s"
+        },
+        "fast_goldens": {
+          "dogbone-v1-s13c-cp-freeze/dogbone-in-domain.json": true,
+          "notched-v1-cp-freeze/notched-in-domain.json": true,
+          "notched-v1-cp-freeze/notched-out-of-envelope.json": true
+        }
+      },
+      "threshold": "bindings without a spec keep their canonical form; checkpoint and bundle tests pass; fast documents equal the S19 goldens",
+      "comparison": "all"
+    },
+    {
+      "id": "G24.anti-scope",
+      "status": "PASS",
+      "measured": {
+        "tests": {
+          "targets": [
+            "tests/test_s24_anti_scope.py",
+            "tests/test_no_fixture_names.py",
+            "tests/test_s15_anti_scope.py"
+          ],
+          "returncode": 0,
+          "summary": "7 passed in 2.98s"
+        },
+        "module_coverage_percent": {
+          "src/piginot/lifting/": 99.5,
+          "src/piginot/problem/": 97.89,
+          "src/piginot/contracts/problem_spec.py": 98.96
+        }
+      },
+      "threshold": "no family token in src/; .[runtime] FEM-free; no eval of formulas; lifting, problem and ProblemSpec branch coverage >= 90% each",
+      "comparison": "all"
+    },
+    {
+      "id": "G24.portability",
+      "status": "PASS",
+      "measured": {
+        "schema_version": "1.0",
+        "tree": "0971f6cda6d65879c784988563f83ebe8d205f20",
+        "clean": true,
+        "summary": "3682 passed, 13 skipped in 1842.36s (0:30:42)",
+        "counts": {
+          "passed": 3682,
+          "skipped": 13
+        },
+        "skips": [
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_dogbone_s13c_closeout.py:54",
+            "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_dogbone_s13c_evaluate.py:204",
+            "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_dogbone_s13c_evaluate.py:228",
+            "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_dogbone_s13c_protocol.py:159",
+            "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_dogbone_s13c_trial.py:55",
+            "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_dogbone_s13c_trial.py:83",
+            "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_dogbone_s15_bundle.py:57",
+            "reason": "set PIGINOT_CP_FREEZE_WEIGHTS to the CP-FREEZE model export"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_dogbone_s24_adf.py:194",
+            "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_dogbone_s25_mooney_rivlin.py:233",
+            "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_notched_s13_s14.py:64",
+            "reason": "the notched S10 requests rebuilt on Windows differ from the Linux ones the S13 protocol was planned from, although the profile is pinned; notched training, which needs them, runs on Linux only (ADR 0100 findings)"
+          },
+          {
+            "count": 1,
+            "where": "tests\\campaigns\\test_notched_s13_s14.py:86",
+            "reason": "the pinned S13c initial weights come from Linux torch on AVX2/AVX512; Windows torch+cpu initialisation draws different bits (ADR 0100 findings)"
+          },
+          {
+            "count": 1,
+            "where": "tests\\store\\test_trees.py:77",
+            "reason": "FIFO unavailable"
+          },
+          {
+            "count": 1,
+            "where": "tests\\verification\\test_core.py:361",
+            "reason": "the OS has no POSIX permission bits (Windows reports 0o666); the owner-only file mode is not enforceable here"
+          }
+        ]
+      },
+      "threshold": "native Windows run of this code tree: 0 failed, 0 errors, every skip has a reason",
+      "comparison": "all"
+    },
+    {
+      "id": "G24.quality",
+      "status": "PASS",
+      "measured": {
+        "tools": {
+          "ruff_check": 0,
+          "ruff_format": 0,
+          "mypy_strict": 0
+        },
+        "suite": {
+          "schema_version": "1.0",
+          "tree": "0971f6cda6d65879c784988563f83ebe8d205f20",
+          "commit": "65ad014c277c1aead7d0fbb5d379dc1dbc213eaf",
+          "clean": true,
+          "branch_coverage": true,
+          "coverage_percent": 92.61,
+          "module_coverage_percent": {
+            "src/piginot/lifting/": 99.5,
+            "src/piginot/problem/": 97.89,
+            "src/piginot/contracts/problem_spec.py": 98.96
+          },
+          "summary": "3694 passed, 1 skipped in 3362.44s (0:56:02)",
+          "counts": {
+            "passed": 3694,
+            "skipped": 1
+          },
+          "skips": [
+            {
+              "count": 1,
+              "where": "tests/campaigns/test_dogbone_s15_bundle.py:57",
+              "reason": "set PIGINOT_CP_FREEZE_WEIGHTS to the CP-FREEZE model export"
+            }
+          ],
+          "execution_profile": {
+            "python": "3.11.15",
+            "system": "Linux",
+            "machine": "x86_64",
+            "torch": "2.13.0+cu130",
+            "cpu_capability": "AVX2"
+          }
+        }
+      },
+      "threshold": {
+        "tools": "exit 0",
+        "suite": "recorded Linux run of this code tree, clean, 0 failed, 0 errors",
+        "global_branch_coverage_at_least": 90.5
+      },
+      "comparison": "all"
+    }
+  ],
+  "decision_record": "docs/adr/0106-s24-problem-spec-and-lifting.md",
+  "verdict": "PASS",
+  "verdict_reason": "every required check PASS"
+}

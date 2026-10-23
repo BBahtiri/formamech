@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import importlib
 import json
+import math
 import sys
 from collections.abc import Callable, Mapping, Sequence
 from importlib.metadata import entry_points
@@ -118,9 +119,26 @@ def parse_request(document: object) -> tuple[dict[str, object], list[object] | N
     return inputs, [queries]
 
 
+def _predict_option_error(args: argparse.Namespace) -> str | None:
+    """Reject option combinations that would otherwise be silently ignored."""
+
+    if args.mode != "certified" and (args.escalate or args.tolerance is not None):
+        return "--escalate and --tolerance apply to --mode certified only"
+    if args.tolerance is not None:
+        if not args.escalate:
+            return "--tolerance needs --escalate"
+        if not math.isfinite(args.tolerance) or args.tolerance <= 0.0:
+            return "--tolerance must be a finite positive number"
+    return None
+
+
 def _predict(args: argparse.Namespace) -> int:
     from piginot.bundle import BundleIntegrityError, load_bundle, predict
 
+    problem = _predict_option_error(args)
+    if problem is not None:
+        print(f"piginot: {problem}", file=sys.stderr)
+        return EXIT_ERROR
     try:
         bundle = load_bundle(args.bundle)
     except (BundleIntegrityError, OSError) as exc:
@@ -132,7 +150,45 @@ def _predict(args: argparse.Namespace) -> int:
         print(f"piginot: cannot read request: {exc}", file=sys.stderr)
         return EXIT_ERROR
     inputs, queries = parse_request(request)
+    calibration = None
+    if args.bounds or args.calibration is not None:
+        from piginot.bounds import (
+            CalibrationError,
+            CalibrationRecord,
+            ConfirmedCalibration,
+            H1Confirmation,
+            calibration_path,
+            confirmation_path,
+        )
+
+        try:
+            record = CalibrationRecord.load(
+                args.calibration or calibration_path(args.bundle),
+                bundle=Path(args.bundle).name,
+                manifest_sha256=bundle.manifest.manifest_sha256,
+            )
+            h1_results = confirmation_path(args.bundle)
+            calibration = (
+                ConfirmedCalibration(record, H1Confirmation.load(h1_results, record))
+                if args.calibration is None and h1_results.is_file()
+                else record
+            )
+        except CalibrationError as exc:
+            print(f"piginot: {exc}", file=sys.stderr)
+            return EXIT_ERROR
     if args.mode == "fast":
+        if calibration is not None:
+            from piginot.serving import serve
+
+            served = serve(
+                bundle,
+                inputs,
+                cast(Any, queries),
+                confidence=not args.no_confidence,
+                calibration=calibration,
+            )
+            _emit(served.document(), args.output)
+            return EXIT_OK if served.prediction.in_domain else EXIT_REFUSED
         prediction = predict(
             bundle,
             inputs,
@@ -141,11 +197,15 @@ def _predict(args: argparse.Namespace) -> int:
         )
         _emit(prediction.document(), args.output)
         return EXIT_OK if prediction.in_domain else EXIT_REFUSED
-    return _serve_verified(args, bundle, inputs, queries)
+    return _serve_verified(args, bundle, inputs, queries, calibration)
 
 
 def _serve_verified(
-    args: argparse.Namespace, bundle: Any, inputs: Any, queries: Any
+    args: argparse.Namespace,
+    bundle: Any,
+    inputs: Any,
+    queries: Any,
+    calibration: Any = None,
 ) -> int:
     """``--mode certified|exact`` (S22): certificate, correction, FEM solve."""
 
@@ -162,6 +222,7 @@ def _serve_verified(
             corrected=args.corrected,
             escalate=args.escalate,
             tolerance=args.tolerance,
+            calibration=calibration,
         )
     except MissingExtraError as exc:
         print(f"piginot: {exc}", file=sys.stderr)
@@ -269,28 +330,60 @@ def build_parser() -> argparse.ArgumentParser:
     predict.add_argument("bundle", type=Path)
     predict.add_argument("--request", required=True, type=Path)
     predict.add_argument("--output", type=Path, default=None)
-    predict.add_argument("--no-confidence", action="store_true")
+    predict.add_argument(
+        "--no-confidence",
+        action="store_true",
+        help="fast: leave out the S14 pointwise stress bound "
+        "(certified and exact leave it out by default)",
+    )
     predict.add_argument(
         "--mode",
         choices=("fast", "certified", "exact"),
         default="fast",
-        help="fast: the bundle alone; certified: plus the physics certificate; "
-        "exact: the converged FEM solution from the prediction (needs piginot[verify])",
+        help="fast: the bundle alone; certified: plus the physics certificate "
+        "against the bundle's FEM problem; exact: the converged FEM solution "
+        "started from the prediction (certified and exact need piginot[verify])",
     )
     predict.add_argument(
-        "--corrected", action="store_true", help="certified: add the corrected field"
+        "--corrected",
+        action="store_true",
+        help="certified or exact: add the one-step corrected displacement "
+        "at the FEM nodes",
     )
     predict.add_argument(
         "--escalate",
         action="store_true",
-        help="certified: solve exactly if not certified",
+        help="certified: solve exactly when the certificate is not OK "
+        "or exceeds --tolerance",
     )
-    predict.add_argument("--tolerance", type=float, default=None)
+    predict.add_argument(
+        "--tolerance",
+        type=float,
+        default=None,
+        help="certified with --escalate: the largest accepted relative L2 change "
+        "of the first Piola stress along the certificate's Newton step "
+        "(0.01 = 1%%); a larger change is solved exactly",
+    )
     predict.add_argument(
         "--recipe",
         type=Path,
         default=None,
         help="FEM recipe (default: beside the bundle)",
+    )
+    predict.add_argument(
+        "--bounds",
+        action="store_true",
+        help="attach the calibrated 90%% upper bounds of the bundle's "
+        "calibration sidecar (fast: S14 budget total; certified and exact: "
+        "FEM reference terms)",
+    )
+    predict.add_argument(
+        "--calibration",
+        type=Path,
+        default=None,
+        help="calibration sidecar to use with --bounds (default: "
+        "<bundles>/calibration/<bundle>.json; bounds not confirmed on H1, listed "
+        "in <bundles>/h1-results/<bundle>.json, are then withheld)",
     )
     predict.set_defaults(handler=_predict)
 

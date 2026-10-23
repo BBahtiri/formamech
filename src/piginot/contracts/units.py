@@ -25,6 +25,7 @@ class Dimension(Enum):
     STRESS = "stress"
     MOMENT = "moment"
     ENERGY = "energy"
+    ANGLE = "angle"
 
 
 class Unit(Enum):
@@ -43,6 +44,7 @@ class Unit(Enum):
     N_MM = "N·mm"
     N_M = "N·m"
     J = "J"
+    DEG = "deg"
 
     @property
     def dimension(self) -> Dimension:
@@ -78,6 +80,7 @@ _UNIT_DEFINITIONS: Final[dict[Unit, tuple[Dimension, Unit, float]]] = {
     Unit.N_MM: (Dimension.MOMENT, Unit.N_MM, 1.0),
     Unit.N_M: (Dimension.MOMENT, Unit.N_MM, 1000.0),
     Unit.J: (Dimension.ENERGY, Unit.N_MM, 1000.0),
+    Unit.DEG: (Dimension.ANGLE, Unit.DEG, 1.0),
 }
 
 _UNIT_DIMENSIONS: Final[dict[Unit, frozenset[Dimension]]] = {

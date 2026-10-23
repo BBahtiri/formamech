@@ -1,0 +1,31 @@
+{
+  "accepted": {
+    "answer": "Same-CPU reference",
+    "before": "any S24 replay comparison",
+    "by": "decision owner",
+    "on": "2026-10-14"
+  },
+  "amends": "artifacts/problem/S24-PROTOCOL.json, section replays",
+  "decision_record": "docs/adr/0106-s24-problem-spec-and-lifting.md, amendment 1",
+  "families": {
+    "dogbone-v1": {
+      "reference": "the G19.resume straight run (artifacts/gates/S19.json), ~/s19/s19-straight/checkpoint-step-0400",
+      "reference_model_state_hash": "9492c444ebd97e7b461a40dbd88f5cd4b681b599a043cfb3446f8b491dad9e52",
+      "reference_run_hash": "eb3c5e155d027e6892438fbb57bff786c744419048a11dfef1fd601ae90e5c29",
+      "replay_command": "python -m campaigns.dogbone_v1.s13c_trial --s10-run-root <S10> --run-root <new> --stop-after 400"
+    },
+    "notched-v1": {
+      "reference": "a new run in the v0.2.0-base checkout",
+      "reference_command": "python -m campaigns.notched_v1.s13 train --run-root <new> --stop-after 400 (in the v0.2.0-base checkout)",
+      "reference_model_state_hash": null,
+      "replay_command": "python -m campaigns.notched_v1.s13 train --run-root <new> --stop-after 400"
+    }
+  },
+  "reason": "the registered step-400 checkpoints were trained on Linux/AVX512; trained weights depend on the CPU instruction set (ADR 0100 decision 5 and findings: the owner machine, Linux/AVX2, gives model state 9492c444... for the S13c recipe at step 400, against e45edbdc... registered), so a replay on the owner machine cannot reproduce the registered tensors whatever the code",
+  "reference_revision": "399a14659cec6812e24980ece8f81ab2d94a4753",
+  "reference_tag": "v0.2.0-base",
+  "registered_profile": "the registered AVX512 model-state hashes of S24-PROTOCOL.json are reported beside each record and required only on that profile",
+  "rule": "on the owner machine, a 400-step run of each family's registered recipe at the S24-or-later revision equals a 400-step run of the same recipe at the v0.2.0 base revision on the same machine: every tensor of model.safetensors and state.safetensors equal, optimizer.json and adaptive.json byte-identical, manifest fields equal except run_hash, model_export_hash and tensor_payload_hash, safetensors metadata equal except run_hash, run bindings equal except implementation_revision; compared by campaigns.s24_replay",
+  "schema_version": "1.0",
+  "step": "S24"
+}

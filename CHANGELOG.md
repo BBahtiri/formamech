@@ -6,10 +6,58 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased] - 0.2.0.dev0
 
-Development line S19–S26 (`STEPS-v2.0.md`), forked from `v0.1.0`.
+Development line S19–S29 (`STEPS-v2.0.md`, ADR 0105), forked from `v0.1.0`.
 
 ### Added
 
+- **Anisotropic models with in-plane fibre families** (S26, ADR 0108
+  accepted): fibre families in the formula language (full invariants `I4`,
+  `I5` per family, `ramp` as the tension-only switch, angles in the new unit
+  `deg`); built-in `hgo`, `hgo_single` and `goh`; admission against the
+  declared symmetry rotations and an FEM check with fibres in tension; the
+  ProblemSpec rule `material-symmetry` for quarter models; the preregistered
+  HGO viability run (`artifacts/materials/S26-PROTOCOL.json`,
+  `campaigns/dogbone_v1/s26_hgo.py`) and gate G26 (`campaigns/g26_gate.py`).
+  The S19 fast goldens are now compared at their recorded thread count
+  (`campaigns/fast_goldens.py`).
+- **Material registry and admission gate** (S25, ADR 0107 accepted):
+  strain-energy formulas as data (`piginot.contracts.energy_formula`, a
+  whitelist parser with unit checks); built-in Mooney–Rivlin, Yeoh and Gent
+  models; `piginot.materials`, which derives stress, tangent and the
+  plane-stress closure of any formula by automatic differentiation; the
+  `piginot.physics` functions, the FEM solver and the energy objective accept
+  every registered model while the Neo-Hookean path stays bit-identical; the
+  admission gate (eight checks, including optimal FEM convergence on a
+  manufactured solution); `material.energy` and `material.stretch_range` in
+  the ProblemSpec; the preregistered Mooney–Rivlin viability run
+  (`artifacts/materials/S25-PROTOCOL.json`,
+  `campaigns/dogbone_v1/s25_mooney_rivlin.py`), which passes every frozen
+  guardrail at the accuracy of the Neo-Hookean run (P-field L2 0.93%
+  against 0.91%), and gate G25 (`campaigns/g25_gate.py`).
+- **ProblemSpec and exact liftings from the spec** (S24, ADR 0106 accepted):
+  the contract `piginot.contracts.ProblemSpec` (`piginot.problem-spec-v1`, a
+  validated JSON problem description with a BLAKE2b identity); the package
+  `piginot.lifting` with the quarter lifting (moved without numerical change)
+  and an ADF lifting over line segments and circular arcs; `piginot.problem`,
+  which builds FEM requests, query frames and liftings from a spec and
+  verifies a lifting over the parameter box; an optional `problem_spec_hash`
+  in run bindings; the two shipped families as specs under `campaigns/`, which
+  reproduce every DEVELOPMENT lifting bit for bit and every S10 FEM request
+  byte for byte (`artifacts/problem/S24-REGRESSION.json`); the preregistered
+  ADF viability run, which passes every frozen guardrail (P-field L2 2.04%),
+  and the 400-step replays, byte-identical to same-CPU runs of the v0.2.0
+  base for both families (`artifacts/problem/S24-PROTOCOL.json`, amendment
+  `S24-REPLAY-AMENDMENT.json`, `campaigns/dogbone_v1/s24_adf.py`,
+  `campaigns/s24_replay.py`) and gate G24 (`campaigns/g24_gate.py`).
+- **Calibrated bounds** (S23, ADR 0104 accepted): the runtime package
+  `piginot.bounds` (split-conformal bounds, Mahalanobis calibration gate,
+  calibration sidecars), `piginot predict --bounds` and
+  `serve(..., calibration=...)`; the preregistered protocol and the
+  DEVELOPMENT calibration of both bundles (`bundles/calibration/`); the
+  single H1 reveal command `campaigns/s23_reveal.py`; gate G23
+  (`campaigns/g23_gate.py`). G23 PASS: every gated H1 coverage count passed;
+  the reported DogBone displacement bound did not (46 of 63), so `--bounds`
+  withholds it (H1 results in `bundles/h1-results/`).
 - **Verified serving** (S22): `piginot predict --mode fast|certified|exact`,
   FEM recipe sidecars in `bundles/fem-recipes/`, warm-start FEM solves, the
   `verify` extra (ADR 0103).
@@ -19,6 +67,31 @@ Development line S19–S26 (`STEPS-v2.0.md`), forked from `v0.1.0`.
 - **Fork and baseline lock** (S19): a standalone fork of `v0.1.0` (ADR 0100),
   the fork manifest tool `scripts/verify_fork.py`, gate `G19`
   (`campaigns/g19_gate.py`) and the baseline records in `artifacts/fork/`.
+
+### Changed
+
+- **S22 follow-up**: ADR 0103 accepted; the G21 and G22 tables are in
+  `STEPS-v2.0.md`; the user guide explains what the certified and exact modes
+  measure and what they do not; `docs/limitations.md` states the limits of
+  S20–S22, so the 0.1.0 limitations sign-off must be renewed before the next
+  release; `piginot predict` documents `--tolerance` and the other serving
+  options, and refuses `--escalate` or `--tolerance` where they would be
+  ignored. Native Windows runs of S21–S22 are still to be recorded.
+
+### Fixed
+
+- The notched S13 protocol could not be rebuilt on the 0.2.0 line: its
+  request plan bound the live package version (0.2.0.dev0 since the S19
+  fork). It now binds the S10 profile the dataset was planned under, so the
+  notched trainer, `s13_close` and `s14` start again.
+- Gates G24 and G25 ignore each other's gate and suite records, so one
+  suite run serves both.
+- Full-suite findings of S24 and S25: contracts no longer evaluate
+  expressions (the S2 rule; values moved to `piginot.problem.expressions`
+  and `piginot.materials.values`); `piginot.problem.fem` renamed
+  `piginot.problem.requests` (the S5 module rule); the confidence indicator,
+  S14 evaluation code frozen by its protocol, restored unchanged; test
+  repositories set their own Git identity.
 
 ## [0.1.0] - 2026-10-06
 

@@ -20,13 +20,14 @@ import statistics
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
 import torch
 
 from campaigns.dogbone_v1.s10_evidence import DOGBONE_S10_DATASET_POLICY
 from campaigns.dogbone_v1.s11_contingency import STRESS_REFERENCE_MPA
 from campaigns.dogbone_v1.s11_contingency_data import (
+    CaseNormalizationStatistics,
     normalize_case_values,
     prepare_operator_case,
 )
@@ -59,11 +60,13 @@ from campaigns.dogbone_v1.s13c_trial import (
 from piginot.contracts import ExecutionProfile, canonical_json_bytes, strict_json_loads
 from piginot.datasets import SemanticBCClass
 from piginot.doe import EvidenceRole
+from piginot.fem import FemRequest, FemResult
 from piginot.operators import (
     EnergyFormOperator,
     OperatorOutput,
     constitutive_in_plane_stress,
 )
+from piginot.physics import reference_modulus
 from piginot.physics._validation import DETERMINANT_MARGIN
 from piginot.training import (
     CheckpointLineage,
@@ -124,6 +127,24 @@ class S13cEvaluation:
     development_opened: bool
 
 
+class Reference(Protocol):
+    """The FEM request and result a TRAIN-screen case is scored against."""
+
+    def __call__(self, verified: Any) -> tuple[FemRequest, FemResult]: ...
+
+
+class CaseFactory(Protocol):
+    """Builds a case's geometry and lifting from its verified request."""
+
+    def __call__(
+        self,
+        verified: VerifiedS10Request,
+        normalization: CaseNormalizationStatistics,
+        *,
+        dtype: torch.dtype,
+    ) -> DogboneS13cGeometryCase: ...
+
+
 def load_run_binding(path: Path) -> TrainingRunBinding:
     """Parse ``run-binding.json`` and require an exact canonical round trip."""
 
@@ -148,6 +169,7 @@ def load_run_binding(path: Path) -> TrainingRunBinding:
 def _verify_binding(
     binding: TrainingRunBinding,
     protocol: DogboneS13cProtocol,
+    problem_spec_hash: str | None = None,
 ) -> None:
     """Check a run binding against the protocol without re-initialising weights.
 
@@ -173,6 +195,8 @@ def _verify_binding(
     for name, value in expected.items():
         if getattr(binding, name) != value:
             raise ValueError(f"run binding {name} differs from the S13c protocol")
+    if binding.problem_spec_hash != problem_spec_hash:
+        raise ValueError("run binding problem_spec_hash differs from the expected spec")
     profile = binding.execution_profile
     if (
         profile.dtype != protocol.execution_dtype
@@ -187,11 +211,16 @@ def load_registered_checkpoint(
     checkpoint_path: Path,
     *,
     require_final: bool = True,
+    problem_spec_hash: str | None = None,
 ) -> tuple[EnergyFormOperator, TrainingRunBinding, TrainingCheckpointManifest]:
-    """Validate the complete checkpoint against its run binding and protocol."""
+    """Validate the complete checkpoint against its run binding and protocol.
+
+    ``problem_spec_hash`` is the spec a run from a ProblemSpec binds (S24);
+    the registered S13c run binds none.
+    """
 
     binding = load_run_binding(checkpoint_path.parent / RUN_BINDING_NAME)
-    _verify_binding(binding, protocol)
+    _verify_binding(binding, protocol, problem_spec_hash)
     config = build_dogbone_s13c_trainer_config(protocol)
     model = build_initial_operator()
     optimizer = torch.optim.Adam(
@@ -324,13 +353,25 @@ def evaluate_s13c_checkpoint(
     s10_run_root: Path,
     checkpoint_path: Path,
     require_final: bool = True,
+    case_factory: CaseFactory = geometry_case,
+    problem_spec_hash: str | None = None,
+    reference: Reference | None = None,
 ) -> S13cEvaluation:
-    """Score one S13c checkpoint on TRAIN evidence and apply frozen selection."""
+    """Score one S13c checkpoint on TRAIN evidence and apply frozen selection.
+
+    ``case_factory`` builds each case's geometry and lifting; S24's ADF
+    viability run passes its own (ADR 0106 decision 5) with its spec hash.
+    ``reference`` replaces each TRAIN-screen case's FEM request and result
+    (S25's re-solves with another material, ADR 0107 decision 8).
+    """
 
     protocol = load_committed_s13c_protocol()
     config = build_dogbone_s13c_trainer_config(protocol)
     model, binding, manifest = load_registered_checkpoint(
-        protocol, checkpoint_path, require_final=require_final
+        protocol,
+        checkpoint_path,
+        require_final=require_final,
+        problem_spec_hash=problem_spec_hash,
     )
     evaluation_model = copy.deepcopy(model).to(torch.float64).eval()
     run_root = checkpoint_path.parent
@@ -360,12 +401,17 @@ def evaluate_s13c_checkpoint(
     for verified in source.iter_train_screen():
         if verified.case.role is not EvidenceRole.TRAIN:
             raise PermissionError("non-TRAIN evidence cannot enter S13c screening")
+        reference_request, reference_result = (
+            (verified.request, verified.result)
+            if reference is None
+            else reference(verified)
+        )
         tensors = normalize_case_values(
-            prepare_operator_case(verified.case, verified.request, verified.result),
+            prepare_operator_case(verified.case, reference_request, reference_result),
             normalization,
         )
         request = VerifiedS10Request(verified.case, verified.request)
-        geometry = geometry_case(request, normalization, dtype=torch.float64)
+        geometry = case_factory(request, normalization, dtype=torch.float64)
         u, stress, determinant = _served_vertex_output(
             evaluation_model, geometry, tensors.query_xy
         )
@@ -388,9 +434,9 @@ def evaluate_s13c_checkpoint(
             replace(
                 _case_diagnostics(tensors, predicted_u, predicted_p, determinant),
                 model_strain_energy=float(fine.energy)
-                * float(geometry.material.properties["elastic_modulus"].value)
+                * reference_modulus(geometry.material)
                 * geometry.domain.area,
-                fem_strain_energy=float(verified.result.total_strain_energy),
+                fem_strain_energy=float(reference_result.total_strain_energy),
             )
         )
         interior = _interior_determinants(evaluation_model, source, request, geometry)
@@ -410,7 +456,7 @@ def evaluate_s13c_checkpoint(
             )
         )
     for verified_request in source.iter_train_geometry(protocol.fit_case_ids):
-        geometry = geometry_case(verified_request, normalization, dtype=torch.float64)
+        geometry = case_factory(verified_request, normalization, dtype=torch.float64)
         interior = _interior_determinants(
             evaluation_model, source, verified_request, geometry
         )

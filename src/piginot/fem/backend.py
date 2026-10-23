@@ -238,10 +238,14 @@ def _build_basis(request: FemRequest) -> tuple[Any, Any, Any]:
 
 
 def _kernel_material(material: MaterialSpec) -> MaterialSpec:
+    from piginot.materials import is_formula_model
+
     if material.model == _KERNEL_MODEL:
         return material
     if material.model == _PLANE_STRESS_MODEL:
         return replace(material, model=_KERNEL_MODEL)
+    if is_formula_model(material.model):
+        return material
     raise FemSolveFailure(
         FemFailureCode.UNSUPPORTED_REQUEST,
         f"unsupported material model {material.model!r}",
