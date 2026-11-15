@@ -54,6 +54,12 @@ def case_terms(case: Mapping[str, Any], quantity: str) -> dict[str, float]:
     }
 
 
+def _total(terms: Mapping[str, float]) -> float:
+    """Keep the protocol's Python 3.11 addition order on newer runtimes."""
+
+    return terms["surrogate"] + terms["discretisation"] + terms["projection"]
+
+
 def _statistic(values: Sequence[float]) -> float:
     return slice_statistic(tuple(values))
 
@@ -76,7 +82,7 @@ def decomposition(
         terms = [case_terms(case, quantity) for case in cases]
         shares = {
             component: statistics.median(
-                term[component] / total if (total := sum(term.values())) > 0 else 0.0
+                term[component] / total if (total := _total(term)) > 0 else 0.0
                 for term in terms
             )
             for component in COMPONENTS
@@ -86,7 +92,7 @@ def decomposition(
             member_terms = [case_terms(case, quantity) for case in members]
             per_slice[name] = {
                 "cases": len(members),
-                "total": _statistic([sum(t.values()) for t in member_terms]),
+                "total": _statistic([_total(t) for t in member_terms]),
                 "without_discretisation": _statistic(
                     [t["surrogate"] + t["projection"] for t in member_terms]
                 ),
@@ -179,7 +185,7 @@ def metric_fragility(
 
     result = {}
     for quantity in QUANTITIES:
-        totals = sorted(sum(case_terms(c, quantity).values()) for c in cases)
+        totals = sorted(_total(case_terms(c, quantity)) for c in cases)
         trimmed = _statistic(totals[:-3])
         result[quantity] = {
             "all": _statistic(totals),

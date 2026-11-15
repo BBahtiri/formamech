@@ -43,6 +43,7 @@ from typing import Any
 from campaigns import fresh_holdouts as fh
 from campaigns import s20_evaluation
 from campaigns.g19_gate import execution_profile, not_run, read_text_any
+from campaigns.history import read_document
 from campaigns.notched_v1 import postmortem, postmortem_owner
 from campaigns.notched_v1.gate_io import (
     check_document,
@@ -289,7 +290,15 @@ def check_rca(root: Path) -> dict[str, Any]:
     committed = json.loads(path.read_text("utf-8"))
     rebuilt = json.loads(json.dumps(postmortem_owner.verdicts(root)))
     verdicts = {key: entry["verdict"] for key, entry in committed["hypotheses"].items()}
-    section = (root / ADR_PATH).read_text("utf-8").split("## Post-mortem result", 1)[-1]
+    try:
+        decision = read_document(root, ADR_PATH)
+    except FileNotFoundError:
+        return not_run(
+            "G20.rca",
+            "ADR 0101 is unavailable locally and in Git history",
+            "every hypothesis judged; verdicts recompute; ADR 0101 records the result",
+        )
+    section = decision.split("## Post-mortem result", 1)[-1]
     section = section.split("\n## ", 1)[0]
     recorded = re.search(r"\bpending\b", section, re.IGNORECASE) is None
     passed = (

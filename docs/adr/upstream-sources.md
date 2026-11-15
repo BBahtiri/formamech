@@ -1,6 +1,6 @@
 # Upstream sources and licences
 
-- Status: Accepted with the release ADR [0032](0032-release-0.1.0.md)
+- Status: Accepted with the release ADR [0032](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/adr/0032-release-0.1.0.md)
 - Date: 2026-10-06
 - Gate: `G18.licenses`
 - Project licence: MIT (`LICENSE`, "Copyright (c) 2026 PI-GINOT contributors")

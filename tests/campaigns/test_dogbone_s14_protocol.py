@@ -93,18 +93,22 @@ def test_protocol_reproduces_adr_0019_and_the_pilot_choice() -> None:
         )
 
 
-def test_frozen_files_detect_any_change(tmp_path: Path) -> None:
+@pytest.mark.parametrize("line_ending", [b"\n", b"\r\n"], ids=["lf", "crlf"])
+def test_frozen_files_detect_any_change(tmp_path: Path, line_ending: bytes) -> None:
     document = {"evaluation_code": {"file_sha256": file_digests()}}
     assert verify_frozen_files(document) == ()
     for name in EVALUATION_FILES:
         (tmp_path / name).parent.mkdir(parents=True, exist_ok=True)
         shutil.copy(_ROOT / name, tmp_path / name)
+    crlf = tmp_path / EVALUATION_FILES[1]
+    crlf.write_bytes(
+        crlf.read_bytes().replace(b"\r\n", b"\n").replace(b"\n", line_ending)
+    )
     assert verify_frozen_files(document, tmp_path) == ()
     changed = tmp_path / EVALUATION_FILES[0]
     changed.write_text(changed.read_text() + "\n# edit\n")
     assert verify_frozen_files(document, tmp_path) == (EVALUATION_FILES[0],)
-    crlf = tmp_path / EVALUATION_FILES[1]
-    crlf.write_bytes(crlf.read_bytes().replace(b"\n", b"\r\n"))
+    crlf.write_bytes(crlf.read_bytes().replace(b"\r\n", b"\n").replace(b"\n", b"\r\n"))
     assert EVALUATION_FILES[1] not in verify_frozen_files(document, tmp_path)
 
 

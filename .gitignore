@@ -18,3 +18,20 @@ experiments/spike/upstream_pi_ginot/models/modules/
 # Agent prompts and coding-session reviews: kept locally, not part of the project
 AGENT-PROMPT-*.md
 S1-iteration8-review.md
+# Implementation plans and historical narratives stay local; user guides remain public.
+# Keep new working notes under .piginot-private/implementation/.
+/STEPS-*.md
+/IMPLEMENTATION*.md
+/[sS][0-9]*-*.md
+/docs/adr/*.md
+!/docs/adr/upstream-sources.md
+/docs/specs/*.md
+/docs/fork/*.md
+/docs/campaigns/*.md
+!/docs/campaigns/own-cad-workflow.md
+!/docs/campaigns/own-cad-meshing.md
+!/docs/campaigns/s28-compiler-guide.md
+!/docs/campaigns/s29-custom-material.md
+!/docs/campaigns/s29-fast-demo.md
+/artifacts/release/**/*.md
+!/artifacts/release/cad-margin-fem-recovery/early-stop/README.md

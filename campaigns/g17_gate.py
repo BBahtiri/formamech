@@ -38,7 +38,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from campaigns.history import resolve_revision
+from campaigns.history import read_document, resolve_revision
 from campaigns.notched_v1.gate_io import (
     check_document,
     gate_document,
@@ -269,7 +269,7 @@ def docs() -> dict[str, Any]:
                 "--strict",
                 "-q",
                 "-f",
-                "docs/mkdocs.yml",
+                "mkdocs.yml",
                 "-d",
                 site,
             ],
@@ -294,8 +294,10 @@ def docs() -> dict[str, Any]:
 def adrs() -> dict[str, Any]:
     measured = {}
     for topic, relative in REQUIRED_ADRS.items():
-        path = REPOSITORY / relative
-        text = path.read_text("utf-8") if path.is_file() else ""
+        try:
+            text = read_document(REPOSITORY, relative)
+        except FileNotFoundError:
+            text = ""
         measured[topic] = {"path": relative, "accepted": "Status: Accepted" in text}
     return check_document(
         "G17.adrs",

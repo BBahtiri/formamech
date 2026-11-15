@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
       - name: Set up Python
         uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
         with:
@@ -35,7 +37,7 @@ jobs:
       - name: Type-check
         run: python -m mypy --strict src/
       - name: Build documentation (strict)
-        run: python -m mkdocs build --strict -f docs/mkdocs.yml -d ../site
+        run: python -m mkdocs build --strict -f mkdocs.yml -d ../site
       - name: Test with coverage
         run: python -m pytest --cov=src/piginot --cov-fail-under=90
       - name: Check S2 contract coverage
@@ -43,7 +45,7 @@ jobs:
       - name: Check S3 store coverage
         run: python -m pytest tests/store --cov=src/piginot/store --cov-fail-under=85
       - name: Check S4 physics coverage
-        run: python -m pytest tests/physics --cov=src/piginot/physics --cov-fail-under=95
+        run: python -m pytest tests/physics tests/materials/test_hyperelastic.py --cov=src/piginot/physics --cov-fail-under=95
       - name: Check S5 geometry coverage
         run: python -m pytest tests/geometry --cov=src/piginot/geometry --cov-fail-under=85
       - name: Check S6 morphing coverage

@@ -71,4 +71,76 @@ def resolve_revision(revision: str, root: Path = REPOSITORY) -> str:
     return found
 
 
-__all__ = ("MAP_PATH", "UnknownRevisionError", "resolve_revision")
+def read_document_bytes(
+    root: Path, relative: Path | str, *, committed: bool = False
+) -> bytes:
+    """Read a local document, or its last committed version after cleanup.
+
+    Historical verification needs a full Git checkout when local-only records
+    are absent. Reading never restores files or fetches missing history.
+    """
+    root, relative = root.resolve(), Path(relative)
+    path = root / relative
+    if (
+        not relative.parts
+        or relative.is_absolute()
+        or ".." in relative.parts
+        or not path.resolve().is_relative_to(root)
+    ):
+        raise ValueError("a repository-relative document path is required")
+    if path.is_file() and not committed:
+        return path.read_bytes()
+    environment = {
+        **isolated_git_environment(),
+        "GIT_ALLOW_PROTOCOL": "",
+        "GIT_NO_LAZY_FETCH": "1",
+        "GIT_TERMINAL_PROMPT": "0",
+    }
+    history = subprocess.run(
+        [
+            "git",
+            "log",
+            "-1",
+            "--format=%H",
+            "--diff-filter=AM",
+            "--",
+            relative.as_posix(),
+        ],
+        cwd=root,
+        env=environment,
+        capture_output=True,
+        check=False,
+    )
+    revision = history.stdout.decode("ascii").strip()
+    missing = f"historical document unavailable; use a full Git history: {relative}"
+    if history.returncode or not revision:
+        raise FileNotFoundError(missing)
+    document = subprocess.run(
+        ["git", "cat-file", "blob", f"{revision}:{relative.as_posix()}"],
+        cwd=root,
+        env=environment,
+        capture_output=True,
+        check=False,
+    )
+    if document.returncode:
+        raise FileNotFoundError(missing)
+    return document.stdout
+
+
+def read_document(root: Path, relative: Path | str) -> str:
+    """Read UTF-8 documentation with ordinary universal-newline handling."""
+    return (
+        read_document_bytes(root, relative)
+        .decode("utf-8")
+        .replace("\r\n", "\n")
+        .replace("\r", "\n")
+    )
+
+
+__all__ = (
+    "MAP_PATH",
+    "UnknownRevisionError",
+    "read_document",
+    "read_document_bytes",
+    "resolve_revision",
+)

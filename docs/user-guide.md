@@ -285,7 +285,7 @@ print(served.path.value, served.certificate["indicators"]["p_l2_change"])
 ## Calibrated error bounds (0.2.0.dev, S23)
 
 `--bounds` attaches calibrated 90% upper bounds to a served request, in any
-mode ([ADR 0104](adr/0104-s23-calibrated-bounds.md)). They bound the S14
+mode ([ADR 0104](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/adr/0104-s23-calibrated-bounds.md)). They bound the S14
 budgeted error, the quantity the claim levels and their tolerances are about:
 the prediction's error against the FEM reference plus that reference's own
 discretisation and projection terms.
@@ -389,9 +389,9 @@ template:
 The notched campaign took about a day of CPU time for 200 FEM cases plus
 training. Its result shows that the tolerances are not guaranteed: it reached
 `DEVELOPMENT_VERIFIED`, not `HOLDOUT_VERIFIED`, largely because of the FEM
-mesh's own error at the notch ([S17 results](campaigns/s17-plan.md#4-results)).
-The [S17 plan](campaigns/s17-plan.md) and
-[ADR 0025](adr/0025-s17-examples-and-second-family.md) describe each step and
+mesh's own error at the notch ([S17 results](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/campaigns/s17-plan.md#4-results)).
+The [S17 plan](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/campaigns/s17-plan.md) and
+[ADR 0025](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/adr/0025-s17-examples-and-second-family.md) describe each step and
 its decisions.
 
 ## Check the project yourself

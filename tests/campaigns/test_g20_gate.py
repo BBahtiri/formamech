@@ -11,6 +11,7 @@ import pytest
 
 from campaigns import fresh_holdouts as fh
 from campaigns import g20_gate as gate
+from campaigns.history import read_document
 from piginot.doe.secret_material import generate_campaign_secrets
 
 LOG = """
@@ -90,9 +91,11 @@ def _seal_repo(tmp_path: Path, public: dict) -> Path:
     for relative in (
         "artifacts/campaigns/notched-v1",
         "artifacts/evaluation",
-        "docs/adr",
     ):
         shutil.copytree(fh.REPOSITORY / relative, root / relative, dirs_exist_ok=True)
+    decision = root / gate.ADR_PATH
+    decision.parent.mkdir(parents=True, exist_ok=True)
+    decision.write_text(read_document(fh.REPOSITORY, gate.ADR_PATH), encoding="utf-8")
     # the scratch "decision" commit must predate any draw, also once the real
     # FRESH-HOLDOUTS.json is committed in the repository
     (root / "artifacts/campaigns/notched-v1" / fh.PUBLIC_NAME).unlink(missing_ok=True)

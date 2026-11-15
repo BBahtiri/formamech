@@ -14,6 +14,7 @@ from campaigns import g26_gate as gate
 from campaigns.dogbone_v1 import material_run
 from campaigns.dogbone_v1.s26_hgo import RUN
 from campaigns.dogbone_v1.s26_references import AMENDMENT_PATH, build_amendment
+from campaigns.history import read_document_bytes
 from piginot.contracts import canonical_json_bytes
 from tests.git_helpers import run_git
 
@@ -80,7 +81,9 @@ def protocol_root(tmp_path: Path) -> Path:
     (root / RUN.protocol_path).parent.mkdir(parents=True)
     shutil.copy(material_run.REPOSITORY / RUN.protocol_path, root / RUN.protocol_path)
     (root / gate.ADR_PATH).parent.mkdir(parents=True)
-    shutil.copy(material_run.REPOSITORY / gate.ADR_PATH, root / gate.ADR_PATH)
+    (root / gate.ADR_PATH).write_bytes(
+        read_document_bytes(material_run.REPOSITORY, gate.ADR_PATH)
+    )
     _commit(root, "protocol")
     _write(root, AMENDMENT_PATH, build_amendment(root))
     _commit(root, "reference amendment")
@@ -190,7 +193,9 @@ def test_the_amendment_must_follow_the_original_protocol(
     protocol.parent.mkdir(parents=True)
     protocol.write_bytes((material_run.REPOSITORY / RUN.protocol_path).read_bytes())
     (repo / gate.ADR_PATH).parent.mkdir(parents=True)
-    shutil.copy(material_run.REPOSITORY / gate.ADR_PATH, repo / gate.ADR_PATH)
+    (repo / gate.ADR_PATH).write_bytes(
+        read_document_bytes(material_run.REPOSITORY, gate.ADR_PATH)
+    )
     _write(repo, AMENDMENT_PATH, build_amendment(repo))
     if order == "amendment-first":
         protocol.unlink()
