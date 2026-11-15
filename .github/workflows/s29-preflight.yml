@@ -1,0 +1,154 @@
+name: S29 installed metadata preflight
+
+# Manual engineering preflight only: no training, FEM, inference or publication.
+# This produces installation diagnostics without numerical evaluation.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build one clean distribution pair and tutorial inputs
+    runs-on: ubuntu-latest
+    outputs:
+      manifest_sha256: ${{ steps.inputs.outputs.manifest_sha256 }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - name: Set up Python
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: "3.11"
+      - name: Install the existing build tool
+        run: python -m pip install "uv==0.8.17"
+      - name: Check the lock and build distributions
+        run: |
+          uv lock --check
+          uv build --out-dir "$RUNNER_TEMP/s29-input/package"
+      - name: Bind artifacts and metadata-only tutorial inputs
+        id: inputs
+        shell: bash
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          import shutil
+          import subprocess
+          import tomllib
+          from pathlib import Path
+
+          root = Path.cwd()
+          assert not subprocess.check_output(["git", "status", "--porcelain=v1"])
+          revision = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode().strip()
+          assert revision == os.environ["GITHUB_SHA"]
+          output = Path(os.environ["RUNNER_TEMP"]) / "s29-input"
+          assert len(list((output / "package").glob("*.whl"))) == 1
+          assert len(list((output / "package").glob("*.tar.gz"))) == 1
+          tools = output / "tools"
+          tools.mkdir()
+          shutil.copyfile(root / "scripts/release_smoke.py", tools / "release_smoke.py")
+          tutorial = output / "tutorial"
+          tutorial.mkdir()
+          for name in ("prepare.py", "problem.json", "source.json", "config-template.json", "README.md"):
+              shutil.copyfile(root / "examples/custom_material" / name, tutorial / name)
+          version = tomllib.loads((root / "pyproject.toml").read_text())["project"]["version"]
+          (output / "build.json").write_text(json.dumps({
+              "source_revision": revision, "version": version,
+              "scope": "Installed metadata preflight; no numerical execution",
+          }, sort_keys=True) + "\n")
+          files = {
+              path.relative_to(output).as_posix(): {
+                  "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                  "bytes": path.stat().st_size,
+              }
+              for path in sorted(output.rglob("*")) if path.is_file()
+          }
+          payload = json.dumps(files, sort_keys=True).encode() + b"\n"
+          (output / "input-manifest.json").write_bytes(payload)
+          with open(os.environ["GITHUB_OUTPUT"], "a") as stream:
+              stream.write("manifest_sha256=" + hashlib.sha256(payload).hexdigest() + "\n")
+          PY
+      - name: Retain the single distribution pair and input hashes
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: s29-preflight-inputs
+          path: ${{ runner.temp }}/s29-input
+          if-no-files-found: error
+
+  install:
+    name: Base wheel / ${{ matrix.os }} / Python ${{ matrix.python-version }}
+    needs: build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.11", "3.12", "3.13"]
+    defaults:
+      run:
+        shell: bash
+        working-directory: ${{ runner.temp }}
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Download the same distribution pair
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: s29-preflight-inputs
+          path: ${{ runner.temp }}/s29-input
+      - name: Verify the build-job manifest and every artifact byte
+        env:
+          EXPECTED_MANIFEST_SHA256: ${{ needs.build.outputs.manifest_sha256 }}
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          root = (Path(os.environ["RUNNER_TEMP"]) / "s29-input").resolve()
+          payload = (root / "input-manifest.json").read_bytes()
+          assert hashlib.sha256(payload).hexdigest() == os.environ["EXPECTED_MANIFEST_SHA256"]
+          for name, expected in json.loads(payload).items():
+              path = (root / name).resolve()
+              assert path.is_relative_to(root) and path.is_file() and not path.is_symlink()
+              assert path.stat().st_size == expected["bytes"]
+              assert hashlib.sha256(path.read_bytes()).hexdigest() == expected["sha256"]
+          PY
+      - name: Install only the wheel and its base dependencies outside a checkout
+        run: |
+          python -m venv "$RUNNER_TEMP/s29-base"
+          if [ -x "$RUNNER_TEMP/s29-base/bin/python" ]; then
+            py="$RUNNER_TEMP/s29-base/bin/python"
+            command="$RUNNER_TEMP/s29-base/bin/piginot"
+          else
+            py="$RUNNER_TEMP/s29-base/Scripts/python.exe"
+            command="$RUNNER_TEMP/s29-base/Scripts/piginot.exe"
+          fi
+          "$py" -m pip install --disable-pip-version-check "$RUNNER_TEMP"/s29-input/package/*.whl
+          echo "RELEASE_PYTHON=$py" >> "$GITHUB_ENV"
+          echo "RELEASE_COMMAND=$command" >> "$GITHUB_ENV"
+          mkdir "$RUNNER_TEMP/s29-results"
+      - name: Verify installed base metadata without numerical imports
+        run: |
+          version=$(python -c "import json, os; from pathlib import Path; print(json.loads((Path(os.environ['RUNNER_TEMP'])/'s29-input/build.json').read_bytes())['version'])")
+          "$RELEASE_PYTHON" -I "$RUNNER_TEMP/s29-input/tools/release_smoke.py" --expect-version "$version" --base-only | tee "$RUNNER_TEMP/s29-results/smoke.json"
+      - name: Prepare public tutorial inputs and inspect its plan
+        run: |
+          "$RELEASE_PYTHON" -I "$RUNNER_TEMP/s29-input/tutorial/prepare.py" --output "$RUNNER_TEMP/s29-user-material"
+          "$RELEASE_COMMAND" compile --spec "$RUNNER_TEMP/s29-user-material/problem.json" --config "$RUNNER_TEMP/s29-user-material/config.json" --output "$RUNNER_TEMP/s29-plan" --plan-only
+      - name: Retain diagnostic reports, including failed preflight jobs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: s29-preflight-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: |
+            ${{ runner.temp }}/s29-results
+            ${{ runner.temp }}/s29-user-material/preparation.json
+            ${{ runner.temp }}/s29-plan/plan.json
+          if-no-files-found: warn

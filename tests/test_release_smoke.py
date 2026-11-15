@@ -304,6 +304,9 @@ def test_preflight_workflow_is_manual_pinned_and_contains_no_numerical_run():
             command = step.get("run", "")
             assert "twine upload" not in command
             assert "--execution-profile" not in command
+            assert "artifacts/campaign-compiler/" not in command
+            assert "artifacts/cross-family/" not in command
+            assert "artifacts/release/" not in command
             for line in command.splitlines():
                 if " compile " in line:
                     assert "--plan-only" in line
