@@ -5,7 +5,7 @@ operator: the family's reference mesh, morph map and executable envelope, the
 model specification, the weights, the verification report and the
 limitations. `bundle.json` lists the SHA-256 and size of every file and its own
 hash, and a bundle is refused if any byte differs
-([ADR 0023](adr/0023-s15-bundle-and-cli.md)).
+([ADR 0023](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/adr/0023-s15-bundle-and-cli.md)).
 
 ## Install for serving
 

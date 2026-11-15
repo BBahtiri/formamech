@@ -11,6 +11,7 @@ from campaigns.dogbone_v1 import s16_mutation
 from campaigns.dogbone_v1.s16_detectors import CACHES, DETECTORS, cleanup
 from campaigns.dogbone_v1.s16_gate import gate_checks
 from campaigns.dogbone_v1.s16_mutants import MUTANTS
+from campaigns.history import read_document
 from piginot.mutation import (
     Detector,
     DetectorOutcome,
@@ -29,7 +30,7 @@ BASELINE = ROOT / "artifacts" / "mutation" / "S16-SIGNATURES.json"
 def _spec_table() -> list[tuple[str, str]]:
     rows = re.findall(
         r"^\| +(\d+) \| `([A-Z_]+)` \| `(G\d+\.[a-z-]+)` \|",
-        SPEC.read_text(encoding="utf-8"),
+        read_document(ROOT, SPEC.relative_to(ROOT)),
         flags=re.MULTILINE,
     )
     return [(name, gate) for _, name, gate in rows]

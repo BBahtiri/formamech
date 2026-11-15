@@ -136,7 +136,7 @@ full-range refinement evidence. The safetensors loader rejects pickle and valida
 metadata, schema and exact byte layout before materialization, but it does not
 authenticate learned tensor values.
 
-[S12](adr/0013-s12-objective-registry.md) fixes the nondimensional objective
+[S12](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/adr/0013-s12-objective-registry.md) fixes the nondimensional objective
 registry, and G12 is PASS on finite fixtures. Its perturbation checks use
 channel-isolated analytic residual fixtures rather than one coupled physical state,
 and its parameter reachability evidence is a single deterministic probe, not a
@@ -149,7 +149,7 @@ neither equilibrium of the recovered stress nor `1e-12` FEM discretization error
 S12 opened neither DEVELOPMENT nor HOLDOUT, ran no production training, and created
 no checkpoint.
 
-[S13](adr/0018-s13c-energy-form-operator.md) freezes a different operator from the
+[S13](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/adr/0018-s13c-energy-form-operator.md) freezes a different operator from the
 S11 baseline described above. The frozen energy-form candidate serves the
 constitutive stress `P_NH(I + grad u)` of its predicted displacement and has no
 independent stress head; the `P_predicted` statement above applies to the S11
@@ -187,7 +187,7 @@ cases under a signed protocol (ADRs 0019–0021). Its numbers carry these limits
   because `IMPLEMENTATION-v1.0-OSS.md` is not available; they are the upstream
   gate artifacts, not an independent audit.
 
-S15 serves that candidate as a bundle ([ADR 0023](adr/0023-s15-bundle-and-cli.md),
+S15 serves that candidate as a bundle ([ADR 0023](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/adr/0023-s15-bundle-and-cli.md),
 [guide](bundle.md)). Its limits:
 
 - A bundle proves that its bytes are the ones its manifest lists and that its
@@ -205,7 +205,7 @@ S15 serves that candidate as a bundle ([ADR 0023](adr/0023-s15-bundle-and-cli.md
 - The S15 clean install was checked on Linux x86_64 with Python 3.11 only.
 
 S16 checks the gates themselves with twenty mutants
-([ADR 0024](adr/0024-s16-mutation-suite.md)). Its limits:
+([ADR 0024](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/adr/0024-s16-mutation-suite.md)). Its limits:
 
 - Each mutant is one deliberate defect from a fixed list. That every gate
   catches its listed defect does not show that the gates catch every defect.
@@ -217,19 +217,19 @@ S16 checks the gates themselves with twenty mutants
   reports such changes instead of hiding them.
 
 S17 adds a second family, the centre-notched plate
-([ADR 0025](adr/0025-s17-examples-and-second-family.md),
-[results](campaigns/s17-plan.md#4-results)). Its limits:
+([ADR 0025](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/adr/0025-s17-examples-and-second-family.md),
+[results](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/campaigns/s17-plan.md#4-results)). Its limits:
 
 - **The notched bundle is `DEVELOPMENT_VERIFIED`, not `HOLDOUT_VERIFIED`.**
   Its S14 DEVELOPMENT budget failed as computed (all-cases p90: stress field
   5.24%, peak 5.34% against 5%) and was accepted by the decision owner after
-  the result was seen ([ADR 0030](adr/0030-notched-development-budget-acceptance.md)).
+  the result was seen ([ADR 0030](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/adr/0030-notched-development-budget-acceptance.md)).
   Its HOLDOUT budget, judged by the unchanged rule, fails: 6.01% and 6.40%,
   up to 10.7% on single slices, worst on the sharpest notches and the widest
   plates. Its predictions are not verified to the S14 tolerances on unseen
   cases.
 - `G17.non-dogbone` computes FAIL and passes only through the decision owner's
-  acceptance ([ADR 0031](adr/0031-g17-non-dogbone-acceptance.md)); G17's PASS
+  acceptance ([ADR 0031](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/adr/0031-g17-non-dogbone-acceptance.md)); G17's PASS
   rests on that acceptance for this check.
 - About half of each notched case's budget is the FEM discretisation term of
   the 24 + 24 × 16 reference mesh, so a better surrogate alone would not pass
@@ -243,7 +243,7 @@ S17 adds a second family, the centre-notched plate
 - Example 1 is a teaching example on a coarse mesh with one geometry; its
   held-out strains lie inside its training range.
 
-Release 0.1.0 (S18, [ADR 0032](adr/0032-release-0.1.0.md)) carries these limits:
+Release 0.1.0 (S18, [ADR 0032](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/adr/0032-release-0.1.0.md)) carries these limits:
 
 - G18 requires the TestPyPI release to install and pass a smoke test on Linux,
   macOS and Windows with Python 3.11. Other platforms, and installs with Python
@@ -267,11 +267,11 @@ The development line after 0.1.0 (S19–S23, `STEPS-v2.0.md`) is not part of
 release 0.1.0 and carries these limits:
 
 - S20 burned both 0.1.0 HOLDOUT sets and committed fresh sealed sets H1 and H2
-  per family ([ADR 0101](adr/0101-s20-fresh-holdouts-and-post-mortem.md)). The
+  per family ([ADR 0101](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/adr/0101-s20-fresh-holdouts-and-post-mortem.md)). The
   notched post-mortem used the revealed notched HOLDOUT descriptively only; its
   classification is evidence about the analysed cases, not a property of the
   whole envelope.
-- The S21 certificate ([ADR 0102](adr/0102-s21-per-prediction-certificate.md))
+- The S21 certificate ([ADR 0102](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/adr/0102-s21-per-prediction-certificate.md))
   estimates, with one Newton step, the distance from a prediction to the
   converged solution of the bundle's own discrete FEM problem (the mesh and
   settings of its reference data). It does not include the discretisation
@@ -280,7 +280,7 @@ release 0.1.0 and carries these limits:
   DEVELOPMENT cases per family; for a prediction far from the solution one step
   need not reach it, and the estimate is then only an indicator. A certificate
   with a failed guard gives no estimate.
-- `exact` serving ([ADR 0103](adr/0103-s22-verified-serving.md)) returns the FEM
+- `exact` serving ([ADR 0103](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/adr/0103-s22-verified-serving.md)) returns the FEM
   solution on that mesh, with the same discretisation error as the bundle's
   reference data and the S7 solver's limits stated above.
 - Certified and exact serving need the bundle's FEM recipe sidecar
@@ -290,7 +290,7 @@ release 0.1.0 and carries these limits:
   three solves in parallel, one run per case. S21 and S22 recorded no native
   Windows or macOS run.
 
-S23 adds calibrated error bounds ([ADR 0104](adr/0104-s23-calibrated-bounds.md)).
+S23 adds calibrated error bounds ([ADR 0104](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/adr/0104-s23-calibrated-bounds.md)).
 Their limits:
 
 - A bound is one number per family and quantity, a split-conformal upper bound

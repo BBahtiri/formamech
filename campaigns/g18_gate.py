@@ -47,6 +47,7 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
+from campaigns.history import read_document
 from campaigns.notched_v1.gate_io import (
     check_document,
     gate_document,
@@ -130,11 +131,10 @@ def all_gates() -> dict[str, Any]:
             for document in documents
         ]
     not_run = sorted(g for g, v in verdicts.items() if "NOT_RUN" in v)
-    adr = (
-        (REPOSITORY / RELEASE_ADR).read_text("utf-8")
-        if (REPOSITORY / RELEASE_ADR).is_file()
-        else ""
-    )
+    try:
+        adr = read_document(REPOSITORY, RELEASE_ADR)
+    except FileNotFoundError:
+        adr = ""
     unexplained = [g for g in not_run if g not in adr]
     passed = (
         all(

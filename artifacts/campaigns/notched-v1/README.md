@@ -34,4 +34,4 @@ the other five families (`campaigns.notched_v1.s14.CAMPAIGN_FAMILIES`).
 
 HOLDOUT was consumed once, after the signed waiver was committed. Its budget
 fails under the unchanged rule, so the bundle built from `CP-FREEZE` serves
-`DEVELOPMENT_VERIFIED` (G15 PASS); see the [S17 results](../../../docs/campaigns/s17-plan.md#4-results).
+`DEVELOPMENT_VERIFIED` (G15 PASS); see the [S17 results](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/campaigns/s17-plan.md#4-results).

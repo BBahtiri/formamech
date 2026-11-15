@@ -18,3 +18,14 @@ validation.
 
 Keep pull requests focused. Explain the behavior being changed, the tests run, and
 any required check that could not run.
+
+Keep implementation plans, agent reviews and intermediate run notes under
+`.piginot-private/implementation/`, which is ignored by Git. Public documentation
+should cover supported workflows, developer interfaces, limitations, licensing
+and final results.
+
+Historical step specifications and decision narratives remain available in Git
+history. Run legacy gate audits from a full Git checkout; shallow clones need
+their history fetched first. Those audits read the original committed documents
+when their local working copies are absent, and fail if the required history
+is unavailable. A source archive does not include that historical audit context.
