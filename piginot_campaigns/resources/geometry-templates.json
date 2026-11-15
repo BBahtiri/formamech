@@ -1,0 +1,30 @@
+{
+  "dogbone-v1": [
+    {
+      "name": "standard",
+      "resolution": [36, 20, 16],
+      "reference_mesh_id": "3bfc1043f5aa9e989469adacb0ee1d0b483825ffabcd5dfac4bf9caca580d82c",
+      "morph_map_sha256": "71dbd2f5637be6ce0563c6763095263cb429471bac56ed60175abfd4d9e8c3ce"
+    },
+    {
+      "name": "qualification-tiny",
+      "resolution": [4, 4, 2],
+      "reference_mesh_id": "eba2ed25bafee15b3fabbc8b824c696aeab5b36558e9d769807bd41a55c672bb",
+      "morph_map_sha256": "71dbd2f5637be6ce0563c6763095263cb429471bac56ed60175abfd4d9e8c3ce"
+    }
+  ],
+  "notched-v1": [
+    {
+      "name": "standard",
+      "resolution": [24, 24, 16],
+      "reference_mesh_id": "e2fca59e8e5b0de550aefec978e416c67aeda062b7f89271dab68a1189e5c773",
+      "morph_map_sha256": "347839ce209a07d4b923cdd59f7318938776ab39ddd2bda88c0cbb32bad70f79"
+    },
+    {
+      "name": "qualification-tiny",
+      "resolution": [4, 4, 2],
+      "reference_mesh_id": "a493f04245a086a24be49c3555f6242d98f5c48c70689c320641caf409aafc93",
+      "morph_map_sha256": "347839ce209a07d4b923cdd59f7318938776ab39ddd2bda88c0cbb32bad70f79"
+    }
+  ]
+}

@@ -1,11 +1,18 @@
 # Bundles
 
-A bundle is a directory that holds everything needed to serve one verified
-operator: the family's reference mesh, morph map and executable envelope, the
+A bundle is a directory that holds everything needed to serve one
+operator: its reference mesh, morph map and executable envelope, the
 model specification, the weights, the verification report and the
 limitations. `bundle.json` lists the SHA-256 and size of every file and its own
 hash, and a bundle is refused if any byte differs
 ([ADR 0023](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/adr/0023-s15-bundle-and-cli.md)).
+
+Compiler exports can also be candidate bundles with claim `NOT_VERIFIED`.
+Their integrity checks establish matching files, not prediction accuracy.
+See [own-CAD bundle reuse](campaigns/own-cad-workflow.md#save-and-reuse-a-candidate-bundle)
+for the supported uncalibrated fast-prediction workflow. Copy or archive the
+whole candidate directory; its manifest binds the mesh, model, material,
+input envelope, weights and report files.
 
 ## Install for serving
 

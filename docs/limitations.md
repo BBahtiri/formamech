@@ -327,3 +327,36 @@ ancestry is verified separately. The project implements deterministic training,
 one frozen, TRAIN-selected candidate per campaign, their S14 verification and their
 S15 bundles; it does not certify a trained operator. The S21 certificate checks one
 prediction against one discrete FEM problem, within the limits stated above.
+
+
+## Own-CAD and compiler scope
+
+The development version imports supported planar STEP/DXF profiles and
+trains one operator for one fixed geometry over declared material and
+prescribed-displacement ranges. The [CAD guide](campaigns/own-cad-workflow.md)
+lists supported entities, units and boundary conditions. Essential boundaries
+use straight line groups; force/Neumann loading, full 3D solids and
+path-dependent materials are outside this workflow.
+
+Material admission and lifting checks run before fitting. They test finite,
+declared configurations; they do not establish that an arbitrary material
+formula or new CAD setup is suitable for an application. Keep explicit
+resource limits, material/load ranges and reference-solver settings with
+each run.
+
+CAD approximation, FEM discretization changes and model prediction error are
+separate. The reference ladder refines a fixed polygon, and measured field
+or peak changes between meshes are not continuum error bounds. A similar
+field image or small displacement error alone does not establish accurate
+local stress. Compare the quantities and regions required by the intended use.
+
+New compiler candidates retain `NOT_VERIFIED`. They support uncalibrated
+fast prediction and inherit no specimen bundle's calibrated bounds,
+certificate or verified envelope. Candidate `certified` and `exact` serving
+are unsupported; perform and inspect FEM comparisons as a separate workflow.
+A successful command or bundle-integrity check establishes execution or
+matching bytes, not a model-accuracy claim.
+
+Keep experimental accuracy reports, run outputs, plots and trained weights
+locally under `.piginot-runs/` or outside the source checkout. They are specific
+to the corresponding geometry, material, loads, mesh and training setup.

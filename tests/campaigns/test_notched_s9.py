@@ -50,6 +50,12 @@ def test_the_proposal_budget_matches_the_design_policy() -> None:
 def test_the_ceremony_and_g9_evidence_in_a_scratch_repository(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    # Reuse the public DogBone test draws; fresh production secrets can miss G9.
+    secret_draws = iter(bytes(range(start, start + 32)) for start in (0, 32, 64))
+    monkeypatch.setattr(
+        "piginot.doe.secret_material.secrets.token_bytes",
+        lambda _size: next(secret_draws),
+    )
     monkeypatch.setattr(s9, "FEM_PILOT_EVIDENCE_HASH", "f" * 64)
     repo = tmp_path / "repo"
     repo.mkdir()

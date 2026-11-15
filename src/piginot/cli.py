@@ -284,6 +284,30 @@ def _store_prune(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def _compile(args: argparse.Namespace) -> int:
+    try:
+        from piginot.compiler.cli import compile_command
+    except ImportError as error:
+        print(
+            f"piginot compile: compiler dependencies unavailable: {error}",
+            file=sys.stderr,
+        )
+        return 2
+    return compile_command(
+        args.spec,
+        args.config,
+        args.output,
+        plan_only=args.plan_only,
+        resume=args.resume,
+    )
+
+
+def _cad(args: argparse.Namespace) -> int:
+    from piginot.cad.cli import run
+
+    return run(args)
+
+
 def _campaign(command: str, args: argparse.Namespace) -> int:
     try:
         table = resolve_campaign(args.campaign, args.campaign_path)
@@ -318,6 +342,43 @@ def build_parser() -> argparse.ArgumentParser:
         "--version", action="version", version=f"%(prog)s {__version__}"
     )
     subparsers = parser.add_subparsers(dest="command")
+
+    compile_parser = subparsers.add_parser(
+        "compile", help="plan and execute a declared campaign"
+    )
+    compile_parser.add_argument("--spec", required=True, type=Path)
+    compile_parser.add_argument("--config", required=True, type=Path)
+    compile_parser.add_argument("--output", required=True, type=Path)
+    action = compile_parser.add_mutually_exclusive_group()
+    action.add_argument("--plan-only", action="store_true")
+    action.add_argument("--resume", action="store_true")
+    compile_parser.set_defaults(handler=_compile)
+
+    cad = subparsers.add_parser("cad", help="import and inspect a fixed CAD geometry")
+    cad_commands = cad.add_subparsers(dest="cad_command", required=True)
+    cad_import = cad_commands.add_parser("import", help="mesh a STEP or DXF profile")
+    cad_import.add_argument("source", type=Path)
+    cad_import.add_argument("--unit", choices=("mm", "cm", "m"), required=True)
+    sizing = cad_import.add_mutually_exclusive_group(required=True)
+    sizing.add_argument("--mesh-size-mm", type=float)
+    sizing.add_argument(
+        "--mesh-policy", type=Path, help="explicit local sizing and curve-accuracy JSON"
+    )
+    cad_import.add_argument("--output", type=Path, required=True)
+    cad_import.set_defaults(handler=_cad)
+    cad_inspect = cad_commands.add_parser(
+        "inspect", help="inspect verified geometry data"
+    )
+    cad_inspect.add_argument("project", type=Path)
+    cad_inspect.set_defaults(handler=_cad)
+    cad_prepare = cad_commands.add_parser(
+        "prepare", help="prepare a fixed-CAD training campaign"
+    )
+    cad_prepare.add_argument("--project", type=Path, required=True)
+    cad_prepare.add_argument("--settings", type=Path, required=True)
+    cad_prepare.add_argument("--output", type=Path, required=True)
+    cad_prepare.add_argument("--execution-profile", action="store_true")
+    cad_prepare.set_defaults(handler=_cad)
 
     store = subparsers.add_parser("store")
     store_commands = store.add_subparsers(dest="store_command", required=True)

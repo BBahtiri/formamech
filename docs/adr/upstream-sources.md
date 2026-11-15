@@ -16,6 +16,13 @@ given where the upstream checkout was available.
 
 ## 1. What a release distributes
 
+The distribution description and contents scan below were recorded for the
+0.1.0 release. The current development wheel additionally includes
+`piginot_campaigns` and its packaged geometry resources. The development
+sdist includes that package and `hatch_build.py` as well as the existing
+source and metadata files. Neither build target includes `experiments/` or
+local experiment outputs.
+
 The wheel contains `src/piginot` and its metadata. The sdist contains
 `src/piginot`, `LICENSE`, `README.md`, `CITATION.cff`, `CHANGELOG.md`,
 `pyproject.toml` and `uv.lock` (`[tool.hatch.build.targets.sdist]`). Neither
@@ -95,5 +102,14 @@ evidence written before the rewrite still names, to the rewritten ones
 Dependencies are installed from PyPI under their own licences and are never
 vendored (`pyproject.toml`, `uv.lock`). The base install needs only `rfc8785`
 (Apache-2.0). The `runtime` extra, used to load a bundle and predict, adds
-NumPy (BSD-3-Clause), PyTorch (BSD-3-Clause) and safetensors (Apache-2.0). The
-other extras are development tools.
+NumPy (BSD-3-Clause), PyTorch (BSD-3-Clause) and safetensors (Apache-2.0).
+`verify` adds numerical execution dependencies including threadpoolctl,
+scikit-fem, SciPy and SymPy. The `fem`, `physics`, `ml` and `geometry` extras
+also declare optional execution capabilities; `dev` contains development tools.
+
+The `cad` extra adds the external Gmsh and ezdxf Python packages.
+[Gmsh's licence](https://gmsh.info/#Licensing) is GPL version 2 or later with
+its stated external-library linking exception.
+[ezdxf is MIT-licensed](https://ezdxf.readthedocs.io/en/stable/introduction.html#license).
+These dependencies are installed separately and are not vendored in this
+project's wheel. Consult their own licence notices when distributing them.

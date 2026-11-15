@@ -10,16 +10,18 @@ reported under its own name.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import struct
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import Any, Protocol
 
 import torch
 
-from piginot.contracts import MaterialSpec
+from piginot.bundle.problem import PROBLEM_STRESS
+from piginot.contracts import MaterialSpec, canonical_json_bytes
 from piginot.operators.energy_operator import (
     ENERGY_ARCHITECTURE_ID,
     DirichletLifting,
@@ -32,6 +34,7 @@ from piginot.operators.energy_operator import (
 from piginot.verification.confidence import equilibrium_residual
 
 CONSTITUTIVE_PLANE_STRESS = "constitutive-plane-stress-neo-hookean"
+CONSTITUTIVE_PROBLEM_PLANE_STRESS = PROBLEM_STRESS
 DETERMINANT_FLOOR = 1.0e-12
 _MAX_HEADER_BYTES = 16 * 1024 * 1024
 
@@ -125,9 +128,15 @@ class EnergyFormServing:
     architecture_id = ENERGY_ARCHITECTURE_ID
     stress_authority = CONSTITUTIVE_PLANE_STRESS
 
-    def __init__(self, model: EnergyFormOperator) -> None:
+    def __init__(
+        self,
+        model: EnergyFormOperator,
+        *,
+        stress_authority: str = CONSTITUTIVE_PLANE_STRESS,
+    ) -> None:
         self._model = model
         self._count = sum(parameter.numel() for parameter in model.parameters())
+        self.stress_authority = stress_authority
 
     @property
     def parameter_count(self) -> int:
@@ -229,6 +238,19 @@ def build_energy_form(
 ) -> EnergyFormServing:
     """Rebuild the operator, load its weights and check its module digest."""
 
+    model = _energy_model(operator_config, tensors, metadata)
+    if metadata.get("architecture_module_digest") != energy_module_digest(model):
+        raise ServingError("weights module digest differs from the declared operator")
+    return EnergyFormServing(model.to(torch.float64).eval())
+
+
+def _energy_model(
+    operator_config: Mapping[str, Any],
+    tensors: Mapping[str, torch.Tensor],
+    metadata: Mapping[str, str],
+    *,
+    dtype: torch.dtype = torch.float32,
+) -> EnergyFormOperator:
     try:
         config = EnergyOperatorConfig(
             **{
@@ -239,20 +261,65 @@ def build_energy_form(
     except (KeyError, TypeError, ValueError) as exc:
         raise ServingError(f"operator configuration is invalid: {exc}") from exc
     with torch.random.fork_rng(devices=[]):
-        model = EnergyFormOperator(config).to(torch.float32)
+        model = EnergyFormOperator(config).to(dtype)
     try:
         model.load_state_dict(dict(tensors), strict=True)
     except RuntimeError as exc:
         raise ServingError(f"weights do not match the operator: {exc}") from exc
     if metadata.get("architecture_id") != ENERGY_ARCHITECTURE_ID:
         raise ServingError("weights were exported by another architecture")
-    if metadata.get("architecture_module_digest") != energy_module_digest(model):
-        raise ServingError("weights module digest differs from the declared operator")
     if not all(math.isfinite(float(t.abs().max())) for t in tensors.values()):
         raise ServingError("weights must be finite")
-    served = model.to(torch.float64).eval()
-    served.requires_grad_(False)
-    return EnergyFormServing(served)
+    model.requires_grad_(False)
+    return model
+
+
+def problem_energy_module_digest(model: EnergyFormOperator, problem_hash: str) -> str:
+    """The material-aware serving contract; the legacy module digest is unchanged."""
+    if type(model) is not EnergyFormOperator:
+        raise TypeError("model must be an exact EnergyFormOperator")
+    if len(problem_hash) != 64 or any(
+        character not in "0123456789abcdef" for character in problem_hash
+    ):
+        raise ValueError("problem_hash must be a lowercase content hash")
+    config = asdict(model.config)
+    config["parameter_names"] = list(model.config.parameter_names)
+    payload = {
+        "architecture_id": model.architecture_id,
+        "config": config,
+        "served_stress": CONSTITUTIVE_PROBLEM_PLANE_STRESS,
+        "problem_hash": problem_hash,
+        "state_schema": [
+            {"name": name, "shape": list(tensor.shape), "dtype": str(tensor.dtype)}
+            for name, tensor in sorted(model.state_dict().items())
+        ],
+    }
+    digest = hashlib.blake2b(canonical_json_bytes(payload), digest_size=32).hexdigest()
+    return f"blake2b256:{digest}"
+
+
+def _build_problem_energy_form(
+    operator_config: Mapping[str, Any],
+    tensors: Mapping[str, torch.Tensor],
+    metadata: Mapping[str, str],
+    problem_hash: str,
+) -> EnergyFormServing:
+    dtypes = {tensor.dtype for tensor in tensors.values()}
+    if len(dtypes) != 1 or not dtypes <= {torch.float32, torch.float64}:
+        raise ServingError(
+            "portable weights must have a uniform float32 or float64 dtype"
+        )
+    model = _energy_model(operator_config, tensors, metadata, dtype=next(iter(dtypes)))
+    if metadata.get("problem_hash") != problem_hash:
+        raise ServingError("weights problem hash differs from the portable problem")
+    if metadata.get("architecture_module_digest") != problem_energy_module_digest(
+        model, problem_hash
+    ):
+        raise ServingError("weights module digest differs from the portable operator")
+    return EnergyFormServing(
+        model.to(torch.float64).eval(),
+        stress_authority=CONSTITUTIVE_PROBLEM_PLANE_STRESS,
+    )
 
 
 ARCHITECTURES: dict[
@@ -267,6 +334,7 @@ def build_serving(
     weights: bytes,
     *,
     served_stress: str,
+    problem_hash: str | None = None,
 ) -> ServingModel:
     """The registered architecture, refusing any served-stress mismatch."""
 
@@ -274,7 +342,16 @@ def build_serving(
     if builder is None:
         raise ServingError(f"unregistered architecture {architecture_id!r}")
     tensors, metadata = read_safetensors(weights)
-    serving: ServingModel = builder(operator_config, tensors, metadata)
+    if problem_hash is not None:
+        if architecture_id != ENERGY_ARCHITECTURE_ID:
+            raise ServingError(
+                "portable problems need the registered energy architecture"
+            )
+        serving: ServingModel = _build_problem_energy_form(
+            operator_config, tensors, metadata, problem_hash
+        )
+    else:
+        serving = builder(operator_config, tensors, metadata)
     if serving.architecture_id != architecture_id:
         raise ServingError("the builder returned another architecture")
     if serving.stress_authority != served_stress:
@@ -288,6 +365,7 @@ def build_serving(
 __all__ = (
     "ARCHITECTURES",
     "CONSTITUTIVE_PLANE_STRESS",
+    "CONSTITUTIVE_PROBLEM_PLANE_STRESS",
     "DETERMINANT_FLOOR",
     "EnergyFormServing",
     "InadmissibleDeformation",
@@ -298,4 +376,5 @@ __all__ = (
     "build_energy_form",
     "build_serving",
     "read_safetensors",
+    "problem_energy_module_digest",
 )

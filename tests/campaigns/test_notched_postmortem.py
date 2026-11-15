@@ -42,6 +42,25 @@ def test_decomposition_separates_the_reference_term() -> None:
     assert d2["at_least_half_tolerance"] == 12 and d2["at_least_tolerance"] == 0
 
 
+def test_three_component_totals_preserve_protocol_rounding() -> None:
+    cases = [
+        {
+            "case_id": f"c{i}",
+            "surrogate": {q: 0.1 for q in pm.QUANTITIES},
+            "components": {
+                q: {"discretisation": 0.2, "projection": 0.3} for q in pm.QUANTITIES
+            },
+            "slices": ["all"],
+        }
+        for i in range(4)
+    ]
+    decomposition = pm.decomposition(cases, TOL)["p_relative_l2"]
+    assert decomposition["slices"]["all"]["total"] == 0.6000000000000001
+    assert decomposition["median_share"]["surrogate"] == 0.16666666666666666
+    fragility = pm.metric_fragility(cases, TOL)["p_relative_l2"]
+    assert fragility["all"] == fragility["without_three_largest"] == 0.6000000000000001
+
+
 def test_concentration_and_fragility() -> None:
     cases = [_case(i, 0.04 if i % 4 == 0 else 0.02, 0.0, i % 4) for i in range(16)]
     d3 = pm.slice_concentration(cases)["absolute_peak_error"]

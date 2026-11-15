@@ -14,6 +14,7 @@ from piginot.morphing.circular_transition import (
     CircularTransitionParameters,
     build_circular_transition_reference_mesh,
 )
+from piginot.morphing.fixed import BoundFixedGeometryDeformation, FixedGeometryMap
 from piginot.morphing.ledger import apply_morph, run_morph_sweep
 from piginot.morphing.membership import (
     DerivedBound,
@@ -56,6 +57,7 @@ __all__ = (
     "BlendedNotchParameters",
     "BoundBlendedNotchDeformation",
     "BoundCircularTransitionDeformation",
+    "BoundFixedGeometryDeformation",
     "CircularTransitionMap",
     "CircularTransitionMeshSpec",
     "CircularTransitionParameters",
@@ -63,6 +65,7 @@ __all__ = (
     "FFDControlPoint",
     "FFDMap",
     "FamilyMembershipPredicate",
+    "FixedGeometryMap",
     "Matrix2",
     "MembershipDecision",
     "MorphAttempt",

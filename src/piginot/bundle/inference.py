@@ -27,6 +27,8 @@ from piginot.bundle.manifest import (
     read_json,
     verify_bundle,
 )
+from piginot.bundle.problem import MATERIAL_DOMAIN_ERRORS
+from piginot.bundle.problem import PredictionReasonCode as PredictionReasonCode
 from piginot.bundle.serving import (
     InadmissibleDeformation,
     ServingError,
@@ -91,12 +93,6 @@ _AXES = {"x": 0, "y": 1}
 _BARYCENTRIC_TOLERANCE = 1.0e-9
 
 
-class PredictionReasonCode(StrEnum):
-    """Refusals raised by the inference closure itself."""
-
-    INADMISSIBLE_DEFORMATION = "PREDICTION_INADMISSIBLE_DEFORMATION"
-
-
 class Verdict(StrEnum):
     IN_DOMAIN = "IN_DOMAIN"
     REFUSED = "REFUSED"
@@ -139,6 +135,7 @@ class Bundle:
             "model_spec_sha256": files[MODEL_PATH].sha256,
             "reference_mesh_id": self.reference_mesh.mesh_id,
             "weights_sha256": files[WEIGHTS_PATH].sha256,
+            **(self.model.problem.identities if self.model.problem is not None else {}),
         }
 
     def geometry(self, inputs: Mapping[str, object]) -> GeometryOutcome:
@@ -248,13 +245,31 @@ def load_bundle(path: Path | str) -> Bundle:
     except (SpecDecodeError, KeyError, TypeError, ValueError) as exc:
         raise _refuse(BundleReasonCode.SPEC_INVALID, str(exc)) from exc
     _check_consistency(mesh, envelope, model)
+    if model.problem is not None:
+        try:
+            model.problem.check_bundle(mesh, morph_map, envelope)
+        except ValueError as exc:
+            raise _refuse(BundleReasonCode.SPEC_INCONSISTENT, str(exc)) from exc
     verification, limitations = _check_reports(manifest, contents)
+    if (
+        model.problem is not None
+        and manifest.claim_level != ClaimLevel.NOT_VERIFIED.value
+    ):
+        raise _refuse(
+            BundleReasonCode.REPORT_INVALID,
+            "portable problem candidates must be NOT_VERIFIED",
+        )
     try:
         serving = build_serving(
             model.architecture_id,
             model.operator_config,
             contents[WEIGHTS_PATH],
             served_stress=model.served_stress,
+            **(
+                {"problem_hash": model.problem.problem_hash}
+                if model.problem is not None
+                else {}
+            ),
         )
     except StressAuthorityMismatch as exc:
         raise _refuse(BundleReasonCode.STRESS_AUTHORITY_MISMATCH, str(exc)) from exc
@@ -329,6 +344,10 @@ class Prediction:
     constitutive_gap: float | None = None
 
     @property
+    def confidence_status(self) -> str | None:
+        return "NOT_CALIBRATED" if "problem_hash" in self.identities else None
+
+    @property
     def in_domain(self) -> bool:
         return self.verdict is Verdict.IN_DOMAIN
 
@@ -352,7 +371,7 @@ class Prediction:
                 }
             return result
 
-        return {
+        result = {
             "verdict": self.verdict.value,
             "reason_codes": list(self.reason_codes),
             "claim_level": self.claim_level.value,
@@ -381,6 +400,9 @@ class Prediction:
             "confidence_quantile": self.confidence_quantile,
             "constitutive_gap": self.constitutive_gap,
         }
+        if self.confidence_status is not None:
+            result["confidence_status"] = self.confidence_status
+        return result
 
 
 def _refused(bundle: Bundle, codes: Sequence[str]) -> Prediction:
@@ -403,6 +425,12 @@ def _decide(
     """The envelope decision, morphing an accepted geometry once."""
 
     if isinstance(inputs, Mapping) and bundle.envelope.evaluate(inputs).accepted:
+        if bundle.model.problem is not None and not bundle.model.problem.accepts(
+            inputs
+        ):
+            return RefusalDecision(
+                False, (PredictionReasonCode.PROBLEM_OUT_OF_DOMAIN.value,)
+            ), None
         outcome = bundle.geometry(inputs)
         if outcome.mesh is not None and not outcome.reason_codes:
             decision = bundle.checker.check(inputs, mesh=outcome.mesh, queries=queries)
@@ -475,24 +503,33 @@ class _Request:
             ],
             dtype=dtype,
         ).unsqueeze(0)
-        origin = [item.evaluate(values) for item in spec.frame_origin]
-        extent = [item.evaluate(values) for item in spec.frame_extent]
-        self.frame = QueryFrame(
-            torch.tensor([origin], dtype=dtype), torch.tensor([extent], dtype=dtype)
-        )
-        self.lifting = AxisAlignedTensionLifting(
-            torch.tensor([extent], dtype=dtype),
-            torch.tensor([spec.lifting_displacement.evaluate(values)], dtype=dtype),
-        )
-        self.material = MaterialSpec(
-            name=spec.material_name,
-            model=spec.material_model,
-            properties={
-                prop: cast(CanonicalQuantity, inputs[source])
-                for prop, source in spec.material_parameters.items()
-            },
-        )
-        self.elastic_modulus = float(self.material.properties["elastic_modulus"].value)
+        if spec.problem is not None:
+            self.frame, self.lifting, self.material, self.elastic_modulus = (
+                spec.problem.request_context(values)
+            )
+        else:
+            assert spec.frame_origin is not None and spec.frame_extent is not None
+            assert spec.lifting_displacement is not None
+            origin = [item.evaluate(values) for item in spec.frame_origin]
+            extent = [item.evaluate(values) for item in spec.frame_extent]
+            self.frame = QueryFrame(
+                torch.tensor([origin], dtype=dtype), torch.tensor([extent], dtype=dtype)
+            )
+            self.lifting = AxisAlignedTensionLifting(
+                torch.tensor([extent], dtype=dtype),
+                torch.tensor([spec.lifting_displacement.evaluate(values)], dtype=dtype),
+            )
+            self.material = MaterialSpec(
+                name=spec.material_name,
+                model=spec.material_model,
+                properties={
+                    prop: cast(CanonicalQuantity, inputs[source])
+                    for prop, source in spec.material_parameters.items()
+                },
+            )
+            self.elastic_modulus = float(
+                self.material.properties["elastic_modulus"].value
+            )
         self.vertices = torch.tensor(mesh.nodes, dtype=dtype)
         self.cells = torch.tensor(mesh.cells, dtype=torch.int64)
 
@@ -507,10 +544,15 @@ def _fields(bundle: Bundle, request: _Request, points: torch.Tensor) -> PointFie
         chunk=bundle.model.query_chunk,
     )
     deformation = torch.eye(2, dtype=points.dtype) + served.gradient
-    f33 = plane_stress_closure(deformation, request.material)
+    if bundle.model.problem is not None:
+        from piginot.physics import first_piola as material_piola
+        from piginot.physics import plane_stress_closure as material_closure
+    else:
+        material_piola, material_closure = first_piola, plane_stress_closure
+    f33 = material_closure(deformation, request.material)
     deformation_3d = embed_plane_stress_deformation(deformation, f33)
     determinant = torch.linalg.det(deformation_3d)
-    material_stress = first_piola(deformation_3d, request.material)[..., :2, :2]
+    material_stress = material_piola(deformation_3d, request.material)[..., :2, :2]
     sigma = served.stress @ deformation.transpose(-2, -1) / determinant[:, None, None]
     return PointFields(
         coordinates=points,
@@ -528,6 +570,7 @@ def _vertex_indicator(
     bundle: Bundle, request: _Request, mesh: CanonicalMesh, vertex_stress: torch.Tensor
 ) -> torch.Tensor:
     spec = bundle.model.confidence
+    assert spec is not None
     points = cell_quadrature_points(request.vertices, request.cells)
     residual = bundle.serving.residual(
         points.reshape(-1, 2),
@@ -555,6 +598,7 @@ def _with_confidence(
     points: PointFields, indicator: torch.Tensor, bundle: Bundle
 ) -> PointFields:
     spec = bundle.model.confidence
+    assert spec is not None
     curve = QuantileCurve(spec.quantile, spec.upper_edges, spec.values)
     return PointFields(
         coordinates=points.coordinates,
@@ -616,6 +660,10 @@ def predict(
         )
     except InadmissibleDeformation:
         return _refused(bundle, (PredictionReasonCode.INADMISSIBLE_DEFORMATION.value,))
+    except MATERIAL_DOMAIN_ERRORS:
+        if bundle.model.problem is None:
+            raise
+        return _refused(bundle, (PredictionReasonCode.MATERIAL_DOMAIN_FAILURE.value,))
     if not all(
         bool(torch.isfinite(getattr(points, name)).all())
         for points in (vertices, query_fields)
@@ -623,7 +671,7 @@ def predict(
         for name in FIELD_NAMES
     ):
         return _refused(bundle, (PredictionReasonCode.INADMISSIBLE_DEFORMATION.value,))
-    if confidence:
+    if confidence and bundle.model.confidence is not None:
         indicator = _vertex_indicator(bundle, request, mesh, vertices.P_served)
         vertices = _with_confidence(vertices, indicator, bundle)
         if query_fields is not None:
@@ -658,7 +706,9 @@ def predict(
         vertices=vertices,
         queries=query_fields,
         qois=_qois(bundle, mesh, vertices),
-        confidence_quantile=bundle.model.confidence.quantile if confidence else None,
+        confidence_quantile=bundle.model.confidence.quantile
+        if confidence and bundle.model.confidence is not None
+        else None,
         constitutive_gap=gap / request.elastic_modulus,
     )
 
@@ -702,7 +752,9 @@ def inspect(bundle: Bundle) -> dict[str, Any]:
             "served_stress": bundle.serving.stress_authority,
             "inputs": list(bundle.model.inputs),
             "qois": [q.name for q in bundle.model.qois],
-            "confidence": {
+            "confidence": None
+            if bundle.model.confidence is None
+            else {
                 "variant": bundle.model.confidence.variant,
                 "quantile": bundle.model.confidence.quantile,
             },

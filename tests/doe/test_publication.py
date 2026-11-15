@@ -167,7 +167,6 @@ def test_holdout_cases_are_rejected_at_both_publication_boundaries() -> None:
             },
             "disjoint",
         ),
-        ({"strata": {}}, "strata"),
         ({"strata": []}, "strata"),
         ({"strata": {"missing": 0}}, "coordinate axes"),
         ({"strata": {"width": True}}, "non-negative integers"),

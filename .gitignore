@@ -33,5 +33,7 @@ S1-iteration8-review.md
 !/docs/campaigns/s28-compiler-guide.md
 !/docs/campaigns/s29-custom-material.md
 !/docs/campaigns/s29-fast-demo.md
-/artifacts/release/**/*.md
-!/artifacts/release/cad-margin-fem-recovery/early-stop/README.md
+# Experimental campaign records and generated results stay local.
+/artifacts/cross-family/
+/artifacts/campaign-compiler/
+/artifacts/release/

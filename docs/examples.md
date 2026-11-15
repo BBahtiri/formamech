@@ -2,6 +2,23 @@
 
 Three reference examples cover the framework. All of them run on CPU.
 
+## Current compiler and CAD workflows
+
+- [Custom material](campaigns/s29-custom-material.md): prepare the complete
+  `examples/custom_material/` inputs, inspect a plan, run and resume training,
+  read FEM comparisons and reuse a candidate bundle.
+- [Own 2D CAD](campaigns/own-cad-workflow.md): import STEP/DXF, inspect boundary
+  identifiers, declare material/load ranges and displacement conditions, then
+  train one model for that fixed profile.
+- [Mesh controls](campaigns/own-cad-meshing.md): set local sizes and curve
+  approximation limits and compare FEM refinements on a fixed polygon.
+- [Bundle prediction](campaigns/s29-fast-demo.md): inspect the shipped bundles,
+  make a runtime prediction and inspect an out-of-envelope refusal.
+
+Keep new numerical outputs and trained candidates locally in `.piginot-runs/`
+or outside the checkout. The historical examples below describe the shipped
+specimen workflows.
+
 ## Example 1 — fixed-mesh strain sweep
 
 One notched-plate geometry (width 23 mm, notch radius 5 mm, notch depth 3 mm)

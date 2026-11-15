@@ -10,7 +10,7 @@
 Predict the stress field of a notched plate with a shipped bundle (Python 3.11–3.13):
 
 ```text
-git clone --branch v0.1.0 https://github.com/BBahtiri/verified-neural-operators.git
+git clone https://github.com/BBahtiri/verified-neural-operators.git
 cd verified-neural-operators
 python -m pip install -e ".[runtime]"
 piginot predict bundles/notched-v1-cp-freeze --request bundles/requests/notched-in-domain.json --output prediction.json
@@ -20,9 +20,35 @@ The [user guide](docs/user-guide.md) covers three ways to use the software:
 
 - predict with the two shipped [bundles](bundles/README.md);
 - train a small model end to end in about two minutes;
-- build a verified model for your own geometry.
+- train and inspect a model for your own CAD geometry.
 
 It also explains the claim levels and refusals.
+
+## Train a model for your own CAD
+
+The current development version supports one model per fixed 2D STEP/DXF
+profile over declared material and displacement-load ranges. Install the
+CAD and numerical capabilities in the cloned source environment:
+
+```text
+python -m pip install -e ".[cad,verify]"
+piginot cad import /path/to/profile.step --unit mm --mesh-size-mm 1 --output .piginot-runs/part/geometry
+piginot cad inspect .piginot-runs/part/geometry
+```
+
+Inspection lists the boundary identifiers and coordinates. Use them to set
+clamps, prescribed displacements and traction-free boundaries explicitly.
+The [own-CAD guide](docs/campaigns/own-cad-workflow.md) walks through settings,
+mesh controls, a training plan, FEM comparison and reusable candidate bundles.
+The [compiler guide](docs/campaigns/s28-compiler-guide.md) covers execution
+and resume; the [custom-material tutorial](docs/campaigns/s29-custom-material.md)
+shows a runnable input example.
+
+Keep your CAD inputs, settings, trained weights and numerical reports in
+`.piginot-runs/` (ignored by Git) or outside the source checkout. New bundles
+retain `NOT_VERIFIED` and support uncalibrated fast prediction. Assess each
+geometry and load/material range with its own FEM comparisons; software
+execution and bundle integrity do not establish model accuracy.
 
 ## About
 
@@ -132,7 +158,7 @@ commits, digests and licences are recorded in
 
 ```text
 python -m venv .venv
-python -m pip install -e ".[dev,geometry,physics,fem,ml]"
+python -m pip install -e ".[dev,geometry,cad,physics,fem,ml,verify]"
 ```
 
 Activate the virtual environment using the command appropriate for your shell before
@@ -145,7 +171,7 @@ ruff check .
 ruff format --check .
 mypy --strict src/
 pytest
-pytest tests/physics --cov=src/piginot/physics --cov-fail-under=95
+pytest tests/physics tests/materials/test_hyperelastic.py --cov=src/piginot/physics --cov-fail-under=95
 pytest tests/geometry --cov=src/piginot/geometry --cov-fail-under=85
 pytest tests/morphing --cov=src/piginot/morphing --cov-fail-under=85
 pytest tests/fem --cov=src/piginot/fem --cov-fail-under=85

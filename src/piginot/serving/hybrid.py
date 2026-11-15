@@ -274,6 +274,13 @@ def serve(
     """
 
     mode = ServingMode(mode)
+    if bundle.model.problem is not None:
+        if mode is not ServingMode.FAST:
+            raise ValueError("a portable candidate supports only fast serving")
+        if recipe is not None:
+            raise ValueError("a portable candidate has no bound FEM recipe")
+        if calibration is not None or confidence is True:
+            raise CalibrationError("a portable candidate has no matching calibration")
     if calibration is not None and (
         calibration.bundle_manifest_sha256 != bundle.manifest.manifest_sha256
     ):
