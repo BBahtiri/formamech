@@ -26,7 +26,13 @@ def _closure_function(
     mu: float,
     lam: float,
 ) -> torch.Tensor:
-    return mu * (torch.exp(2.0 * log_f33) - 1.0) + lam * (log_j2 + log_f33)
+    return mu * torch.expm1(2.0 * log_f33) + lam * (log_j2 + log_f33)
+
+
+def _bracket_is_resolved(lower: torch.Tensor, upper: torch.Tensor) -> torch.Tensor:
+    """A sign-changing bracket with no interior float cannot be refined further."""
+
+    return torch.nextafter(lower, upper) >= upper
 
 
 def _initial_log_guess(
@@ -94,7 +100,11 @@ def _solve_log_f33(
         tolerance = (
             0.5 * epsilon * torch.maximum(torch.ones_like(log_f33), log_f33.abs())
         )
-        newly_converged = (residual == 0.0) | (correction.abs() <= tolerance)
+        newly_converged = (
+            (residual == 0.0)
+            | (correction.abs() <= tolerance)
+            | _bracket_is_resolved(lower, upper)
+        )
         converged = converged | newly_converged
         if bool(converged.all().item()):
             break
@@ -113,8 +123,10 @@ def _solve_log_f33(
     final_tolerance = (
         0.5 * epsilon * torch.maximum(torch.ones_like(log_f33), log_f33.abs())
     )
-    final_converged = (final_residual == 0.0) | (
-        final_correction.abs() <= final_tolerance
+    final_converged = (
+        (final_residual == 0.0)
+        | (final_correction.abs() <= final_tolerance)
+        | _bracket_is_resolved(lower, upper)
     )
     if not bool(final_converged.all().item()):
         raise NewtonNonConvergenceError(

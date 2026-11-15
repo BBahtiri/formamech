@@ -5,6 +5,21 @@ shipped bundles, run the end-to-end example, and build a model for your own
 geometry. The [limitations](limitations.md) say what the numbers do and do not
 mean.
 
+## Work with your own CAD or material
+
+The current development version imports supported 2D STEP/DXF profiles,
+meshes them, and trains one model per fixed geometry over declared material
+and displacement-load ranges. Follow the [own-CAD workflow](campaigns/own-cad-workflow.md)
+to inspect and label boundaries, prepare a training plan, compare against FEM
+and save a reusable candidate bundle. The [meshing guide](campaigns/own-cad-meshing.md)
+explains local refinement and reference-convergence diagnostics.
+
+The installed [campaign compiler](campaigns/s28-compiler-guide.md) supports
+explicit execution and resume. Try the [custom-material example](campaigns/s29-custom-material.md)
+for complete inputs. New candidates retain `NOT_VERIFIED`; keep their inputs,
+weights and comparison reports locally under `.piginot-runs/` or outside the
+checkout, and assess suitability for their own geometry and input range.
+
 ## Project history
 
 PI-GINOT currently includes immutable unit-safe contracts, a local content-addressed

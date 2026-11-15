@@ -34,11 +34,13 @@ fem = [
   "torch>=2.6,<3",
 ]
 geometry = ["meshio>=5.3.5,<6", "numpy>=1.26,<2.3"]
+cad = ["gmsh>=4.15.2,<5", "ezdxf>=1.4.5,<2", "numpy>=1.26,<2.3"]
 physics = ["torch>=2.6,<3"]
 ml = ["torch>=2.6,<3", "safetensors>=0.8,<1"]
 runtime = ["numpy>=1.26,<2.3", "torch>=2.6,<3", "safetensors>=0.8,<1"]
 verify = [
   "numpy>=1.26,<2.3",
+  "threadpoolctl>=3.1,<4",
   "torch>=2.6,<3",
   "safetensors>=0.8,<1",
   "scikit-fem>=11,<13",
@@ -59,20 +61,30 @@ dev = [
 [project.scripts]
 piginot = "piginot.cli:main"
 
+[project.entry-points."piginot.compiler.adapters"]
+dogbone-v1 = "piginot_campaigns.adapters:DOGBONE"
+notched-v1 = "piginot_campaigns.adapters:NOTCHED"
+cad-fixed-v1 = "piginot.cad.adapter:FIXED_CAD"
+
 [tool.hatch.build]
 exclude = ["/experiments"]
 
+[tool.hatch.build.hooks.custom]
+path = "hatch_build.py"
+
 [tool.hatch.build.targets.wheel]
-packages = ["src/piginot"]
+packages = ["src/piginot", "piginot_campaigns"]
 
 [tool.hatch.build.targets.sdist]
 only-include = [
   "/src/piginot",
+  "/piginot_campaigns",
   "/LICENSE",
   "/README.md",
   "/CITATION.cff",
   "/CHANGELOG.md",
   "/pyproject.toml",
+  "/hatch_build.py",
   "/uv.lock",
 ]
 

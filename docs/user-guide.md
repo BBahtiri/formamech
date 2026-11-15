@@ -1,17 +1,15 @@
 # User guide
 
-This guide shows how to use PI-GINOT 0.1.0. Read the
-[limitations](limitations.md) before trusting any number it gives you: every
-prediction is checked against FEM solutions of one plane-stress model, inside
-a declared input range, and nothing else.
+This guide follows the current source development version (0.2.0.dev0).
+Read the [limitations](limitations.md) when assessing numerical output.
+Predictions belong to a declared geometry, material and input envelope.
 
-PI-GINOT can be used in three ways. They differ a lot in effort.
-
-| Use | What you provide | What you get | Effort |
-| --- | --- | --- | --- |
-| [1. Predict with a shipped bundle](#1-predict-with-a-shipped-bundle) | shape and load parameters of one of the two families | displacement, strain, stress, the peak stress and a confidence bound at every mesh vertex, in milliseconds | ready today |
-| [2. Train a small model end to end](#2-train-a-small-model-end-to-end-example-1) | nothing (one built-in geometry) | the full loop (FEM, training, verification, bundle) in about 2 minutes on a CPU | ready today; adapt the script for your own case |
-| [3. Build a verified model for your own geometry](#3-build-a-verified-model-for-your-own-geometry) | a mesh, a shape parametrisation, an input range | your own bundle with a measured claim level | Python work plus about a day of CPU time; no single command yet |
+| Use | What you provide | What you get |
+| --- | --- | --- |
+| [Predict with a shipped bundle](#1-predict-with-a-shipped-bundle) | Parameters inside an existing specimen envelope | Fields and quantities from that bundle |
+| [Train a small example](#2-train-a-small-model-end-to-end-example-1) | A built-in fixed-geometry configuration | An end-to-end software example |
+| [Train for your own CAD](#3-train-for-your-own-2d-cad-profile) | STEP/DXF, boundary settings and material/load ranges | A reusable fixed-geometry candidate and FEM comparisons |
+| [Use a custom material](campaigns/s29-custom-material.md) | An admitted strain-energy formula and explicit inputs | A material-specific candidate and its own reports |
 
 ## Install
 
@@ -19,7 +17,7 @@ You need Python 3.11, 3.12 or 3.13, and Git. Install from the repository; it
 also holds the bundles.
 
 ```text
-git clone --branch v0.1.0 https://github.com/BBahtiri/verified-neural-operators.git
+git clone https://github.com/BBahtiri/verified-neural-operators.git
 cd verified-neural-operators
 python -m venv .venv
 ```
@@ -28,16 +26,21 @@ Activate the environment (`source .venv/bin/activate` on Linux and macOS,
 `.venv\Scripts\activate` on Windows), then install what you need:
 
 ```text
-python -m pip install -e ".[runtime]"            # 1. predict with bundles
-python -m pip install -e ".[runtime,fem,ml]"     # 2. and 3. FEM and training as well
-python -m pip install -e ".[dev,geometry,physics,fem,ml,runtime]"   # contributors: tests and docs
+python -m pip install -e ".[runtime]"       # predict with bundles
+python -m pip install -e ".[verify]"        # compiler training and FEM comparison
+python -m pip install -e ".[cad,verify]"    # add STEP/DXF import and meshing
+python -m pip install -e ".[dev,geometry,cad,physics,fem,ml,verify]"  # contributors
 ```
 
-`piginot --version` should print `piginot 0.1.0`. Once the release workflow
-has published 0.1.0 to TestPyPI, the package installs without a clone as well:
-`python -m pip install --index-url https://test.pypi.org/simple/
---extra-index-url https://pypi.org/simple/ "piginot[runtime]==0.1.0"`. The
-bundles still come from the repository's `bundles/` folder.
+`piginot --version` reports the installed version. The commands above use
+`main`, including the CAD/compiler interface. A source checkout also supplies
+the specimen bundles and examples; the Python wheel contains the runtime
+packages and their adapter resources. CAD dependencies may require additional
+OS libraries, as described in the [CAD guide](campaigns/own-cad-workflow.md).
+
+Keep your settings and numerical outputs under the ignored `.piginot-runs/`
+directory or outside the clone. This preserves a clean source identity for
+compiler execution and keeps experimental results local.
 
 ## 1. Predict with a shipped bundle
 
@@ -211,6 +214,10 @@ figure.savefig("prediction.png", dpi=150, bbox_inches="tight")
 | `certified` | the prediction plus a physics certificate (`eta_energy`, stress change, guards); `--corrected` adds the corrected displacement at the FEM nodes | `pip install 'piginot[verify]'` |
 | `exact` | the converged FEM solution, started from the prediction, with the path that produced it | `pip install 'piginot[verify]'` |
 
+These FEM-backed modes use the shipped bundles' own recipe sidecars. New CAD
+and compiler candidates support uncalibrated `fast` prediction only; compare
+them with FEM through their separate compiler workflow.
+
 ```bash
 piginot predict bundles/notched-v1-cp-freeze --request bundles/requests/notched-in-domain.json --mode certified --corrected
 piginot predict bundles/notched-v1-cp-freeze --request bundles/requests/notched-in-domain.json --mode exact
@@ -352,13 +359,32 @@ To use your own fixed geometry and load range, copy
 `examples/fixed_mesh_sweep/sweep.py` and replace its mesh and strain values.
 The script shows each framework call in order. See [Examples](examples.md).
 
-## 3. Build a verified model for your own geometry
+## 3. Train for your own 2D CAD profile
 
-The shipped bundles are tied to their families: you cannot give an existing
-bundle a new shape. To get a model for your own geometry with a measured claim level, you
-define a new *family* and run the same evidence chain that produced the two
-shipped bundles. In 0.1.0 this means writing a small Python campaign package.
-There is no "upload a mesh and train" command yet.
+The [own-CAD workflow](campaigns/own-cad-workflow.md) imports a supported STEP
+or DXF profile, lists its boundary identifiers and prepares a declared run.
+You supply the material and parameter ranges, identify clamped/displaced/free
+boundaries from the inspected coordinates, and set the mesh, training and
+FEM comparison limits. Review a metadata-only plan before execution.
+
+The installed compiler performs material/lifting checks, training and FEM
+comparisons, and exports a candidate when those stages permit it. It supports
+explicit resume with unchanged inputs. The [compiler guide](campaigns/s28-compiler-guide.md)
+explains statuses and reports; the [meshing guide](campaigns/own-cad-meshing.md)
+explains local sizing and reference refinement.
+
+Copy the complete candidate directory to reuse a trained model. Check its
+hashes and envelope before [fast prediction](campaigns/own-cad-workflow.md#save-and-reuse-a-candidate-bundle).
+Own-CAD candidates retain `NOT_VERIFIED` and their own material/load ranges.
+Assess their FEM comparisons for the intended use; they inherit no shipped
+bundle's calibration or certificates.
+
+## Advanced: define a parametric geometry family
+
+The shipped bundles are tied to their geometry families. To build a new
+parametric shape family with a measured claim level, author a Python campaign
+and run its declared evidence chain. This extends the fixed-profile workflow
+above with a morph map and family-level verification.
 
 What you provide:
 
@@ -399,10 +425,10 @@ its decisions.
 ```text
 python -m pytest                                  # full suite, about 50 minutes on one CPU
 python -m pytest tests/test_shipped_bundles.py    # the shipped bundles, a few seconds
-python -m mkdocs build --strict -f docs/mkdocs.yml -d ../site
+python -m mkdocs build --strict -f mkdocs.yml -d ../site
 ```
 
-Every gate result is committed under `artifacts/gates/` and
+Historical specimen gate results are recorded under `artifacts/gates/` and
 `artifacts/campaigns/*/gates/`, and the [benchmarks](benchmarks.md) page lists
 the measured numbers. Re-measuring the benchmarks needs the FEM datasets,
 which are not in the repository; regenerate them with the campaign's FEM

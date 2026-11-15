@@ -10,6 +10,18 @@ Development line S19–S29 (`STEPS-v2.0.md`, ADR 0105), forked from `v0.1.0`.
 
 ### Added
 
+- Fixed-profile STEP/DXF import, boundary inspection, explicit material/load
+  settings and per-geometry training through `piginot cad` and `piginot compile`.
+- CAD local mesh controls, curve approximation checks, bounded pilot refinement
+  and same-polygon FEM reference-convergence diagnostics.
+- Installed campaign adapters, metadata-only plans, deterministic execution,
+  explicit resume and portable candidate bundles with `NOT_VERIFIED` claims.
+- Guides for [own CAD](docs/campaigns/own-cad-workflow.md),
+  [meshing](docs/campaigns/own-cad-meshing.md),
+  [compiler execution](docs/campaigns/s28-compiler-guide.md),
+  [custom materials](docs/campaigns/s29-custom-material.md) and
+  [bundle prediction](docs/campaigns/s29-fast-demo.md).
+
 - **Anisotropic models with in-plane fibre families** (S26, ADR 0108
   accepted): fibre families in the formula language (full invariants `I4`,
   `I5` per family, `ramp` as the tension-only switch, angles in the new unit

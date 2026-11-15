@@ -24,6 +24,12 @@ nav:
   - Benchmarks: benchmarks.md
   - Bundles: bundle.md
   - Problem specification: problem-spec.md
+  - Train with your own inputs:
+      - Own 2D CAD: campaigns/own-cad-workflow.md
+      - Meshing and FEM convergence: campaigns/own-cad-meshing.md
+      - Campaign compiler: campaigns/s28-compiler-guide.md
+      - Custom materials: campaigns/s29-custom-material.md
+      - Bundle prediction demo: campaigns/s29-fast-demo.md
   - Upstream sources and licences: adr/upstream-sources.md
 
 theme:

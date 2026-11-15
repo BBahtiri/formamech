@@ -95,11 +95,13 @@ def _axis_name(value: object, label: str) -> str:
     return name
 
 
-def _axis_tuple(values: object, label: str) -> tuple[str, ...]:
+def _axis_tuple(
+    values: object, label: str, *, nonempty: bool = True
+) -> tuple[str, ...]:
     if not isinstance(values, Sequence) or isinstance(values, (str, bytes, bytearray)):
         raise ValueError(f"{label} must be an array")
     axes = tuple(_axis_name(value, label) for value in values)
-    if not axes:
+    if nonempty and not axes:
         raise ValueError(f"{label} must not be empty")
     if len(axes) != len(set(axes)):
         raise ValueError(f"{label} must contain unique identifiers")
@@ -115,10 +117,12 @@ def _finite_number(value: object, label: str) -> float:
     return number
 
 
-def _coordinates(value: object, label: str) -> Mapping[str, float]:
+def _coordinates(
+    value: object, label: str, *, nonempty: bool = True
+) -> Mapping[str, float]:
     if not isinstance(value, Mapping):
         raise ValueError(f"{label} must be an object")
-    if not value:
+    if nonempty and not value:
         raise ValueError(f"{label} must not be empty")
     result: dict[str, float] = {}
     for name, coordinate in value.items():
@@ -127,10 +131,12 @@ def _coordinates(value: object, label: str) -> Mapping[str, float]:
     return MappingProxyType(dict(sorted(result.items())))
 
 
-def _strata(value: object, coordinate_axes: frozenset[str]) -> Mapping[str, int]:
+def _strata(
+    value: object, coordinate_axes: frozenset[str], *, nonempty: bool = True
+) -> Mapping[str, int]:
     if not isinstance(value, Mapping):
         raise ValueError("strata must be an object")
-    if not value:
+    if nonempty and not value:
         raise ValueError("strata must not be empty")
     result: dict[str, int] = {}
     for name, stratum in value.items():
@@ -139,7 +145,10 @@ def _strata(value: object, coordinate_axes: frozenset[str]) -> Mapping[str, int]
             raise ValueError("strata must map names to non-negative integers")
         result[axis] = stratum
     if not set(result) <= coordinate_axes:
-        raise ValueError("strata must refer only to coordinate axes")
+        raise ValueError(
+            "strata must refer only to coordinate axes "
+            "(primitive_coordinates and derived_coordinates)"
+        )
     return MappingProxyType(dict(sorted(result.items())))
 
 
@@ -168,12 +177,14 @@ class PublishedCase:
             self.primitive_coordinates,
             "primitive_coordinates",
         )
-        derived = _coordinates(self.derived_coordinates, "derived_coordinates")
+        derived = _coordinates(
+            self.derived_coordinates, "derived_coordinates", nonempty=False
+        )
         primitive_axes = frozenset(primitive)
         derived_axes = frozenset(derived)
         if primitive_axes & derived_axes:
             raise ValueError("primitive and derived coordinate names must be disjoint")
-        strata = _strata(self.strata, primitive_axes | derived_axes)
+        strata = _strata(self.strata, primitive_axes | derived_axes, nonempty=False)
 
         object.__setattr__(self, "case_id", case_id)
         object.__setattr__(self, "leakage_group_id", group_id)
@@ -204,13 +215,16 @@ class PublishedCaseManifest:
                 f"unsupported public manifest schema version {self.schema_version!r}"
             )
         primitive_axes = _axis_tuple(self.primitive_axes, "primitive_axes")
-        derived_axes = _axis_tuple(self.derived_axes, "derived_axes")
-        stratum_axes = _axis_tuple(self.stratum_axes, "stratum_axes")
+        derived_axes = _axis_tuple(self.derived_axes, "derived_axes", nonempty=False)
+        stratum_axes = _axis_tuple(self.stratum_axes, "stratum_axes", nonempty=False)
         coordinate_axes = frozenset((*primitive_axes, *derived_axes))
         if set(primitive_axes) & set(derived_axes):
             raise ValueError("primitive_axes and derived_axes must be disjoint")
         if not set(stratum_axes) <= coordinate_axes:
-            raise ValueError("stratum_axes must refer only to coordinate axes")
+            raise ValueError(
+                "stratum_axes must refer only to coordinate axes "
+                "declared in primitive_axes and derived_axes"
+            )
 
         cases = tuple(self.cases)
         if not cases:
@@ -226,9 +240,11 @@ class PublishedCaseManifest:
             if tuple(case.primitive_coordinates) != tuple(sorted(primitive_axes)):
                 raise ValueError("case primitive coordinate schema is incoherent")
             if tuple(case.derived_coordinates) != tuple(sorted(derived_axes)):
-                raise ValueError("case derived coordinate schema is incoherent")
+                raise ValueError(
+                    "case derived coordinate schema is incoherent with derived_axes"
+                )
             if tuple(case.strata) != tuple(sorted(stratum_axes)):
-                raise ValueError("case strata schema is incoherent")
+                raise ValueError("case strata schema is incoherent with stratum_axes")
             prior_role = group_roles.setdefault(case.leakage_group_id, case.role)
             if prior_role is not case.role:
                 raise ValueError("each leakage group must have exactly one role")

@@ -12,6 +12,13 @@ from piginot.operators.architecture import (
     PiGinotOperator,
     module_digest,
 )
+from piginot.operators.boundary_energy_operator import (
+    BOUNDARY_ENERGY_ARCHITECTURE_ID,
+    BoundaryEnergyConfig,
+    BoundaryEnergyEncoding,
+    BoundaryEnergyOperator,
+    boundary_energy_module_digest,
+)
 from piginot.operators.energy_gate import (
     ENERGY_G11_CHECK_IDS,
     ENERGY_G11_LIFTING_POINTS_PER_EDGE,
@@ -47,6 +54,7 @@ from piginot.operators.safetensors_io import (
 
 __all__ = (
     "ARCHITECTURE_ID",
+    "BOUNDARY_ENERGY_ARCHITECTURE_ID",
     "ENERGY_ARCHITECTURE_ID",
     "ENERGY_G11_CHECK_IDS",
     "ENERGY_G11_LIFTING_POINTS_PER_EDGE",
@@ -55,6 +63,9 @@ __all__ = (
     "AffineDirichletLifting",
     "AxisAlignedTensionLifting",
     "BoundaryConditionMode",
+    "BoundaryEnergyConfig",
+    "BoundaryEnergyEncoding",
+    "BoundaryEnergyOperator",
     "DirichletData",
     "DirichletLifting",
     "EnergyFormOperator",
@@ -71,6 +82,7 @@ __all__ = (
     "S11GateEvaluation",
     "S11GateMeasurements",
     "TensorSpec",
+    "boundary_energy_module_digest",
     "load_operator_state_dict",
     "load_operator_state_dict_with_metadata",
     "constitutive_in_plane_stress",

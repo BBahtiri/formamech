@@ -1,0 +1,119 @@
+{
+  "schema": "piginot.campaign-config-v1",
+  "name": "s29-custom-material",
+  "adapter": {
+    "id": "dogbone-v1",
+    "implementation_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "source": {
+    "kind": "public-manifest",
+    "path": "source.json",
+    "sha256": "3b29c23cf1625344c7603abf6ba3e2e478ded462d8caf7d8be04626cfff76b7d",
+    "fit_case_ids": [
+      "fit-001",
+      "fit-002"
+    ],
+    "screen_case_ids": [
+      "screen-001"
+    ],
+    "development_case_ids": []
+  },
+  "model": {
+    "architecture_id": "pi-ginot-energy-parametric-film-v1",
+    "parameter_names": [
+      "L_total",
+      "W_grip",
+      "W_gauge",
+      "R_fillet",
+      "nominal_axial_strain",
+      "elastic_modulus",
+      "poisson_ratio"
+    ],
+    "hidden_dim": 8,
+    "latent_token_count": 2,
+    "parameter_hidden_dim": 8,
+    "num_attention_heads": 2,
+    "decoder_layers": 1,
+    "positional_frequencies": 1,
+    "output_init_std": 1e-05
+  },
+  "normalization": "train-fit",
+  "training": {
+    "optimizer_steps": 1,
+    "case_batch_size": 1,
+    "checkpoint_interval": 1,
+    "learning_rate": 0.001,
+    "final_learning_rate": 0.0001,
+    "constant_steps": 0,
+    "seed": 2901
+  },
+  "objective": {
+    "points_per_cell": 3,
+    "barrier_weight": 1000.0,
+    "barrier_threshold": 0.05,
+    "admissibility_floor": 1e-06
+  },
+  "reference": {
+    "initialization": "cold",
+    "refinement_levels": [
+      1,
+      2
+    ],
+    "workers": 2
+  },
+  "execution": {
+    "training": {
+      "python_version": "NOT_PROBED",
+      "library_versions": {
+        "numpy": "NOT_INSTALLED",
+        "rfc8785": "NOT_INSTALLED",
+        "safetensors": "NOT_INSTALLED",
+        "scikit-fem": "NOT_INSTALLED",
+        "scipy": "NOT_INSTALLED",
+        "sympy": "NOT_INSTALLED",
+        "threadpoolctl": "NOT_INSTALLED",
+        "torch": "NOT_INSTALLED"
+      },
+      "blas_threads": 1,
+      "device": "cpu",
+      "dtype": "float32",
+      "rng_algorithm": "torch-manual-seed",
+      "seed": 2901,
+      "container_digest": null,
+      "platform_fingerprint": {
+        "os": "NOT_PROBED",
+        "machine": "NOT_PROBED",
+        "cpu_capability": "NOT_PROBED"
+      }
+    },
+    "reference": {
+      "python_version": "NOT_PROBED",
+      "library_versions": {
+        "numpy": "NOT_INSTALLED",
+        "rfc8785": "NOT_INSTALLED",
+        "safetensors": "NOT_INSTALLED",
+        "scikit-fem": "NOT_INSTALLED",
+        "scipy": "NOT_INSTALLED",
+        "sympy": "NOT_INSTALLED",
+        "threadpoolctl": "NOT_INSTALLED",
+        "torch": "NOT_INSTALLED"
+      },
+      "blas_threads": 1,
+      "device": "cpu",
+      "dtype": "float64",
+      "rng_algorithm": "torch-manual-seed",
+      "seed": 2901,
+      "container_digest": null,
+      "platform_fingerprint": {
+        "os": "NOT_PROBED",
+        "machine": "NOT_PROBED",
+        "cpu_capability": "NOT_PROBED"
+      }
+    },
+    "inference_dtype": "float64"
+  },
+  "selection": {
+    "checkpoint_rule": "final",
+    "development": false
+  }
+}

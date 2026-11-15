@@ -1,0 +1,218 @@
+{
+  "schema": "piginot.problem-spec-v1",
+  "name": "s28-user-isotropic",
+  "physics": "2d-plane-stress-finite-strain",
+  "parameters": [
+    {
+      "name": "L_total",
+      "role": "geometry",
+      "lo": 54.0,
+      "hi": 54.0,
+      "unit": "mm",
+      "distribution": "fixed"
+    },
+    {
+      "name": "W_grip",
+      "role": "geometry",
+      "lo": 20.0,
+      "hi": 20.0,
+      "unit": "mm",
+      "distribution": "fixed"
+    },
+    {
+      "name": "W_gauge",
+      "role": "geometry",
+      "lo": 10.0,
+      "hi": 10.0,
+      "unit": "mm",
+      "distribution": "fixed"
+    },
+    {
+      "name": "R_fillet",
+      "role": "geometry",
+      "lo": 12.0,
+      "hi": 12.0,
+      "unit": "mm",
+      "distribution": "fixed"
+    },
+    {
+      "name": "nominal_axial_strain",
+      "role": "load",
+      "lo": 0.01,
+      "hi": 0.012,
+      "unit": "1",
+      "distribution": "uniform"
+    },
+    {
+      "name": "elastic_modulus",
+      "role": "material",
+      "lo": 760.0,
+      "hi": 760.0,
+      "unit": "MPa",
+      "distribution": "fixed"
+    },
+    {
+      "name": "poisson_ratio",
+      "role": "material",
+      "lo": 0.23,
+      "hi": 0.23,
+      "unit": "1",
+      "distribution": "fixed"
+    }
+  ],
+  "constants": [],
+  "constraints": [
+    {
+      "name": "arc_feasibility_ratio",
+      "expression": "2 * R_fillet / (W_grip - W_gauge)",
+      "lo": 1.35,
+      "hi": 20.0,
+      "unit": "1"
+    },
+    {
+      "name": "fillet_to_gauge_ratio",
+      "expression": "R_fillet / W_gauge",
+      "lo": 0.5714285714285714,
+      "hi": 3.3333333333333335,
+      "unit": "1"
+    },
+    {
+      "name": "grip_to_gauge_ratio",
+      "expression": "W_grip / W_gauge",
+      "lo": 1.1428571428571428,
+      "hi": 4.333333333333333,
+      "unit": "1"
+    },
+    {
+      "name": "length_to_gauge_ratio",
+      "expression": "L_total / W_gauge",
+      "lo": 2.857142857142857,
+      "hi": 11.666666666666666,
+      "unit": "1"
+    }
+  ],
+  "geometry": {
+    "reference_mesh_id": "eba2ed25bafee15b3fabbc8b824c696aeab5b36558e9d769807bd41a55c672bb",
+    "morph_map_sha256": "71dbd2f5637be6ce0563c6763095263cb429471bac56ed60175abfd4d9e8c3ce",
+    "regions": [
+      "bottom",
+      "gauge_top",
+      "left_symmetry",
+      "right_arc",
+      "right_grip"
+    ],
+    "frame": {
+      "origin": [
+        "0",
+        "0"
+      ],
+      "extent": [
+        "0.5 * L_total",
+        "0.5 * W_grip"
+      ]
+    }
+  },
+  "material": {
+    "model": "energy-0730b1423a5a89ca",
+    "parameters": {
+      "E": "elastic_modulus",
+      "nu": "poisson_ratio"
+    },
+    "energy": {
+      "schema": "piginot.energy-formula-v1",
+      "energy": "E/(4*(1+nu))*(I1-3)-E/(2*(1+nu))*log(J)+E*nu/(2*(1+nu)*(1-2*nu))*log(J)^2",
+      "parameters": {
+        "E": "MPa",
+        "nu": "1"
+      },
+      "positive": [
+        "E"
+      ],
+      "small_strain": {
+        "shear_modulus": "E/(2*(1+nu))",
+        "bulk_modulus": "E/(3*(1-2*nu))"
+      },
+      "symmetry": "isotropic"
+    }
+  },
+  "boundary_conditions": [
+    {
+      "name": "left_x_symmetry",
+      "region": "left_symmetry",
+      "kind": "symmetry",
+      "components": [
+        "x"
+      ]
+    },
+    {
+      "name": "bottom_y_symmetry",
+      "region": "bottom",
+      "kind": "symmetry",
+      "components": [
+        "y"
+      ]
+    },
+    {
+      "name": "right_grip_displacement",
+      "region": "right_grip",
+      "kind": "dirichlet",
+      "components": [
+        "x"
+      ],
+      "values": [
+        {
+          "nominal_strain": "nominal_axial_strain"
+        }
+      ]
+    },
+    {
+      "name": "gauge_top_free",
+      "region": "gauge_top",
+      "kind": "traction_free"
+    },
+    {
+      "name": "right_arc_free",
+      "region": "right_arc",
+      "kind": "traction_free"
+    }
+  ],
+  "lifting": {
+    "kind": "quarter",
+    "displacement_scale": "0.5 * nominal_axial_strain * L_total"
+  },
+  "qois": [
+    {
+      "name": "root_peak_first_piola_frobenius",
+      "field": "P_served",
+      "reduction": "max-frobenius",
+      "region": "right_arc",
+      "exclude_regions": [
+        "right_grip"
+      ]
+    }
+  ],
+  "verification": {
+    "quantile": 0.9,
+    "tolerances": {
+      "absolute_peak_error": 0.05,
+      "p_relative_l2": 0.05,
+      "u_relative_l2": 0.02
+    }
+  },
+  "split": {
+    "pilot": 0,
+    "train": 3,
+    "development": 1,
+    "holdout": 1,
+    "reserve": 0
+  },
+  "fem": {
+    "material_name": "dogbone-pinned-reference-material-v1",
+    "element_order": 2,
+    "load_steps": 64,
+    "max_dofs": 100000,
+    "max_newton_iterations": 20,
+    "plane_stress_max_iterations": 32,
+    "solver_tolerance": 1e-10
+  }
+}

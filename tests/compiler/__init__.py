@@ -1,0 +1,1 @@
+"""Campaign compiler contract tests."""

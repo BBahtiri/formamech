@@ -14,6 +14,12 @@ from typing import Any, cast
 
 import rfc8785
 
+from piginot.bundle.problem import (
+    MODEL_SCHEMA,
+    PROBLEM_LIFTING,
+    PROBLEM_STRESS,
+    PortableProblem,
+)
 from piginot.contracts import (
     CanonicalMesh,
     Unit,
@@ -21,12 +27,14 @@ from piginot.contracts import (
     hash_spec,
     strict_json_loads,
 )
+from piginot.contracts.specs import FrozenMap
 from piginot.doe.envelope import ExecutableEnvelope
 from piginot.morphing.blended_notch import BlendedNotchMap, BlendedNotchParameters
 from piginot.morphing.circular_transition import (
     CircularTransitionMap,
     CircularTransitionParameters,
 )
+from piginot.morphing.fixed import FixedGeometryMap
 from piginot.morphing.membership import (
     FamilyMembershipPredicate,
     PrimitiveBound,
@@ -134,6 +142,7 @@ def _blended_notch(document: Mapping[str, Any]) -> BlendedNotchMap:
 MORPH_MAP_DECODERS: Mapping[str, Callable[[Mapping[str, Any]], object]] = {
     "piginot.morphing.BlendedNotchMap": _blended_notch,
     "piginot.morphing.CircularTransitionMap": _circular_transition,
+    "piginot.morphing.FixedGeometryMap": lambda document: FixedGeometryMap(),
 }
 
 
@@ -279,10 +288,10 @@ class ModelSpec:
     architecture_id: str
     operator_config: Mapping[str, Any]
     conditioning: tuple[ConditioningInput, ...]
-    frame_origin: tuple[ScaledParameter, ScaledParameter]
-    frame_extent: tuple[ScaledParameter, ScaledParameter]
+    frame_origin: tuple[ScaledParameter, ScaledParameter] | None
+    frame_extent: tuple[ScaledParameter, ScaledParameter] | None
     lifting_kind: str
-    lifting_displacement: ScaledParameter
+    lifting_displacement: ScaledParameter | None
     material_name: str
     material_model: str
     material_parameters: Mapping[str, str]
@@ -291,8 +300,9 @@ class ModelSpec:
     dtype: str
     query_chunk: int
     qois: tuple[QoiSpec, ...]
-    confidence: ConfidenceSpec
+    confidence: ConfidenceSpec | None
     units: Mapping[str, str]
+    problem: PortableProblem | None = None
 
     def __post_init__(self) -> None:
         if not self.conditioning:
@@ -302,8 +312,19 @@ class ModelSpec:
             raise SpecDecodeError("conditioning names must be unique")
         if list(self.operator_config.get("parameter_names", ())) != names:
             raise SpecDecodeError("conditioning order differs from the operator")
-        if self.lifting_kind not in SUPPORTED_LIFTINGS:
+        if self.problem is not None:
+            self._check_problem()
+        elif self.lifting_kind not in SUPPORTED_LIFTINGS:
             raise SpecDecodeError(f"unsupported lifting {self.lifting_kind!r}")
+        elif (
+            self.frame_origin is None
+            or self.frame_extent is None
+            or self.lifting_displacement is None
+            or self.confidence is None
+        ):
+            raise SpecDecodeError(
+                "legacy model needs its frame, lifting and confidence"
+            )
         if self.dtype not in SUPPORTED_DTYPES:
             raise SpecDecodeError(f"unsupported dtype {self.dtype!r}")
         if isinstance(self.query_chunk, bool) or self.query_chunk <= 0:
@@ -316,10 +337,113 @@ class ModelSpec:
         if len({q.name for q in self.qois}) != len(self.qois):
             raise SpecDecodeError("QoI names must be unique")
 
+    def _check_problem(self) -> None:
+        if type(self.problem) is not PortableProblem:
+            raise SpecDecodeError("model problem must be an exact PortableProblem")
+        problem = self.problem
+        if (
+            self.frame_origin is not None
+            or self.frame_extent is not None
+            or self.lifting_displacement is not None
+        ):
+            raise SpecDecodeError(
+                "portable problem cannot carry a second frame or lifting"
+            )
+        if self.lifting_kind != PROBLEM_LIFTING or self.served_stress != PROBLEM_STRESS:
+            raise SpecDecodeError(
+                "portable model must use the problem stress and lifting"
+            )
+        if self.material_model != problem.spec.material.model or dict(
+            self.material_parameters
+        ) != dict(problem.spec.material.parameters):
+            raise SpecDecodeError("portable material differs from ProblemSpec")
+        if dict(self.boundary_conditions) != problem.boundary_components():
+            raise SpecDecodeError(
+                "portable boundary conditions differ from ProblemSpec"
+            )
+        expected = tuple(
+            QoiSpec(q.name, q.field, q.region, q.exclude_regions, "MPa")
+            for q in problem.spec.qois
+        )
+        if self.qois != expected:
+            raise SpecDecodeError("portable QoIs differ from ProblemSpec")
+        if self.confidence is not None:
+            raise SpecDecodeError(
+                "portable candidates cannot inherit a confidence curve"
+            )
+        names = {parameter.name for parameter in problem.spec.parameters}
+        if any(item.source not in names for item in self.conditioning):
+            raise SpecDecodeError("portable conditioning reads an unknown parameter")
+        allowed = {
+            "u": "mm",
+            "P_served": "MPa",
+            "P_material": "MPa",
+            "sigma": "MPa",
+            "F_2D": "1",
+            "F33": "1",
+            "J_3D": "1",
+        }
+        if not {"u", "P_served"} <= self.units.keys() or any(
+            allowed.get(key) != unit for key, unit in self.units.items()
+        ):
+            raise SpecDecodeError("portable field units differ from canonical units")
+        config = {
+            **self.operator_config,
+            "parameter_names": tuple(self.operator_config["parameter_names"]),
+        }
+        object.__setattr__(self, "operator_config", FrozenMap.copy_of(config))
+        for name in ("material_parameters", "boundary_conditions", "units"):
+            object.__setattr__(self, name, FrozenMap.copy_of(getattr(self, name)))
+
+    @classmethod
+    def from_problem(
+        cls,
+        *,
+        problem: PortableProblem,
+        architecture_id: str,
+        operator_config: Mapping[str, Any],
+        conditioning: tuple[ConditioningInput, ...],
+        material_name: str,
+        dtype: str,
+        query_chunk: int,
+        units: Mapping[str, str],
+    ) -> ModelSpec:
+        if type(problem) is not PortableProblem:
+            raise SpecDecodeError("model problem must be an exact PortableProblem")
+        return cls(
+            architecture_id,
+            operator_config,
+            conditioning,
+            None,
+            None,
+            PROBLEM_LIFTING,
+            None,
+            material_name,
+            problem.spec.material.model,
+            problem.spec.material.parameters,
+            problem.boundary_components(),
+            PROBLEM_STRESS,
+            dtype,
+            query_chunk,
+            tuple(
+                QoiSpec(q.name, q.field, q.region, q.exclude_regions, "MPa")
+                for q in problem.spec.qois
+            ),
+            None,
+            units,
+            problem,
+        )
+
     @property
     def inputs(self) -> tuple[str, ...]:
         """Every request input the model reads, sorted."""
 
+        if self.problem is not None:
+            return tuple(
+                sorted(parameter.name for parameter in self.problem.spec.parameters)
+            )
+        assert self.frame_origin is not None and self.frame_extent is not None
+        assert self.lifting_displacement is not None
         names = {item.source for item in self.conditioning}
         names.update(self.material_parameters.values())
         for scaled in (
@@ -331,7 +455,7 @@ class ModelSpec:
         return tuple(sorted(names))
 
     def document(self) -> dict[str, Any]:
-        return {
+        common = {
             "architecture_id": self.architecture_id,
             "operator_config": dict(self.operator_config),
             "conditioning": [
@@ -343,19 +467,6 @@ class ModelSpec:
                 }
                 for item in self.conditioning
             ],
-            "frame": {
-                "origin": [item.document() for item in self.frame_origin],
-                "extent": [item.document() for item in self.frame_extent],
-            },
-            "lifting": {
-                "kind": self.lifting_kind,
-                "displacement": self.lifting_displacement.document(),
-            },
-            "material": {
-                "name": self.material_name,
-                "model": self.material_model,
-                "parameters": dict(self.material_parameters),
-            },
             "boundary_conditions": {
                 tag: list(components)
                 for tag, components in self.boundary_conditions.items()
@@ -373,6 +484,32 @@ class ModelSpec:
                 }
                 for q in self.qois
             ],
+            "units": dict(self.units),
+        }
+        if self.problem is not None:
+            return {
+                **common,
+                "schema": MODEL_SCHEMA,
+                "problem": self.problem.document(),
+                "material_name": self.material_name,
+            }
+        assert self.frame_origin is not None and self.frame_extent is not None
+        assert self.lifting_displacement is not None and self.confidence is not None
+        return {
+            **common,
+            "frame": {
+                "origin": [item.document() for item in self.frame_origin],
+                "extent": [item.document() for item in self.frame_extent],
+            },
+            "lifting": {
+                "kind": self.lifting_kind,
+                "displacement": self.lifting_displacement.document(),
+            },
+            "material": {
+                "name": self.material_name,
+                "model": self.material_model,
+                "parameters": dict(self.material_parameters),
+            },
             "confidence": {
                 "variant": self.confidence.variant,
                 "length_scale_mm": self.confidence.length_scale_mm,
@@ -381,7 +518,6 @@ class ModelSpec:
                 "upper_edges": list(self.confidence.upper_edges),
                 "values": list(self.confidence.values),
             },
-            "units": dict(self.units),
         }
 
     def to_bytes(self) -> bytes:
@@ -406,6 +542,8 @@ def decode_model_spec(payload: bytes) -> ModelSpec:
 
     document = _object(payload, "model spec")
     try:
+        if "schema" in document:
+            return _decode_problem_model(document, payload)
         confidence = document["confidence"]
         spec = ModelSpec(
             architecture_id=document["architecture_id"],
@@ -456,6 +594,35 @@ def decode_model_spec(payload: bytes) -> ModelSpec:
     return spec
 
 
+def _decode_problem_model(document: dict[str, Any], payload: bytes) -> ModelSpec:
+    if document["schema"] != MODEL_SCHEMA:
+        raise SpecDecodeError("unsupported portable model schema")
+    try:
+        spec = ModelSpec.from_problem(
+            problem=PortableProblem.from_document(document["problem"]),
+            architecture_id=document["architecture_id"],
+            operator_config=dict(document["operator_config"]),
+            conditioning=tuple(
+                ConditioningInput(
+                    item["name"],
+                    item["source"],
+                    float(item["mean"]),
+                    float(item["standard_deviation"]),
+                )
+                for item in document["conditioning"]
+            ),
+            material_name=document["material_name"],
+            dtype=document["dtype"],
+            query_chunk=document["query_chunk"],
+            units=dict(document["units"]),
+        )
+    except (KeyError, TypeError, ValueError, AttributeError) as exc:
+        raise SpecDecodeError(f"portable model is invalid: {exc}") from exc
+    if spec.to_bytes() != payload:
+        raise SpecDecodeError("portable model does not round-trip to its stored bytes")
+    return spec
+
+
 __all__ = (
     "MORPH_MAP_DECODERS",
     "SUPPORTED_DTYPES",
@@ -464,6 +631,7 @@ __all__ = (
     "ConditioningInput",
     "ConfidenceSpec",
     "ModelSpec",
+    "PortableProblem",
     "QoiSpec",
     "ScaledParameter",
     "SpecDecodeError",

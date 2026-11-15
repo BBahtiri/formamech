@@ -46,13 +46,28 @@ EXACT_TOLERANCE = 1e-12
 CONFORMITY_TOLERANCE = 1e-9
 MUTANT_MINIMUM_MISS = 1e-3
 REFINEMENTS = (320, 4800)
+MAX_INTERIOR_ATTEMPTS_PER_POINT = 1000
+
+
+class ParameterSamplingError(ValueError):
+    """The feasible domain exhausted the declared rejection-sampling budget."""
+
+    def __init__(self, *, requested: int, accepted: int, attempts: int) -> None:
+        self.requested = requested
+        self.accepted = accepted
+        self.attempts = attempts
+        super().__init__(
+            f"unable to sample {requested} feasible interior parameter vectors "
+            f"after {attempts} attempts ({accepted} accepted)"
+        )
 
 
 def box_points(
     spec: ProblemSpec, *, interior: int = 64, seed: int = 0
 ) -> list[dict[str, float]]:
     """Every box corner and the centre that meet the spec's constraints, then
-    ``interior`` seeded uniform draws that meet them."""
+    ``interior`` seeded uniform draws that meet them. Refuse if they cannot be
+    found within 1000 attempts per requested interior point."""
 
     def feasible(values: Mapping[str, float]) -> bool:
         return all(
@@ -76,7 +91,14 @@ def box_points(
         points.append(centre)
     generator = random.Random(seed)
     draws = 0
+    attempts = 0
+    maximum_attempts = MAX_INTERIOR_ATTEMPTS_PER_POINT * interior
     while draws < interior:
+        if attempts >= maximum_attempts:
+            raise ParameterSamplingError(
+                requested=interior, accepted=draws, attempts=attempts
+            )
+        attempts += 1
         draw = dict(fixed)
         draw.update({name: generator.uniform(lo, hi) for name, lo, hi in varying})
         if feasible(draw):
@@ -364,8 +386,10 @@ __all__ = (
     "CONFORMITY_TOLERANCE",
     "EXACT_TOLERANCE",
     "MUTANT_MINIMUM_MISS",
+    "MAX_INTERIOR_ATTEMPTS_PER_POINT",
     "REFINEMENTS",
     "LiftingEvidence",
+    "ParameterSamplingError",
     "box_points",
     "verify_lifting",
 )
