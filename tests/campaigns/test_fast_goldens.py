@@ -47,8 +47,8 @@ def test_the_thread_count_is_restored_after_an_error() -> None:
 
 
 def test_the_avx512_goldens_match_at_one_thread() -> None:
-    if g19_gate.execution_profile()["cpu_capability"] != "AVX512":
-        pytest.skip("the AVX512 goldens are reproduced on AVX512 only")
+    if g19_gate.profile_key(g19_gate.execution_profile()) != _AVX512:
+        pytest.skip("the AVX512 goldens require their recorded execution profile")
     result = fast_goldens.compare(_REPOSITORY, _AVX512)
     assert result is not None and all(result["documents"].values()), result
 
