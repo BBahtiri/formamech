@@ -1,18 +1,18 @@
 cff-version: 1.2.0
-message: "If you use PI-GINOT, please cite the software using this metadata."
+message: "If you use PI-GINOT, please cite the software and record the version or commit used."
 title: "PI-GINOT"
 type: software
-version: 0.1.0
-date-released: "2026-10-06"
+version: 0.2.0.dev0
 authors:
   - family-names: "Bahtiri"
     given-names: "Betim"
 license: MIT
 repository-code: "https://github.com/BBahtiri/verified-neural-operators"
 abstract: >-
-  An open-source project for verified, problem-specific physics-informed neural
-  operators in 2D finite-strain elasticity. Every served prediction carries a
-  claim level that is no stronger than its recorded verification evidence.
+  Physics-informed neural operators for 2D finite-strain plane-stress
+  elasticity, with fixed-profile STEP/DXF import, per-geometry training,
+  FEM comparison and reusable model bundles. Prediction claim levels
+  remain bounded by the recorded verification evidence.
 keywords:
   - neural operator
   - physics-informed machine learning
