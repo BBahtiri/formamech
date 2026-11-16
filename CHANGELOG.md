@@ -10,6 +10,9 @@ Development line S19–S29 (`STEPS-v2.0.md`, ADR 0105), forked from `v0.1.0`.
 
 ### Added
 
+- Optional `plot` extra and runnable prediction examples for displacement,
+  first-Piola stress and load-response figures, including a saved-JSON plotter
+  for users' own CAD candidates.
 - Fixed-profile STEP/DXF import, boundary inspection, explicit material/load
   settings and per-geometry training through `piginot cad` and `piginot compile`.
 - CAD local mesh controls, curve approximation checks, bounded pilot refinement

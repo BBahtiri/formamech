@@ -107,6 +107,11 @@ NumPy (BSD-3-Clause), PyTorch (BSD-3-Clause) and safetensors (Apache-2.0).
 scikit-fem, SciPy and SymPy. The `fem`, `physics`, `ml` and `geometry` extras
 also declare optional execution capabilities; `dev` contains development tools.
 
+The `plot` extra adds NumPy and Matplotlib for plotting saved predictions and
+running the source examples. Matplotlib is installed separately and is not
+vendored; its [licence notices](https://matplotlib.org/stable/project/license.html)
+describe its own terms and included components.
+
 The `cad` extra adds the external Gmsh and ezdxf Python packages.
 [Gmsh's licence](https://gmsh.info/#Licensing) is GPL version 2 or later with
 its stated external-library linking exception.

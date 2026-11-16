@@ -38,6 +38,7 @@ cad = ["gmsh>=4.15.2,<5", "ezdxf>=1.4.5,<2", "numpy>=1.26,<2.3"]
 physics = ["torch>=2.6,<3"]
 ml = ["torch>=2.6,<3", "safetensors>=0.8,<1"]
 runtime = ["numpy>=1.26,<2.3", "torch>=2.6,<3", "safetensors>=0.8,<1"]
+plot = ["matplotlib>=3.9,<4", "numpy>=1.26,<2.3"]
 verify = [
   "numpy>=1.26,<2.3",
   "threadpoolctl>=3.1,<4",
