@@ -1,6 +1,59 @@
 # Examples
 
-Three reference examples cover the framework. All of them run on CPU.
+Start with the plotting demo below, or choose a compiler/CAD workflow.
+The historical reference examples later on this page cover training and
+specimen campaigns. All examples run on CPU.
+
+## Prediction plots
+
+From the source checkout, generate figures with the shipped DogBone and
+notched-plate models:
+
+```text
+python -m pip install -e ".[runtime,plot]"
+python -m examples.prediction_plots --output .piginot-runs/prediction-plots
+```
+
+Use a new output directory for each run. The demo makes five in-envelope
+predictions per model at fixed geometry and material, and saves the 15% strain
+vertex fields plus a load-response summary. It performs no training or FEM
+solves. The model bundles retain their existing claim levels.
+
+### DogBone: displacement and stress
+
+![DogBone model predictions on the undeformed quarter mesh](assets/examples/dogbone-fields.png)
+
+### Notched plate: displacement and stress
+
+![Notched-plate model predictions on the undeformed quarter mesh](assets/examples/notched-fields.png)
+
+Each field figure shows displacement magnitude in mm and the Frobenius norm
+of the in-plane first-Piola stress tensor in MPa. The axes are undeformed
+coordinates in mm, and the saved mesh connectivity preserves the boundary.
+
+### Model load response
+
+![Maximum vertex displacement and stress against nominal axial strain](assets/examples/load-response.png)
+
+The curve connects model predictions at 10%, 12.5%, 15%, 17.5% and 20% nominal
+axial strain. It shows maxima over mesh vertices. It is a model-response
+illustration, with no FEM reference comparison or accuracy estimate.
+
+### Plot a saved CAD prediction
+
+The same plotter works with the JSON from a new CAD candidate. For a saved
+prediction, from the repository root:
+
+```text
+python -m examples.prediction_plots.fields --prediction prediction.json --output .piginot-runs/my-part.png --title "My CAD part"
+```
+
+The plotter needs only the `plot` extra and accepts PNG, SVG or PDF output.
+It refuses invalid fields or units and preserves the input JSON. New CAD
+candidates remain `NOT_VERIFIED`. The
+[example guide](https://github.com/BBahtiri/verified-neural-operators/blob/main/examples/prediction_plots/README.md)
+lists every output and explains reuse. Keep raw model outputs locally in
+`.piginot-runs/` or outside the checkout.
 
 ## Current compiler and CAD workflows
 

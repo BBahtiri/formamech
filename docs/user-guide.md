@@ -29,7 +29,7 @@ Activate the environment (`source .venv/bin/activate` on Linux and macOS,
 python -m pip install -e ".[runtime]"       # predict with bundles
 python -m pip install -e ".[verify]"        # compiler training and FEM comparison
 python -m pip install -e ".[cad,verify]"    # add STEP/DXF import and meshing
-python -m pip install -e ".[dev,geometry,cad,physics,fem,ml,verify]"  # contributors
+python -m pip install -e ".[dev,geometry,cad,physics,fem,ml,verify,plot]"  # contributors
 ```
 
 `piginot --version` reports the installed version. The commands above use
@@ -177,7 +177,10 @@ print(result["qois"][0]["value"], "MPa")
 
 ### Plot a result
 
-Matplotlib is not a dependency; install it separately (`pip install matplotlib`).
+Plotting is optional: install it with `python -m pip install -e ".[plot]"`.
+The [runnable plotting examples](examples.md#prediction-plots) generate field
+figures and model-response curves, and accept saved CAD prediction JSON.
+For a minimal Python plot:
 
 ```python
 import json

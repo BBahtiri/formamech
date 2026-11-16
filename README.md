@@ -4,7 +4,7 @@
 
 [![Python 3.11–3.13](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-3776AB?logo=python&logoColor=white)](pyproject.toml) [![MIT License](https://img.shields.io/badge/license-MIT-2ea44f)](LICENSE) [![Development](https://img.shields.io/badge/status-development-orange)](CHANGELOG.md)
 
-[Get started](#installation) · [Own CAD](#train-on-your-own-cad) · [Materials](#material-models) · [Cite](#how-to-cite) · [Limitations](docs/limitations.md)
+[Get started](#installation) · [Plots](#examples-with-plots) · [Own CAD](#train-on-your-own-cad) · [Materials](#material-models) · [Cite](#how-to-cite) · [Limitations](docs/limitations.md)
 
 Import a planar STEP or DXF profile, define its material and boundary conditions,
 and train a model over the loads and material ranges you choose. Compare its
@@ -27,6 +27,7 @@ flowchart LR
 | I want to… | Start here |
 | --- | --- |
 | Predict with an existing model | [Quick start](#quick-start-predict-with-an-existing-model) |
+| See displacement, stress and load-response plots | [Runnable plotting examples](#examples-with-plots) |
 | Train for my own CAD profile | [CAD walkthrough](#train-on-your-own-cad) |
 | Inspect a plan before running numerical work | [Prepare a complete example](docs/campaigns/s29-custom-material.md#prepare-and-inspect-a-plan) |
 | Define a custom strain-energy formula | [Custom-material tutorial](docs/campaigns/s29-custom-material.md) |
@@ -102,6 +103,27 @@ with open("bundles/requests/notched-in-domain.json", encoding="utf-8") as handle
 result = predict(bundle, inputs, queries, confidence=False).document()
 print(result["verdict"], result["claim_level"])
 ```
+
+## Examples with plots
+
+Generate DogBone and notched-plate field plots, plus a load-response figure,
+using the shipped models:
+
+```text
+python -m pip install -e ".[runtime,plot]"
+python -m examples.prediction_plots --output .piginot-runs/prediction-plots
+```
+
+![Notched-plate model: displacement magnitude in mm and in-plane first-Piola stress norm in MPa](docs/assets/examples/notched-fields.png)
+
+These are model predictions on the original quarter-specimen mesh. The demo
+holds geometry/material fixed and samples five strains per model. It performs
+no training or FEM solves. Choose a new output directory when rerunning it.
+
+The [plot gallery](docs/examples.md#prediction-plots) shows all three figures.
+The [plotting guide](examples/prediction_plots/README.md#plot-your-own-prediction)
+also shows how to turn a saved prediction from your own CAD model into PNG,
+SVG or PDF. New CAD candidates retain their own `NOT_VERIFIED` claim.
 
 ## Train on your own CAD
 
@@ -244,7 +266,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT
 For a development environment and the common checks:
 
 ```text
-python -m pip install -e ".[dev,geometry,cad,physics,fem,ml,verify]"
+python -m pip install -e ".[dev,geometry,cad,physics,fem,ml,verify,plot]"
 python -m ruff check .
 python -m ruff format --check .
 python -m mypy --strict src/
