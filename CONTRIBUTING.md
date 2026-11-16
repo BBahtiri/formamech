@@ -1,6 +1,6 @@
-# Contributing to PI-GINOT
+# Contributing to FormaMech
 
-Thank you for helping build PI-GINOT.
+Thank you for helping build FormaMech.
 
 ## Development workflow
 

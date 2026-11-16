@@ -74,7 +74,7 @@ def _require_numerical_dependencies() -> None:
             "capability",
             "numerical execution needs "
             + ", ".join(missing)
-            + "; install pip install 'piginot[verify]'",
+            + "; install pip install 'formamech[verify]'",
         )
 
 

@@ -9,7 +9,7 @@ structured mesh, loaded by a nominal axial strain between 10% and 20%:
    framework trainer (no FEM label enters the loss);
 4. verify the operator against FEM on the held-out strains;
 5. calibrate the confidence indicator on the training strains, build a bundle,
-   serve a held-out strain through ``piginot.bundle.predict`` and check that a
+   serve a held-out strain through ``formamech.bundle.predict`` and check that a
    strain outside the envelope is refused.
 
 The example claims nothing: its bundle is ``NOT_VERIFIED`` because the full S14
@@ -35,8 +35,7 @@ from pathlib import Path
 from typing import Any
 
 import torch
-
-from piginot.bundle import (
+from formamech.bundle import (
     CONSTITUTIVE_PLANE_STRESS,
     ConditioningInput,
     ConfidenceSpec,
@@ -48,7 +47,7 @@ from piginot.bundle import (
     load_bundle,
     predict,
 )
-from piginot.contracts import (
+from formamech.contracts import (
     BoundaryConditionSpec,
     CanonicalQuantity,
     Dimension,
@@ -59,10 +58,10 @@ from piginot.contracts import (
     Unit,
     hash_spec,
 )
-from piginot.doe import EvidenceRole, ExecutableEnvelope
-from piginot.fem import FemRequest, FemResult, FemSolverConfig
-from piginot.fem.backend import ScikitFemBackend
-from piginot.morphing import (
+from formamech.doe import EvidenceRole, ExecutableEnvelope
+from formamech.fem import FemRequest, FemResult, FemSolverConfig
+from formamech.fem.backend import ScikitFemBackend
+from formamech.morphing import (
     BlendedNotchMap,
     BlendedNotchMeshSpec,
     BlendedNotchParameters,
@@ -70,15 +69,15 @@ from piginot.morphing import (
     MorphValidityCriteria,
     build_blended_notch_reference_mesh,
 )
-from piginot.morphing.membership import PrimitiveBound
-from piginot.objectives import (
+from formamech.morphing.membership import PrimitiveBound
+from formamech.objectives import (
     PotentialEnergyConfig,
     PotentialEnergyTerms,
     TriangleDomain,
     plane_stress_potential_energy,
     stratified_triangle_quadrature,
 )
-from piginot.operators import (
+from formamech.operators import (
     ENERGY_ARCHITECTURE_ID,
     AxisAlignedTensionLifting,
     EnergyFormOperator,
@@ -86,7 +85,7 @@ from piginot.operators import (
     QueryFrame,
     energy_module_digest,
 )
-from piginot.training import (
+from formamech.training import (
     CosineTailSchedule,
     DeterministicSamplerPlan,
     EnergyTrainerConfig,
@@ -96,7 +95,7 @@ from piginot.training import (
     model_state_hash,
     train_energy_to_checkpoint,
 )
-from piginot.verification import fit_quantile_curve
+from formamech.verification import fit_quantile_curve
 
 HALF_LENGTH_MM = 25.0
 WIDTH, RADIUS, DEPTH = 23.0, 5.0, 3.0

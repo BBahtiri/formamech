@@ -136,7 +136,7 @@ def _load_operator_state_dict(
     try:
         safetensors_module = import_module("safetensors.torch")
     except ModuleNotFoundError as exc:
-        raise RuntimeError("install piginot[ml] to load operator weights") from exc
+        raise RuntimeError("install formamech[ml] to load operator weights") from exc
     load_file = cast(
         Callable[..., dict[str, torch.Tensor]],
         safetensors_module.load_file,

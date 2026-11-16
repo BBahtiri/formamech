@@ -35,8 +35,8 @@ available resources, and replace the boundary ID with one from your own
 ```
 
 ```text
-piginot cad import profile.step --unit mm --mesh-policy mesh-policy.json --output geometry
-piginot cad inspect geometry
+formamech cad import profile.step --unit mm --mesh-policy mesh-policy.json --output geometry
+formamech cad inspect geometry
 ```
 
 The two import sizing options are mutually exclusive. All policy fields are
@@ -74,7 +74,7 @@ Failed preparation publishes no geometry manifest.
 
 ## Bounded pilot refinement
 
-The Python API `piginot.cad.adaptation.adapt_mesh` coordinates a finite loop.
+The Python API `formamech.cad.adaptation.adapt_mesh` coordinates a finite loop.
 Supply a policy, explicit `PilotCase` objects with partition `TRAIN-pilot`,
 separate screen IDs, a CAD `remesh(policy)` callback and an
 `evaluate(mesh, case)` callback returning `PilotStress` from cell-average
@@ -98,8 +98,8 @@ Round/solve/marker/minimum-size limits and stalled meshes remain explicit.
 After a successful preparation, bind its report to the final geometry:
 
 ```python
-from piginot.cad.project import prepare_geometry
-from piginot.contracts import Unit
+from formamech.cad.project import prepare_geometry
+from formamech.contracts import Unit
 
 final_policy = report.attempts[-1].policy
 prepare_geometry(
@@ -136,7 +136,7 @@ same regions/exclusions as model screening. This uses no nearest-node transfer.
 The standalone API is:
 
 ```python
-from piginot.compiler.reference_convergence import compare_fem_pair
+from formamech.compiler.reference_convergence import compare_fem_pair
 
 changes = compare_fem_pair(
     problem,

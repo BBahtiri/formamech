@@ -55,7 +55,7 @@ class MissingExtraError(ImportError):
 
     def __init__(self, mode: str) -> None:
         super().__init__(
-            f"mode {mode!r} needs the FEM extra: pip install 'piginot[verify]'"
+            f"mode {mode!r} needs the FEM extra: pip install 'formamech[verify]'"
         )
 
 

@@ -14,13 +14,13 @@ python -m pip install -e ".[cad,verify]"
 ```
 
 Run the following commands in a working folder outside the source checkout,
-or inside its ignored `.piginot-runs/` directory. Put your CAD file and
+or inside its ignored `.formamech-runs/` directory. Put your CAD file and
 settings there; keep generated meshes, reports and weights there too.
 Relative paths below refer to that working folder.
 
 ```text
-piginot cad import profile.step --unit mm --mesh-size-mm 1 --output geometry
-piginot cad inspect geometry
+formamech cad import profile.step --unit mm --mesh-size-mm 1 --output geometry
+formamech cad inspect geometry
 ```
 
 Use the same commands with a `.stp` or `.dxf` file. Import produces a new
@@ -108,8 +108,8 @@ to an imported project; select the identifiers from your inspection output.
 Prepare and inspect the campaign without starting numerical work:
 
 ```text
-piginot cad prepare --project geometry --settings physics.json --output inputs
-piginot compile --spec inputs/problem.json --config inputs/config.json --output preview-run --plan-only
+formamech cad prepare --project geometry --settings physics.json --output inputs
+formamech compile --spec inputs/problem.json --config inputs/config.json --output preview-run --plan-only
 ```
 
 Preparation validates the settings and geometry, generates disjoint public
@@ -127,8 +127,8 @@ preparing training inputs. Freeze the final mesh before fitting.
 Capture the installed numerical execution profile in a separate new folder:
 
 ```text
-piginot cad prepare --project geometry --settings physics.json --output execution-inputs --execution-profile
-piginot compile --spec execution-inputs/problem.json --config execution-inputs/config.json --output model-run
+formamech cad prepare --project geometry --settings physics.json --output execution-inputs --execution-profile
+formamech compile --spec execution-inputs/problem.json --config execution-inputs/config.json --output model-run
 ```
 
 The compiler performs material and lifting checks before the declared
@@ -160,8 +160,8 @@ command is needed.
 Check and inspect it:
 
 ```text
-piginot bundle verify model-run/candidate-bundle
-piginot inspect model-run/candidate-bundle --output candidate-inspect.json
+formamech bundle verify model-run/candidate-bundle
+formamech inspect model-run/candidate-bundle --output candidate-inspect.json
 ```
 
 Create `request.json` using the [bundle request format](../bundle.md#request),
@@ -170,12 +170,12 @@ The shipped DogBone/notched request files describe different models and must
 not be substituted for your CAD inputs. Predict with:
 
 ```text
-piginot predict model-run/candidate-bundle --request request.json --mode fast --no-confidence --output prediction.json
+formamech predict model-run/candidate-bundle --request request.json --mode fast --no-confidence --output prediction.json
 ```
 
 To reuse the trained model elsewhere, copy or archive the entire
 `candidate-bundle/` directory, preserve its relative paths and bytes, and
-install a compatible `piginot[runtime]` package in the destination environment.
+install a compatible `formamech[runtime]` package in the destination environment.
 Verify and inspect the copied bundle again before prediction. Runtime-only
 prediction needs neither the original CAD file nor Gmsh/FEM. Keep the source
 CAD, settings, meshes, reports and checkpoints separately if you also want

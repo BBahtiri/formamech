@@ -5,7 +5,7 @@ operator: its reference mesh, morph map and executable envelope, the
 model specification, the weights, the verification report and the
 limitations. `bundle.json` lists the SHA-256 and size of every file and its own
 hash, and a bundle is refused if any byte differs
-([ADR 0023](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/adr/0023-s15-bundle-and-cli.md)).
+([ADR 0023](https://github.com/BBahtiri/formamech/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/adr/0023-s15-bundle-and-cli.md)).
 
 Compiler exports can also be candidate bundles with claim `NOT_VERIFIED`.
 Their integrity checks establish matching files, not prediction accuracy.
@@ -17,7 +17,7 @@ input envelope, weights and report files.
 ## Install for serving
 
 ```text
-python -m pip install "piginot[runtime]"
+python -m pip install "formamech[runtime]"
 ```
 
 The runtime needs `numpy`, `torch`, `safetensors` and `rfc8785` only.
@@ -25,9 +25,9 @@ The runtime needs `numpy`, `torch`, `safetensors` and `rfc8785` only.
 ## Commands
 
 ```text
-piginot bundle verify BUNDLE
-piginot inspect BUNDLE [--output report.json]
-piginot predict BUNDLE --request request.json [--output prediction.json] [--no-confidence]
+formamech bundle verify BUNDLE
+formamech inspect BUNDLE [--output report.json]
+formamech predict BUNDLE --request request.json [--output prediction.json] [--no-confidence]
 ```
 
 `bundle verify` checks every byte and that the parts agree. `inspect` reports
@@ -86,6 +86,6 @@ pointwise in-plane stress error for the confidence indicator at that point;
 Bundles are built by a campaign plugin, for example:
 
 ```text
-python -m piginot.cli bundle build --campaign dogbone_v1 -- \
+python -m formamech.cli bundle build --campaign dogbone_v1 -- \
     --output BUNDLE --weights CP-FREEZE/model.safetensors --created-utc 2026-10-03T00:00:00Z
 ```

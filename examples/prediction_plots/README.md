@@ -11,7 +11,7 @@ From the repository root, in your activated virtual environment:
 
 ```text
 python -m pip install -e ".[runtime,plot]"
-python -m examples.prediction_plots --output .piginot-runs/prediction-plots
+python -m examples.prediction_plots --output .formamech-runs/prediction-plots
 ```
 
 Choose a new output directory for each run. The demo verifies the shipped
@@ -46,11 +46,11 @@ claim for another geometry, material or load range. See the
 
 ## Plot your own prediction
 
-The reusable plotter accepts JSON from `piginot predict`, including
+The reusable plotter accepts JSON from `formamech predict`, including
 `NOT_VERIFIED` CAD candidates. For example, replot the saved demo as SVG:
 
 ```text
-python -m examples.prediction_plots.fields --prediction .piginot-runs/prediction-plots/notched-prediction.json --output .piginot-runs/notched.svg --title "Notched plate"
+python -m examples.prediction_plots.fields --prediction .formamech-runs/prediction-plots/notched-prediction.json --output .formamech-runs/notched.svg --title "Notched plate"
 ```
 
 Replace `--prediction` with the path to your CAD prediction JSON. Accepted
@@ -59,7 +59,7 @@ reads saved fields and needs the `plot` extra, without loading a model,
 Torch or FEM. From outside the checkout, run the same script by its full path:
 
 ```text
-python /path/to/verified-neural-operators/examples/prediction_plots/fields.py --prediction prediction.json --output fields.png --title "My CAD part"
+python /path/to/formamech/examples/prediction_plots/fields.py --prediction prediction.json --output fields.png --title "My CAD part"
 ```
 
 The plotter uses the saved triangle connectivity, preserving holes and cutouts.
@@ -72,4 +72,4 @@ preserved, including when an output path aliases it.
 See the [own-CAD workflow](../../docs/campaigns/own-cad-workflow.md) to create a
 candidate and its FEM comparisons. [Matplotlib's triangular-field plotting](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.tripcolor.html)
 describes the rendering used here. Keep new model outputs under the ignored
-`.piginot-runs/` directory or outside the source checkout.
+`.formamech-runs/` directory or outside the source checkout.

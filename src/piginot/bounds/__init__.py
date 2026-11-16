@@ -1,6 +1,6 @@
 """Calibrated error bounds and the calibration envelope gate (S23, ADR 0104).
 
-NumPy only: fast serving with ``piginot[runtime]`` can attach bounds without
+NumPy only: fast serving with ``formamech[runtime]`` can attach bounds without
 the FEM stack.
 """
 

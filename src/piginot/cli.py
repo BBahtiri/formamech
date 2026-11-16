@@ -48,6 +48,10 @@ class PluginError(LookupError):
     """The campaign plugin or one of its commands cannot be resolved."""
 
 
+def _program(args: argparse.Namespace) -> str:
+    return str(getattr(args, "program", "piginot"))
+
+
 def resolve_campaign(name: str, search_path: Path | None = None) -> Mapping[str, Any]:
     """The command table of a campaign plugin."""
 
@@ -137,7 +141,7 @@ def _predict(args: argparse.Namespace) -> int:
 
     problem = _predict_option_error(args)
     if problem is not None:
-        print(f"piginot: {problem}", file=sys.stderr)
+        print(f"{_program(args)}: {problem}", file=sys.stderr)
         return EXIT_ERROR
     try:
         bundle = load_bundle(args.bundle)
@@ -147,7 +151,7 @@ def _predict(args: argparse.Namespace) -> int:
     try:
         request = json.loads(args.request.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        print(f"piginot: cannot read request: {exc}", file=sys.stderr)
+        print(f"{_program(args)}: cannot read request: {exc}", file=sys.stderr)
         return EXIT_ERROR
     inputs, queries = parse_request(request)
     calibration = None
@@ -174,7 +178,7 @@ def _predict(args: argparse.Namespace) -> int:
                 else record
             )
         except CalibrationError as exc:
-            print(f"piginot: {exc}", file=sys.stderr)
+            print(f"{_program(args)}: {exc}", file=sys.stderr)
             return EXIT_ERROR
     if args.mode == "fast":
         if calibration is not None:
@@ -225,10 +229,10 @@ def _serve_verified(
             calibration=calibration,
         )
     except MissingExtraError as exc:
-        print(f"piginot: {exc}", file=sys.stderr)
+        print(f"{_program(args)}: {exc}", file=sys.stderr)
         return EXIT_ERROR
     except (OSError, ValueError) as exc:
-        print(f"piginot: cannot serve {args.mode}: {exc}", file=sys.stderr)
+        print(f"{_program(args)}: cannot serve {args.mode}: {exc}", file=sys.stderr)
         return EXIT_ERROR
     _emit(served.document(), args.output)
     if served.path is ServingPath.REFUSED:
@@ -272,7 +276,7 @@ def _store_prune(args: argparse.Namespace) -> int:
     try:
         result = ObjectStore.open(args.root).prune(dry_run=args.dry_run)
     except (OSError, StoreError) as exc:
-        print(f"piginot: {exc}", file=sys.stderr)
+        print(f"{_program(args)}: {exc}", file=sys.stderr)
         return EXIT_ERROR
     report = {
         "dry_run": result.dry_run,
@@ -289,7 +293,7 @@ def _compile(args: argparse.Namespace) -> int:
         from piginot.compiler.cli import compile_command
     except ImportError as error:
         print(
-            f"piginot compile: compiler dependencies unavailable: {error}",
+            f"{_program(args)} compile: compiler dependencies unavailable: {error}",
             file=sys.stderr,
         )
         return 2
@@ -299,6 +303,7 @@ def _compile(args: argparse.Namespace) -> int:
         args.output,
         plan_only=args.plan_only,
         resume=args.resume,
+        prog=_program(args),
     )
 
 
@@ -315,7 +320,7 @@ def _campaign(command: str, args: argparse.Namespace) -> int:
         if handler is None:
             raise PluginError(f"campaign {args.campaign!r} has no {command!r} command")
     except PluginError as exc:
-        print(f"piginot: {exc}", file=sys.stderr)
+        print(f"{_program(args)}: {exc}", file=sys.stderr)
         return EXIT_ERROR
     rest = list(args.arguments)
     if rest[:1] == ["--"]:
@@ -336,8 +341,9 @@ def _campaign_parser(
     return parser
 
 
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="piginot")
+def build_parser(*, prog: str = "piginot") -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog=prog)
+    parser.set_defaults(program=prog)
     parser.add_argument(
         "--version", action="version", version=f"%(prog)s {__version__}"
     )
@@ -403,7 +409,7 @@ def build_parser() -> argparse.ArgumentParser:
         default="fast",
         help="fast: the bundle alone; certified: plus the physics certificate "
         "against the bundle's FEM problem; exact: the converged FEM solution "
-        "started from the prediction (certified and exact need piginot[verify])",
+        f"started from the prediction (certified and exact need {prog}[verify])",
     )
     predict.add_argument(
         "--corrected",
@@ -475,8 +481,8 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: Sequence[str] | None = None) -> int:
-    parser = build_parser()
+def main(argv: Sequence[str] | None = None, *, prog: str = "piginot") -> int:
+    parser = build_parser(prog=prog)
     args = parser.parse_args(argv)
     if hasattr(args, "campaign_command"):
         return _campaign(args.campaign_command, args)

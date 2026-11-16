@@ -10,8 +10,8 @@ From the cloned repository, install runtime dependencies:
 
 ```text
 python -m pip install -e ".[runtime]"
-piginot bundle verify bundles/dogbone-v1-s13c-cp-freeze
-piginot bundle verify bundles/notched-v1-cp-freeze
+formamech bundle verify bundles/dogbone-v1-s13c-cp-freeze
+formamech bundle verify bundles/notched-v1-cp-freeze
 ```
 
 The bundles are separate from the Python wheel. If copying them to another
@@ -23,9 +23,9 @@ prediction does not require the source CAD file, mesher or FEM stack.
 Create an output directory under the ignored run folder:
 
 ```text
-python -c "from pathlib import Path; Path('.piginot-runs/demo').mkdir(parents=True, exist_ok=True)"
-piginot predict bundles/dogbone-v1-s13c-cp-freeze --request bundles/requests/dogbone-in-domain.json --mode fast --no-confidence --output .piginot-runs/demo/dogbone-prediction.json
-piginot predict bundles/notched-v1-cp-freeze --request bundles/requests/notched-in-domain.json --mode fast --no-confidence --output .piginot-runs/demo/notched-prediction.json
+python -c "from pathlib import Path; Path('.formamech-runs/demo').mkdir(parents=True, exist_ok=True)"
+formamech predict bundles/dogbone-v1-s13c-cp-freeze --request bundles/requests/dogbone-in-domain.json --mode fast --no-confidence --output .formamech-runs/demo/dogbone-prediction.json
+formamech predict bundles/notched-v1-cp-freeze --request bundles/requests/notched-in-domain.json --mode fast --no-confidence --output .formamech-runs/demo/notched-prediction.json
 ```
 
 The requests use each model's own material, shape and load envelope. Check
@@ -36,7 +36,7 @@ it does not independently establish a prediction's accuracy.
 ## Inspect a refusal
 
 ```text
-piginot predict bundles/notched-v1-cp-freeze --request bundles/requests/notched-out-of-envelope.json --mode fast --no-confidence --output .piginot-runs/demo/refused.json
+formamech predict bundles/notched-v1-cp-freeze --request bundles/requests/notched-out-of-envelope.json --mode fast --no-confidence --output .formamech-runs/demo/refused.json
 ```
 
 This supplied request is outside the bundle envelope. The command returns

@@ -1,6 +1,6 @@
 # Campaign compiler
 
-The installed `piginot compile` command plans and executes a declared problem
+The installed `formamech compile` command plans and executes a declared problem
 with packaged DogBone/notched adapters or a prepared fixed CAD profile. It
 performs material and lifting checks, training, FEM comparisons and candidate
 export. Exported candidates retain `NOT_VERIFIED` and their own input envelope.
@@ -14,10 +14,10 @@ python -m pip install -e ".[verify]"
 ```
 
 Keep run inputs and outputs outside the checkout or in its ignored
-`.piginot-runs/` directory. From the working folder containing your inputs:
+`.formamech-runs/` directory. From the working folder containing your inputs:
 
 ```text
-piginot compile --spec problem.json --config config.json --output preview --plan-only
+formamech compile --spec problem.json --config config.json --output preview --plan-only
 ```
 
 The base wheel is sufficient for planning. `--plan-only` checks the problem,
@@ -55,8 +55,8 @@ planning does not read sealed data.
 Use a new output directory for execution:
 
 ```text
-piginot compile --spec problem.json --config config.json --output run
-piginot compile --spec problem.json --config config.json --output run --resume
+formamech compile --spec problem.json --config config.json --output run
+formamech compile --spec problem.json --config config.json --output run --resume
 ```
 
 Run in a clean, committed source checkout or from a wheel carrying a clean,

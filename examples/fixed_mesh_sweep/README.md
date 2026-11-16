@@ -11,7 +11,7 @@ minutes:
    framework trainer (no FEM label enters the loss);
 4. verify against FEM on the held-out strains;
 5. calibrate the confidence indicator on the training strains, build a
-   bundle, serve a held-out strain through `piginot.bundle.predict` and check
+   bundle, serve a held-out strain through `formamech.bundle.predict` and check
    that a strain outside the envelope is refused.
 
 ```bash

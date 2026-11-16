@@ -10,11 +10,14 @@ Development line S19–S29 (`STEPS-v2.0.md`, ADR 0105), forked from `v0.1.0`.
 
 ### Added
 
+- FormaMech project, package and CLI name, with `formamech` Python imports
+  and a retained `piginot` command/import alias for existing users and bundles.
+
 - Optional `plot` extra and runnable prediction examples for displacement,
   first-Piola stress and load-response figures, including a saved-JSON plotter
   for users' own CAD candidates.
 - Fixed-profile STEP/DXF import, boundary inspection, explicit material/load
-  settings and per-geometry training through `piginot cad` and `piginot compile`.
+  settings and per-geometry training through `formamech cad` and `formamech compile`.
 - CAD local mesh controls, curve approximation checks, bounded pilot refinement
   and same-polygon FEM reference-convergence diagnostics.
 - Installed campaign adapters, metadata-only plans, deterministic execution,

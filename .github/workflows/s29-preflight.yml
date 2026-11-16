@@ -125,10 +125,10 @@ jobs:
           python -m venv "$RUNNER_TEMP/s29-base"
           if [ -x "$RUNNER_TEMP/s29-base/bin/python" ]; then
             py="$RUNNER_TEMP/s29-base/bin/python"
-            command="$RUNNER_TEMP/s29-base/bin/piginot"
+            command="$RUNNER_TEMP/s29-base/bin/formamech"
           else
             py="$RUNNER_TEMP/s29-base/Scripts/python.exe"
-            command="$RUNNER_TEMP/s29-base/Scripts/piginot.exe"
+            command="$RUNNER_TEMP/s29-base/Scripts/formamech.exe"
           fi
           "$py" -m pip install --disable-pip-version-check "$RUNNER_TEMP"/s29-input/package/*.whl
           echo "RELEASE_PYTHON=$py" >> "$GITHUB_ENV"

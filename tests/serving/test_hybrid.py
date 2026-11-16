@@ -212,7 +212,7 @@ def test_the_light_install_serves_fast_and_explains_the_rest() -> None:
         try:
             serve(bundle, inputs, mode="certified", recipe=object())
         except MissingExtraError as exc:
-            print("explained:", "piginot[verify]" in str(exc))
+            print("explained:", "formamech[verify]" in str(exc))
         """
     )
     result = subprocess.run(

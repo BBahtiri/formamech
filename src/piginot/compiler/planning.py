@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, cast
 
+import formamech
 import piginot
 import piginot_campaigns
 from piginot.compiler.adapters import (
@@ -16,6 +17,7 @@ from piginot.compiler.adapters import (
     resolve_configured_adapter,
 )
 from piginot.compiler.config import CampaignConfig, CompilerConfigError
+from piginot.compiler.provenance import implementation_package_sha256
 from piginot.compiler.public_source import select_public_cases
 from piginot.contracts import ProblemSpec, canonical_json_bytes, strict_json_loads
 from piginot.doe import PublishedCaseManifest
@@ -48,11 +50,7 @@ def _sha(payload: bytes) -> str:
 
 def _implementation() -> tuple[str, str]:
     package = Path(piginot.__file__).resolve().parent
-    files = {
-        path.relative_to(package).as_posix(): _sha(path.read_bytes())
-        for path in sorted(package.rglob("*.py"))
-    }
-    return piginot.__version__, _sha(canonical_json_bytes(files))
+    return piginot.__version__, implementation_package_sha256(package)
 
 
 def _capabilities(
@@ -124,6 +122,7 @@ def check_output_path(output: Path, protected: tuple[Path, ...]) -> Path:
     if any(path == resolved or path.is_relative_to(resolved) for path in protected):
         raise PlanError("output", "output overlaps a source or evidence input")
     package_roots = (
+        Path(formamech.__file__).resolve().parent,
         Path(piginot.__file__).resolve().parent,
         Path(piginot_campaigns.__file__).resolve().parent,
     )

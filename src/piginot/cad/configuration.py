@@ -100,7 +100,7 @@ def _profile(seed: int, *, execution_profile: bool) -> dict[str, Any]:
     versions = {name: _version(name) for name in LIBRARIES}
     if execution_profile and "NOT_INSTALLED" in versions.values():
         raise ValueError(
-            "Install piginot[verify] before capturing an execution profile"
+            "Install formamech[verify] before capturing an execution profile"
         )
     return {
         "python_version": platform.python_version(),

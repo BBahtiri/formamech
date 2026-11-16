@@ -1,13 +1,13 @@
 cff-version: 1.2.0
-message: "If you use PI-GINOT, please cite the software and record the version or commit used."
-title: "PI-GINOT"
+message: "If you use FormaMech, please cite the software and record the version or commit used."
+title: "FormaMech"
 type: software
 version: 0.2.0.dev0
 authors:
   - family-names: "Bahtiri"
     given-names: "Betim"
 license: MIT
-repository-code: "https://github.com/BBahtiri/verified-neural-operators"
+repository-code: "https://github.com/BBahtiri/formamech"
 abstract: >-
   Physics-informed neural operators for 2D finite-strain plane-stress
   elasticity, with fixed-profile STEP/DXF import, per-geometry training,

@@ -55,8 +55,9 @@ def _plot_response(series: Mapping[str, list[dict[str, float]]], output: Path) -
 def _predict_family(
     root: Path, output: Path, name: str, label: str, bundle_name: str
 ) -> tuple[list[dict[str, float]], dict[str, Any]]:
-    from piginot.bundle import load_bundle, predict
-    from piginot.cli import parse_request
+    from formamech.bundle import load_bundle, predict
+
+    from formamech.cli import parse_request
 
     bundle = load_bundle(root / "bundles" / bundle_name)
     request = json.loads(
@@ -132,7 +133,7 @@ def run_demo(output: Path, *, root: Path = REPOSITORY) -> dict[str, Any]:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--output", type=Path, default=Path(".piginot-runs/prediction-plots")
+        "--output", type=Path, default=Path(".formamech-runs/prediction-plots")
     )
     args = parser.parse_args(argv)
     try:

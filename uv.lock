@@ -524,6 +524,108 @@ wheels = [
 ]
 
 [[package]]
+name = "formamech"
+version = "0.2.0.dev0"
+source = { editable = "." }
+dependencies = [
+    { name = "rfc8785" },
+]
+
+[package.optional-dependencies]
+cad = [
+    { name = "ezdxf" },
+    { name = "gmsh" },
+    { name = "numpy" },
+]
+dev = [
+    { name = "mkdocs" },
+    { name = "mypy" },
+    { name = "pip-audit" },
+    { name = "pre-commit" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+    { name = "setuptools" },
+]
+fem = [
+    { name = "numpy" },
+    { name = "scikit-fem" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "scipy", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "sympy" },
+    { name = "torch" },
+]
+geometry = [
+    { name = "meshio" },
+    { name = "numpy" },
+]
+ml = [
+    { name = "safetensors" },
+    { name = "torch" },
+]
+physics = [
+    { name = "torch" },
+]
+plot = [
+    { name = "matplotlib" },
+    { name = "numpy" },
+]
+runtime = [
+    { name = "numpy" },
+    { name = "safetensors" },
+    { name = "torch" },
+]
+verify = [
+    { name = "numpy" },
+    { name = "safetensors" },
+    { name = "scikit-fem" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "scipy", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "sympy" },
+    { name = "threadpoolctl" },
+    { name = "torch" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "ezdxf", marker = "extra == 'cad'", specifier = ">=1.4.5,<2" },
+    { name = "gmsh", marker = "extra == 'cad'", specifier = ">=4.15.2,<5" },
+    { name = "matplotlib", marker = "extra == 'plot'", specifier = ">=3.9,<4" },
+    { name = "meshio", marker = "extra == 'geometry'", specifier = ">=5.3.5,<6" },
+    { name = "mkdocs", marker = "extra == 'dev'", specifier = ">=1.6,<2" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.15,<3" },
+    { name = "numpy", marker = "extra == 'cad'", specifier = ">=1.26,<2.3" },
+    { name = "numpy", marker = "extra == 'fem'", specifier = ">=1.26,<2.3" },
+    { name = "numpy", marker = "extra == 'geometry'", specifier = ">=1.26,<2.3" },
+    { name = "numpy", marker = "extra == 'plot'", specifier = ">=1.26,<2.3" },
+    { name = "numpy", marker = "extra == 'runtime'", specifier = ">=1.26,<2.3" },
+    { name = "numpy", marker = "extra == 'verify'", specifier = ">=1.26,<2.3" },
+    { name = "pip-audit", marker = "extra == 'dev'", specifier = ">=2.8,<3" },
+    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.1,<5" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3,<10" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=6,<8" },
+    { name = "rfc8785", specifier = ">=0.1.4,<0.2" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.9,<1" },
+    { name = "safetensors", marker = "extra == 'ml'", specifier = ">=0.8,<1" },
+    { name = "safetensors", marker = "extra == 'runtime'", specifier = ">=0.8,<1" },
+    { name = "safetensors", marker = "extra == 'verify'", specifier = ">=0.8,<1" },
+    { name = "scikit-fem", marker = "extra == 'fem'", specifier = ">=11,<13" },
+    { name = "scikit-fem", marker = "extra == 'verify'", specifier = ">=11,<13" },
+    { name = "scipy", marker = "extra == 'fem'", specifier = ">=1.12,<2" },
+    { name = "scipy", marker = "extra == 'verify'", specifier = ">=1.12,<2" },
+    { name = "setuptools", marker = "extra == 'dev'", specifier = ">=83" },
+    { name = "sympy", marker = "extra == 'fem'", specifier = ">=1.13,<2" },
+    { name = "sympy", marker = "extra == 'verify'", specifier = ">=1.13,<2" },
+    { name = "threadpoolctl", marker = "extra == 'verify'", specifier = ">=3.1,<4" },
+    { name = "torch", marker = "extra == 'fem'", specifier = ">=2.6,<3" },
+    { name = "torch", marker = "extra == 'ml'", specifier = ">=2.6,<3" },
+    { name = "torch", marker = "extra == 'physics'", specifier = ">=2.6,<3" },
+    { name = "torch", marker = "extra == 'runtime'", specifier = ">=2.6,<3" },
+    { name = "torch", marker = "extra == 'verify'", specifier = ">=2.6,<3" },
+]
+provides-extras = ["fem", "geometry", "cad", "physics", "ml", "runtime", "plot", "verify", "dev"]
+
+[[package]]
 name = "fsspec"
 version = "2026.7.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1251,108 +1353,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/5a/82/42f767fc1c1143d6f
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f1/d9/7fb5aa316bc299258e68c73ba3bddbc499654a07f151cba08f6153988714/pathspec-1.1.1-py3-none-any.whl", hash = "sha256:a00ce642f577bf7f473932318056212bc4f8bfdf53128c78bbd5af0b9b20b189", size = 57328, upload-time = "2026-04-27T01:46:07.06Z" },
 ]
-
-[[package]]
-name = "piginot"
-version = "0.2.0.dev0"
-source = { editable = "." }
-dependencies = [
-    { name = "rfc8785" },
-]
-
-[package.optional-dependencies]
-cad = [
-    { name = "ezdxf" },
-    { name = "gmsh" },
-    { name = "numpy" },
-]
-dev = [
-    { name = "mkdocs" },
-    { name = "mypy" },
-    { name = "pip-audit" },
-    { name = "pre-commit" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "ruff" },
-    { name = "setuptools" },
-]
-fem = [
-    { name = "numpy" },
-    { name = "scikit-fem" },
-    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
-    { name = "scipy", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "sympy" },
-    { name = "torch" },
-]
-geometry = [
-    { name = "meshio" },
-    { name = "numpy" },
-]
-ml = [
-    { name = "safetensors" },
-    { name = "torch" },
-]
-physics = [
-    { name = "torch" },
-]
-plot = [
-    { name = "matplotlib" },
-    { name = "numpy" },
-]
-runtime = [
-    { name = "numpy" },
-    { name = "safetensors" },
-    { name = "torch" },
-]
-verify = [
-    { name = "numpy" },
-    { name = "safetensors" },
-    { name = "scikit-fem" },
-    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
-    { name = "scipy", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "sympy" },
-    { name = "threadpoolctl" },
-    { name = "torch" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "ezdxf", marker = "extra == 'cad'", specifier = ">=1.4.5,<2" },
-    { name = "gmsh", marker = "extra == 'cad'", specifier = ">=4.15.2,<5" },
-    { name = "matplotlib", marker = "extra == 'plot'", specifier = ">=3.9,<4" },
-    { name = "meshio", marker = "extra == 'geometry'", specifier = ">=5.3.5,<6" },
-    { name = "mkdocs", marker = "extra == 'dev'", specifier = ">=1.6,<2" },
-    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.15,<3" },
-    { name = "numpy", marker = "extra == 'cad'", specifier = ">=1.26,<2.3" },
-    { name = "numpy", marker = "extra == 'fem'", specifier = ">=1.26,<2.3" },
-    { name = "numpy", marker = "extra == 'geometry'", specifier = ">=1.26,<2.3" },
-    { name = "numpy", marker = "extra == 'plot'", specifier = ">=1.26,<2.3" },
-    { name = "numpy", marker = "extra == 'runtime'", specifier = ">=1.26,<2.3" },
-    { name = "numpy", marker = "extra == 'verify'", specifier = ">=1.26,<2.3" },
-    { name = "pip-audit", marker = "extra == 'dev'", specifier = ">=2.8,<3" },
-    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.1,<5" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3,<10" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=6,<8" },
-    { name = "rfc8785", specifier = ">=0.1.4,<0.2" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.9,<1" },
-    { name = "safetensors", marker = "extra == 'ml'", specifier = ">=0.8,<1" },
-    { name = "safetensors", marker = "extra == 'runtime'", specifier = ">=0.8,<1" },
-    { name = "safetensors", marker = "extra == 'verify'", specifier = ">=0.8,<1" },
-    { name = "scikit-fem", marker = "extra == 'fem'", specifier = ">=11,<13" },
-    { name = "scikit-fem", marker = "extra == 'verify'", specifier = ">=11,<13" },
-    { name = "scipy", marker = "extra == 'fem'", specifier = ">=1.12,<2" },
-    { name = "scipy", marker = "extra == 'verify'", specifier = ">=1.12,<2" },
-    { name = "setuptools", marker = "extra == 'dev'", specifier = ">=83" },
-    { name = "sympy", marker = "extra == 'fem'", specifier = ">=1.13,<2" },
-    { name = "sympy", marker = "extra == 'verify'", specifier = ">=1.13,<2" },
-    { name = "threadpoolctl", marker = "extra == 'verify'", specifier = ">=3.1,<4" },
-    { name = "torch", marker = "extra == 'fem'", specifier = ">=2.6,<3" },
-    { name = "torch", marker = "extra == 'ml'", specifier = ">=2.6,<3" },
-    { name = "torch", marker = "extra == 'physics'", specifier = ">=2.6,<3" },
-    { name = "torch", marker = "extra == 'runtime'", specifier = ">=2.6,<3" },
-    { name = "torch", marker = "extra == 'verify'", specifier = ">=2.6,<3" },
-]
-provides-extras = ["fem", "geometry", "cad", "physics", "ml", "runtime", "plot", "verify", "dev"]
 
 [[package]]
 name = "pillow"

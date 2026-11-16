@@ -24,12 +24,12 @@ its own declared training budget and scientific verification.
 
 Run these commands from the repository root. The tutorial inputs are included
 in `examples/custom_material/`; prepared inputs and results stay in the
-Git-ignored `.piginot-runs/` directory:
+Git-ignored `.formamech-runs/` directory:
 
 ```text
 python -m pip install -e "."
-python -I examples/custom_material/prepare.py --output .piginot-runs/material-plan-inputs
-piginot compile --spec .piginot-runs/material-plan-inputs/problem.json --config .piginot-runs/material-plan-inputs/config.json --output .piginot-runs/material-plan --plan-only
+python -I examples/custom_material/prepare.py --output .formamech-runs/material-plan-inputs
+formamech compile --spec .formamech-runs/material-plan-inputs/problem.json --config .formamech-runs/material-plan-inputs/config.json --output .formamech-runs/material-plan --plan-only
 ```
 
 Preparation creates a new input folder and refuses an existing folder or any
@@ -46,8 +46,8 @@ Install the numerical extra, then prepare a separate input folder:
 
 ```text
 python -m pip install -e ".[verify]"
-python -I examples/custom_material/prepare.py --execution-profile --output .piginot-runs/material-run-inputs
-piginot compile --spec .piginot-runs/material-run-inputs/problem.json --config .piginot-runs/material-run-inputs/config.json --output .piginot-runs/material-run
+python -I examples/custom_material/prepare.py --execution-profile --output .formamech-runs/material-run-inputs
+formamech compile --spec .formamech-runs/material-run-inputs/problem.json --config .formamech-runs/material-run-inputs/config.json --output .formamech-runs/material-run
 ```
 
 `--execution-profile` captures actual library versions and the CPU capability
@@ -71,7 +71,7 @@ To continue after interruption, use identical inputs, budget and execution
 profile:
 
 ```text
-piginot compile --spec .piginot-runs/material-run-inputs/problem.json --config .piginot-runs/material-run-inputs/config.json --output .piginot-runs/material-run --resume
+formamech compile --spec .formamech-runs/material-run-inputs/problem.json --config .formamech-runs/material-run-inputs/config.json --output .formamech-runs/material-run --resume
 ```
 
 The geometry is the registered tiny mesh, with fixed dimensions and material

@@ -4,13 +4,13 @@ A problem specification (`piginot.problem-spec-v1`) describes one 2D
 finite-strain problem as a JSON file: geometry, parameter ranges, material,
 boundary conditions, exact Dirichlet lifting, quantities of interest,
 verification tolerances, DOE budget and FEM settings. It is introduced by
-S24 ([ADR 0106](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/adr/0106-s24-problem-spec-and-lifting.md)) and is the
+S24 ([ADR 0106](https://github.com/BBahtiri/formamech/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/adr/0106-s24-problem-spec-and-lifting.md)) and is the
 input of the one-command compiler planned for S28. The two shipped families
 are written this way in `campaigns/dogbone_v1/problem_spec.json` and
 `campaigns/notched_v1/problem_spec.json`.
 
 ```python
-from piginot.contracts import ProblemSpec
+from formamech.contracts import ProblemSpec
 
 spec = ProblemSpec.load("campaigns/notched_v1/problem_spec.json")
 spec.problem_hash  # BLAKE2b-256 identity, bound by training runs
@@ -43,7 +43,7 @@ is left free, and a nominal-strain region is perpendicular to its component.
 
 Expressions use names of parameters and constants, numbers, `+ - * /` and
 parentheses. They are parsed into a syntax tree, which the contract stores, and
-evaluated left to right by `piginot.problem.expressions.value`; nothing is
+evaluated left to right by `formamech.problem.expressions.value`; nothing is
 passed to `eval`. Units are checked: a frame entry is a length, a
 constraint has its declared unit, and a bare number takes the unit expected
 where it stands.
@@ -75,13 +75,13 @@ Dirichlet set for any network output `φ`.
   A line may be marked `"trimmed": false` when its whole supporting line meets
   the domain only along the piece.
 
-`piginot.problem.verify_lifting` measures a spec's lifting over its parameter
+`formamech.problem.verify_lifting` measures a spec's lifting over its parameter
 box on the morphed meshes (ADR 0106 decision 4).
 
 ## Materials
 
 A material is either a built-in model or a strain-energy formula
-([ADR 0107](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/adr/0107-s25-material-registry.md)).
+([ADR 0107](https://github.com/BBahtiri/formamech/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/adr/0107-s25-material-registry.md)).
 
 | Model | Properties | Strain energy |
 |---|---|---|
@@ -111,7 +111,7 @@ small-strain moduli:
 ```
 
 A formula may declare up to two in-plane fibre families
-([ADR 0108](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/adr/0108-s26-fibre-families.md)), each at the angle of a `deg`
+([ADR 0108](https://github.com/BBahtiri/formamech/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/adr/0108-s26-fibre-families.md)), each at the angle of a `deg`
 parameter (or its negative) from the x axis. Each family `<label>` adds the
 full invariants `I4<label> = a·C a` and `I5<label> = a·C² a`, and
 `ramp(x) = max(x, 0)` switches a fibre off in compression. A fibre term must
@@ -130,7 +130,7 @@ A symmetry boundary condition needs a material symmetric about its plane
 (rule `material-symmetry`): every family needs a mirror family at the
 negative angle, as `±beta` or a single family at 0° or 90°.
 
-`piginot.problem.admit_material(spec)` runs the admission gate over the
+`formamech.problem.admit_material(spec)` runs the admission gate over the
 material parameters' box: stress-free reference state, objectivity,
 isotropy (or, with fibres, the declared symmetry rotations), stress and tangent against finite differences, the declared
 moduli, a unique plane-stress closure root, ellipticity, and (with

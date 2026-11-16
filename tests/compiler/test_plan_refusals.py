@@ -12,6 +12,7 @@ from types import SimpleNamespace
 
 import pytest
 
+import formamech
 import piginot
 import piginot_campaigns
 from piginot import cli
@@ -68,7 +69,9 @@ def test_registry_resolution_and_absolute_source_produce_the_same_plan(
     assert not output.exists()
 
 
-@pytest.mark.parametrize("kind", ["symlink", "core-package", "adapter-package", "file"])
+@pytest.mark.parametrize(
+    "kind", ["symlink", "core-package", "adapter-package", "public-package", "file"]
+)
 def test_output_cannot_alias_other_data_or_modify_the_package(tmp_path, kind):
     spec, config, _, descriptor = inputs(tmp_path)
     output = tmp_path / "output"
@@ -77,7 +80,11 @@ def test_output_cannot_alias_other_data_or_modify_the_package(tmp_path, kind):
         target.mkdir()
         symlink(output, target, directory=True)
     elif kind.endswith("-package"):
-        package = piginot if kind == "core-package" else piginot_campaigns
+        package = {
+            "core-package": piginot,
+            "adapter-package": piginot_campaigns,
+            "public-package": formamech,
+        }[kind]
         output = Path(package.__file__).resolve().parent / "compiler-test-output"
     else:
         output.write_bytes(b"preserve")
@@ -92,7 +99,9 @@ def test_output_cannot_alias_other_data_or_modify_the_package(tmp_path, kind):
 
 
 @pytest.mark.parametrize(
-    "package", [piginot, piginot_campaigns], ids=["core", "adapters"]
+    "package",
+    [piginot, piginot_campaigns, formamech],
+    ids=["core", "adapters", "public"],
 )
 def test_output_parent_symlink_cannot_alias_an_installed_package(tmp_path, package):
     root = Path(package.__file__).resolve().parent

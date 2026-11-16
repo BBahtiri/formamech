@@ -65,7 +65,7 @@ def plot_prediction(
     document: Mapping[str, Any],
     output: Path,
     *,
-    title: str = "PI-GINOT prediction",
+    title: str = "FormaMech prediction",
 ) -> Path:
     """Save two field panels on the original mesh; never fill holes by remeshing."""
     if output.suffix.lower() not in {".png", ".svg", ".pdf"}:
@@ -109,7 +109,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--prediction", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--title", default="PI-GINOT prediction")
+    parser.add_argument("--title", default="FormaMech prediction")
     args = parser.parse_args(argv)
     try:
         if args.prediction.resolve() == args.output.resolve() or (

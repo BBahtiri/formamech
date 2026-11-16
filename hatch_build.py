@@ -42,10 +42,14 @@ def _sha(path: Path) -> str:
 
 def _manifest(root: Path) -> dict[str, str]:
     result: dict[str, str] = {}
-    for relative, prefix, suffixes in (
+    packages = [
         ("src/piginot", "piginot", (".py",)),
         ("piginot_campaigns", "piginot_campaigns", (".py", ".json")),
-    ):
+    ]
+    facade = root / "src/formamech"
+    if facade.exists() or facade.is_symlink():
+        packages.append(("src/formamech", "formamech", (".py",)))
+    for relative, prefix, suffixes in packages:
         directory = root / relative
         if not directory.is_dir() or directory.is_symlink():
             raise ValueError(f"missing or linked source package: {relative}")
@@ -103,7 +107,8 @@ def _git_state(root: Path, files: dict[str, str]) -> tuple[str, bool] | None:
     ):
         raise ValueError("cannot establish source revision and cleanliness")
     required = {
-        f"src/{key}" if key.startswith("piginot/") else key for key in files
+        f"src/{key}" if key.startswith(("piginot/", "formamech/")) else key
+        for key in files
     } | BUILD_INPUTS
     dirty = bool(status.stdout) or not required <= set(tracked.stdout.split("\0"))
     return value, dirty
@@ -149,9 +154,14 @@ def _prior_record(
 def build_identity(root: Path, version: str) -> dict[str, Any]:
     root = root.resolve()
     project = tomllib.loads((root / "pyproject.toml").read_text("utf-8"))["project"]
-    if project.get("name") != "piginot" or project.get("version") != version:
+    if (
+        project.get("name") not in {"piginot", "formamech"}
+        or project.get("version") != version
+    ):
         raise ValueError("source project does not match build package/version")
     files = _manifest(root)
+    if project["name"] == "formamech" and "formamech/__init__.py" not in files:
+        raise ValueError("FormaMech public package is missing")
     inputs = {name: _sha(root / name) for name in sorted(BUILD_INPUTS)}
     state = _git_state(root, files)
     if state is None:

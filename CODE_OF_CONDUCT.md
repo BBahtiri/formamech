@@ -2,7 +2,7 @@
 
 ## Our pledge
 
-We pledge to make participation in PI-GINOT free from harassment for everyone,
+We pledge to make participation in FormaMech free from harassment for everyone,
 regardless of age, body size, disability, ethnicity, sex characteristics, gender
 identity and expression, experience, education, socioeconomic status, nationality,
 personal appearance, race, caste, color, religion, or sexual identity and

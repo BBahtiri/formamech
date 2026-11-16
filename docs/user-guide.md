@@ -17,8 +17,8 @@ You need Python 3.11, 3.12 or 3.13, and Git. Install from the repository; it
 also holds the bundles.
 
 ```text
-git clone https://github.com/BBahtiri/verified-neural-operators.git
-cd verified-neural-operators
+git clone https://github.com/BBahtiri/formamech.git
+cd formamech
 python -m venv .venv
 ```
 
@@ -32,13 +32,13 @@ python -m pip install -e ".[cad,verify]"    # add STEP/DXF import and meshing
 python -m pip install -e ".[dev,geometry,cad,physics,fem,ml,verify,plot]"  # contributors
 ```
 
-`piginot --version` reports the installed version. The commands above use
+`formamech --version` reports the installed version. The commands above use
 `main`, including the CAD/compiler interface. A source checkout also supplies
 the specimen bundles and examples; the Python wheel contains the runtime
 packages and their adapter resources. CAD dependencies may require additional
 OS libraries, as described in the [CAD guide](campaigns/own-cad-workflow.md).
 
-Keep your settings and numerical outputs under the ignored `.piginot-runs/`
+Keep your settings and numerical outputs under the ignored `.formamech-runs/`
 directory or outside the clone. This preserves a clean source identity for
 compiler execution and keeps experimental results local.
 
@@ -61,8 +61,8 @@ Neo-Hookean solid in 2D plane stress with 1 mm thickness.
 ### Check and inspect a bundle
 
 ```text
-piginot bundle verify bundles/notched-v1-cp-freeze
-piginot inspect bundles/notched-v1-cp-freeze --output inspect.json
+formamech bundle verify bundles/notched-v1-cp-freeze
+formamech inspect bundles/notched-v1-cp-freeze --output inspect.json
 ```
 
 `inspect` lists the inputs and their ranges, any derived bounds (ratios such
@@ -102,7 +102,7 @@ Example requests are in `bundles/requests/`.
 ### Predict
 
 ```text
-piginot predict bundles/notched-v1-cp-freeze --request bundles/requests/notched-in-domain.json --output prediction.json
+formamech predict bundles/notched-v1-cp-freeze --request bundles/requests/notched-in-domain.json --output prediction.json
 ```
 
 The exit code tells you the outcome:
@@ -146,7 +146,7 @@ errors only moderately: it covered 87–88% of HOLDOUT vertices for a nominal
 
 ### Refusals
 
-PI-GINOT refuses rather than extrapolates. Common reason codes:
+FormaMech refuses rather than extrapolates. Common reason codes:
 
 | Code | Cause |
 | --- | --- |
@@ -162,8 +162,8 @@ PI-GINOT refuses rather than extrapolates. Common reason codes:
 ```python
 import json
 
-from piginot.bundle import load_bundle, predict
-from piginot.cli import parse_request
+from formamech.bundle import load_bundle, predict
+from formamech.cli import parse_request
 
 bundle = load_bundle("bundles/notched-v1-cp-freeze")
 with open("bundles/requests/notched-in-domain.json", encoding="utf-8") as handle:
@@ -208,22 +208,22 @@ figure.savefig("prediction.png", dpi=150, bbox_inches="tight")
 
 ## Certified and exact predictions (0.2.0.dev, S22)
 
-`piginot predict` takes `--mode` (from the development line; not in release
+`formamech predict` takes `--mode` (from the development line; not in release
 0.1.0):
 
 | Mode | You get | Needs |
 | --- | --- | --- |
-| `fast` (default) | the bundle's prediction, as in 0.1.0 | `pip install 'piginot[runtime]'` |
-| `certified` | the prediction plus a physics certificate (`eta_energy`, stress change, guards); `--corrected` adds the corrected displacement at the FEM nodes | `pip install 'piginot[verify]'` |
-| `exact` | the converged FEM solution, started from the prediction, with the path that produced it | `pip install 'piginot[verify]'` |
+| `fast` (default) | the bundle's prediction, as in 0.1.0 | `pip install 'formamech[runtime]'` |
+| `certified` | the prediction plus a physics certificate (`eta_energy`, stress change, guards); `--corrected` adds the corrected displacement at the FEM nodes | `pip install 'formamech[verify]'` |
+| `exact` | the converged FEM solution, started from the prediction, with the path that produced it | `pip install 'formamech[verify]'` |
 
 These FEM-backed modes use the shipped bundles' own recipe sidecars. New CAD
 and compiler candidates support uncalibrated `fast` prediction only; compare
 them with FEM through their separate compiler workflow.
 
 ```bash
-piginot predict bundles/notched-v1-cp-freeze --request bundles/requests/notched-in-domain.json --mode certified --corrected
-piginot predict bundles/notched-v1-cp-freeze --request bundles/requests/notched-in-domain.json --mode exact
+formamech predict bundles/notched-v1-cp-freeze --request bundles/requests/notched-in-domain.json --mode certified --corrected
+formamech predict bundles/notched-v1-cp-freeze --request bundles/requests/notched-in-domain.json --mode exact
 ```
 
 The FEM problem comes from the bundle's recipe in `bundles/fem-recipes/`: the
@@ -266,7 +266,7 @@ budget. Neither mode extends a bundle beyond its envelope.
 not `OK`, or whose `p_l2_change` exceeds `--tolerance`, is solved exactly:
 
 ```bash
-piginot predict bundles/notched-v1-cp-freeze --request bundles/requests/notched-in-domain.json --mode certified --escalate --tolerance 0.01
+formamech predict bundles/notched-v1-cp-freeze --request bundles/requests/notched-in-domain.json --mode certified --escalate --tolerance 0.01
 ```
 
 `--tolerance 0.01` accepts at most a 1% change of the stress field. The
@@ -281,8 +281,8 @@ cold FEM solve about 190 s. Other machines and loads change these numbers.
 From Python:
 
 ```python
-from piginot.bundle import load_bundle
-from piginot.serving import load_recipe, serve
+from formamech.bundle import load_bundle
+from formamech.serving import load_recipe, serve
 
 bundle = load_bundle("bundles/notched-v1-cp-freeze")
 recipe = load_recipe(bundle, "bundles/notched-v1-cp-freeze")
@@ -295,13 +295,13 @@ print(served.path.value, served.certificate["indicators"]["p_l2_change"])
 ## Calibrated error bounds (0.2.0.dev, S23)
 
 `--bounds` attaches calibrated 90% upper bounds to a served request, in any
-mode ([ADR 0104](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/adr/0104-s23-calibrated-bounds.md)). They bound the S14
+mode ([ADR 0104](https://github.com/BBahtiri/formamech/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/adr/0104-s23-calibrated-bounds.md)). They bound the S14
 budgeted error, the quantity the claim levels and their tolerances are about:
 the prediction's error against the FEM reference plus that reference's own
 discretisation and projection terms.
 
 ```bash
-piginot predict bundles/dogbone-v1-s13c-cp-freeze --request bundles/requests/dogbone-in-domain.json --bounds
+formamech predict bundles/dogbone-v1-s13c-cp-freeze --request bundles/requests/dogbone-in-domain.json --bounds
 ```
 
 | Mode | `bounds.kind` | What is bounded |
@@ -325,7 +325,7 @@ request. A request that is inside the bundle's envelope but further from the
 training cases than any calibration case is served with
 `"status": "OUT_OF_CALIBRATION"` and no bound. The bounds come from the
 sidecars in `bundles/calibration/`, bound to each bundle's manifest; they need
-only `piginot[runtime]`. Without `--bounds` every output is unchanged.
+only `formamech[runtime]`. Without `--bounds` every output is unchanged.
 
 The bounds were tested once on 64 fresh H1 cases per family (gate G23, PASS):
 the stress-field and peak bounds covered 86–91% of the in-calibration cases
@@ -393,12 +393,12 @@ What you provide:
 
 1. **A reference mesh:** a planar Gmsh v4.1 triangle mesh with named physical
    groups for the boundaries (loaded end, symmetry lines, free edges). It is
-   read with `piginot.geometry.read_gmsh(path, unit=Unit.MM)`, which refuses
+   read with `formamech.geometry.read_gmsh(path, unit=Unit.MM)`, which refuses
    meshes it cannot trust: inverted or degenerate elements, unnamed boundary
    facets, 3D or quad cells.
 2. **A shape parametrisation:** a morph map that deforms the reference mesh
    from a few parameters. The framework provides RBF and FFD maps
-   (`piginot.morphing`), plus the exact DogBone and notched-plate maps as
+   (`formamech.morphing`), plus the exact DogBone and notched-plate maps as
    examples of a family-specific map.
 3. **An input range:** bounds on every parameter, derived bounds on their
    ratios, and the material and load range.
@@ -418,9 +418,9 @@ template:
 The notched campaign took about a day of CPU time for 200 FEM cases plus
 training. Its result shows that the tolerances are not guaranteed: it reached
 `DEVELOPMENT_VERIFIED`, not `HOLDOUT_VERIFIED`, largely because of the FEM
-mesh's own error at the notch ([S17 results](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/campaigns/s17-plan.md#4-results)).
-The [S17 plan](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/campaigns/s17-plan.md) and
-[ADR 0025](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/adr/0025-s17-examples-and-second-family.md) describe each step and
+mesh's own error at the notch ([S17 results](https://github.com/BBahtiri/formamech/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/campaigns/s17-plan.md#4-results)).
+The [S17 plan](https://github.com/BBahtiri/formamech/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/campaigns/s17-plan.md) and
+[ADR 0025](https://github.com/BBahtiri/formamech/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/adr/0025-s17-examples-and-second-family.md) describe each step and
 its decisions.
 
 ## Check the project yourself

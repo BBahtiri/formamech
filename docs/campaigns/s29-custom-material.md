@@ -11,8 +11,8 @@ Install the current source package in a virtual environment:
 
 ```text
 python -m pip install -e "."
-python -I examples/custom_material/prepare.py --output .piginot-runs/material-plan-inputs
-piginot compile --spec .piginot-runs/material-plan-inputs/problem.json --config .piginot-runs/material-plan-inputs/config.json --output .piginot-runs/material-plan --plan-only
+python -I examples/custom_material/prepare.py --output .formamech-runs/material-plan-inputs
+formamech compile --spec .formamech-runs/material-plan-inputs/problem.json --config .formamech-runs/material-plan-inputs/config.json --output .formamech-runs/material-plan --plan-only
 ```
 
 The preparation script reads `problem.json`, `source.json` and
@@ -22,7 +22,7 @@ cases, records installed adapter/input identities, and writes
 Metadata-only preparation records an unprobed CPU capability; it performs
 no training, FEM solve or inference. Inspect `plan.json` before execution.
 
-Keep the prepared inputs, results and checkpoints in `.piginot-runs/`, which
+Keep the prepared inputs, results and checkpoints in `.formamech-runs/`, which
 Git ignores, or choose a working directory outside the checkout.
 
 ## Capture an execution profile and train
@@ -31,8 +31,8 @@ Install the numerical dependencies and prepare a separate input directory:
 
 ```text
 python -m pip install -e ".[verify]"
-python -I examples/custom_material/prepare.py --output .piginot-runs/material-inputs --execution-profile
-piginot compile --spec .piginot-runs/material-inputs/problem.json --config .piginot-runs/material-inputs/config.json --output .piginot-runs/material-run
+python -I examples/custom_material/prepare.py --output .formamech-runs/material-inputs --execution-profile
+formamech compile --spec .formamech-runs/material-inputs/problem.json --config .formamech-runs/material-inputs/config.json --output .formamech-runs/material-run
 ```
 
 Preparation captures the installed numerical libraries, platform and CPU
@@ -58,7 +58,7 @@ only when export succeeded.
 Resume the same inputs and budget explicitly:
 
 ```text
-piginot compile --spec .piginot-runs/material-inputs/problem.json --config .piginot-runs/material-inputs/config.json --output .piginot-runs/material-run --resume
+formamech compile --spec .formamech-runs/material-inputs/problem.json --config .formamech-runs/material-inputs/config.json --output .formamech-runs/material-run --resume
 ```
 
 An exported candidate supports uncalibrated fast prediction. The

@@ -44,7 +44,7 @@ jobs:
       - name: Build documentation (strict)
         run: python -m mkdocs build --strict -f mkdocs.yml -d ../site
       - name: Test with coverage
-        run: python -m pytest --cov=src/piginot --cov-fail-under=90
+        run: python -m pytest --cov=src/formamech --cov=src/piginot --cov-fail-under=90
       - name: Check S2 contract coverage
         run: python -m pytest tests/contracts --cov=src/piginot/contracts --cov-fail-under=90
       - name: Check S3 store coverage

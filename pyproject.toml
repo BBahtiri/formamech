@@ -3,9 +3,9 @@ requires = ["hatchling>=1.27,<1.30"]
 build-backend = "hatchling.build"
 
 [project]
-name = "piginot"
+name = "formamech"
 version = "0.2.0.dev0"
-description = "Verified, problem-specific physics-informed neural operators for 2D finite-strain elasticity"
+description = "Physics-informed models and FEM workflows for user-owned 2D CAD geometry"
 readme = "README.md"
 requires-python = ">=3.11,<3.14"
 license = "MIT"
@@ -22,8 +22,8 @@ classifiers = [
 dependencies = ["rfc8785>=0.1.4,<0.2"]
 
 [project.urls]
-Repository = "https://github.com/BBahtiri/verified-neural-operators"
-Documentation = "https://github.com/BBahtiri/verified-neural-operators/tree/main/docs"
+Repository = "https://github.com/BBahtiri/formamech"
+Documentation = "https://github.com/BBahtiri/formamech/tree/main/docs"
 
 [project.optional-dependencies]
 fem = [
@@ -60,6 +60,7 @@ dev = [
 ]
 
 [project.scripts]
+formamech = "formamech.cli:main"
 piginot = "piginot.cli:main"
 
 [project.entry-points."piginot.compiler.adapters"]
@@ -74,10 +75,11 @@ exclude = ["/experiments"]
 path = "hatch_build.py"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/piginot", "piginot_campaigns"]
+packages = ["src/formamech", "src/piginot", "piginot_campaigns"]
 
 [tool.hatch.build.targets.sdist]
 only-include = [
+  "/src/formamech",
   "/src/piginot",
   "/piginot_campaigns",
   "/LICENSE",

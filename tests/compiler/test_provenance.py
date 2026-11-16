@@ -66,6 +66,12 @@ def _files(core: Path, public: Path) -> dict[str, str]:
             for path in public.rglob("*")
             if path.is_file() and path.suffix in (".py", ".json")
         },
+        **{
+            f"formamech/{path.relative_to(core.parent / 'formamech').as_posix()}": _sha(
+                path
+            )
+            for path in (core.parent / "formamech").rglob("*.py")
+        },
     }
 
 
@@ -597,3 +603,50 @@ def test_hook_refuses_wrong_target_temp_location_and_project_version(
 
 def test_actual_package_root_is_derived_from_module_file() -> None:
     assert provenance._package_root() == Path(provenance.__file__).resolve().parents[1]
+
+
+def test_public_namespace_is_in_both_implementation_hashes(installed) -> None:
+    core, public, _ = installed
+    before = provenance.require_clean_implementation_identity()
+    facade = core.parent / "formamech"
+    facade.mkdir()
+    (facade / "__init__.py").write_text('"""FormaMech API."""\n')
+    record = _record(core, public)
+    (core / "_build_identity.json").write_text(json.dumps(record))
+    after = provenance.require_clean_implementation_identity()
+    assert after.package_sha256 != before.package_sha256
+    assert after.manifest_sha256 != before.manifest_sha256
+    assert "formamech/__init__.py" in record["files"]
+
+
+@pytest.mark.parametrize("change", ["modify", "missing", "extra"])
+def test_changed_public_namespace_refuses(installed, change) -> None:
+    core, public, _ = installed
+    facade = core.parent / "formamech"
+    facade.mkdir()
+    module = facade / "__init__.py"
+    module.write_text('"""FormaMech API."""\n')
+    (core / "_build_identity.json").write_text(json.dumps(_record(core, public)))
+    if change == "modify":
+        module.write_text("VALUE = 2\n")
+    elif change == "missing":
+        module.unlink()
+        facade.rmdir()
+    else:
+        (facade / "injected.py").write_text("VALUE = 2\n")
+    with pytest.raises(provenance.BuildIdentityError, match="attestation"):
+        provenance.require_clean_implementation_identity()
+
+
+def test_build_hook_requires_and_attests_the_public_namespace(tmp_path, hook_module):
+    _project(tmp_path, git=False)
+    (tmp_path / "pyproject.toml").write_text(
+        f'[project]\nname = "formamech"\nversion = "{VERSION}"\n'
+    )
+    with pytest.raises(ValueError, match="public package is missing"):
+        hook_module.build_identity(tmp_path, VERSION)
+    facade = tmp_path / "src/formamech"
+    facade.mkdir()
+    module = facade / "__init__.py"
+    module.write_text('"""FormaMech API."""\n')
+    assert hook_module._manifest(tmp_path)["formamech/__init__.py"] == _sha(module)

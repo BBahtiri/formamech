@@ -18,7 +18,13 @@ from piginot.compiler.records import write_plan
 
 
 def compile_command(
-    spec: Path, config: Path, output: Path, *, plan_only: bool, resume: bool
+    spec: Path,
+    config: Path,
+    output: Path,
+    *,
+    plan_only: bool,
+    resume: bool,
+    prog: str = "piginot",
 ) -> int:
     try:
         campaign = CampaignConfig.load(config)
@@ -47,8 +53,8 @@ def compile_command(
             )
         return code
     except (CompilerConfigError, PlanError, AdapterError, OSError) as error:
-        print(f"piginot compile: {error}", file=sys.stderr)
+        print(f"{prog} compile: {error}", file=sys.stderr)
         return 2
     except Exception as error:
-        print(f"piginot compile: {type(error).__name__}: {error}", file=sys.stderr)
+        print(f"{prog} compile: {type(error).__name__}: {error}", file=sys.stderr)
         return 1

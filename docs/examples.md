@@ -11,7 +11,7 @@ notched-plate models:
 
 ```text
 python -m pip install -e ".[runtime,plot]"
-python -m examples.prediction_plots --output .piginot-runs/prediction-plots
+python -m examples.prediction_plots --output .formamech-runs/prediction-plots
 ```
 
 Use a new output directory for each run. The demo makes five in-envelope
@@ -45,15 +45,15 @@ The same plotter works with the JSON from a new CAD candidate. For a saved
 prediction, from the repository root:
 
 ```text
-python -m examples.prediction_plots.fields --prediction prediction.json --output .piginot-runs/my-part.png --title "My CAD part"
+python -m examples.prediction_plots.fields --prediction prediction.json --output .formamech-runs/my-part.png --title "My CAD part"
 ```
 
 The plotter needs only the `plot` extra and accepts PNG, SVG or PDF output.
 It refuses invalid fields or units and preserves the input JSON. New CAD
 candidates remain `NOT_VERIFIED`. The
-[example guide](https://github.com/BBahtiri/verified-neural-operators/blob/main/examples/prediction_plots/README.md)
+[example guide](https://github.com/BBahtiri/formamech/blob/main/examples/prediction_plots/README.md)
 lists every output and explains reuse. Keep raw model outputs locally in
-`.piginot-runs/` or outside the checkout.
+`.formamech-runs/` or outside the checkout.
 
 ## Current compiler and CAD workflows
 
@@ -68,7 +68,7 @@ lists every output and explains reuse. Keep raw model outputs locally in
 - [Bundle prediction](campaigns/s29-fast-demo.md): inspect the shipped bundles,
   make a runtime prediction and inspect an out-of-envelope refusal.
 
-Keep new numerical outputs and trained candidates locally in `.piginot-runs/`
+Keep new numerical outputs and trained candidates locally in `.formamech-runs/`
 or outside the checkout. The historical examples below describe the shipped
 specimen workflows.
 
@@ -103,25 +103,25 @@ bundle with claim level `HOLDOUT_VERIFIED`. The campaign plug-in exposes the
 steps on the command line:
 
 ```bash
-piginot verify --campaign dogbone_v1 -- development --run-root OUT ...
-piginot bundle verify BUNDLE
-piginot predict BUNDLE --request request.json --output prediction.json
+formamech verify --campaign dogbone_v1 -- development --run-root OUT ...
+formamech bundle verify BUNDLE
+formamech predict BUNDLE --request request.json --output prediction.json
 ```
 
-The plans record every step: [S13c](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/campaigns/s13c-enhanced-model-plan.md),
-[S14](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/campaigns/s14-verification-plan.md), [S15](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/campaigns/s15-bundle-plan.md)
-and [S16](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/campaigns/s16-mutation-plan.md).
+The plans record every step: [S13c](https://github.com/BBahtiri/formamech/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/campaigns/s13c-enhanced-model-plan.md),
+[S14](https://github.com/BBahtiri/formamech/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/campaigns/s14-verification-plan.md), [S15](https://github.com/BBahtiri/formamech/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/campaigns/s15-bundle-plan.md)
+and [S16](https://github.com/BBahtiri/formamech/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/campaigns/s16-mutation-plan.md).
 
 ## Example 3 — centre-notched plate campaign
 
-The second family (`campaigns/notched_v1/`, [ADR 0025](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/adr/0025-s17-examples-and-second-family.md)):
+The second family (`campaigns/notched_v1/`, [ADR 0025](https://github.com/BBahtiri/formamech/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/adr/0025-s17-examples-and-second-family.md)):
 a 50 mm plate of width `W` with a C2-blended double-edge notch of depth `d` and
 root radius `r` at mid-length, inputs width 16–30 mm, notch radius 2–8 mm,
 notch depth 1–5 mm and nominal axial strain 10–20%. It runs the same evidence
 chain through the same framework calls as the DogBone; the only framework
 additions are the `BlendedNotchMap` morph map and absolute selection
 guardrails. Its artifacts and its campaign-scoped gates are in
-`artifacts/campaigns/notched-v1/`, and the [S17 plan](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/campaigns/s17-plan.md)
+`artifacts/campaigns/notched-v1/`, and the [S17 plan](https://github.com/BBahtiri/formamech/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/campaigns/s17-plan.md)
 lists the module of every step.
 
 ```bash
@@ -133,8 +133,8 @@ python -m campaigns.notched_v1.s14 development --s10-run-root RUN --training-run
 
 The notched plate misses the S14 tolerances on DEVELOPMENT (all-cases p90:
 stress field 5.24%, peak 5.34%, accepted by the decision owner in
-[ADR 0030](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/adr/0030-notched-development-budget-acceptance.md)) and on HOLDOUT
+[ADR 0030](https://github.com/BBahtiri/formamech/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/adr/0030-notched-development-budget-acceptance.md)) and on HOLDOUT
 (6.01%, 6.40% against 5%), so its bundle serves `DEVELOPMENT_VERIFIED`
-through the same API as the DogBone ([results](https://github.com/BBahtiri/verified-neural-operators/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/campaigns/s17-plan.md#4-results)).
+through the same API as the DogBone ([results](https://github.com/BBahtiri/formamech/blob/7f7127820e706a71543941e2d917ca84fc298aa9/docs/campaigns/s17-plan.md#4-results)).
 The [benchmarks](benchmarks.md) page gives the measured numbers of both
 campaigns and how they are reproduced.

@@ -12,11 +12,11 @@ from importlib import metadata
 from pathlib import Path
 from typing import Any
 
-from piginot.compiler.adapters import resolve_adapter
-from piginot.compiler.config import CampaignConfig
-from piginot.compiler.public_source import select_public_cases
-from piginot.contracts import ProblemSpec, canonical_json_bytes, strict_json_loads
-from piginot.doe import PublishedCaseManifest
+from formamech.compiler.adapters import resolve_adapter
+from formamech.compiler.config import CampaignConfig
+from formamech.compiler.public_source import select_public_cases
+from formamech.contracts import ProblemSpec, canonical_json_bytes, strict_json_loads
+from formamech.doe import PublishedCaseManifest
 
 ASSETS = Path(__file__).resolve().parent
 INPUTS = ("problem.json", "config-template.json", "source.json")
@@ -52,7 +52,8 @@ def _profile(*, execution_profile: bool) -> dict[str, Any]:
     missing = [name for name, version in versions.items() if version == "NOT_INSTALLED"]
     if execution_profile and missing:
         raise ValueError(
-            "Install piginot[verify] before capturing a profile: " + ", ".join(missing)
+            "Install formamech[verify] before capturing a profile: "
+            + ", ".join(missing)
         )
     return {
         "python_version": platform.python_version(),
@@ -177,7 +178,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--execution-profile",
         action="store_true",
-        help="Capture actual dependencies/CPU for a later explicit execution; requires piginot[verify].",
+        help="Capture actual dependencies/CPU for a later explicit execution; requires formamech[verify].",
     )
     arguments = parser.parse_args(argv)
     try:

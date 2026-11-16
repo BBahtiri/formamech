@@ -1,4 +1,4 @@
-"""Installed-wheel qualification; set PIGINOT_S28_TEST_WHEEL to the built artifact.
+"""Installed-wheel qualification; set FORMAMECH_TEST_WHEEL to the built artifact.
 
 These tests install only the wheel and its declared dependencies in a temporary
 environment. They never import repository test helpers in that environment.
@@ -85,9 +85,11 @@ def _run(arguments, *, cwd, env):
 
 @pytest.fixture(scope="module")
 def installed(tmp_path_factory):
-    configured = os.environ.get("PIGINOT_S28_TEST_WHEEL")
+    configured = os.environ.get("FORMAMECH_TEST_WHEEL") or os.environ.get(
+        "PIGINOT_S28_TEST_WHEEL"
+    )
     if configured is None:
-        pytest.skip("installed-wheel job requires PIGINOT_S28_TEST_WHEEL")
+        pytest.skip("installed-wheel job requires FORMAMECH_TEST_WHEEL")
     wheel = Path(configured).resolve(strict=True)
     root = tmp_path_factory.mktemp("s28-installed-wheel")
     environment = root / "environment"
@@ -100,7 +102,7 @@ def installed(tmp_path_factory):
     _run([sys.executable, "-m", "venv", str(environment)], cwd=root, env=env)
     scripts = environment / ("Scripts" if os.name == "nt" else "bin")
     python = scripts / ("python.exe" if os.name == "nt" else "python")
-    command = scripts / ("piginot.exe" if os.name == "nt" else "piginot")
+    command = scripts / ("formamech.exe" if os.name == "nt" else "formamech")
     _run(
         [
             str(python),
@@ -132,6 +134,10 @@ def test_built_wheel_contains_public_compiler_and_adapter_assets(installed):
     with zipfile.ZipFile(wheel) as archive:
         names = set(archive.namelist())
         for required in (
+            "formamech/__init__.py",
+            "formamech/__main__.py",
+            "formamech/_compat.py",
+            "formamech/cli.py",
             "piginot/compiler/config.py",
             "piginot/compiler/planning.py",
             "piginot_campaigns/adapters.py",
@@ -145,6 +151,8 @@ def test_built_wheel_contains_public_compiler_and_adapter_assets(installed):
             name for name in names if name.endswith(".dist-info/entry_points.txt")
         )
         entries = archive.read(entry_file).decode()
+        assert "formamech = formamech.cli:main" in entries
+        assert "piginot = piginot.cli:main" in entries
         assert "[piginot.compiler.adapters]" in entries
         assert "dogbone-v1 = piginot_campaigns.adapters:DOGBONE" in entries
         assert "notched-v1 = piginot_campaigns.adapters:NOTCHED" in entries
@@ -163,6 +171,7 @@ def test_built_wheel_attests_its_observed_installed_code_and_resources(installed
             name for name in names if name.endswith(".dist-info/METADATA")
         )
         metadata = Parser().parsestr(archive.read(metadata_file).decode())
+        assert metadata["Name"] == "formamech"
         assert identity["package_version"] == metadata["Version"]
         assert identity["manifest_algorithm"] == "sha256-rfc8785-file-map-v1"
         assert set(identity["build_inputs_sha256"]) == {
@@ -176,7 +185,7 @@ def test_built_wheel_attests_its_observed_installed_code_and_resources(installed
         expected = {
             name
             for name in names
-            if (name.startswith("piginot/") and name.endswith(".py"))
+            if (name.startswith(("piginot/", "formamech/")) and name.endswith(".py"))
             or (
                 name.startswith("piginot_campaigns/")
                 and name.endswith((".py", ".json"))
@@ -197,8 +206,10 @@ def test_installed_identity_verifies_without_git_and_detects_file_changes(instal
         import json
         import shutil
         from pathlib import Path
+        import formamech
         import piginot
-        from piginot.compiler.provenance import (
+        from formamech.compiler.planning import _implementation
+        from formamech.compiler.provenance import (
             BuildIdentityError, load_implementation_identity,
             require_clean_implementation_identity,
         )
@@ -207,6 +218,7 @@ def test_installed_identity_verifies_without_git_and_detects_file_changes(instal
         recorded = json.loads((package / "_build_identity.json").read_bytes())
         identity = load_implementation_identity()
         assert identity.origin == "packaged"
+        assert _implementation() == (identity.package_version, identity.package_sha256)
         for key in ("source_revision", "package_version", "dirty", "manifest_sha256"):
             assert getattr(identity, key) == recorded[key]
         if identity.dirty:
@@ -218,21 +230,45 @@ def test_installed_identity_verifies_without_git_and_detects_file_changes(instal
                 raise AssertionError("dirty wheel authorized numerical execution")
         else:
             assert require_clean_implementation_identity() == identity
-        changed = package / "compiler/config.py"
-        original = changed.read_bytes()
-        changed.write_bytes(original + b"\\n# installed provenance mutation\\n")
-        try:
+        for changed in (
+            package / "compiler/config.py",
+            Path(formamech.__file__).resolve().parent / "cli.py",
+        ):
+            original = changed.read_bytes()
+            changed.write_bytes(original + b"\\n# installed provenance mutation\\n")
             try:
-                load_implementation_identity()
-            except BuildIdentityError:
-                pass
-            else:
-                raise AssertionError("modified installed source accepted")
-        finally:
-            changed.write_bytes(original)
+                try:
+                    load_implementation_identity()
+                except BuildIdentityError:
+                    pass
+                else:
+                    raise AssertionError("modified installed source accepted")
+            finally:
+                changed.write_bytes(original)
+        assert load_implementation_identity() == identity
     """)
     no_git = {**env, "PATH": str(python.parent)}
     _run([str(python), "-I", "-c", program], cwd=empty, env=no_git)
+
+
+def test_installed_console_keeps_the_legacy_alias(installed):
+    _, _, python, command, empty, env, _ = installed
+    legacy = command.with_name("piginot.exe" if os.name == "nt" else "piginot")
+    primary = _run([str(command), "--version"], cwd=empty, env=env)
+    previous = _run([str(legacy), "--version"], cwd=empty, env=env)
+    assert primary.stdout.startswith("formamech ")
+    assert previous.stdout == primary.stdout.replace("formamech ", "piginot ", 1)
+    _run(
+        [
+            str(python),
+            "-I",
+            "-c",
+            "from formamech.contracts import Quantity; "
+            "from piginot.contracts import Quantity as Legacy; assert Quantity is Legacy",
+        ],
+        cwd=empty,
+        env=env,
+    )
 
 
 @pytest.mark.parametrize("family", ["dogbone-v1", "notched-v1"])
@@ -274,9 +310,11 @@ def test_installed_plan_has_no_numerical_stack(installed):
         import importlib.util
         import sys
         from pathlib import Path
+        import formamech
         import piginot
         import piginot_campaigns
-        from piginot import cli
+        from formamech import cli
+        assert "site-packages" in str(Path(formamech.__file__).resolve())
         assert "site-packages" in str(Path(piginot.__file__).resolve())
         assert "site-packages" in str(Path(piginot_campaigns.__file__).resolve())
         assert cli.main(sys.argv[1:]) == 0
@@ -314,7 +352,7 @@ def test_installed_executor_refuses_missing_optional_dependencies(installed):
             str(python),
             "-I",
             "-c",
-            "from piginot.compiler.adapters import resolve_adapter; "
+            "from formamech.compiler.adapters import resolve_adapter; "
             "assert callable(resolve_adapter('dogbone-v1').execute)",
         ],
         cwd=empty,
@@ -339,7 +377,7 @@ def test_installed_executor_refuses_missing_optional_dependencies(installed):
         timeout=30,
     )
     assert result.returncode == 2
-    assert re.search(r"optional|dependenc|piginot\[", result.stderr, re.IGNORECASE)
+    assert re.search(r"optional|dependenc|formamech\[", result.stderr, re.IGNORECASE)
     assert "ModuleNotFoundError" not in result.stderr
     assert "Traceback" not in result.stderr
     assert not execution_output.exists()

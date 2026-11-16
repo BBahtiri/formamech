@@ -131,7 +131,7 @@ def test_execution_profile_requires_dependencies_before_creating_output(
     tmp_path, monkeypatch
 ):
     monkeypatch.setattr(prepare.metadata, "version", missing_torch)
-    with pytest.raises(ValueError, match=r"piginot\[verify\].*torch"):
+    with pytest.raises(ValueError, match=r"formamech\[verify\].*torch"):
         prepare.prepare(tmp_path / "inputs", execution_profile=True)
     assert not (tmp_path / "inputs").exists()
 

@@ -67,7 +67,10 @@ def _project_root(package: Path) -> Path | None:
         project = tomllib.loads((root / "pyproject.toml").read_text("utf-8"))["project"]
     except (OSError, ValueError, KeyError, TypeError):
         return None
-    if not isinstance(project, dict) or project.get("name") != "piginot":
+    if not isinstance(project, dict) or project.get("name") not in {
+        "piginot",
+        "formamech",
+    }:
         return None
     if project.get("version") != piginot.__version__:
         raise BuildIdentityError("source project and package versions differ")
@@ -93,9 +96,25 @@ def _observed_files(package: Path, public: Path) -> dict[str, str]:
         **_collect(package, "piginot", (".py",)),
         **_collect(public, "piginot_campaigns", (".py", ".json")),
     }
+    facade = package.parent / "formamech"
+    if facade.exists() or facade.is_symlink():
+        files.update(_collect(facade, "formamech", (".py",)))
     if not {"piginot/__init__.py", "piginot_campaigns/__init__.py"} <= files.keys():
         raise BuildIdentityError("implementation package manifests are incomplete")
     return files
+
+
+def implementation_package_sha256(package: Path) -> str:
+    """Use one package digest for planning and execution, including public aliases."""
+
+    files = {
+        path.relative_to(package).as_posix(): _sha(path)
+        for path in sorted(package.rglob("*.py"))
+    }
+    facade = package.parent / "formamech"
+    if facade.exists() or facade.is_symlink():
+        files.update(_collect(facade, "formamech", (".py",)))
+    return hashlib.sha256(canonical_json_bytes(files)).hexdigest()
 
 
 def _git(root: Path, *arguments: str) -> subprocess.CompletedProcess[str]:
@@ -130,7 +149,8 @@ def _source_state(root: Path, files: dict[str, str]) -> tuple[str, bool] | None:
     ):
         raise BuildIdentityError("cannot establish source revision and cleanliness")
     required = {
-        f"src/{name}" if name.startswith("piginot/") else name for name in files
+        f"src/{name}" if name.startswith(("piginot/", "formamech/")) else name
+        for name in files
     } | _BUILD_INPUTS
     dirty = bool(status.stdout) or not required <= set(tracked.stdout.split("\0"))
     return value, dirty
@@ -212,13 +232,9 @@ def load_implementation_identity() -> ImplementationIdentity:
         else:
             revision, dirty = state
             origin = "source"
-        core_files = {
-            path.relative_to(package).as_posix(): _sha(path)
-            for path in sorted(package.rglob("*.py"))
-        }
         return ImplementationIdentity(
             source_revision=revision,
-            package_sha256=hashlib.sha256(canonical_json_bytes(core_files)).hexdigest(),
+            package_sha256=implementation_package_sha256(package),
             manifest_sha256=hashlib.sha256(canonical_json_bytes(files)).hexdigest(),
             package_version=piginot.__version__,
             dirty=dirty,

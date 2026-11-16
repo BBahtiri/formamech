@@ -26,6 +26,7 @@ def smoke():
 
 @pytest.fixture
 def installation(smoke, monkeypatch, tmp_path):
+    import formamech
     import piginot
     import piginot.compiler.adapters as adapters
     import piginot.compiler.provenance as provenance
@@ -33,6 +34,9 @@ def installation(smoke, monkeypatch, tmp_path):
     from piginot_campaigns.adapters import DOGBONE, NOTCHED
 
     package_root = tmp_path / "site-packages"
+    monkeypatch.setattr(
+        formamech, "__file__", str(package_root / "formamech/__init__.py")
+    )
     monkeypatch.setattr(piginot, "__file__", str(package_root / "piginot/__init__.py"))
     monkeypatch.setattr(
         piginot_campaigns,
@@ -48,7 +52,7 @@ def installation(smoke, monkeypatch, tmp_path):
         }.items()
     ] + [
         SimpleNamespace(
-            group="console_scripts", name="piginot", value="piginot.cli:main"
+            group="console_scripts", name="formamech", value="formamech.cli:main"
         )
     ]
     distribution = SimpleNamespace(
@@ -56,7 +60,12 @@ def installation(smoke, monkeypatch, tmp_path):
         locate_file=lambda relative: package_root / relative,
         entry_points=entries,
     )
-    monkeypatch.setattr(smoke, "distribution", lambda name: distribution, raising=False)
+
+    def installed_distribution(name):
+        assert name == "formamech"
+        return distribution
+
+    monkeypatch.setattr(smoke, "distribution", installed_distribution, raising=False)
     identity = provenance.ImplementationIdentity(
         "a" * 40, "b" * 64, "c" * 64, piginot.__version__, False, "packaged"
     )
@@ -70,14 +79,14 @@ def installation(smoke, monkeypatch, tmp_path):
     )
     monkeypatch.setattr(smoke, "_loaded_modules", lambda prefixes: [], raising=False)
     monkeypatch.setattr(
-        smoke.shutil, "which", lambda *args, **kwargs: "/venv/bin/piginot"
+        smoke.shutil, "which", lambda *args, **kwargs: "/venv/bin/formamech"
     )
 
     def console(command, **kwargs):
         text = (
-            f"piginot {piginot.__version__}"
+            f"formamech {piginot.__version__}"
             if command[-1] == "--version"
-            else "usage: piginot compile --spec --config --output --plan-only --resume"
+            else "usage: formamech compile --spec --config --output --plan-only --resume"
         )
         return subprocess.CompletedProcess(command, 0, text, "")
 
@@ -142,6 +151,16 @@ def test_imported_package_must_come_from_its_distribution(
 
     monkeypatch.setattr(piginot, "__file__", "/checkout/src/piginot/__init__.py")
     result = smoke.run(piginot.__version__, base_only=True)
+    assert result["checks"]["installed_not_source"] is False
+
+
+def test_public_package_must_come_from_its_distribution(
+    smoke, installation, monkeypatch
+):
+    import formamech
+
+    monkeypatch.setattr(formamech, "__file__", "/checkout/src/formamech/__init__.py")
+    result = smoke.run(formamech.__version__, base_only=True)
     assert result["checks"]["installed_not_source"] is False
 
 

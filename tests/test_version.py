@@ -7,9 +7,9 @@ import pytest
 
 
 def test_package_version_matches_distribution_metadata() -> None:
-    package = import_module("piginot")
+    package = import_module("formamech")
 
-    assert package.__version__ == version("piginot")
+    assert package.__version__ == version("formamech")
 
 
 def test_package_public_api_contains_only_version() -> None:
@@ -27,7 +27,7 @@ def test_cli_reports_version(
         cli.main(["--version"])
 
     assert exit_info.value.code == 0
-    assert capsys.readouterr().out.strip() == f"piginot {version('piginot')}"
+    assert capsys.readouterr().out.strip() == f"piginot {version('formamech')}"
 
 
 def test_module_entry_point_reports_version(
@@ -41,4 +41,4 @@ def test_module_entry_point_reports_version(
         runpy.run_module("piginot.cli", run_name="__main__")
 
     assert exit_info.value.code == 0
-    assert capsys.readouterr().out.strip() == f"piginot {version('piginot')}"
+    assert capsys.readouterr().out.strip() == f"piginot {version('formamech')}"

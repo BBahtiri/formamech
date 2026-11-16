@@ -1,5 +1,5 @@
-site_name: PI-GINOT
-site_description: Documentation for the PI-GINOT project
+site_name: FormaMech
+site_description: Documentation for the FormaMech project
 docs_dir: .
 site_dir: ../site
 strict: true

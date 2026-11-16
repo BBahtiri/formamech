@@ -1,4 +1,4 @@
-# PI-GINOT
+# FormaMech
 
 **Train physics-informed neural surrogates for your own 2D CAD geometry.**
 
@@ -41,8 +41,8 @@ Use **Python 3.11, 3.12 or 3.13** and Git. These instructions install the curren
 workflows. The checkout also supplies the example inputs and shipped bundles.
 
 ```text
-git clone https://github.com/BBahtiri/verified-neural-operators.git
-cd verified-neural-operators
+git clone https://github.com/BBahtiri/formamech.git
+cd formamech
 python -m venv .venv
 ```
 
@@ -62,8 +62,12 @@ Install CAD import, training and FEM comparison:
 
 ```text
 python -m pip install -e ".[cad,verify]"
-piginot --version
+formamech --version
 ```
+
+**FormaMech is installed from source until a package-index release is published.**
+If you used the earlier `piginot` distribution, use a fresh virtual environment
+for FormaMech to avoid overlapping installed files.
 
 For prediction only, use `python -m pip install -e ".[runtime]"` instead.
 For metadata-only planning, the base install `python -m pip install -e "."`
@@ -76,10 +80,10 @@ From the repository root, verify a shipped bundle and predict a notched-plate
 field using its supplied request:
 
 ```text
-python -c "from pathlib import Path; Path('.piginot-runs/demo').mkdir(parents=True, exist_ok=True)"
-piginot bundle verify bundles/notched-v1-cp-freeze
-piginot inspect bundles/notched-v1-cp-freeze
-piginot predict bundles/notched-v1-cp-freeze --request bundles/requests/notched-in-domain.json --mode fast --no-confidence --output .piginot-runs/demo/prediction.json
+python -c "from pathlib import Path; Path('.formamech-runs/demo').mkdir(parents=True, exist_ok=True)"
+formamech bundle verify bundles/notched-v1-cp-freeze
+formamech inspect bundles/notched-v1-cp-freeze
+formamech predict bundles/notched-v1-cp-freeze --request bundles/requests/notched-in-domain.json --mode fast --no-confidence --output .formamech-runs/demo/prediction.json
 ```
 
 The JSON contains displacement and stress fields, mesh connectivity, quantities
@@ -93,8 +97,8 @@ explains the output fields and plotting.
 ```python
 import json
 
-from piginot.bundle import load_bundle, predict
-from piginot.cli import parse_request
+from formamech.bundle import load_bundle, predict
+from formamech.cli import parse_request
 
 bundle = load_bundle("bundles/notched-v1-cp-freeze")
 with open("bundles/requests/notched-in-domain.json", encoding="utf-8") as handle:
@@ -111,7 +115,7 @@ using the shipped models:
 
 ```text
 python -m pip install -e ".[runtime,plot]"
-python -m examples.prediction_plots --output .piginot-runs/prediction-plots
+python -m examples.prediction_plots --output .formamech-runs/prediction-plots
 ```
 
 ![Notched-plate model: displacement magnitude in mm and in-plane first-Piola stress norm in MPa](docs/assets/examples/notched-fields.png)
@@ -128,15 +132,15 @@ SVG or PDF. New CAD candidates retain their own `NOT_VERIFIED` claim.
 ## Train on your own CAD
 
 Use a separate working folder containing your CAD file: outside the source
-checkout, or under its ignored `.piginot-runs/` directory. Run the commands in
+checkout, or under its ignored `.formamech-runs/` directory. Run the commands in
 this section from that folder, with the installed virtual environment active.
 Keep the source checkout clean and committed for numerical execution.
 
 ### 1. Import and inspect the profile
 
 ```text
-piginot cad import profile.step --unit mm --mesh-size-mm 1 --output geometry
-piginot cad inspect geometry
+formamech cad import profile.step --unit mm --mesh-size-mm 1 --output geometry
+formamech cad inspect geometry
 ```
 
 Use a supported `.step`, `.stp` or `.dxf` profile. Inspection lists boundary
@@ -164,8 +168,8 @@ assigned a condition.
 ### 3. Prepare inputs and review the plan
 
 ```text
-piginot cad prepare --project geometry --settings physics.json --output inputs --execution-profile
-piginot compile --spec inputs/problem.json --config inputs/config.json --output preview --plan-only
+formamech cad prepare --project geometry --settings physics.json --output inputs --execution-profile
+formamech compile --spec inputs/problem.json --config inputs/config.json --output preview --plan-only
 ```
 
 Preparation captures the installed execution environment and binds the inputs
@@ -175,7 +179,7 @@ FEM solves. Review it before starting the run.
 ### 4. Train and compare with FEM
 
 ```text
-piginot compile --spec inputs/problem.json --config inputs/config.json --output run
+formamech compile --spec inputs/problem.json --config inputs/config.json --output run
 ```
 
 The compiler checks the material and boundary lifting, trains the energy-form
@@ -196,9 +200,9 @@ fixed mesh, material/problem specification, input envelope and supporting
 records. Its manifest binds the files by their hashes.
 
 ```text
-piginot bundle verify run/candidate-bundle
-piginot inspect run/candidate-bundle
-piginot predict run/candidate-bundle --request request.json --mode fast --no-confidence --output prediction.json
+formamech bundle verify run/candidate-bundle
+formamech inspect run/candidate-bundle
+formamech predict run/candidate-bundle --request request.json --mode fast --no-confidence --output prediction.json
 ```
 
 Create `request.json` with the names, units and values declared by **your
@@ -206,7 +210,7 @@ candidate's envelope**, following the [request format](docs/bundle.md#request).
 The specimen demo requests belong to their own models.
 
 Copy or archive the **entire bundle directory**, preserving its files and
-relative paths. On the destination machine, install a compatible PI-GINOT
+relative paths. On the destination machine, install a compatible FormaMech
 version with the `runtime` extra, verify the bundle, and predict again. Runtime
 prediction needs neither the original CAD file nor the mesher/FEM stack. Keep
 the CAD, inputs, checkpoints and comparison reports separately to reproduce
@@ -242,22 +246,22 @@ FEM model and does not establish experimental validation. Read the
 
 ## How to cite
 
-If PI-GINOT contributes to your research, cite the software and record the
+If FormaMech contributes to your research, cite the software and record the
 version and commit you used. [CITATION.cff](CITATION.cff) supplies the metadata
 for GitHub's **Cite this repository** button.
 
 ```bibtex
-@misc{bahtiri_piginot,
+@misc{bahtiri_formamech,
   author  = {Bahtiri, Betim},
-  title   = {{PI-GINOT}},
+  title   = {{FormaMech}},
   year    = {2026},
   version = {0.2.0.dev0},
-  url     = {https://github.com/BBahtiri/verified-neural-operators}
+  url     = {https://github.com/BBahtiri/formamech}
 }
 ```
 
 Replace the version with the one used in your work. For a source checkout,
-record the outputs of `piginot --version` and `git rev-parse HEAD` alongside
+record the outputs of `formamech --version` and `git rev-parse HEAD` alongside
 your configuration and results.
 
 ## Contributing
@@ -271,18 +275,23 @@ python -m ruff check .
 python -m ruff format --check .
 python -m mypy --strict src/
 python -m mkdocs build --strict -f mkdocs.yml
-python -m pytest --cov=src/piginot --cov-fail-under=90
+python -m pytest --cov=src/formamech --cov=src/piginot --cov-fail-under=90
 ```
 
 ## License and attribution
 
-PI-GINOT is licensed under the [MIT License](LICENSE). Adapted components and
+FormaMech is licensed under the [MIT License](LICENSE). Adapted components and
 optional dependencies retain their own licences; see [upstream sources](docs/adr/upstream-sources.md).
 
-The name PI-GINOT does not claim a faithful reproduction of GNOT or GINO, nor
+FormaMech does not claim a faithful reproduction of GNOT or GINO, nor
 of GINOT. The shipped DogBone and notched bundles use this project's energy-form
 operator:
 
 ```text
 architecture_id: pi-ginot-energy-parametric-film-v1
 ```
+
+The Python package and command are now `formamech`. The `piginot` command
+and imports remain compatibility aliases. Existing bundle schemas, architecture
+identifiers and recorded limitation text retain their original names so stored
+models and provenance records remain readable.

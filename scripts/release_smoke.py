@@ -1,4 +1,4 @@
-"""Smoke-test an installed piginot release without importing a source checkout.
+"""Smoke-test an installed FormaMech release without importing a source checkout.
 
 Run with ``python -I scripts/release_smoke.py --expect-version 0.1.0`` from a
 directory outside the source tree, after installing the release from an
@@ -36,8 +36,8 @@ def _loaded_modules(prefixes: tuple[str, ...]) -> list[str]:
 
 
 def _runtime_checks() -> tuple[dict[str, bool], list[str]]:
-    from piginot.bundle import BundleIntegrityError, load_bundle
-    from piginot.verification import ClaimLevel
+    from formamech.bundle import BundleIntegrityError, load_bundle
+    from formamech.verification import ClaimLevel
 
     with tempfile.TemporaryDirectory() as directory:
         try:
@@ -63,14 +63,17 @@ def _command(
 
 
 def run(expected_version: str, *, base_only: bool = False) -> dict[str, object]:
+    from formamech.compiler.adapters import resolve_adapter
+    from formamech.compiler.provenance import require_clean_implementation_identity
+
+    import formamech
     import piginot
     import piginot_campaigns
-    from piginot.compiler.adapters import resolve_adapter
-    from piginot.compiler.provenance import require_clean_implementation_identity
 
-    location = Path(piginot.__file__).resolve()
+    location = Path(formamech.__file__).resolve()
+    implementation_location = Path(piginot.__file__).resolve()
     public_location = Path(piginot_campaigns.__file__).resolve()
-    installed = distribution("piginot")
+    installed = distribution("formamech")
     identity = require_clean_implementation_identity()
     expected_entries = {
         "dogbone-v1": "piginot_campaigns.adapters:DOGBONE",
@@ -86,21 +89,23 @@ def run(expected_version: str, *, base_only: bool = False) -> dict[str, object]:
         name: resolve_adapter(name).descriptor.document()
         for name in ("dogbone-v1", "notched-v1")
     }
-    script = shutil.which("piginot", path=str(Path(sys.executable).parent))
+    script = shutil.which("formamech", path=str(Path(sys.executable).parent))
     version = _command(script, "--version")
     compiler = _command(script, "compile", "--help")
     checks = {
         "installed_not_source": location
+        == Path(str(installed.locate_file("formamech/__init__.py"))).resolve()
+        and implementation_location
         == Path(str(installed.locate_file("piginot/__init__.py"))).resolve()
         and public_location
         == Path(str(installed.locate_file("piginot_campaigns/__init__.py"))).resolve(),
-        "version": piginot.__version__ == expected_version,
-        "metadata_version": installed.version == piginot.__version__,
+        "version": formamech.__version__ == expected_version,
+        "metadata_version": installed.version == formamech.__version__,
         "packaged_identity": identity.origin == "packaged",
         "adapter_entry_points": entries == sorted(expected_entries.items()),
         "console_script": version is not None
         and version.returncode == 0
-        and version.stdout.strip() == f"piginot {expected_version}",
+        and version.stdout.strip() == f"formamech {expected_version}",
         "compiler_help": compiler is not None
         and compiler.returncode == 0
         and all(
@@ -126,8 +131,9 @@ def run(expected_version: str, *, base_only: bool = False) -> dict[str, object]:
         "os": platform.system(),
         "machine": platform.machine(),
         "python": platform.python_version(),
-        "installed_version": piginot.__version__,
+        "installed_version": formamech.__version__,
         "location": str(location.parent),
+        "implementation_location": str(implementation_location.parent),
         "public_adapter_location": str(public_location.parent),
         "console_script": script,
         "implementation": asdict(identity),
