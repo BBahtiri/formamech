@@ -237,7 +237,7 @@ def default_s10_execution_profile() -> ExecutionProfile:
     return ExecutionProfile(
         python_version=platform.python_version(),
         library_versions={
-            package: version(package)
+            package: version("formamech" if package == "piginot" else package)
             for package in (
                 "numpy",
                 "piginot",

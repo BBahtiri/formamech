@@ -419,7 +419,9 @@ def test_demo_refusal_restores_thread_count_and_publishes_no_summary(
 def test_demo_cli_uses_the_declared_output_directory(
     demo, tmp_path, monkeypatch, explicit
 ):
-    output = tmp_path / "plots" if explicit else Path(".formamech-runs/prediction-plots")
+    output = (
+        tmp_path / "plots" if explicit else Path(".formamech-runs/prediction-plots")
+    )
     calls = []
     monkeypatch.setattr(demo, "run_demo", lambda value: calls.append(value))
     assert demo.main(["--output", str(output)] if explicit else []) == 0

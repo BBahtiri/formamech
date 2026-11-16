@@ -6,6 +6,7 @@ import importlib
 import subprocess
 import sys
 import tomllib
+from importlib.metadata import version
 from pathlib import Path
 
 import pytest
@@ -80,6 +81,20 @@ def test_planning_and_execution_bind_the_same_implementation():
 
     identity = load_implementation_identity()
     assert _implementation() == (identity.package_version, identity.package_sha256)
+
+
+@pytest.mark.parametrize(
+    "module,factory",
+    [
+        ("campaigns.dogbone_v1.s10_production", "default_s10_execution_profile"),
+        ("campaigns.dogbone_v1.strain_pilot", "_execution_profile"),
+        ("campaigns.notched_v1.pilot", "execution_profile"),
+    ],
+)
+def test_legacy_profiles_use_new_metadata_and_keep_record_keys(module, factory):
+    profile = getattr(importlib.import_module(module), factory)()
+    assert profile.library_versions["piginot"] == version("formamech")
+    assert "formamech" not in profile.library_versions
 
 
 def test_branding_keeps_a_legacy_console_alias():
