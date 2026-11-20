@@ -309,4 +309,133 @@ def compare_fem_pair(
     }
 
 
-__all__ = ("compare_fem_pair",)
+def _point_in_mesh_mask(field: _Field, points: Any, *, tol: float = 1e-10) -> Any:
+    """Exact vectorized containment mask for 2D linear triangular meshes."""
+    import numpy as np
+
+    mesh = field.scalar.mesh
+    p = np.asarray(mesh.p, dtype=np.float64)  # (2, n_nodes)
+    t = np.asarray(mesh.t, dtype=np.int64)  # (3, n_cells)
+    x0, y0 = p[0, t[0]], p[1, t[0]]
+    x1, y1 = p[0, t[1]], p[1, t[1]]
+    x2, y2 = p[0, t[2]], p[1, t[2]]
+
+    xmin = np.minimum(np.minimum(x0, x1), x2) - tol
+    xmax = np.maximum(np.maximum(x0, x1), x2) + tol
+    ymin = np.minimum(np.minimum(y0, y1), y2) - tol
+    ymax = np.maximum(np.maximum(y0, y1), y2) + tol
+
+    det = (x1 - x0) * (y2 - y0) - (y1 - y0) * (x2 - x0)
+    inside = np.zeros(len(points), dtype=bool)
+    for start in range(0, len(points), 512):
+        chunk = points[start : start + 512]
+        px = chunk[:, 0:1]
+        py = chunk[:, 1:2]
+        cand = (px >= xmin) & (px <= xmax) & (py >= ymin) & (py <= ymax)
+        if not np.any(cand):
+            continue
+        p_idx, c_idx = np.nonzero(cand)
+        dx = chunk[p_idx, 0] - x0[c_idx]
+        dy = chunk[p_idx, 1] - y0[c_idx]
+        inv_det = 1.0 / det[c_idx]
+        lam1 = ((y2[c_idx] - y0[c_idx]) * dx - (x2[c_idx] - x0[c_idx]) * dy) * inv_det
+        lam2 = (-(y1[c_idx] - y0[c_idx]) * dx + (x1[c_idx] - x0[c_idx]) * dy) * inv_det
+        lam0 = 1.0 - lam1 - lam2
+        hit = (lam0 >= -tol) & (lam1 >= -tol) & (lam2 >= -tol)
+        if np.any(hit):
+            inside[start + p_idx[hit]] = True
+    return inside
+
+
+def compare_remeshed_cad_fem_pair(
+    spec: ProblemSpec,
+    coarse_request: FemRequest,
+    coarse_result: FemResult,
+    fine_request: FemRequest,
+    fine_result: FemResult,
+    *,
+    tolerances: Mapping[str, float] | None = None,
+) -> dict[str, Any]:
+    """Compare FEM fields across two distinct CAD remeshes on their common interior.
+
+    Unlike :func:`compare_fem_pair`, this function allows two different polygonal
+    approximations of a curved CAD source. Fine quadrature points outside the
+    coarse polygon are explicitly excluded and reported via
+    ``excluded_weight_fraction``; they are never silently snapped to nearest nodes.
+    """
+    import numpy as np
+
+    if tolerances is not None and (
+        set(tolerances) != _QUANTITIES
+        or any(
+            isinstance(v, bool)
+            or not isinstance(v, (int, float))
+            or not math.isfinite(v)
+            or v < 0
+            for v in tolerances.values()
+        )
+    ):
+        raise ValueError("tolerances must specify three finite nonnegative targets")
+
+    if coarse_request.material != fine_request.material:
+        raise ValueError("remeshed CAD FEM comparison requires identical material")
+    if coarse_request.mesh.mesh_id == fine_request.mesh.mesh_id:
+        raise ValueError("remeshed CAD comparison requires two distinct meshes")
+
+    coarse = _validated(coarse_request, coarse_result)
+    fine = _validated(fine_request, fine_result)
+    points, weights = fine.points.reshape(-1, 2), fine.weights.reshape(-1)
+    mask = _point_in_mesh_mask(coarse, points)
+    if not np.any(mask):
+        raise ValueError(
+            "distinct CAD remeshes have no overlapping interior quadrature"
+        )
+
+    common_points = points[mask]
+    common_weights = weights[mask]
+    total_fine_area = float(weights.sum())
+    total_coarse_area = float(coarse.weights.sum())
+    common_area = float(common_weights.sum())
+    excluded_fraction = max(0.0, 1.0 - common_area / total_fine_area)
+
+    coarse_u, coarse_gradient = _evaluate(coarse, common_points)
+    fine_u_all = np.stack(
+        [fine.scalar.interpolate(fine.displacement[:, axis]) for axis in (0, 1)], -1
+    ).reshape(-1, 2)
+    fine_p_all = fine.stress[..., :2, :2].reshape(-1, 4)
+    fine_u = fine_u_all[mask]
+    fine_p = fine_p_all[mask]
+    coarse_p = _stress(coarse_gradient, coarse_request).reshape(-1, 4)
+
+    qois = _peaks(spec, coarse, fine)
+    quantities = {
+        "u_relative_l2": _relative(coarse_u - fine_u, fine_u, common_weights),
+        "p_relative_l2": _relative(coarse_p - fine_p, fine_p, common_weights),
+        "absolute_peak_error": max(qoi["relative_change"] for qoi in qois.values()),
+    }
+    return {
+        "status": "MEASURED_CHANGES_ONLY"
+        if tolerances is None
+        else (
+            "PASS"
+            if all(quantities[k] <= tolerances[k] for k in quantities)
+            else "FAIL"
+        ),
+        "qualification": "UNCALIBRATED",
+        "geometry_status": "REMESHED_CAD_COMMON_INTERIOR",
+        "method": "common-interior-fe-field-and-recovered-region-vertex-changes",
+        "coarse_mesh_id": coarse_request.mesh.mesh_id,
+        "fine_mesh_id": fine_request.mesh.mesh_id,
+        "coarse_area_mm2": total_coarse_area,
+        "fine_area_mm2": total_fine_area,
+        "common_area_mm2": common_area,
+        "excluded_weight_fraction": excluded_fraction,
+        "quantities": quantities,
+        "tolerances": None if tolerances is None else dict(tolerances),
+        "qois": qois,
+        "total_error_bound": None,
+        "reference_terms_qualified": False,
+    }
+
+
+__all__ = ("compare_fem_pair", "compare_remeshed_cad_fem_pair")

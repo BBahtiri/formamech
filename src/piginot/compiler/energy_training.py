@@ -24,6 +24,11 @@ from piginot.objectives.energy import (
     plane_stress_potential_energy,
     stratified_triangle_quadrature,
 )
+from piginot.objectives.hierarchical_energy import (
+    HierarchicalEnergyConfig,
+    hierarchical_plane_stress_energy,
+    subdivide_triangle_domain,
+)
 from piginot.operators.architecture import OperatorOutput
 from piginot.operators.energy_operator import (
     EnergyFormOperator,
@@ -63,6 +68,8 @@ class EnergyTraining:
             plan.config.execution.training.dtype
         ]
         self.domains: dict[str, TriangleDomain] = {}
+        self.fine_domains: dict[str, TriangleDomain] = {}
+        self.hierarchical_config: HierarchicalEnergyConfig | None = None
         self.prepared: Document | None = None
         self.inference_model: EnergyFormOperator | None = None
         self.last_checkpoint: Path | None = None
@@ -168,15 +175,41 @@ class EnergyTraining:
             ),
         )
         self.trainer = self._trainer_config()
+        obj = self.plan.config.objective
         self.objective_config = PotentialEnergyConfig(
-            **asdict(self.plan.config.objective)
+            points_per_cell=obj.points_per_cell,
+            barrier_weight=obj.barrier_weight,
+            barrier_threshold=obj.barrier_threshold,
+            admissibility_floor=obj.admissibility_floor,
         )
-        self.objective_hash = digest(
-            {
-                "config": asdict(self.objective_config),
-                "problem_hash": self.plan.problem.problem_hash,
-            }
-        )
+        if obj.is_hierarchical:
+            self.hierarchical_config = HierarchicalEnergyConfig(
+                base=self.objective_config,
+                cross_mesh_weight=float(obj.cross_mesh_weight or 0.0),
+                local_physics_weight=float(obj.local_physics_weight or 0.0),
+                quadrature_degree=int(obj.quadrature_degree or 2),
+                use_deterministic_quadrature=bool(
+                    obj.use_deterministic_quadrature
+                    if obj.use_deterministic_quadrature is not None
+                    else False
+                ),
+            )
+            for case_id, domain in self.domains.items():
+                self.fine_domains[case_id] = subdivide_triangle_domain(domain)
+            self.objective_hash = digest(
+                {
+                    "config": asdict(self.hierarchical_config),
+                    "problem_hash": self.plan.problem.problem_hash,
+                }
+            )
+        else:
+            self.hierarchical_config = None
+            self.objective_hash = digest(
+                {
+                    "config": asdict(self.objective_config),
+                    "problem_hash": self.plan.problem.problem_hash,
+                }
+            )
         self.binding = TrainingRunBinding(
             self.population.dataset_snapshot_hash,
             self.population.public_manifest_hash,
@@ -230,21 +263,53 @@ class EnergyTraining:
         if not isinstance(model, EnergyFormOperator):
             raise TypeError("energy objective requires the declared energy operator")
         domain = self.domains[sample_id]
+        values = self._values(sample_id)
+        params = self.parameters(values, self.dtype)
+        frame = query_frame(self.plan.problem, [values], self.dtype)
+        lifting = build_lifting(self.plan.problem, [values], self.dtype)
+        material = material_spec(self.plan.problem, values)
+
+        if self.hierarchical_config is not None:
+
+            def _eval_grad(pts: torch.Tensor) -> torch.Tensor:
+                _, grad = model.displacement_and_gradient(
+                    query_xy=pts.unsqueeze(0),
+                    parameters=params,
+                    frame=frame,
+                    lifting=lifting,
+                    create_graph=True,
+                )
+                return grad[0]
+
+            h_terms = hierarchical_plane_stress_energy(
+                _eval_grad,
+                domain,
+                material,
+                config=self.hierarchical_config,
+                fine_domain=self.fine_domains.get(sample_id),
+            )
+            return PotentialEnergyTerms(
+                total=h_terms.total,
+                energy=h_terms.primary.energy,
+                barrier=h_terms.primary.barrier,
+                minimum_determinant=h_terms.primary.minimum_determinant,
+                inadmissible_points=h_terms.primary.inadmissible_points,
+            )
+
         points, weights = stratified_triangle_quadrature(
             domain, self.objective_config.points_per_cell
         )
-        values = self._values(sample_id)
         _, gradient = model.displacement_and_gradient(
             query_xy=points.unsqueeze(0),
-            parameters=self.parameters(values, self.dtype),
-            frame=query_frame(self.plan.problem, [values], self.dtype),
-            lifting=build_lifting(self.plan.problem, [values], self.dtype),
+            parameters=params,
+            frame=frame,
+            lifting=lifting,
             create_graph=True,
         )
         return plane_stress_potential_energy(
             gradient[0],
             weights,
-            material_spec(self.plan.problem, values),
+            material,
             config=self.objective_config,
             reference_area=domain.area,
         )

@@ -149,6 +149,10 @@ class EnergyObjectiveConfig:
     barrier_weight: float
     barrier_threshold: float
     admissibility_floor: float
+    cross_mesh_weight: float | None = None
+    local_physics_weight: float | None = None
+    quadrature_degree: int | None = None
+    use_deterministic_quadrature: bool | None = None
 
     def __post_init__(self) -> None:
         integer(self.points_per_cell, "objective.points_per_cell")
@@ -158,6 +162,42 @@ class EnergyObjectiveConfig:
             raise CompilerConfigError(
                 "value", "admissibility_floor must be below barrier_threshold"
             )
+        for label in ("cross_mesh_weight", "local_physics_weight"):
+            val = getattr(self, label)
+            if val is not None:
+                if (
+                    isinstance(val, bool)
+                    or not isinstance(val, (int, float))
+                    or float(val) < 0.0
+                ):
+                    raise CompilerConfigError(
+                        "value", f"objective.{label} must be finite and nonnegative"
+                    )
+        if self.quadrature_degree is not None and (
+            type(self.quadrature_degree) is not int
+            or self.quadrature_degree not in (1, 2, 5)
+        ):
+            raise CompilerConfigError(
+                "value", "objective.quadrature_degree must be one of 1, 2, 5"
+            )
+        if (
+            self.use_deterministic_quadrature is not None
+            and type(self.use_deterministic_quadrature) is not bool
+        ):
+            raise CompilerConfigError(
+                "type", "objective.use_deterministic_quadrature must be a boolean"
+            )
+
+    @property
+    def is_hierarchical(self) -> bool:
+        return (
+            (self.cross_mesh_weight is not None and self.cross_mesh_weight > 0.0)
+            or (
+                self.local_physics_weight is not None
+                and self.local_physics_weight > 0.0
+            )
+            or bool(self.use_deterministic_quadrature)
+        )
 
 
 @dataclass(frozen=True, slots=True)

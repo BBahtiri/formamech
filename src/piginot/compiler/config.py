@@ -178,6 +178,12 @@ def _objective(value: object) -> EnergyObjectiveConfig:
             "barrier_threshold",
             "admissibility_floor",
         ),
+        (
+            "cross_mesh_weight",
+            "local_physics_weight",
+            "quadrature_degree",
+            "use_deterministic_quadrature",
+        ),
     )
     return EnergyObjectiveConfig(
         **{
@@ -322,6 +328,11 @@ class CampaignConfig:
                 name: value
                 for name, value in document["adapter"].items()
                 if name != "geometry_resource" or value is not None
+            },
+            "objective": {
+                name: value
+                for name, value in document["objective"].items()
+                if value is not None
             },
         }
 
