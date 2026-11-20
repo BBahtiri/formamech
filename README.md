@@ -4,7 +4,7 @@
 
 [![Python 3.11–3.13](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-3776AB?logo=python&logoColor=white)](pyproject.toml) [![MIT License](https://img.shields.io/badge/license-MIT-2ea44f)](LICENSE) [![Development](https://img.shields.io/badge/status-development-orange)](CHANGELOG.md)
 
-[Get started](#installation) · [Plots](#examples-with-plots) · [Own CAD](#train-on-your-own-cad) · [Materials](#material-models) · [Cite](#how-to-cite) · [Limitations](docs/limitations.md)
+[Get started](#installation) · [Plots](#examples-with-plots) · [Own CAD](#train-on-your-own-cad) · [Advanced workflows](#advanced-workflows-p1p6) · [Materials](#material-models) · [Cite](#how-to-cite) · [Limitations](docs/limitations.md)
 
 Import a planar STEP or DXF profile, define its material and boundary conditions,
 and train a model over the loads and material ranges you choose. Compare its
@@ -33,6 +33,7 @@ flowchart LR
 | Define a custom strain-energy formula | [Custom-material tutorial](docs/campaigns/s29-custom-material.md) |
 | Refine a mesh around holes or other features | [Meshing and convergence guide](docs/campaigns/own-cad-meshing.md) |
 | Resume training or move a model to another machine | [Compiler guide](docs/campaigns/s28-compiler-guide.md) · [Bundle reuse](#save-and-reuse-your-model) |
+| Use hierarchical CAD training, LoRA adaptation, active FEM, live DWR trust reports, design optimization or viscoelastic rollouts | [Advanced workflows (P1–P6)](#advanced-workflows-p1p6) · [Guide](docs/advanced-workflows.md) |
 
 ## Installation
 
@@ -216,6 +217,43 @@ prediction needs neither the original CAD file nor the mesher/FEM stack. Keep
 the CAD, inputs, checkpoints and comparison reports separately to reproduce
 or resume training.
 
+## Advanced workflows (P1–P6)
+
+Beyond fixed-geometry hyperelastic compilation, FormaMech includes six
+integrated physics-informed and FEM-guarded workflows exposed through both the
+`formamech` CLI and Python APIs. All newly generated candidates, adapters,
+optimization reports and trajectory rollouts carry explicit
+`claim_level = "NOT_VERIFIED"` provenance until formally qualified.
+
+| Track | Capability | CLI / Entry Point |
+| --- | --- | --- |
+| **P1** | Hierarchical `M0/M1/M2` CAD mesh convergence & multi-level energy training | `formamech cad import --hierarchy`, `formamech cad hierarchy`, `formamech cad convergence` |
+| **P2** | Multi-CAD geometry tokens, OOD gate & budgeted (`<= 10%`) low-rank adapters (`safetensors`) | `formamech cad adapt` |
+| **P3** | Certificate-driven `TRAIN`-only active FEM acquisition (`FEMCostLedger`, multi-fidelity disclosure) | `formamech active select`, `formamech.active.run_active_fem_campaign` |
+| **P4** | CAD-level numerical trust reports (`CADTrustReport`) with live DWR adjoints in certified/exact serving | `formamech predict --mode certified --trust-report` |
+| **P5** | FEM-guarded differentiable design optimization with periodic FEM FD gradient checks & final FEM verification | `formamech optimize` |
+| **P6** | Stateful finite-strain generalized-Maxwell viscoelasticity, history-aware operator & guarded checkpoints | `formamech stateful rollout` |
+
+Try live certified DWR trust reporting, FEM-guarded design optimization on a
+shipped bundle, and deterministic `TRAIN`-only active selection using the
+supplied configs in [examples/advanced_workflows/](examples/advanced_workflows/README.md):
+
+```text
+formamech predict bundles/notched-v1-cp-freeze --request bundles/requests/notched-in-domain.json --mode certified --trust-report --output .formamech-runs/certified-trust.json
+formamech optimize bundles/notched-v1-cp-freeze --problem examples/advanced_workflows/notched_design_problem.json --output .formamech-runs/opt-report.json
+formamech active select --plan examples/advanced_workflows/active_plan.json --pool examples/advanced_workflows/active_train_pool.json --output .formamech-runs/selected-batch.json
+```
+
+To run the reproducible CPU-sized diagnostic pilot suite across all six tracks
+(writes strictly to `.formamech-runs/pilots/`):
+
+```text
+python scripts/run_cpu_pilots.py
+```
+
+See the [advanced workflows guide](docs/advanced-workflows.md) for all flags,
+artifact schemas, and claim boundaries.
+
 ## Material models
 
 | Family | Available models |
@@ -223,6 +261,7 @@ or resume training.
 | Isotropic hyperelasticity | Compressible Neo-Hookean, Mooney–Rivlin, Yeoh, Gent |
 | In-plane fibre reinforcement | HGO, single-family HGO, GOH |
 | Custom energy functions | Declared isotropic or fibre strain-energy formulas with units, symmetry and small-strain moduli |
+| Stateful viscoelasticity (P6 / F1) | Finite-strain generalized-Maxwell incremental variational potential with closed-form algorithmic tangent and nonnegative discrete dissipation |
 
 Training uses the declared strain-energy model; stresses come from displacement
 gradients and the constitutive law. Custom materials must pass admission checks
@@ -231,17 +270,22 @@ the [runnable custom-material example](examples/custom_material/README.md).
 
 ## Scope and interpretation
 
-The current CAD workflow covers **fixed 2D planar profiles, finite-strain
-plane-stress hyperelasticity and displacement-controlled loading**. Essential
-boundaries must be straight; curved free boundaries and holes are supported.
-Full 3D solids and applied force/traction loading are outside this CAD interface.
+The current CAD workflow covers **2D planar profiles, finite-strain
+plane-stress hyperelasticity and generalized-Maxwell viscoelasticity, and
+displacement-controlled loading**. Essential boundaries must be straight;
+curved free boundaries and holes are supported. Full 3D solids, applied
+force/traction loading, rate-independent plasticity and damage remain outside
+the current interface.
 
-New CAD/compiler candidates retain **`NOT_VERIFIED`** and support uncalibrated
-`fast` prediction. Assess each candidate against its own FEM comparisons and
-mesh/reference checks. The shipped specimen bundles have separate, recorded
-claim levels; their calibration and FEM-backed serving modes do not transfer
-to a newly trained geometry. Numerical verification compares with the declared
-FEM model and does not establish experimental validation. Read the
+New CAD/compiler candidates, low-rank geometry adapters, active-FEM
+multi-fidelity runs (explicitly disclosed as `multi-fidelity-label-efficient`,
+never `label-free`), design optimization reports and viscoelastic rollouts
+retain **`NOT_VERIFIED`** until formally qualified. Assess each output against
+its own FEM comparisons, `CADTrustReport` error components and mesh/reference
+checks. The shipped specimen bundles have separate, recorded claim levels;
+their calibration and FEM-backed serving modes do not transfer to a newly
+trained geometry. Numerical verification compares with the declared FEM model
+and does not establish experimental validation. Read the
 [limitations](docs/limitations.md) when deciding whether results suit your use.
 
 ## How to cite
