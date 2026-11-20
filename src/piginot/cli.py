@@ -136,6 +136,84 @@ def _predict_option_error(args: argparse.Namespace) -> str | None:
     return None
 
 
+def _attach_trust_report(
+    document: dict[str, Any], bundle: Any, *, mode: str
+) -> dict[str, Any]:
+    """Attach a versioned ``CADTrustReport`` without altering serving semantics."""
+    from piginot.certify.trust_report import (
+        DiscretizationErrorRecord,
+        GeometryErrorRecord,
+        QoITrustResult,
+        SurrogateErrorRecord,
+        build_cad_trust_report,
+        reduce_qoi_trust_status,
+    )
+
+    in_env = document.get("verdict") == "IN_DOMAIN"
+    cert = (
+        document.get("certificate")
+        if isinstance(document.get("certificate"), dict)
+        else None
+    )
+    solve_failed = document.get("serving_path") == "SOLVE_FAILED"
+    surr = SurrogateErrorRecord(
+        verdict=str(cert.get("verdict", "UNAVAILABLE")) if cert else "UNAVAILABLE",
+        eta_energy=cert.get("eta_energy") if cert else None,
+        dwr_estimate=None,
+        newton_qoi_change=None,
+        dirichlet_deviation=float(cert.get("dirichlet_deviation", 0.0))
+        if cert
+        else 0.0,
+        guards=dict(cert.get("guards", {})) if cert else {},
+    )
+    disc = DiscretizationErrorRecord(
+        reference_status="MEASURED_CHANGES_ONLY" if mode != "fast" else "NOT_EVALUATED",
+        element_order=2,
+        dof_count=int(cert.get("dof_count", 0)) if cert else 0,
+    )
+    geom = GeometryErrorRecord(
+        cad_source_hash=None,
+        declared_curve_tolerance_mm=None,
+        achieved_max_chord_error_mm=None,
+        remesh_status="FIXED_BUNDLE_MESH",
+    )
+    status, reason = reduce_qoi_trust_status(
+        in_parameter_envelope=in_env,
+        in_geometry_envelope=in_env,
+        solve_failed=solve_failed,
+        surrogate=surr,
+        discretization=disc,
+        singular_or_reentrant=False,
+        indicators_qualified=False,
+    )
+    qoi_res = QoITrustResult(
+        qoi_name="bundle_field_summary",
+        qoi_kind="regional_average_stress",
+        unit="MPa",
+        predicted_value=None,
+        corrected_value=None,
+        status=status,
+        reason=reason,
+        geometry=geom,
+        discretization=disc,
+        surrogate=surr,
+    )
+    claim = str(document.get("claim_level", "NOT_VERIFIED"))
+    report = build_cad_trust_report(
+        problem_hash=str(getattr(bundle.manifest, "manifest_sha256", "unknown")),
+        mesh_id=str(getattr(bundle.reference_mesh, "mesh_id", "unknown")),
+        cad_source_hash=None,
+        bundle_digest=str(getattr(bundle.manifest, "manifest_sha256", "")),
+        claim_level=claim,
+        qoi_results=(qoi_res,),
+    )
+    return {
+        **document,
+        "trust_report": report.document(),
+        "trust_report_sha256": report.report_hash,
+    }
+
+
 def _predict(args: argparse.Namespace) -> int:
     from piginot.bundle import BundleIntegrityError, load_bundle, predict
 
@@ -191,7 +269,10 @@ def _predict(args: argparse.Namespace) -> int:
                 confidence=not args.no_confidence,
                 calibration=calibration,
             )
-            _emit(served.document(), args.output)
+            doc = served.document()
+            if getattr(args, "trust_report", False):
+                doc = _attach_trust_report(doc, bundle, mode="fast")
+            _emit(doc, args.output)
             return EXIT_OK if served.prediction.in_domain else EXIT_REFUSED
         prediction = predict(
             bundle,
@@ -199,7 +280,10 @@ def _predict(args: argparse.Namespace) -> int:
             queries,
             confidence=not args.no_confidence,
         )
-        _emit(prediction.document(), args.output)
+        doc = prediction.document()
+        if getattr(args, "trust_report", False):
+            doc = _attach_trust_report(doc, bundle, mode="fast")
+        _emit(doc, args.output)
         return EXIT_OK if prediction.in_domain else EXIT_REFUSED
     return _serve_verified(args, bundle, inputs, queries, calibration)
 
@@ -234,7 +318,10 @@ def _serve_verified(
     except (OSError, ValueError) as exc:
         print(f"{_program(args)}: cannot serve {args.mode}: {exc}", file=sys.stderr)
         return EXIT_ERROR
-    _emit(served.document(), args.output)
+    doc = served.document()
+    if getattr(args, "trust_report", False):
+        doc = _attach_trust_report(doc, bundle, mode=args.mode)
+    _emit(doc, args.output)
     if served.path is ServingPath.REFUSED:
         return EXIT_REFUSED
     return EXIT_ERROR if served.path is ServingPath.SOLVE_FAILED else EXIT_OK
@@ -451,6 +538,12 @@ def build_parser(*, prog: str = "piginot") -> argparse.ArgumentParser:
         help="calibration sidecar to use with --bounds (default: "
         "<bundles>/calibration/<bundle>.json; bounds not confirmed on H1, listed "
         "in <bundles>/h1-results/<bundle>.json, are then withheld)",
+    )
+    predict.add_argument(
+        "--trust-report",
+        action="store_true",
+        help="attach a versioned CADTrustReport separating geometry, "
+        "discretization, surrogate and statistical status",
     )
     predict.set_defaults(handler=_predict)
 
