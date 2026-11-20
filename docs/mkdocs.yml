@@ -24,6 +24,7 @@ nav:
   - Benchmarks: benchmarks.md
   - Bundles: bundle.md
   - Problem specification: problem-spec.md
+  - Advanced workflows (P1-P6): advanced-workflows.md
   - Train with your own inputs:
       - Own 2D CAD: campaigns/own-cad-workflow.md
       - Meshing and FEM convergence: campaigns/own-cad-meshing.md

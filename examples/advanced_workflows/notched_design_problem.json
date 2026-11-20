@@ -1,0 +1,37 @@
+{
+  "name": "notched-plate-lightweighting-demo",
+  "parameters": [
+    {
+      "name": "width",
+      "lower": 18.0,
+      "upper": 28.0,
+      "initial": 24.0,
+      "unit": "mm"
+    }
+  ],
+  "fixed_inputs": {
+    "notch_radius": { "value": 4.0, "unit": "mm" },
+    "notch_depth": { "value": 3.0, "unit": "mm" },
+    "elastic_modulus": { "value": 760.0, "unit": "MPa" },
+    "poisson_ratio": { "value": 0.23, "unit": "1" },
+    "nominal_axial_strain": { "value": 0.15, "unit": "1" }
+  },
+  "objective_name": "width_proxy",
+  "objective_metric": "expr: width",
+  "objective_unit": "mm",
+  "minimize": true,
+  "constraints": [
+    {
+      "name": "avg_p11",
+      "metric": "avg_p11",
+      "kind": "inequality_le",
+      "limit": 140.0,
+      "tolerance": 0.5,
+      "unit": "MPa"
+    }
+  ],
+  "max_iterations": 6,
+  "max_fem_evaluations": 6,
+  "gradient_check_interval": 5,
+  "accept_eta_tolerance": 0.5
+}

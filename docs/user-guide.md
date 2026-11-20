@@ -10,6 +10,7 @@ Predictions belong to a declared geometry, material and input envelope.
 | [Train a small example](#2-train-a-small-model-end-to-end-example-1) | A built-in fixed-geometry configuration | An end-to-end software example |
 | [Train for your own CAD](#3-train-for-your-own-2d-cad-profile) | STEP/DXF, boundary settings and material/load ranges | A reusable fixed-geometry candidate and FEM comparisons |
 | [Use a custom material](campaigns/s29-custom-material.md) | An admitted strain-energy formula and explicit inputs | A material-specific candidate and its own reports |
+| [Advanced workflows (P1–P6)](advanced-workflows.md) | Hierarchical CAD, LoRA adaptation, active FEM, live DWR trust reports, design optimization, viscoelasticity | End-to-end CLI and Python workflows with explicit claim discipline |
 
 ## Install
 

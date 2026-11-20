@@ -1,0 +1,31 @@
+{
+  "time_grid": {
+    "t0": 0.0,
+    "t1": 2.0,
+    "dt_initial": 0.25,
+    "dt_min": 0.05,
+    "dt_max": 0.25
+  },
+  "segments": [
+    {
+      "start": 0.0,
+      "end": 0.5,
+      "kind": "ramp",
+      "boundary_values": { "ux": "u_max * s" }
+    },
+    {
+      "start": 0.5,
+      "end": 1.5,
+      "kind": "hold",
+      "boundary_values": { "ux": "u_max" }
+    },
+    {
+      "start": 1.5,
+      "end": 2.0,
+      "kind": "ramp",
+      "boundary_values": { "ux": "u_max * (1 - s)" }
+    }
+  ],
+  "parameters": { "u_max": 0.44 },
+  "load_key": "ux"
+}

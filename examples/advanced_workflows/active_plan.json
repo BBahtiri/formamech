@@ -1,0 +1,15 @@
+{
+  "plan_id": "example-active-fem-plan-v1",
+  "arm_kind": "physics_diversity",
+  "budget_solves": 4,
+  "batch_size": 2,
+  "seed": 0,
+  "weights": {
+    "eta_weight": 0.4,
+    "ood_weight": 0.15,
+    "ensemble_weight": 0.0,
+    "diversity_weight": 0.45
+  },
+  "supervises_training": true,
+  "training_mode": "multi_fidelity_label_efficient"
+}

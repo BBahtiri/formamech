@@ -1,0 +1,34 @@
+[
+  {
+    "case_id": "train-01",
+    "partition": "TRAIN",
+    "feature_vector": [0.06, 0.24],
+    "eta_energy": 0.025,
+    "ood_distance": 0.15,
+    "parameters": { "strain": 0.06, "poisson_ratio": 0.24 }
+  },
+  {
+    "case_id": "train-02",
+    "partition": "TRAIN",
+    "feature_vector": [0.12, 0.28],
+    "eta_energy": 0.042,
+    "ood_distance": 0.35,
+    "parameters": { "strain": 0.12, "poisson_ratio": 0.28 }
+  },
+  {
+    "case_id": "train-03",
+    "partition": "TRAIN",
+    "feature_vector": [0.23, 0.17],
+    "eta_energy": 0.064,
+    "ood_distance": 1.65,
+    "parameters": { "strain": 0.23, "poisson_ratio": 0.17 }
+  },
+  {
+    "case_id": "train-04",
+    "partition": "TRAIN",
+    "feature_vector": [0.24, 0.42],
+    "eta_energy": 0.071,
+    "ood_distance": 2.45,
+    "parameters": { "strain": 0.24, "poisson_ratio": 0.42 }
+  }
+]

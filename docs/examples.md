@@ -67,6 +67,10 @@ lists every output and explains reuse. Keep raw model outputs locally in
   approximation limits and compare FEM refinements on a fixed polygon.
 - [Bundle prediction](campaigns/s29-fast-demo.md): inspect the shipped bundles,
   make a runtime prediction and inspect an out-of-envelope refusal.
+- [Advanced workflows (P1–P6)](advanced-workflows.md): ready-to-run configs under
+  `examples/advanced_workflows/` for `cad hierarchy`/`convergence`/`adapt`,
+  `active select`, `predict --mode certified --trust-report`, `optimize`, and
+  `stateful rollout`.
 
 Keep new numerical outputs and trained candidates locally in `.formamech-runs/`
 or outside the checkout. The historical examples below describe the shipped
