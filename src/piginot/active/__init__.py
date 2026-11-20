@@ -19,6 +19,12 @@ from piginot.active.acquisition import (
     SelectionScoreBreakdown,
     select_acquisition_batch,
 )
+from piginot.active.campaign import (
+    ACTIVE_CAMPAIGN_SUMMARY_SCHEMA,
+    ActiveFemCampaignResult,
+    ActiveFemSolveOutcome,
+    run_active_fem_campaign,
+)
 
 _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     "MULTIFIDELITY_DISCLOSURE": (
@@ -48,6 +54,7 @@ def __getattr__(name: str) -> Any:
 __all__ = (
     "ACQUISITION_ARMS",
     "ACQUISITION_PLAN_SCHEMA",
+    "ACTIVE_CAMPAIGN_SUMMARY_SCHEMA",
     "FEM_COST_LEDGER_SCHEMA",
     "MULTIFIDELITY_DISCLOSURE",
     "SELECTION_EVIDENCE_SCHEMA",
@@ -55,6 +62,8 @@ __all__ = (
     "AcquisitionCandidate",
     "AcquisitionPlan",
     "AcquisitionWeights",
+    "ActiveFemCampaignResult",
+    "ActiveFemSolveOutcome",
     "FEMCostLedger",
     "FEMCostLedgerEntry",
     "MultiFidelityConfig",
@@ -62,5 +71,6 @@ __all__ = (
     "SelectionEvidence",
     "SelectionScoreBreakdown",
     "multifidelity_energy_loss",
+    "run_active_fem_campaign",
     "select_acquisition_batch",
 )

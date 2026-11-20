@@ -347,24 +347,51 @@ def evaluate_case(
     )
     diagnostics = refinement_diagnostics(results)
     if plan.adapter.adapter_id == "cad-fixed-v1":
+        from piginot.cad.hierarchy import (
+            build_mesh_hierarchy,
+            build_reference_convergence_report,
+        )
         from piginot.compiler.reference_convergence import compare_fem_pair
 
+        pairs = [
+            compare_fem_pair(
+                plan.problem,
+                coarse,
+                coarse_result,
+                fine,
+                fine_result,
+                tolerances=None,
+            )
+            for coarse, coarse_result, fine, fine_result in zip(
+                requests[:-1], results[:-1], requests[1:], results[1:], strict=True
+            )
+        ]
         diagnostics = {
             **diagnostics,
-            "same_polygon_field_changes": [
-                compare_fem_pair(
-                    plan.problem,
-                    coarse,
-                    coarse_result,
-                    fine,
-                    fine_result,
-                    tolerances=None,
-                )
-                for coarse, coarse_result, fine, fine_result in zip(
-                    requests[:-1], results[:-1], requests[1:], results[1:], strict=True
-                )
-            ],
+            "same_polygon_field_changes": pairs,
         }
+        if len(pairs) >= 2:
+            try:
+                hierarchy = build_mesh_hierarchy(
+                    requests[0].mesh,
+                    cad_source_hash=requests[0].mesh.mesh_id,
+                    geometry_tolerance_mm=0.05,
+                )
+                ref_report = build_reference_convergence_report(
+                    hierarchy,
+                    pairs[0],
+                    pairs[1],
+                    reference_floor=plan.problem.verification.tolerances,
+                )
+                diagnostics = {
+                    **diagnostics,
+                    "reference_convergence_report": {
+                        **ref_report.document(),
+                        "report_hash": ref_report.report_hash,
+                    },
+                }
+            except ValueError:
+                pass
     return {
         **base,
         "status": "PASS",

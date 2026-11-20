@@ -1,5 +1,16 @@
 """S11 neural-operator architecture surface and the S13c energy-form operator."""
 
+from piginot.operators.adapter_artifact import (
+    BOUNDARY_CHECKPOINT_SCHEMA,
+    GEOMETRY_ADAPTER_ARTIFACT_SCHEMA,
+    GEOMETRY_OOD_ARTIFACT_SCHEMA,
+    load_boundary_operator_checkpoint,
+    load_geometry_adapter,
+    load_geometry_ood_detector,
+    save_boundary_operator_checkpoint,
+    save_geometry_adapter,
+    save_geometry_ood_detector,
+)
 from piginot.operators.architecture import (
     ARCHITECTURE_ID,
     LOCAL_STRESS_ARCHITECTURE_ID,
@@ -83,13 +94,16 @@ __all__ = (
     "ADAPTATION_PLAN_SCHEMA",
     "ADAPTER_SCHEMA",
     "ARCHITECTURE_ID",
+    "BOUNDARY_CHECKPOINT_SCHEMA",
     "BOUNDARY_ENERGY_ARCHITECTURE_ID",
     "DEFAULT_TARGET_MODULES",
     "ENERGY_ARCHITECTURE_ID",
     "ENERGY_G11_CHECK_IDS",
     "ENERGY_G11_LIFTING_POINTS_PER_EDGE",
     "ENERGY_G11_MINIMUM_PARAMETER_VECTORS",
+    "GEOMETRY_ADAPTER_ARTIFACT_SCHEMA",
     "GEOMETRY_FEATURE_NAMES",
+    "GEOMETRY_OOD_ARTIFACT_SCHEMA",
     "GEOMETRY_OOD_SCHEMA",
     "LOCAL_STRESS_ARCHITECTURE_ID",
     "SUPPORTED_BC_ROLES",
@@ -133,6 +147,9 @@ __all__ = (
     "adapt_boundary_operator_energy",
     "boundary_energy_module_digest",
     "compute_geometry_descriptor",
+    "load_boundary_operator_checkpoint",
+    "load_geometry_adapter",
+    "load_geometry_ood_detector",
     "load_operator_state_dict",
     "load_operator_state_dict_with_metadata",
     "constitutive_in_plane_stress",
@@ -141,5 +158,8 @@ __all__ = (
     "evaluate_energy_g11_gate",
     "evaluate_s11_gate",
     "module_digest",
+    "save_boundary_operator_checkpoint",
+    "save_geometry_adapter",
+    "save_geometry_ood_detector",
     "state_dict_schema",
 )

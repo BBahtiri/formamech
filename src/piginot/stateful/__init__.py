@@ -8,6 +8,13 @@ from __future__ import annotations
 
 from typing import Any
 
+from piginot.stateful.artifact import (
+    VISCOELASTIC_ARTIFACT_SCHEMA,
+    LoadedViscoelasticArtifact,
+    load_viscoelastic_artifact,
+    run_viscoelastic_rollout,
+    save_viscoelastic_artifact,
+)
 from piginot.stateful.constitutive import (
     ConstitutiveModel,
     MaterialUpdate,
@@ -75,6 +82,7 @@ def __getattr__(name: str) -> Any:
 __all__ = (
     "STEP_CONTROLLER_VERSION",
     "TRAJECTORY_CHECKPOINT_SCHEMA",
+    "VISCOELASTIC_ARTIFACT_SCHEMA",
     "VISCOELASTIC_MODEL_ID",
     "VISCOELASTIC_OPERATOR_ARCH_ID",
     "CandidateStepOutput",
@@ -86,6 +94,7 @@ __all__ = (
     "HistoryAwareViscoelasticOperator",
     "IncrementalFemStep",
     "IncrementalFemTrajectory",
+    "LoadedViscoelasticArtifact",
     "MaterialUpdate",
     "MaxwellBranch",
     "PlaneStressMaterialUpdate",
@@ -101,8 +110,11 @@ __all__ = (
     "hash_state_tensors",
     "interpolate_nodal_features_in_cells",
     "load_trajectory_checkpoint",
+    "load_viscoelastic_artifact",
     "project_cell_state_to_nodes",
+    "run_viscoelastic_rollout",
     "save_trajectory_checkpoint",
+    "save_viscoelastic_artifact",
     "solve_incremental_fem_trajectory",
     "summarize_viscous_state",
     "train_viscoelastic_operator_energy",

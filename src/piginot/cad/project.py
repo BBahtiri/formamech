@@ -293,3 +293,107 @@ def inspect_geometry(project: Path) -> dict[str, Any]:
         resource.boundary_kinds,
         resource.provenance,
     )
+
+
+def build_project_hierarchy(
+    project: Path,
+    *,
+    output: Path | None = None,
+    geometry_tolerance_mm: float | None = None,
+    quadrature_rule: str = "stratified-v1",
+) -> dict[str, Any]:
+    """Build and optionally persist a verified ``MeshHierarchy`` (M0/M1/M2) for a CAD project."""
+    from piginot.cad.hierarchy import build_mesh_hierarchy
+
+    path = project / "geometry.json"
+    if _has_symlink(path):
+        raise CadResourceError("geometry manifest cannot contain a symlink")
+    try:
+        payload = path.read_bytes()
+    except OSError as error:
+        raise CadResourceError(f"cannot read geometry manifest: {error}") from error
+    resource = load_geometry_resource(path, _sha(payload))
+    hierarchy = build_mesh_hierarchy(
+        resource.mesh(1),
+        cad_source_hash=resource.source_sha256,
+        geometry_tolerance_mm=(
+            0.05 if geometry_tolerance_mm is None else float(geometry_tolerance_mm)
+        ),
+        quadrature_rule=quadrature_rule,
+    )
+    document: dict[str, Any] = {
+        **hierarchy.document(),
+        "hierarchy_hash": hierarchy.hierarchy_hash,
+        "geometry_resource_sha256": resource.sha256,
+        "claim_level": "NOT_VERIFIED",
+    }
+    if output is not None:
+        if _has_symlink(output):
+            raise ValueError("hierarchy output cannot contain a symlink")
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_bytes(canonical_json_bytes(document) + b"\n")
+    return document
+
+
+def evaluate_project_geometry_convergence(
+    source: Path,
+    *,
+    unit: Unit,
+    mesh_sizes_mm: tuple[float, ...],
+    max_relative_area_change: float = 0.01,
+    max_relative_perimeter_change: float = 0.01,
+    max_chord_error_mm: float = 0.05,
+    output: Path | None = None,
+) -> dict[str, Any]:
+    """Remesh a CAD source at multiple distinct mesh sizes and evaluate geometry convergence."""
+    from piginot.cad.hierarchy import (
+        GeometryConvergenceSample,
+        evaluate_geometry_convergence,
+    )
+
+    if len(mesh_sizes_mm) < 2:
+        raise ValueError("geometry convergence requires at least two mesh sizes")
+    original = _source_bytes(source)
+    source_sha = _sha(original)
+    source = source.resolve()
+    samples: list[GeometryConvergenceSample] = []
+    for idx, size_mm in enumerate(mesh_sizes_mm):
+        imported = _import_cad(source, unit=unit, mesh_size_mm=float(size_mm))
+        if imported.source_sha256 != source_sha:
+            raise ValueError("CAD source changed during multi-size remeshing")
+        chord_err: float | None = None
+        evidence = getattr(imported, "mesh_evidence", None)
+        if isinstance(evidence, Mapping):
+            raw_chord = evidence.get("achieved_max_chord_error_mm")
+            if isinstance(raw_chord, (int, float)) and not isinstance(raw_chord, bool):
+                chord_err = float(raw_chord)
+        samples.append(
+            GeometryConvergenceSample.from_mesh(
+                f"remesh-{idx}-h{size_mm:g}mm",
+                imported.mesh,
+                cad_source_hash=source_sha,
+                declared_curve_tolerance_mm=(
+                    0.05 if max_chord_error_mm is None else float(max_chord_error_mm)
+                ),
+                achieved_max_chord_error_mm=(
+                    0.0 if chord_err is None else float(chord_err)
+                ),
+            )
+        )
+    report = evaluate_geometry_convergence(
+        samples,
+        max_relative_area_change=max_relative_area_change,
+        max_relative_perimeter_change=max_relative_perimeter_change,
+        max_chord_error_mm=max_chord_error_mm,
+    )
+    document: dict[str, Any] = {
+        **report.document(),
+        "report_hash": report.report_hash,
+        "mesh_sizes_mm": [float(s) for s in mesh_sizes_mm],
+    }
+    if output is not None:
+        if _has_symlink(output):
+            raise ValueError("convergence output cannot contain a symlink")
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_bytes(canonical_json_bytes(document) + b"\n")
+    return document

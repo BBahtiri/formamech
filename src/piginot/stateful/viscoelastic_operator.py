@@ -359,12 +359,17 @@ def train_viscoelastic_operator_energy(
     points_per_cell: int = 3,
     quadrature_degree: int = 2,
     seed: int = 0,
+    accumulate_trajectory: bool = False,
+    normalize_step_energy: bool = False,
 ) -> ViscoelasticTrainingSummary:
     """Train ``operator`` via label-free incremental variational potential energy.
 
     Uses fresh unbiased ``stratified_triangle_quadrature`` at every step to
-    prevent fixed-quadrature hourglass modes while feeding each query point its
-    owning cell's physical internal viscous strain tensor ``E_v^(m)[c]``.
+    prevent fixed-quadrature hourglass modes while feeding each query point
+    differentiable P1-interpolated viscous strain tensors ``E_v^(m)(x)``.
+    When ``accumulate_trajectory=True``, gradients accumulate across the full
+    load path before each optimizer update so unloading recovery steps receive
+    balanced variational gradient signal alongside peak-load steps.
     """
     del quadrature_degree
     torch.manual_seed(seed)
@@ -392,6 +397,9 @@ def train_viscoelastic_operator_energy(
         epoch_count = 0
         for traj in load_trajectories:
             cell_state = material.initial_state((n_cells,), dtype=dtype, device=device)
+            if accumulate_trajectory:
+                optimizer.zero_grad(set_to_none=True)
+            n_traj = max(len(traj), 1)
             for load_vec, dt in traj:
                 hist_feat = summarize_viscous_state(cell_state, weights=cell_areas)
                 lifting = lifting_factory(load_vec)
@@ -418,7 +426,8 @@ def train_viscoelastic_operator_energy(
                         ).unsqueeze(0)
 
                     local_fn = _interp
-                optimizer.zero_grad(set_to_none=True)
+                if not accumulate_trajectory:
+                    optimizer.zero_grad(set_to_none=True)
                 _, grad = operator.displacement_and_gradient(
                     query_xy=pts.unsqueeze(0),
                     frame=frame,
@@ -438,17 +447,31 @@ def train_viscoelastic_operator_energy(
                     domain.area,
                     barrier_threshold=0.20,
                 )
-                loss.backward()  # type: ignore[no-untyped-call]
-                torch.nn.utils.clip_grad_norm_(operator.parameters(), max_norm=1.0)
-                optimizer.step()
+                raw_loss = float(loss.detach().item())
+                # Detached positive step weight preserves the exact variational
+                # minimizer d(W_inc)/du == 0 while equalizing unloading vs peak steps.
+                if normalize_step_energy:
+                    step_scale = 1.0 / max(abs(raw_loss), 5e-4)
+                    scaled_loss = loss * (
+                        step_scale / (n_traj if accumulate_trajectory else 1)
+                    )
+                else:
+                    scaled_loss = loss / (n_traj if accumulate_trajectory else 1)
+                scaled_loss.backward()  # type: ignore[no-untyped-call]
+                if not accumulate_trajectory:
+                    torch.nn.utils.clip_grad_norm_(operator.parameters(), max_norm=1.0)
+                    optimizer.step()
                 cell_state = {
                     k: v.reshape(n_cells, points_per_cell, *v.shape[1:]).mean(dim=1)
                     for k, v in q_state_next.items()
                 }
-                epoch_loss += float(loss.detach().item())
+                epoch_loss += raw_loss
                 epoch_count += 1
                 total_steps += 1
                 min_det_seen = min(min_det_seen, min_det)
+            if accumulate_trajectory:
+                torch.nn.utils.clip_grad_norm_(operator.parameters(), max_norm=1.0)
+                optimizer.step()
         scheduler.step()
         history.append(epoch_loss / max(epoch_count, 1))
 

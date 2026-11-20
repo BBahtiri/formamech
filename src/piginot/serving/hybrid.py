@@ -95,6 +95,8 @@ class VerifiedPrediction:
     request_hash: str | None = None
     reason: str = ""
     bounds: Mapping[str, Any] | None = None
+    trust_report: Mapping[str, Any] | None = None
+    trust_report_sha256: str | None = None
 
     def document(self) -> dict[str, Any]:
         """JSON form; ``fast`` without bounds is exactly the v0.1.0 document.
@@ -105,14 +107,19 @@ class VerifiedPrediction:
 
         if self.mode is ServingMode.FAST:
             prediction: dict[str, Any] = self.prediction.document()
-            if self.bounds is None:
+            if self.bounds is None and self.trust_report is None:
                 return prediction
-            return {
+            doc_fast: dict[str, Any] = {
                 "mode": self.mode.value,
                 "path": self.path.value,
                 "prediction": prediction,
-                "bounds": dict(self.bounds),
             }
+            if self.bounds is not None:
+                doc_fast["bounds"] = dict(self.bounds)
+            if self.trust_report is not None:
+                doc_fast["trust_report"] = dict(self.trust_report)
+                doc_fast["trust_report_sha256"] = self.trust_report_sha256
+            return doc_fast
         document: dict[str, Any] = {
             "mode": self.mode.value,
             "path": self.path.value,
@@ -138,6 +145,9 @@ class VerifiedPrediction:
         }
         if self.bounds is not None:
             document["bounds"] = dict(self.bounds)
+        if self.trust_report is not None:
+            document["trust_report"] = dict(self.trust_report)
+            document["trust_report_sha256"] = self.trust_report_sha256
         return document
 
 
@@ -249,6 +259,75 @@ def solve_ladder(
     return None, tuple(attempts)
 
 
+def _build_live_cad_trust_report(
+    *,
+    bundle: Any,
+    request: FemRequest,
+    surrogate: np.ndarray[Any, Any],
+    trust_sidecar: Mapping[str, Any] | None = None,
+    solve_failed: bool = False,
+) -> tuple[dict[str, Any], str]:
+    """Evaluate live DWR adjoint QoI error budgets and assemble ``CADTrustReport``."""
+    from piginot.certify import (
+        DiscretizationErrorRecord,
+        GeometryErrorRecord,
+        ReactionForceQoi,
+        RegionalAverageStressQoi,
+        evaluate_cad_trust,
+    )
+
+    qois: list[Any] = []
+    for bc in request.boundary_conditions:
+        if bc.kind == "dirichlet" and any(abs(v.value) > 0.0 for v in bc.values):
+            qois.append(ReactionForceQoi(f"reaction_{bc.name}", bc.name))
+    qois.append(RegionalAverageStressQoi("avg_p11", component=(0, 0)))
+
+    raw_geom = (
+        trust_sidecar.get("geometry") if isinstance(trust_sidecar, Mapping) else None
+    )
+    geom_doc: Mapping[str, Any] = raw_geom if isinstance(raw_geom, Mapping) else {}
+    raw_disc = (
+        trust_sidecar.get("discretization")
+        if isinstance(trust_sidecar, Mapping)
+        else None
+    )
+    disc_doc: Mapping[str, Any] = raw_disc if isinstance(raw_disc, Mapping) else {}
+    geom_rec = GeometryErrorRecord(
+        cad_source_hash=geom_doc.get("cad_source_hash"),
+        declared_curve_tolerance_mm=geom_doc.get("declared_curve_tolerance_mm"),
+        achieved_max_chord_error_mm=geom_doc.get("achieved_max_chord_error_mm"),
+        remesh_status=str(geom_doc.get("remesh_status", "FIXED_BUNDLE_MESH")),
+        excluded_weight_fraction=geom_doc.get("excluded_weight_fraction"),
+    )
+    disc_rec = DiscretizationErrorRecord(
+        reference_status=str(disc_doc.get("reference_status", "MEASURED_CHANGES_ONLY")),
+        element_order=int(disc_doc.get("element_order", request.config.element_order)),
+        dof_count=int(disc_doc.get("dof_count", surrogate.shape[0] * 2)),
+        m1_to_m2_u_rel_l2=disc_doc.get("m1_to_m2_u_rel_l2"),
+        m1_to_m2_p_rel_l2=disc_doc.get("m1_to_m2_p_rel_l2"),
+        m1_to_m2_qoi_change=disc_doc.get("m1_to_m2_qoi_change"),
+    )
+    indicators_qualified = bool(
+        isinstance(trust_sidecar, Mapping)
+        and trust_sidecar.get("indicators_qualified") is True
+    )
+    report = evaluate_cad_trust(
+        request,
+        surrogate,
+        qois,
+        problem_hash=str(bundle.manifest.manifest_sha256),
+        geometry_error=geom_rec,
+        discretization_error=disc_rec,
+        bundle_digest=str(bundle.manifest.manifest_sha256),
+        claim_level=bundle.claim_level,
+        in_parameter_envelope=True,
+        in_geometry_envelope=True,
+        indicators_qualified=indicators_qualified,
+        solve_failed=solve_failed,
+    )
+    return report.document(), report.report_hash
+
+
 def serve(
     bundle: Any,
     inputs: Mapping[str, Any],
@@ -263,6 +342,8 @@ def serve(
     backend: Any = None,
     confidence: bool | None = None,
     calibration: CalibrationRecord | ConfirmedCalibration | None = None,
+    trust_report: bool = False,
+    trust_sidecar: Mapping[str, Any] | None = None,
 ) -> VerifiedPrediction:
     """Serve one request in the chosen mode (see the module docstring).
 
@@ -335,6 +416,16 @@ def serve(
         None if calibration is None else calibration.evaluate(inputs, "reference_terms")
     )
     if not needs_exact:
+        tr_doc: dict[str, Any] | None = None
+        tr_sha: str | None = None
+        if trust_report:
+            tr_doc, tr_sha = _build_live_cad_trust_report(
+                bundle=bundle,
+                request=request,
+                surrogate=surrogate,
+                trust_sidecar=trust_sidecar,
+                solve_failed=False,
+            )
         return VerifiedPrediction(
             mode,
             ServingPath.OPERATOR_CERTIFICATE,
@@ -343,9 +434,21 @@ def serve(
             corrected_nodal,
             request_hash=request_hash,
             bounds=bounds,
+            trust_report=tr_doc,
+            trust_report_sha256=tr_sha,
         )
     start = linearization.with_exact_dirichlet(linearization.vector(surrogate))
     attempt, attempts = solve_ladder(backend or backend_type(), request, start)
+    tr_doc_ex: dict[str, Any] | None = None
+    tr_sha_ex: str | None = None
+    if trust_report:
+        tr_doc_ex, tr_sha_ex = _build_live_cad_trust_report(
+            bundle=bundle,
+            request=request,
+            surrogate=surrogate,
+            trust_sidecar=trust_sidecar,
+            solve_failed=attempt is None,
+        )
     return VerifiedPrediction(
         mode,
         attempts[-1].path if attempt is not None else ServingPath.SOLVE_FAILED,
@@ -359,4 +462,6 @@ def serve(
         request_hash=request_hash,
         reason="" if attempt is not None else "every rung of the solve ladder failed",
         bounds=bounds,
+        trust_report=tr_doc_ex,
+        trust_report_sha256=tr_sha_ex,
     )

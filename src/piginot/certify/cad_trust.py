@@ -48,6 +48,7 @@ def evaluate_cad_trust(
     singular_qoi_names: frozenset[str] = frozenset(),
     statistical_by_qoi: Mapping[str, StatisticalCalibrationRecord] | None = None,
     indicators_qualified: bool = False,
+    solve_failed: bool = False,
     backend: ScikitFemBackend | None = None,
 ) -> CADTrustReport:
     """Evaluate per-QoI DWR + Newton indicators and assemble a ``CADTrustReport``."""
@@ -55,14 +56,14 @@ def evaluate_cad_trust(
         raise ValueError("evaluate_cad_trust requires at least one DifferentiableQoi")
 
     stat_map = {} if statistical_by_qoi is None else statistical_by_qoi
-    solve_failed = False
     linearization: FemLinearization | None = None
-    failure_reason = ""
-    try:
-        linearization = FemLinearization(request, backend=backend)
-    except FemSolveFailure as exc:
-        solve_failed = True
-        failure_reason = f"{exc.code.value}: {exc}"
+    failure_reason = "exact FEM solve failed" if solve_failed else ""
+    if not solve_failed:
+        try:
+            linearization = FemLinearization(request, backend=backend)
+        except FemSolveFailure as exc:
+            solve_failed = True
+            failure_reason = f"{exc.code.value}: {exc}"
 
     results: list[QoITrustResult] = []
     for qoi in qois:

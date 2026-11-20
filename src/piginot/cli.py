@@ -288,6 +288,24 @@ def _predict(args: argparse.Namespace) -> int:
     return _serve_verified(args, bundle, inputs, queries, calibration)
 
 
+def _load_trust_sidecar(
+    bundle_path: Path, explicit: Path | None
+) -> dict[str, Any] | None:
+    path = (
+        explicit
+        if explicit is not None
+        else bundle_path.parent / "trust" / f"{bundle_path.name}.json"
+    )
+    if not path.is_file():
+        if explicit is not None:
+            raise OSError(f"trust sidecar not found: {path}")
+        return None
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(loaded, dict):
+        raise ValueError("trust sidecar must be a JSON object")
+    return loaded
+
+
 def _serve_verified(
     args: argparse.Namespace,
     bundle: Any,
@@ -295,12 +313,17 @@ def _serve_verified(
     queries: Any,
     calibration: Any = None,
 ) -> int:
-    """``--mode certified|exact`` (S22): certificate, correction, FEM solve."""
+    """``--mode certified|exact`` (S22): certificate, correction, FEM solve, live DWR."""
 
     from piginot.serving import MissingExtraError, ServingPath, load_recipe, serve
 
     try:
         recipe = load_recipe(bundle, args.bundle, args.recipe)
+        sidecar = (
+            _load_trust_sidecar(args.bundle, getattr(args, "trust_sidecar", None))
+            if getattr(args, "trust_report", False)
+            else None
+        )
         served = serve(
             bundle,
             inputs,
@@ -311,6 +334,8 @@ def _serve_verified(
             escalate=args.escalate,
             tolerance=args.tolerance,
             calibration=calibration,
+            trust_report=bool(getattr(args, "trust_report", False)),
+            trust_sidecar=sidecar,
         )
     except MissingExtraError as exc:
         print(f"{_program(args)}: {exc}", file=sys.stderr)
@@ -319,7 +344,7 @@ def _serve_verified(
         print(f"{_program(args)}: cannot serve {args.mode}: {exc}", file=sys.stderr)
         return EXIT_ERROR
     doc = served.document()
-    if getattr(args, "trust_report", False):
+    if getattr(args, "trust_report", False) and "trust_report" not in doc:
         doc = _attach_trust_report(doc, bundle, mode=args.mode)
     _emit(doc, args.output)
     if served.path is ServingPath.REFUSED:
@@ -400,6 +425,163 @@ def _cad(args: argparse.Namespace) -> int:
     return run(args)
 
 
+def _active_select(args: argparse.Namespace) -> int:
+    """Pure-stdlib deterministic TRAIN-only active-FEM batch selection (P3)."""
+    from piginot.active import (
+        AcquisitionCandidate,
+        AcquisitionPlan,
+        AcquisitionWeights,
+        select_acquisition_batch,
+    )
+
+    try:
+        plan_doc = json.loads(args.plan.read_text(encoding="utf-8"))
+        pool_doc = json.loads(args.pool.read_text(encoding="utf-8"))
+        w_doc = plan_doc.get("weights", {})
+        plan = AcquisitionPlan(
+            plan_id=str(plan_doc["plan_id"]),
+            arm_kind=plan_doc["arm_kind"],
+            budget_solves=int(plan_doc["budget_solves"]),
+            batch_size=int(plan_doc["batch_size"]),
+            seed=int(plan_doc.get("seed", 0)),
+            weights=AcquisitionWeights(
+                eta_weight=float(w_doc.get("eta_weight", 0.5)),
+                ood_weight=float(w_doc.get("ood_weight", 0.2)),
+                ensemble_weight=float(w_doc.get("ensemble_weight", 0.1)),
+                diversity_weight=float(w_doc.get("diversity_weight", 0.2)),
+            ),
+            supervises_training=bool(plan_doc.get("supervises_training", True)),
+            training_mode=plan_doc.get(
+                "training_mode", "multi_fidelity_label_efficient"
+            ),
+        )
+        candidates = [
+            AcquisitionCandidate(
+                case_id=str(row["case_id"]),
+                partition=str(row["partition"]),
+                feature_vector=tuple(float(v) for v in row["feature_vector"]),
+                eta_energy=float(row["eta_energy"]),
+                ood_distance=float(row.get("ood_distance", 0.0)),
+                ensemble_disagreement=float(row.get("ensemble_disagreement", 0.0)),
+                parameters=dict(row.get("parameters", {})),
+            )
+            for row in pool_doc
+        ]
+        acquired_ids: list[str] = []
+        acquired_feats: list[tuple[float, ...]] = []
+        if args.acquired is not None:
+            acq_doc = json.loads(args.acquired.read_text(encoding="utf-8"))
+            if isinstance(acq_doc, list):
+                acquired_ids = [str(v) for v in acq_doc]
+            elif isinstance(acq_doc, dict):
+                acquired_ids = [str(v) for v in acq_doc.get("case_ids", [])]
+                acquired_feats = [
+                    tuple(float(x) for x in f) for f in acq_doc.get("features", [])
+                ]
+        evidence = select_acquisition_batch(
+            candidates,
+            already_acquired_ids=acquired_ids,
+            plan=plan,
+            round_index=int(args.round),
+            already_acquired_features=acquired_feats,
+        )
+    except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+        print(f"{_program(args)} active select: {exc}", file=sys.stderr)
+        return EXIT_REFUSED
+    out_doc = {
+        **evidence.document(),
+        "selection_hash": evidence.selection_hash,
+        "training_mode": plan.training_mode,
+    }
+    _emit(out_doc, args.output)
+    return EXIT_OK
+
+
+def _optimize(args: argparse.Namespace) -> int:
+    """Run FEM-guarded differentiable design optimization on a verified bundle (P5)."""
+    from piginot.bundle import BundleIntegrityError, load_bundle
+    from piginot.optimization import (
+        BundleDesignBridge,
+        DesignOptimizationStatus,
+        parse_bundle_design_document,
+    )
+    from piginot.serving import MissingExtraError, load_recipe
+
+    try:
+        bundle = load_bundle(args.bundle)
+    except (BundleIntegrityError, OSError) as exc:
+        _emit(_bundle_refusal(exc), args.output)
+        return EXIT_ERROR
+    try:
+        recipe = load_recipe(bundle, args.bundle, args.recipe)
+        prob_doc = json.loads(args.problem.read_text(encoding="utf-8"))
+        spec = parse_bundle_design_document(prob_doc, bundle=bundle)
+        bridge = BundleDesignBridge(bundle, recipe, spec)
+        report = bridge.run(geometry_supported=not bool(args.refuse_unsupported))
+    except MissingExtraError as exc:
+        print(f"{_program(args)} optimize: {exc}", file=sys.stderr)
+        return EXIT_ERROR
+    except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+        print(f"{_program(args)} optimize: {exc}", file=sys.stderr)
+        return EXIT_ERROR
+    out_doc = {**report.document(), "report_hash": report.report_hash}
+    _emit(out_doc, args.output)
+    if report.status is DesignOptimizationStatus.REFUSED_UNSUPPORTED_GEOMETRY:
+        return EXIT_REFUSED
+    if report.status is DesignOptimizationStatus.FAILED_NO_FEASIBLE_FEM_DESIGN:
+        return EXIT_ERROR
+    return EXIT_OK
+
+
+def _stateful_rollout(args: argparse.Namespace) -> int:
+    """Run guarded viscoelastic trajectory rollout from a saved P6 artifact."""
+    from piginot.contracts.expressions import DerivedExpression
+    from piginot.contracts.stateful import LoadSegment, TimeGrid
+    from piginot.stateful import load_viscoelastic_artifact, run_viscoelastic_rollout
+
+    try:
+        artifact = load_viscoelastic_artifact(args.artifact)
+        lp_doc = json.loads(args.load_path.read_text(encoding="utf-8"))
+        grid_doc = lp_doc["time_grid"]
+        grid = TimeGrid(
+            t0=float(grid_doc["t0"]),
+            t1=float(grid_doc["t1"]),
+            dt_initial=float(grid_doc["dt_initial"]),
+            dt_min=float(grid_doc["dt_min"]),
+            dt_max=float(grid_doc["dt_max"]),
+        )
+        segments = tuple(
+            LoadSegment(
+                start=float(seg["start"]),
+                end=float(seg["end"]),
+                kind=seg["kind"],
+                boundary_values={
+                    str(k): DerivedExpression.parse(str(v))
+                    for k, v in seg["boundary_values"].items()
+                },
+            )
+            for seg in lp_doc["segments"]
+        )
+        params = {
+            str(k): float(v) for k, v in dict(lp_doc.get("parameters", {})).items()
+        }
+        result = run_viscoelastic_rollout(
+            artifact,
+            time_grid=grid,
+            segments=segments,
+            parameters=params,
+            load_key=str(lp_doc.get("load_key", "ux")),
+            residual_tolerance=float(args.residual_tolerance),
+            resume_checkpoint=args.resume,
+            save_checkpoint_to=args.checkpoint_out,
+        )
+    except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+        print(f"{_program(args)} stateful rollout: {exc}", file=sys.stderr)
+        return EXIT_REFUSED
+    _emit(result, args.output)
+    return EXIT_OK if result.get("accepted") else EXIT_REFUSED
+
+
 def _campaign(command: str, args: argparse.Namespace) -> int:
     try:
         table = resolve_campaign(args.campaign, args.campaign_path)
@@ -458,6 +640,11 @@ def build_parser(*, prog: str = "piginot") -> argparse.ArgumentParser:
         "--mesh-policy", type=Path, help="explicit local sizing and curve-accuracy JSON"
     )
     cad_import.add_argument("--output", type=Path, required=True)
+    cad_import.add_argument(
+        "--hierarchy",
+        action="store_true",
+        help="also emit a verified M0/M1/M2 MeshHierarchy sidecar (hierarchy.json)",
+    )
     cad_import.set_defaults(handler=_cad)
     cad_inspect = cad_commands.add_parser(
         "inspect", help="inspect verified geometry data"
@@ -472,6 +659,75 @@ def build_parser(*, prog: str = "piginot") -> argparse.ArgumentParser:
     cad_prepare.add_argument("--output", type=Path, required=True)
     cad_prepare.add_argument("--execution-profile", action="store_true")
     cad_prepare.set_defaults(handler=_cad)
+    cad_hier = cad_commands.add_parser(
+        "hierarchy", help="build a verified M0/M1/M2 MeshHierarchy for a CAD project"
+    )
+    cad_hier.add_argument("project", type=Path)
+    cad_hier.add_argument("--output", type=Path, default=None)
+    cad_hier.add_argument("--geometry-tolerance-mm", type=float, default=None)
+    cad_hier.set_defaults(handler=_cad)
+    cad_conv = cad_commands.add_parser(
+        "convergence",
+        help="remesh a STEP or DXF source at multiple sizes and check geometry convergence",
+    )
+    cad_conv.add_argument("source", type=Path)
+    cad_conv.add_argument("--unit", choices=("mm", "cm", "m"), required=True)
+    cad_conv.add_argument("--mesh-sizes", nargs="+", type=float, required=True)
+    cad_conv.add_argument("--max-area-change", type=float, default=0.01)
+    cad_conv.add_argument("--max-perimeter-change", type=float, default=0.01)
+    cad_conv.add_argument("--max-chord-error-mm", type=float, default=0.05)
+    cad_conv.add_argument("--output", type=Path, default=None)
+    cad_conv.set_defaults(handler=_cad)
+    cad_adapt = cad_commands.add_parser(
+        "adapt",
+        help="adapt a pretrained BoundaryEnergyOperator to a CAD project via low-rank deltas",
+    )
+    cad_adapt.add_argument("--project", type=Path, required=True)
+    cad_adapt.add_argument("--checkpoint", type=Path, required=True)
+    cad_adapt.add_argument("--config", type=Path, required=True)
+    cad_adapt.add_argument("--output", type=Path, required=True)
+    cad_adapt.add_argument("--ood-detector", type=Path, default=None)
+    cad_adapt.set_defaults(handler=_cad)
+
+    active = subparsers.add_parser(
+        "active", help="certificate-driven TRAIN-only active FEM acquisition (P3)"
+    )
+    active_commands = active.add_subparsers(dest="active_command", required=True)
+    active_sel = active_commands.add_parser(
+        "select", help="deterministically rank and select the next TRAIN FEM batch"
+    )
+    active_sel.add_argument("--plan", type=Path, required=True)
+    active_sel.add_argument("--pool", type=Path, required=True)
+    active_sel.add_argument("--acquired", type=Path, default=None)
+    active_sel.add_argument("--round", type=int, default=0)
+    active_sel.add_argument("--output", type=Path, default=None)
+    active_sel.set_defaults(handler=_active_select)
+
+    optimize = subparsers.add_parser(
+        "optimize",
+        help="FEM-guarded differentiable design optimization on a verified bundle (P5)",
+    )
+    optimize.add_argument("bundle", type=Path)
+    optimize.add_argument("--problem", type=Path, required=True)
+    optimize.add_argument("--recipe", type=Path, default=None)
+    optimize.add_argument("--output", type=Path, default=None)
+    optimize.add_argument("--refuse-unsupported", action="store_true")
+    optimize.set_defaults(handler=_optimize)
+
+    stateful = subparsers.add_parser(
+        "stateful", help="stateful nonlinear mechanics rollout and checkpointing (P6)"
+    )
+    stateful_commands = stateful.add_subparsers(dest="stateful_command", required=True)
+    st_roll = stateful_commands.add_parser(
+        "rollout", help="run a guarded finite-strain viscoelastic trajectory rollout"
+    )
+    st_roll.add_argument("--artifact", type=Path, required=True)
+    st_roll.add_argument("--load-path", type=Path, required=True)
+    st_roll.add_argument("--resume", type=Path, default=None)
+    st_roll.add_argument("--checkpoint-out", type=Path, default=None)
+    st_roll.add_argument("--residual-tolerance", type=float, default=5.0)
+    st_roll.add_argument("--output", type=Path, default=None)
+    st_roll.set_defaults(handler=_stateful_rollout)
 
     store = subparsers.add_parser("store")
     store_commands = store.add_subparsers(dest="store_command", required=True)
@@ -543,7 +799,14 @@ def build_parser(*, prog: str = "piginot") -> argparse.ArgumentParser:
         "--trust-report",
         action="store_true",
         help="attach a versioned CADTrustReport separating geometry, "
-        "discretization, surrogate and statistical status",
+        "discretization, surrogate (with live DWR adjoints in certified/exact "
+        "mode) and statistical status",
+    )
+    predict.add_argument(
+        "--trust-sidecar",
+        type=Path,
+        default=None,
+        help="optional geometry/discretization convergence sidecar JSON for --trust-report",
     )
     predict.set_defaults(handler=_predict)
 
