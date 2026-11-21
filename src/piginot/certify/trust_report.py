@@ -27,7 +27,13 @@ from piginot.contracts import canonical_json_bytes
 
 CAD_TRUST_REPORT_SCHEMA: Final = "piginot.cad-trust-report-v1"
 SUPPORTED_QOI_KINDS: Final = frozenset(
-    ("reaction_force", "regional_average_stress", "peak_stress")
+    (
+        "reaction_force",
+        "regional_average_stress",
+        "peak_stress",
+        "smoothed_peak_stress",
+        "total_strain_energy",
+    )
 )
 ALLOWED_CLAIM_LEVELS: Final = (
     "NOT_VERIFIED",

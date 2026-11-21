@@ -30,7 +30,12 @@ from piginot.contracts import canonical_json_bytes
 ACQUISITION_PLAN_SCHEMA: Final = "piginot.active-fem-plan-v1"
 FEM_COST_LEDGER_SCHEMA: Final = "piginot.fem-cost-ledger-v1"
 SELECTION_EVIDENCE_SCHEMA: Final = "piginot.active-selection-evidence-v1"
-ACQUISITION_ARMS: Final = ("random_doe", "physics_indicator", "physics_diversity")
+ACQUISITION_ARMS: Final = (
+    "random_doe",
+    "physics_indicator",
+    "physics_diversity",
+    "physics_dwr_diversity",
+)
 TRAINING_MODES: Final = ("label_free", "multi_fidelity_label_efficient")
 
 
@@ -63,6 +68,8 @@ class AcquisitionCandidate:
     eta_energy: float
     ood_distance: float = 0.0
     ensemble_disagreement: float = 0.0
+    dwr_sensitivity: float = 0.0
+    geometry_token_vector: tuple[float, ...] = ()
     parameters: Mapping[str, float] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -96,6 +103,16 @@ class AcquisitionCandidate:
                 nonnegative=True,
             ),
         )
+        object.__setattr__(
+            self,
+            "dwr_sensitivity",
+            _finite(self.dwr_sensitivity, "dwr_sensitivity", nonnegative=True),
+        )
+        toks = tuple(
+            _finite(v, f"geometry_token_vector[{i}]")
+            for i, v in enumerate(self.geometry_token_vector)
+        )
+        object.__setattr__(self, "geometry_token_vector", toks)
         if not isinstance(self.parameters, Mapping):
             object.__setattr__(self, "parameters", {})
         else:
@@ -117,26 +134,32 @@ class AcquisitionWeights:
     ood_weight: float = 0.2
     ensemble_weight: float = 0.1
     diversity_weight: float = 0.2
+    dwr_weight: float = 0.0
 
     def __post_init__(self) -> None:
         w1 = _finite(self.eta_weight, "eta_weight", nonnegative=True)
         w2 = _finite(self.ood_weight, "ood_weight", nonnegative=True)
         w3 = _finite(self.ensemble_weight, "ensemble_weight", nonnegative=True)
         w4 = _finite(self.diversity_weight, "diversity_weight", nonnegative=True)
-        if w1 + w2 + w3 + w4 <= 0.0:
+        w5 = _finite(self.dwr_weight, "dwr_weight", nonnegative=True)
+        if w1 + w2 + w3 + w4 + w5 <= 0.0:
             raise ValueError("at least one acquisition weight must be positive")
         object.__setattr__(self, "eta_weight", w1)
         object.__setattr__(self, "ood_weight", w2)
         object.__setattr__(self, "ensemble_weight", w3)
         object.__setattr__(self, "diversity_weight", w4)
+        object.__setattr__(self, "dwr_weight", w5)
 
     def document(self) -> dict[str, float]:
-        return {
+        doc = {
             "eta_weight": self.eta_weight,
             "ood_weight": self.ood_weight,
             "ensemble_weight": self.ensemble_weight,
             "diversity_weight": self.diversity_weight,
         }
+        if self.dwr_weight > 0.0:
+            doc["dwr_weight"] = self.dwr_weight
+        return doc
 
 
 @dataclass(frozen=True, slots=True)
@@ -144,7 +167,12 @@ class AcquisitionPlan:
     """Preregistered, content-hashed active-FEM acquisition policy."""
 
     plan_id: str
-    arm_kind: Literal["random_doe", "physics_indicator", "physics_diversity"]
+    arm_kind: Literal[
+        "random_doe",
+        "physics_indicator",
+        "physics_diversity",
+        "physics_dwr_diversity",
+    ]
     budget_solves: int
     batch_size: int
     seed: int
@@ -204,9 +232,10 @@ class SelectionScoreBreakdown:
     tilde_ood: float
     tilde_ensemble: float
     tilde_diversity: float
+    tilde_dwr: float = 0.0
 
     def document(self) -> dict[str, Any]:
-        return {
+        doc = {
             "case_id": self.case_id,
             "rank": self.rank,
             "total_score": self.total_score,
@@ -215,6 +244,9 @@ class SelectionScoreBreakdown:
             "tilde_ensemble": self.tilde_ensemble,
             "tilde_diversity": self.tilde_diversity,
         }
+        if self.tilde_dwr > 0.0:
+            doc["tilde_dwr"] = self.tilde_dwr
+        return doc
 
 
 @dataclass(frozen=True, slots=True)
@@ -330,17 +362,29 @@ def select_acquisition_batch(
             scores=scores,
         )
 
-    # Normalize feature vectors per coordinate for scale-invariant diversity distances.
-    col_lo = [min(c.feature_vector[j] for c in eligible) for j in range(dim)]
+    # Normalize feature vectors (plus optional geometry tokens for physics_dwr_diversity).
+    use_joint_tokens = plan.arm_kind == "physics_dwr_diversity" and all(
+        bool(c.geometry_token_vector) for c in eligible
+    )
+    joint_raw = {
+        c.case_id: (
+            (*c.feature_vector, *c.geometry_token_vector)
+            if use_joint_tokens
+            else c.feature_vector
+        )
+        for c in eligible
+    }
+    joint_dim = len(next(iter(joint_raw.values())))
+    col_lo = [min(joint_raw[c.case_id][j] for c in eligible) for j in range(joint_dim)]
     col_span = [
-        max(max(c.feature_vector[j] for c in eligible) - col_lo[j], 1e-15)
-        for j in range(dim)
+        max(max(joint_raw[c.case_id][j] for c in eligible) - col_lo[j], 1e-15)
+        for j in range(joint_dim)
     ]
 
     def _norm_feat(vec: tuple[float, ...]) -> tuple[float, ...]:
-        return tuple((vec[j] - col_lo[j]) / col_span[j] for j in range(dim))
+        return tuple((vec[j] - col_lo[j]) / col_span[j] for j in range(len(vec)))
 
-    norm_feats = {c.case_id: _norm_feat(c.feature_vector) for c in eligible}
+    norm_feats = {cid: _norm_feat(vec) for cid, vec in joint_raw.items()}
     eta_norm = dict(
         zip(
             (c.case_id for c in eligible),
@@ -362,20 +406,33 @@ def select_acquisition_batch(
             strict=True,
         )
     )
+    dwr_norm = dict(
+        zip(
+            (c.case_id for c in eligible),
+            _normalize_scale([c.dwr_sensitivity for c in eligible]),
+            strict=True,
+        )
+    )
 
     if plan.arm_kind == "physics_indicator":
-        w1, w2, w3, w4 = 1.0, 0.0, 0.0, 0.0
+        w1, w2, w3, w4, w5 = 1.0, 0.0, 0.0, 0.0, 0.0
+    elif plan.arm_kind == "physics_dwr_diversity":
+        # Single-model physics-residual + DWR sensitivity + geometry-token diversity (no ensemble).
+        w = plan.weights
+        w5 = w.dwr_weight if w.dwr_weight > 0.0 else 0.35
+        w1, w2, w3, w4 = w.eta_weight, w.ood_weight, 0.0, w.diversity_weight
     else:
         w = plan.weights
-        w1, w2, w3, w4 = (
+        w1, w2, w3, w4, w5 = (
             w.eta_weight,
             w.ood_weight,
             w.ensemble_weight,
             w.diversity_weight,
+            w.dwr_weight,
         )
 
     anchors: list[tuple[float, ...]] = [
-        _norm_feat(f) for f in already_acquired_features
+        _norm_feat(f) for f in already_acquired_features if len(f) == joint_dim
     ]
     remaining = list(eligible)
     selected_ids: list[str] = []
@@ -399,7 +456,14 @@ def select_acquisition_batch(
 
         best_cand: AcquisitionCandidate | None = None
         best_key: tuple[float, str] | None = None
-        best_parts: tuple[float, float, float, float, float] = (0.0, 0.0, 0.0, 0.0, 0.0)
+        best_parts: tuple[float, float, float, float, float, float] = (
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+        )
 
         for cand in remaining:
             cid = cand.case_id
@@ -407,13 +471,14 @@ def select_acquisition_batch(
             t_ood = ood_norm[cid]
             t_ens = ens_norm[cid]
             t_div = div_norm[cid]
-            score = w1 * t_eta + w2 * t_ood + w3 * t_ens + w4 * t_div
+            t_dwr = dwr_norm[cid]
+            score = w1 * t_eta + w2 * t_ood + w3 * t_ens + w4 * t_div + w5 * t_dwr
             # Maximize score, break exact ties deterministically by lexicographic case_id.
             key = (-round(score, 12), cid)
             if best_key is None or key < best_key:
                 best_key = key
                 best_cand = cand
-                best_parts = (score, t_eta, t_ood, t_ens, t_div)
+                best_parts = (score, t_eta, t_ood, t_ens, t_div, t_dwr)
 
         assert best_cand is not None
         selected_ids.append(best_cand.case_id)
@@ -428,6 +493,7 @@ def select_acquisition_batch(
                 tilde_ood=best_parts[2],
                 tilde_ensemble=best_parts[3],
                 tilde_diversity=best_parts[4],
+                tilde_dwr=best_parts[5] if w5 > 0.0 else 0.0,
             )
         )
 

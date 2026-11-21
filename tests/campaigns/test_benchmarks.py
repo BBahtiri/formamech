@@ -58,3 +58,31 @@ def test_render_reports_an_unopened_holdout_without_numbers() -> None:
     assert "HOLDOUT calibration coverage of the 90% confidence bound: 87.00%" in text
     assert "Claim level: `NOT_VERIFIED`." in text
     assert text.count("DEVELOPMENT budget: accepted by the decision owner") == 1
+
+
+def test_render_reports_amortized_break_even_with_and_without_training_time() -> None:
+    fam_partial = _family("a-v1", None)
+    fam_partial["development"]["amortization"] = {
+        "calibration_cases": 64,
+        "calibration_only_break_even_queries": 64.06,
+        "training_wall_seconds": None,
+        "break_even_queries": None,
+        "threads": 1,
+        "precision": "float64",
+        "device": "cpu",
+        "query_set": "969 vertices",
+    }
+    fam_full = _family("b-v1", None)
+    fam_full["development"]["amortization"] = {
+        "calibration_cases": 20,
+        "calibration_only_break_even_queries": 20.02,
+        "training_wall_seconds": 1000.0,
+        "break_even_queries": 30.03,
+        "threads": 1,
+        "precision": "float64",
+        "device": "cpu",
+        "query_set": "833 vertices",
+    }
+    text = render({"families": [fam_partial, fam_full]})
+    assert "at least **64.1 queries**" in text
+    assert "**30.0 queries**" in text

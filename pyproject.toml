@@ -39,6 +39,9 @@ physics = ["torch>=2.6,<3"]
 ml = ["torch>=2.6,<3", "safetensors>=0.8,<1"]
 runtime = ["numpy>=1.26,<2.3", "torch>=2.6,<3", "safetensors>=0.8,<1"]
 plot = ["matplotlib>=3.9,<4", "numpy>=1.26,<2.3"]
+ui = ["streamlit>=1.40,<2", "plotly>=5.24,<7"]
+mcp = ["mcp>=1.6,<2"]
+export = ["onnx>=1.17,<2", "onnxruntime>=1.20,<2"]
 verify = [
   "numpy>=1.26,<2.3",
   "threadpoolctl>=3.1,<4",
@@ -67,6 +70,10 @@ piginot = "piginot.cli:main"
 dogbone-v1 = "piginot_campaigns.adapters:DOGBONE"
 notched-v1 = "piginot_campaigns.adapters:NOTCHED"
 cad-fixed-v1 = "piginot.cad.adapter:FIXED_CAD"
+
+[project.entry-points."formamech.fem.backends"]
+scikit-fem = "piginot.fem.backend:ScikitFemBackend"
+torch-fem = "piginot.fem.torch_backend:TorchFemBackend"
 
 [tool.hatch.build]
 exclude = ["/experiments"]

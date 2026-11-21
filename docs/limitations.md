@@ -358,5 +358,10 @@ A successful command or bundle-integrity check establishes execution or
 matching bytes, not a model-accuracy claim.
 
 Keep experimental accuracy reports, run outputs, plots and trained weights
-locally under `.piginot-runs/` or outside the source checkout. They are specific
-to the corresponding geometry, material, loads, mesh and training setup.
+locally under `.formamech-runs/` (legacy `.piginot-runs/` is also gitignored) or
+outside the source checkout. They are specific to the corresponding geometry,
+material, loads, mesh and training setup.
+
+*Historical provenance note: ADR links pinned at commit `7f71278` above reference
+the pre-rename `BBahtiri/verified-neural-operators` archive from release `0.1.0`;
+active development and releases live at `https://github.com/BBahtiri/formamech`.*

@@ -27,6 +27,7 @@ from piginot.verification import (
     vertex_mesh_size,
     vertex_patch_mean,
 )
+from piginot.verification.amortization import amortized_break_even_queries
 
 _DTYPE = torch.float64
 _EXTENT = torch.tensor([[20.0, 8.0]], dtype=_DTYPE)
@@ -219,6 +220,59 @@ def test_latency_reports_median_and_p99_and_restores_threads() -> None:
         measure_latency(lambda: None, repeats=0)
     with pytest.raises(TypeError):
         measure_latency(None)  # type: ignore[arg-type]
+
+
+def test_amortized_break_even_queries_formula_and_validation() -> None:
+    summary = amortized_break_even_queries(
+        training_wall_seconds=1000.0,
+        calibration_cases=20,
+        fem_seconds=100.0,
+        inference_seconds=0.1,
+        threads=1,
+        precision="float64",
+        device="cpu",
+        dof_count=1938,
+    )
+    expected = (1000.0 + 20 * 100.0) / (100.0 - 0.1)
+    assert summary.break_even_queries == pytest.approx(expected)
+    assert summary.calibration_only_break_even_queries == pytest.approx(
+        (20 * 100.0) / (100.0 - 0.1)
+    )
+    assert summary.online_speedup == pytest.approx(1000.0)
+    doc = summary.document()
+    assert doc["dof_count"] == 1938
+    assert doc["break_even_queries"] == pytest.approx(expected)
+
+    no_train = amortized_break_even_queries(
+        training_wall_seconds=None,
+        calibration_cases=64,
+        fem_seconds=109.9,
+        inference_seconds=0.109,
+    )
+    assert no_train.break_even_queries is None
+    assert no_train.calibration_only_break_even_queries > 64.0
+
+    with pytest.raises(ValueError):
+        amortized_break_even_queries(
+            training_wall_seconds=10.0,
+            calibration_cases=5,
+            fem_seconds=0.1,
+            inference_seconds=0.2,
+        )
+    with pytest.raises(ValueError):
+        amortized_break_even_queries(
+            training_wall_seconds=-1.0,
+            calibration_cases=5,
+            fem_seconds=10.0,
+            inference_seconds=0.1,
+        )
+    with pytest.raises(TypeError):
+        amortized_break_even_queries(
+            training_wall_seconds=None,
+            calibration_cases=True,  # type: ignore[arg-type]
+            fem_seconds=10.0,
+            inference_seconds=0.1,
+        )
 
 
 def test_boundary_traction_residual_uses_outward_normals_and_free_components() -> None:

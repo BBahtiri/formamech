@@ -311,6 +311,10 @@ def assemble_dead_loads(
             )
             result = result + np.asarray(assembled, dtype=np.float64) * thickness
             continue
+        if load.kind in ("follower_pressure", "cavity_pressure"):
+            # Follower pressure is configuration-dependent and assembled dynamically
+            # in piginot.fem.follower rather than as a dead load.
+            continue
         if load.kind != "traction" or load.boundary_tag is None:
             raise FemSolveFailure(
                 FemFailureCode.UNSUPPORTED_REQUEST,

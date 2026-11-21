@@ -49,3 +49,49 @@ def symmetric_inertia(matrix: Any) -> Inertia:
         return Inertia(size, None)
     pivots = np.asarray(factor.U.diagonal(), dtype=np.float64)
     return Inertia(size, int(np.count_nonzero(~(pivots > 0.0))))
+
+
+@dataclass(frozen=True, slots=True)
+class CoerciveInertia:
+    """Positive-definiteness / coercivity check supporting unsymmetric tangents.
+
+    When ``tangent_symmetric`` is ``True``, :attr:`inertia` is Sylvester's exact
+    inertia of ``K``. When ``tangent_symmetric`` is ``False`` (for example under
+    non-conservative follower pressure loads), :attr:`inertia` evaluates the
+    symmetric part ``0.5 * (K + K^T)`` to test coercivity (``v^T K v > 0``).
+    """
+
+    inertia: Inertia
+    tangent_symmetric: bool
+    relative_asymmetry: float
+
+    @property
+    def positive_definite(self) -> bool | None:
+        return self.inertia.positive_definite
+
+
+def coercive_inertia(
+    matrix: Any,
+    *,
+    symmetry_tol: float = 1.0e-10,
+) -> CoerciveInertia:
+    """Test positive definiteness of ``matrix`` or coercivity of ``0.5*(K+K^T)``."""
+
+    square = csc_matrix(matrix, dtype=np.float64)
+    size = int(square.shape[0])
+    if size == 0:
+        return CoerciveInertia(Inertia(0, 0), True, 0.0)
+    skew = square - square.T
+    mat_norm = float(np.sqrt(np.sum(square.data**2))) if square.nnz else 0.0
+    skew_norm = float(np.sqrt(np.sum(skew.data**2))) if skew.nnz else 0.0
+    rel_asym = 0.0 if mat_norm == 0.0 else skew_norm / mat_norm
+    is_symmetric = rel_asym <= symmetry_tol
+    target = square if is_symmetric else 0.5 * (square + square.T)
+    return CoerciveInertia(
+        inertia=symmetric_inertia(target),
+        tangent_symmetric=is_symmetric,
+        relative_asymmetry=rel_asym,
+    )
+
+
+__all__ = ("CoerciveInertia", "Inertia", "coercive_inertia", "symmetric_inertia")

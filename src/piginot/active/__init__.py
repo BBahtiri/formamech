@@ -25,6 +25,11 @@ from piginot.active.campaign import (
     ActiveFemSolveOutcome,
     run_active_fem_campaign,
 )
+from piginot.active.feedback import (
+    FALLBACK_LEDGER_SCHEMA,
+    FallbackFeedbackLedger,
+    FallbackReturnRecord,
+)
 
 _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     "MULTIFIDELITY_DISCLOSURE": (
@@ -55,6 +60,7 @@ __all__ = (
     "ACQUISITION_ARMS",
     "ACQUISITION_PLAN_SCHEMA",
     "ACTIVE_CAMPAIGN_SUMMARY_SCHEMA",
+    "FALLBACK_LEDGER_SCHEMA",
     "FEM_COST_LEDGER_SCHEMA",
     "MULTIFIDELITY_DISCLOSURE",
     "SELECTION_EVIDENCE_SCHEMA",
@@ -66,6 +72,8 @@ __all__ = (
     "ActiveFemSolveOutcome",
     "FEMCostLedger",
     "FEMCostLedgerEntry",
+    "FallbackFeedbackLedger",
+    "FallbackReturnRecord",
     "MultiFidelityConfig",
     "MultiFidelityTerms",
     "SelectionEvidence",

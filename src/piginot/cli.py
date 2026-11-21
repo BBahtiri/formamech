@@ -258,8 +258,26 @@ def _predict(args: argparse.Namespace) -> int:
         except CalibrationError as exc:
             print(f"{_program(args)}: {exc}", file=sys.stderr)
             return EXIT_ERROR
+    cad_calibration = None
+    if getattr(args, "cad_calibration", None) is not None:
+        from piginot.bounds import CadCalibrationRecord
+
+        try:
+            cad_calibration = CadCalibrationRecord.load(
+                args.cad_calibration,
+                expected_manifest_sha256=bundle.manifest.manifest_sha256,
+            )
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            print(f"{_program(args)}: {exc}", file=sys.stderr)
+            return EXIT_ERROR
     if args.mode == "fast":
-        if calibration is not None:
+        use_serve = (
+            calibration is not None
+            or cad_calibration is not None
+            or bool(getattr(args, "tier0", False))
+            or bool(getattr(args, "receipt", False))
+        )
+        if use_serve:
             from piginot.serving import serve
 
             served = serve(
@@ -268,6 +286,9 @@ def _predict(args: argparse.Namespace) -> int:
                 cast(Any, queries),
                 confidence=not args.no_confidence,
                 calibration=calibration,
+                cad_calibration=cad_calibration,
+                tier0_check=bool(getattr(args, "tier0", False)),
+                emit_receipt=bool(getattr(args, "receipt", False)),
             )
             doc = served.document()
             if getattr(args, "trust_report", False):
@@ -285,7 +306,7 @@ def _predict(args: argparse.Namespace) -> int:
             doc = _attach_trust_report(doc, bundle, mode="fast")
         _emit(doc, args.output)
         return EXIT_OK if prediction.in_domain else EXIT_REFUSED
-    return _serve_verified(args, bundle, inputs, queries, calibration)
+    return _serve_verified(args, bundle, inputs, queries, calibration, cad_calibration)
 
 
 def _load_trust_sidecar(
@@ -312,18 +333,33 @@ def _serve_verified(
     inputs: Any,
     queries: Any,
     calibration: Any = None,
+    cad_calibration: Any = None,
 ) -> int:
     """``--mode certified|exact`` (S22): certificate, correction, FEM solve, live DWR."""
 
+    from piginot.bundle.problem import PortableProblem
     from piginot.serving import MissingExtraError, ServingPath, load_recipe, serve
 
     try:
-        recipe = load_recipe(bundle, args.bundle, args.recipe)
+        is_portable = isinstance(
+            getattr(bundle.model, "problem", None), PortableProblem
+        )
+        recipe = (
+            None
+            if (is_portable and args.recipe is None)
+            else load_recipe(bundle, args.bundle, args.recipe)
+        )
         sidecar = (
             _load_trust_sidecar(args.bundle, getattr(args, "trust_sidecar", None))
             if getattr(args, "trust_report", False)
             else None
         )
+        tta_steps = int(getattr(args, "tta_steps", 0) or 0)
+        tta_cfg = None
+        if tta_steps > 0:
+            from piginot.serving.test_time_lora import TestTimeLoraConfig
+
+            tta_cfg = TestTimeLoraConfig(steps=tta_steps)
         served = serve(
             bundle,
             inputs,
@@ -333,14 +369,20 @@ def _serve_verified(
             corrected=args.corrected,
             escalate=args.escalate,
             tolerance=args.tolerance,
+            backend=getattr(args, "backend", None),
             calibration=calibration,
+            cad_calibration=cad_calibration,
             trust_report=bool(getattr(args, "trust_report", False)),
             trust_sidecar=sidecar,
+            tier0_check=bool(getattr(args, "tier0", False)),
+            spectral_repair=bool(getattr(args, "spectral_repair", False)),
+            tta_config=tta_cfg,
+            emit_receipt=bool(getattr(args, "receipt", False)),
         )
     except MissingExtraError as exc:
         print(f"{_program(args)}: {exc}", file=sys.stderr)
         return EXIT_ERROR
-    except (OSError, ValueError) as exc:
+    except (LookupError, OSError, ValueError) as exc:
         print(f"{_program(args)}: cannot serve {args.mode}: {exc}", file=sys.stderr)
         return EXIT_ERROR
     doc = served.document()
@@ -350,6 +392,70 @@ def _serve_verified(
     if served.path is ServingPath.REFUSED:
         return EXIT_REFUSED
     return EXIT_ERROR if served.path is ServingPath.SOLVE_FAILED else EXIT_OK
+
+
+def _calibrate(args: argparse.Namespace) -> int:
+    """Build a bundle-bound per-CAD split-conformal calibration sidecar."""
+    from piginot.bounds import build_cad_calibration
+    from piginot.bundle import BundleIntegrityError, load_bundle
+    from piginot.bundle.problem import PortableProblem
+
+    try:
+        bundle = load_bundle(args.bundle)
+    except (BundleIntegrityError, OSError) as exc:
+        _emit(_bundle_refusal(exc), None)
+        return EXIT_ERROR
+    try:
+        raw = json.loads(args.scores.read_text(encoding="utf-8"))
+        qoi_scores = {
+            str(name): (str(entry["unit"]), [float(v) for v in entry["scores"]])
+            for name, entry in dict(raw.get("qoi_scores", {})).items()
+        }
+        func_res = {
+            str(name): (
+                str(entry["unit"]),
+                [[float(x) for x in row] for row in entry["residuals"]],
+            )
+            for name, entry in dict(raw.get("functional_residuals", {})).items()
+        }
+        pbounds = {
+            bound.name: (
+                float(bound.lower_bound.value),
+                float(bound.upper_bound.value),
+            )
+            for bound in bundle.envelope.primitive_bounds
+        }
+        problem = getattr(bundle.model, "problem", None)
+        record = build_cad_calibration(
+            bundle_name=bundle.manifest.name,
+            bundle_manifest_sha256=bundle.manifest.manifest_sha256,
+            problem_hash=(
+                problem.problem_hash if isinstance(problem, PortableProblem) else None
+            ),
+            qoi_scores=qoi_scores,
+            alpha=float(args.alpha),
+            exchangeability_scope=str(
+                raw.get(
+                    "exchangeability_scope",
+                    "in-envelope-exchangeable-cad-calibration",
+                )
+            ),
+            functional_residuals=func_res or None,
+            parameter_bounds=pbounds,
+        )
+        record.save(args.output)
+    except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+        print(f"{_program(args)} calibrate: {exc}", file=sys.stderr)
+        return EXIT_REFUSED
+    _emit(
+        {
+            **record.document(),
+            "calibration_sha256": record.calibration_sha256,
+            "output": str(args.output),
+        },
+        None,
+    )
+    return EXIT_OK
 
 
 def _inspect(args: argparse.Namespace) -> int:
@@ -582,6 +688,87 @@ def _stateful_rollout(args: argparse.Namespace) -> int:
     return EXIT_OK if result.get("accepted") else EXIT_REFUSED
 
 
+def _ui(args: argparse.Namespace) -> int:
+    """Launch the Verification & Trust Inspector Streamlit app (`formamech[ui]`)."""
+    import importlib.util
+    import subprocess
+
+    if importlib.util.find_spec("streamlit") is None:
+        print(
+            f"{_program(args)} ui: requires optional extra {_program(args)}[ui] "
+            "(install with `pip install 'formamech[ui]'`)",
+            file=sys.stderr,
+        )
+        return EXIT_ERROR
+    app_path = Path(__file__).resolve().parent / "ui" / "app.py"
+    cmd = [
+        sys.executable,
+        "-m",
+        "streamlit",
+        "run",
+        str(app_path),
+        "--server.port",
+        str(int(args.port)),
+    ]
+    if args.headless:
+        cmd.extend(["--server.headless", "true"])
+    if args.bundle is not None:
+        cmd.extend(["--", str(args.bundle)])
+    completed = subprocess.run(cmd, check=False)
+    return int(completed.returncode)
+
+
+def _mcp(args: argparse.Namespace) -> int:
+    """Run or inspect the FormaMech Model Context Protocol (MCP) server."""
+    from piginot.mcp_server import FormaMechMcpServer
+
+    try:
+        server = FormaMechMcpServer(
+            args.workspace,
+            max_dof_limit=int(args.max_dofs),
+        )
+    except ValueError as exc:
+        print(f"{_program(args)} mcp: {exc}", file=sys.stderr)
+        return EXIT_ERROR
+    if args.mcp_command == "list-tools":
+        _emit({"tools": server.list_tools()}, args.output)
+        return EXIT_OK
+    server.serve_stdio()
+    return EXIT_OK
+
+
+def _export(args: argparse.Namespace) -> int:
+    """Export a verified FormaMech bundle to ONNX or FMI 3.0 Co-Simulation FMU."""
+    from piginot.bundle import BundleIntegrityError
+    from piginot.export import export_bundle_to_fmu, export_bundle_to_onnx
+    from piginot.serving.hybrid import MissingExtraError
+
+    try:
+        if args.export_command == "onnx":
+            onnx_res = export_bundle_to_onnx(
+                args.bundle,
+                args.output,
+                opset_version=int(args.opset),
+                verify_parity=not bool(args.no_verify),
+            )
+            _emit(onnx_res.document(), None)
+            return EXIT_OK
+        fmu_res = export_bundle_to_fmu(
+            args.bundle,
+            args.output,
+            model_name=args.model_name,
+            include_onnx=bool(args.include_onnx),
+        )
+        _emit(fmu_res.document(), None)
+        return EXIT_OK
+    except MissingExtraError as exc:
+        print(f"{_program(args)} export: {exc}", file=sys.stderr)
+        return EXIT_ERROR
+    except (BundleIntegrityError, OSError, ValueError) as exc:
+        print(f"{_program(args)} export: {exc}", file=sys.stderr)
+        return EXIT_ERROR
+
+
 def _campaign(command: str, args: argparse.Namespace) -> int:
     try:
         table = resolve_campaign(args.campaign, args.campaign_path)
@@ -808,7 +995,104 @@ def build_parser(*, prog: str = "piginot") -> argparse.ArgumentParser:
         default=None,
         help="optional geometry/discretization convergence sidecar JSON for --trust-report",
     )
+    predict.add_argument(
+        "--backend",
+        type=str,
+        default=None,
+        help="FEM solver backend name registered under formamech.fem.backends "
+        "(default: scikit-fem)",
+    )
+    predict.add_argument(
+        "--tier0",
+        action="store_true",
+        help="evaluate Tier 0 zero-FEM physics admissibility checks on served fields",
+    )
+    predict.add_argument(
+        "--spectral-repair",
+        action="store_true",
+        help="exact/escalated: run bounded discrete spectral repair before warm Newton "
+        "when initial predictions are inadmissible or indefinite",
+    )
+    predict.add_argument(
+        "--cad-calibration",
+        type=Path,
+        default=None,
+        help="path to a per-CAD split-conformal calibration sidecar JSON",
+    )
+    predict.add_argument(
+        "--tta-steps",
+        type=int,
+        default=0,
+        help="certified: optional zero-shot test-time physics LoRA steps (1..200) "
+        "before escalating to Tier 2 FEM",
+    )
+    predict.add_argument(
+        "--receipt",
+        action="store_true",
+        help="emit a canonical RFC 8785 Trust Receipt (formamech.trust-receipt-v1)",
+    )
     predict.set_defaults(handler=_predict)
+
+    calibrate = subparsers.add_parser(
+        "calibrate",
+        help="build a per-CAD split-conformal & functional-band calibration sidecar",
+    )
+    calibrate.add_argument("bundle", type=Path)
+    calibrate.add_argument("--scores", type=Path, required=True)
+    calibrate.add_argument("--alpha", type=float, default=0.05)
+    calibrate.add_argument("--output", type=Path, required=True)
+    calibrate.set_defaults(handler=_calibrate)
+
+    ui = subparsers.add_parser(
+        "ui",
+        help="launch the Verification & Trust Inspector web app (needs [ui] extra)",
+    )
+    ui.add_argument("--bundle", type=Path, default=None)
+    ui.add_argument("--port", type=int, default=8501)
+    ui.add_argument("--headless", action="store_true")
+    ui.set_defaults(handler=_ui)
+
+    mcp = subparsers.add_parser(
+        "mcp",
+        help="run or inspect the sandboxed FormaMech MCP server",
+    )
+    mcp_commands = mcp.add_subparsers(dest="mcp_command", required=True)
+    mcp_serve = mcp_commands.add_parser(
+        "serve", help="serve JSON-RPC 2.0 MCP tools over stdio"
+    )
+    mcp_serve.add_argument("--workspace", type=Path, default=Path("."))
+    mcp_serve.add_argument("--max-dofs", type=int, default=100_000)
+    mcp_serve.set_defaults(handler=_mcp)
+    mcp_list = mcp_commands.add_parser(
+        "list-tools", help="print declared MCP tool descriptors as JSON"
+    )
+    mcp_list.add_argument("--workspace", type=Path, default=Path("."))
+    mcp_list.add_argument("--max-dofs", type=int, default=100_000)
+    mcp_list.add_argument("--output", type=Path, default=None)
+    mcp_list.set_defaults(handler=_mcp)
+
+    export = subparsers.add_parser(
+        "export",
+        help="export a verified bundle to ONNX or FMI 3.0 Co-Simulation FMU",
+    )
+    export_commands = export.add_subparsers(dest="export_command", required=True)
+    exp_onnx = export_commands.add_parser(
+        "onnx",
+        help="export surrogate operator + lifting to ONNX (needs [export] extra)",
+    )
+    exp_onnx.add_argument("bundle", type=Path)
+    exp_onnx.add_argument("--output", type=Path, required=True)
+    exp_onnx.add_argument("--opset", type=int, default=17)
+    exp_onnx.add_argument("--no-verify", action="store_true")
+    exp_onnx.set_defaults(handler=_export)
+    exp_fmu = export_commands.add_parser(
+        "fmu", help="package an FMI 3.0 Co-Simulation .fmu archive"
+    )
+    exp_fmu.add_argument("bundle", type=Path)
+    exp_fmu.add_argument("--output", type=Path, required=True)
+    exp_fmu.add_argument("--model-name", type=str, default=None)
+    exp_fmu.add_argument("--include-onnx", action="store_true")
+    exp_fmu.set_defaults(handler=_export)
 
     inspect = subparsers.add_parser("inspect", help="describe a bundle")
     inspect.add_argument("bundle", type=Path)

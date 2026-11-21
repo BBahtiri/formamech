@@ -12,6 +12,10 @@ from piginot.objectives.energy import (
     plane_stress_potential_energy,
     stratified_triangle_quadrature,
 )
+from piginot.objectives.energy_25d import (
+    axisymmetric_potential_energy,
+    plane_strain_potential_energy,
+)
 from piginot.objectives.equilibrium import (
     strong_equilibrium_residual,
     weak_equilibrium_residual,
@@ -49,6 +53,14 @@ from piginot.objectives.terms import (
     supervised_displacement_residual,
     supervised_stress_residual,
     traction_free_residual,
+)
+from piginot.objectives.traction_and_follower import (
+    QuadratureOvershootDiagnostic,
+    check_energy_quadrature_overshoot,
+    dead_traction_potential_energy,
+    discrete_fem_residual_loss,
+    enclosed_cavity_pressure_energy,
+    follower_pressure_traction_residual,
 )
 
 _LAZY_EXPORTS = {
@@ -108,6 +120,7 @@ __all__ = (
     "PotentialEnergyConfig",
     "PotentialEnergyTerms",
     "QuadratureConvergenceReport",
+    "QuadratureOvershootDiagnostic",
     "S12GateCheck",
     "S12GateEvaluation",
     "S12GateMeasurements",
@@ -117,14 +130,21 @@ __all__ = (
     "VERIFIED_GRADIENT_TERM_IDS",
     "VERIFIED_REACHABILITY_LOSS_PATHS",
     "angular_momentum_residual",
+    "axisymmetric_potential_energy",
+    "check_energy_quadrature_overshoot",
+    "plane_strain_potential_energy",
     "check_quadrature_energy_convergence",
     "constitutive_residual",
+    "dead_traction_potential_energy",
     "default_objective_registry",
     "deterministic_triangle_quadrature",
     "dirichlet_residual",
+    "discrete_fem_residual_loss",
     "displacement_gradient",
+    "enclosed_cavity_pressure_energy",
     "evaluate_objective",
     "evaluate_s12_gate",
+    "follower_pressure_traction_residual",
     "hierarchical_plane_stress_energy",
     "plane_stress_potential_energy",
     "run_s12_verification",

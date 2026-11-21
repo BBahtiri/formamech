@@ -15,7 +15,8 @@ Claim level: `HOLDOUT_VERIFIED`.
 
 DEVELOPMENT budget: accepted by the decision owner (ADR 0021); computed FAIL on W_grip:2 absolute_peak_error 0.05004, nominal_axial_strain:2 absolute_peak_error 0.05054.
 
-HOLDOUT calibration coverage of the 90% confidence bound: 86.80%. Latency (u and P at every vertex, one thread): 0.109 s against 109.9 s for FEM, a speed-up of 1009x.
+HOLDOUT calibration coverage of the 90% confidence bound: 86.80%. Online latency (u and P at every vertex, one thread, float64 CPU): 0.109 s against 109.9 s for FEM, an unamortized online speed-up of 1009x.
+Amortized break-even query count `N* = (T_train + N_cal * T_FEM) / (T_FEM - T_infer)` (all mesh vertices of each case (969 points), float64 cpu, 1 thread): at least **64.1 queries** to amortize the 64 DEVELOPMENT calibration FEM solves alone (legacy S13 artifacts did not record offline training wall time `T_train`, which adds `T_train / (T_FEM - T_infer)` additional queries).
 
 ## notched-v1
 
@@ -30,7 +31,8 @@ Claim level: `DEVELOPMENT_VERIFIED`.
 
 DEVELOPMENT budget: accepted by the decision owner (ADR 0030).
 
-HOLDOUT calibration coverage of the 90% confidence bound: 87.71%. Latency (u and P at every vertex, one thread): 0.071 s against 99.5 s for FEM, a speed-up of 1410x.
+HOLDOUT calibration coverage of the 90% confidence bound: 87.71%. Online latency (u and P at every vertex, one thread, float64 CPU): 0.071 s against 99.5 s for FEM, an unamortized online speed-up of 1410x.
+Amortized break-even query count `N* = (T_train + N_cal * T_FEM) / (T_FEM - T_infer)` (all mesh vertices of each case (833 points), float64 cpu, 1 thread): at least **64.0 queries** to amortize the 64 DEVELOPMENT calibration FEM solves alone (legacy S13 artifacts did not record offline training wall time `T_train`, which adds `T_train / (T_FEM - T_infer)` additional queries).
 
 ## Reproduction
 

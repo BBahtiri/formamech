@@ -267,8 +267,10 @@ def _validate_inputs(
     expected_dtype = {"float32": torch.float32, "float64": torch.float64}.get(
         binding.execution_profile.dtype
     )
+    expected_device_type = binding.execution_profile.device.split(":", 1)[0]
     if expected_dtype is None or any(
-        parameter.dtype is not expected_dtype or parameter.device.type != "cpu"
+        parameter.dtype is not expected_dtype
+        or parameter.device.type != expected_device_type
         for parameter in parameters
     ):
         raise ValueError("model dtype/device does not match the execution profile")

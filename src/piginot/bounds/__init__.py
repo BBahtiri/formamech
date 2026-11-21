@@ -4,6 +4,14 @@ NumPy only: fast serving with ``formamech[runtime]`` can attach bounds without
 the FEM stack.
 """
 
+from piginot.bounds.cad_calibration import (
+    CAD_CALIBRATION_SCHEMA,
+    CadCalibrationRecord,
+    FunctionalBandCalibration,
+    ScalarQoiCalibration,
+    build_cad_calibration,
+    calibrate_functional_band,
+)
 from piginot.bounds.confirmation import (
     ConfirmedCalibration,
     H1Confirmation,
@@ -30,18 +38,24 @@ from piginot.bounds.record import (
 
 __all__ = (
     "BOUND_KINDS",
+    "CAD_CALIBRATION_SCHEMA",
     "IN_CALIBRATION",
     "OUT_OF_CALIBRATION",
+    "CadCalibrationRecord",
     "CalibrationError",
     "CalibrationRecord",
     "ConfirmedCalibration",
     "ConformalBound",
+    "FunctionalBandCalibration",
     "GateError",
     "H1Confirmation",
     "MahalanobisGate",
     "NoFiniteBound",
+    "ScalarQoiCalibration",
     "acceptance_count",
     "beta_binomial_pmf",
+    "build_cad_calibration",
+    "calibrate_functional_band",
     "calibration_path",
     "case_ids_sha256",
     "confirmation_path",

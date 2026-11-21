@@ -3,6 +3,20 @@
   {
    "claim_level": "HOLDOUT_VERIFIED",
    "development": {
+    "amortization": {
+     "break_even_queries": null,
+     "calibration_cases": 64,
+     "calibration_only_break_even_queries": 64.06346814288035,
+     "device": "cpu",
+     "dof_count": null,
+     "fem_seconds": 109.90592941449995,
+     "inference_seconds": 0.10888460200000001,
+     "online_speedup": 1009.3799067612879,
+     "precision": "float64",
+     "query_set": "all mesh vertices of each case (969 points)",
+     "threads": 1,
+     "training_wall_seconds": null
+    },
     "cases": 64,
     "fem_median_seconds": 109.90592941449995,
     "gated_status": "FAIL",
@@ -54,6 +68,20 @@
   {
    "claim_level": "DEVELOPMENT_VERIFIED",
    "development": {
+    "amortization": {
+     "break_even_queries": null,
+     "calibration_cases": 64,
+     "calibration_only_break_even_queries": 64.04542375255538,
+     "device": "cpu",
+     "dof_count": null,
+     "fem_seconds": 99.51657470300052,
+     "inference_seconds": 0.07058140925,
+     "online_speedup": 1409.9544874559233,
+     "precision": "float64",
+     "query_set": "all mesh vertices of each case (833 points)",
+     "threads": 1,
+     "training_wall_seconds": null
+    },
     "cases": 64,
     "fem_median_seconds": 99.51657470300052,
     "gated_status": "FAIL",

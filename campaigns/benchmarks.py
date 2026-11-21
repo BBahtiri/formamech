@@ -34,6 +34,7 @@ from pathlib import Path
 from typing import Any
 
 from campaigns.history import resolve_revision
+from piginot.verification.amortization import amortized_break_even_queries
 
 REPOSITORY = Path(__file__).resolve().parents[1]
 OUTPUT = Path("artifacts/benchmarks")
@@ -105,6 +106,16 @@ def family_table(family: str) -> dict[str, Any]:
     holdout = _load(holdout_path) if holdout_path.is_file() else None
     gate = _load(REPOSITORY / spec["gate"])
     latency = development["latency"]
+    amortization = amortized_break_even_queries(
+        training_wall_seconds=None,
+        calibration_cases=int(development["case_count"]),
+        fem_seconds=float(latency["fem_median_seconds"]),
+        inference_seconds=float(latency["model_u_and_p_median_seconds"]),
+        threads=int(latency.get("threads", 1)),
+        precision="float64",
+        device="cpu",
+    ).document()
+    amortization["query_set"] = latency.get("query_set")
     return {
         "family": family,
         "train_screen": {
@@ -124,6 +135,7 @@ def family_table(family: str) -> dict[str, Any]:
             "latency_u_and_p_median_seconds": latency["model_u_and_p_median_seconds"],
             "fem_median_seconds": latency["fem_median_seconds"],
             "speedup": latency["speedup_u_and_p"],
+            "amortization": amortization,
         },
         "holdout": None
         if holdout is None
@@ -224,12 +236,37 @@ def render(table: Mapping[str, Any]) -> str:
             lines += ["", f"DEVELOPMENT budget: {decision}."]
         lines += [
             "",
-            f"{coverage}Latency (u and P at every "
-            f"vertex, one thread): {development['latency_u_and_p_median_seconds']:.3f} s "
-            f"against {development['fem_median_seconds']:.1f} s for FEM, a speed-up of "
-            f"{development['speedup']:.0f}x.",
-            "",
+            f"{coverage}Online latency (u and P at every "
+            f"vertex, one thread, float64 CPU): "
+            f"{development['latency_u_and_p_median_seconds']:.3f} s "
+            f"against {development['fem_median_seconds']:.1f} s for FEM, an "
+            f"unamortized online speed-up of {development['speedup']:.0f}x.",
         ]
+        amort = development.get("amortization")
+        if isinstance(amort, Mapping):
+            cal_lb = float(amort["calibration_only_break_even_queries"])
+            n_cal = int(amort["calibration_cases"])
+            n_star = amort.get("break_even_queries")
+            qset = amort.get("query_set") or "mesh vertices"
+            if n_star is None:
+                lines.append(
+                    f"Amortized break-even query count `N* = (T_train + N_cal * T_FEM) "
+                    f"/ (T_FEM - T_infer)` ({qset}, {amort.get('precision', 'float64')} "
+                    f"{amort.get('device', 'cpu')}, {amort.get('threads', 1)} thread): "
+                    f"at least **{cal_lb:.1f} queries** to amortize the {n_cal} "
+                    f"DEVELOPMENT calibration FEM solves alone (legacy S13 artifacts "
+                    f"did not record offline training wall time `T_train`, which adds "
+                    f"`T_train / (T_FEM - T_infer)` additional queries)."
+                )
+            else:
+                lines.append(
+                    f"Amortized break-even query count `N*` ({qset}, "
+                    f"{amort.get('precision', 'float64')} {amort.get('device', 'cpu')}, "
+                    f"{amort.get('threads', 1)} thread): **{float(n_star):.1f} queries** "
+                    f"(including {float(amort['training_wall_seconds']):.1f} s training "
+                    f"and {n_cal} calibration FEM solves)."
+                )
+        lines.append("")
     lines += [
         "## Reproduction",
         "",

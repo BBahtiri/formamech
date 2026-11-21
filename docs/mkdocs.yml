@@ -18,6 +18,7 @@ exclude_docs: |
 
 nav:
   - Home: index.md
+  - Architecture and lineage: architecture.md
   - User guide: user-guide.md
   - Limitations: limitations.md
   - Examples: examples.md

@@ -57,7 +57,25 @@ def profile_mismatches(profile: ExecutionProfile, observed: Document) -> list[st
     for name, version in profile.library_versions.items():
         if observed["library_versions"].get(name) != version:
             failures.append(f"library {name} differs from the declared version")
-    if profile.device != "cpu" or profile.blas_threads != 1:
+    if profile.device.startswith("cuda"):
+        if profile.replay_tier != "gpu-accelerated-tolerance":
+            failures.append(
+                "CUDA execution profiles must declare replay_tier="
+                "'gpu-accelerated-tolerance'"
+            )
+        if not torch.cuda.is_available():
+            failures.append("CUDA execution requested but torch.cuda is unavailable")
+        elif profile.gpu_fingerprint is not None:
+            observed_gpu = {
+                "device_name": str(torch.cuda.get_device_name(0)),
+                "cuda_version": str(torch.version.cuda or "unknown"),
+                "cublas_workspace": str(
+                    profile.gpu_fingerprint.get("cublas_workspace", "")
+                ),
+            }
+            if observed_gpu != dict(profile.gpu_fingerprint):
+                failures.append("gpu_fingerprint differs from the observed CUDA device")
+    elif profile.device != "cpu" or profile.blas_threads != 1:
         failures.append("only CPU execution with one BLAS thread is supported")
     if profile.rng_algorithm != "torch-manual-seed":
         failures.append("unsupported RNG algorithm")

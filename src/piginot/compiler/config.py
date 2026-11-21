@@ -58,7 +58,7 @@ def _profile(value: object) -> ExecutionProfile:
             "seed",
             "platform_fingerprint",
         ),
-        ("container_digest",),
+        ("container_digest", "replay_tier", "gpu_fingerprint"),
     )
     versions = fields["library_versions"]
     if not isinstance(versions, dict) or not versions:
@@ -322,6 +322,19 @@ class CampaignConfig:
 
     def document(self) -> dict[str, Any]:
         document = cast(dict[str, Any], primitive(self))
+        omit_profile_keys = ("replay_tier", "gpu_fingerprint")
+        execution = {
+            slot: (
+                {
+                    k: v
+                    for k, v in profile_doc.items()
+                    if k not in omit_profile_keys or v is not None
+                }
+                if isinstance(profile_doc, dict)
+                else profile_doc
+            )
+            for slot, profile_doc in document["execution"].items()
+        }
         return {
             **document,
             "adapter": {
@@ -334,6 +347,7 @@ class CampaignConfig:
                 for name, value in document["objective"].items()
                 if value is not None
             },
+            "execution": execution,
         }
 
     @property

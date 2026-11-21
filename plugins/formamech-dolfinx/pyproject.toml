@@ -1,0 +1,20 @@
+[build-system]
+requires = ["hatchling>=1.27,<1.30"]
+build-backend = "hatchling.build"
+
+[project]
+name = "formamech-dolfinx"
+version = "0.1.0.dev0"
+description = "Optional LGPL-3.0 FEniCSx / DOLFINx 3D & Third Medium Contact SolverBackend plugin for FormaMech"
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+license = "LGPL-3.0-or-later"
+dependencies = [
+  "formamech>=0.2.0.dev0",
+]
+
+[project.entry-points."formamech.fem.backends"]
+dolfinx = "formamech_dolfinx.backend:DolfinxBackend"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/formamech_dolfinx"]

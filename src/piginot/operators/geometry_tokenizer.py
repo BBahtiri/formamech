@@ -34,8 +34,24 @@ GEOMETRY_FEATURE_NAMES: Final[tuple[str, ...]] = (
     "bc_traction_free",
     "dist_to_essential_norm",
 )
+GEOMETRY_LOAD_FEATURE_NAMES: Final[tuple[str, ...]] = (
+    *GEOMETRY_FEATURE_NAMES,
+    "bc_dead_traction",
+    "bc_follower_pressure",
+    "load_x_norm",
+    "load_y_norm",
+    "pressure_norm",
+)
 SUPPORTED_BC_ROLES: Final = frozenset(
-    ("dirichlet_xy", "dirichlet_x", "dirichlet_y", "symmetry", "traction_free")
+    (
+        "dirichlet_xy",
+        "dirichlet_x",
+        "dirichlet_y",
+        "symmetry",
+        "traction_free",
+        "dead_traction",
+        "follower_pressure",
+    )
 )
 
 
@@ -74,7 +90,45 @@ class BoundaryRoleMap:
             return (0.0, 1.0, 0.0, 0.0)
         if role == "symmetry":
             return (0.0, 0.0, 1.0, 0.0)
-        return (0.0, 0.0, 0.0, 1.0)
+        if role == "traction_free":
+            return (0.0, 0.0, 0.0, 1.0)
+        return (0.0, 0.0, 0.0, 0.0)
+
+    def load_role_flags(self, role: str) -> tuple[float, float]:
+        """Return ``(is_dead_traction, is_follower_pressure)``."""
+        return (
+            1.0 if role == "dead_traction" else 0.0,
+            1.0 if role == "follower_pressure" else 0.0,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class BoundaryLoadMap:
+    """Normalized per-boundary-group load-vector embeddings ``(lx, ly, p)``."""
+
+    loads: Mapping[str, tuple[float, float, float]]
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.loads, Mapping):
+            raise ValueError("loads must be a mapping from boundary groups to 3-tuples")
+        cleaned: dict[str, tuple[float, float, float]] = {}
+        for group, vec in self.loads.items():
+            if not isinstance(group, str) or not group.strip():
+                raise ValueError("boundary group names must be non-empty text")
+            if len(vec) != 3 or any(
+                isinstance(v, bool)
+                or not isinstance(v, (int, float))
+                or not math.isfinite(float(v))
+                for v in vec
+            ):
+                raise ValueError(
+                    f"load embedding for {group!r} must be three finite numbers"
+                )
+            cleaned[group] = (float(vec[0]), float(vec[1]), float(vec[2]))
+        object.__setattr__(self, "loads", cleaned)
+
+    def load_vector(self, group: str) -> tuple[float, float, float]:
+        return self.loads.get(group, (0.0, 0.0, 0.0))
 
 
 @dataclass(frozen=True, slots=True)
@@ -252,11 +306,22 @@ def _facet_roles(mesh: CanonicalMesh, role_map: BoundaryRoleMap) -> list[str]:
     return [r for r in assigned if r is not None]
 
 
+def _facet_groups(mesh: CanonicalMesh) -> list[str]:
+    assigned: list[str | None] = [None] * len(mesh.boundary_facets)
+    for group, facet_indices in mesh.semantic_tags.items():
+        for idx in facet_indices:
+            assigned[idx] = group
+    if any(g is None for g in assigned):
+        raise ValueError("unclassified boundary facet found in mesh")
+    return [g for g in assigned if g is not None]
+
+
 @dataclass(frozen=True, slots=True)
 class GeometryTokenizer:
     """Converts planar ``CanonicalMesh`` objects into canonical boundary token batches."""
 
     subdivisions_per_facet: int = 1
+    include_load_embeddings: bool = False
 
     def __post_init__(self) -> None:
         if (
@@ -264,16 +329,23 @@ class GeometryTokenizer:
             or self.subdivisions_per_facet < 1
         ):
             raise ValueError("subdivisions_per_facet must be a positive integer")
+        if type(self.include_load_embeddings) is not bool:
+            raise TypeError("include_load_embeddings must be a boolean")
 
     @property
     def feature_names(self) -> tuple[str, ...]:
-        return GEOMETRY_FEATURE_NAMES
+        return (
+            GEOMETRY_LOAD_FEATURE_NAMES
+            if self.include_load_embeddings
+            else GEOMETRY_FEATURE_NAMES
+        )
 
     def tokenize_one(
         self,
         mesh: CanonicalMesh,
         role_map: BoundaryRoleMap,
         *,
+        load_map: BoundaryLoadMap | None = None,
         dtype: torch.dtype = torch.float64,
     ) -> tuple[
         torch.Tensor,
@@ -288,6 +360,7 @@ class GeometryTokenizer:
         interior = _facet_owner_interior_point(mesh)
         loops, facet_to_loop, loop_is_hole = _extract_closed_loops(mesh)
         roles = _facet_roles(mesh, role_map)
+        groups = _facet_groups(mesh)
 
         xs = [p[0] for p in mesh.nodes]
         ys = [p[1] for p in mesh.nodes]
@@ -303,7 +376,11 @@ class GeometryTokenizer:
         # Essential-boundary segment midpoints for normalized distance feature.
         essential_pts: list[tuple[float, float]] = []
         for f_idx, (a, b) in enumerate(mesh.boundary_facets):
-            if roles[f_idx] != "traction_free":
+            if roles[f_idx] not in (
+                "traction_free",
+                "dead_traction",
+                "follower_pressure",
+            ):
                 ax, ay = mesh.nodes[a]
                 bx, by = mesh.nodes[b]
                 essential_pts.append((0.5 * (ax + bx), 0.5 * (ay + by)))
@@ -333,6 +410,12 @@ class GeometryTokenizer:
 
             is_hole = 1.0 if loop_is_hole[facet_to_loop[f_idx]] else 0.0
             d_x, d_y, sym, t_free = role_map.role_flags(roles[f_idx])
+            dead_t, fol_p = role_map.load_role_flags(roles[f_idx])
+            lx, ly, p_n = (
+                (0.0, 0.0, 0.0)
+                if load_map is None
+                else load_map.load_vector(groups[f_idx])
+            )
             ka, kb = curvatures[a], curvatures[b]
 
             for s in range(k_sub):
@@ -349,9 +432,27 @@ class GeometryTokenizer:
                     dist_ess = 1.0
                 pts_list.append((px, py))
                 nrm_list.append((nx, ny))
-                feat_list.append(
-                    (math.log1p(curv), is_hole, d_x, d_y, sym, t_free, dist_ess)
-                )
+                if self.include_load_embeddings:
+                    feat_list.append(
+                        (
+                            math.log1p(curv),
+                            is_hole,
+                            d_x,
+                            d_y,
+                            sym,
+                            t_free,
+                            dist_ess,
+                            dead_t,
+                            fol_p,
+                            lx,
+                            ly,
+                            p_n,
+                        )
+                    )
+                else:
+                    feat_list.append(
+                        (math.log1p(curv), is_hole, d_x, d_y, sym, t_free, dist_ess)
+                    )
                 wt_list.append(length / k_sub)
 
         outer_id = next(i for i, hole in loop_is_hole.items() if not hole)
@@ -394,14 +495,23 @@ class GeometryTokenizer:
         self,
         items: Sequence[tuple[CanonicalMesh, BoundaryRoleMap]],
         *,
+        load_maps: Sequence[BoundaryLoadMap | None] | None = None,
         dtype: torch.dtype = torch.float64,
         pad_to: int | None = None,
     ) -> BoundaryTokenBatch:
         """Tokenize and deterministically pad a batch of distinct 2D geometries."""
         if not items:
             raise ValueError("items must contain at least one (mesh, role_map) pair")
+        if load_maps is not None and len(load_maps) != len(items):
+            raise ValueError("load_maps length must match items")
         per_sample = [
-            self.tokenize_one(mesh, roles, dtype=dtype) for mesh, roles in items
+            self.tokenize_one(
+                mesh,
+                roles,
+                load_map=None if load_maps is None else load_maps[idx],
+                dtype=dtype,
+            )
+            for idx, (mesh, roles) in enumerate(items)
         ]
         max_n = max(sample[0].shape[0] for sample in per_sample)
         if pad_to is not None:
@@ -412,7 +522,7 @@ class GeometryTokenizer:
             max_n = pad_to
 
         batch_size = len(per_sample)
-        feat_dim = len(GEOMETRY_FEATURE_NAMES)
+        feat_dim = len(self.feature_names)
         xy = torch.zeros((batch_size, max_n, 2), dtype=dtype)
         normals = torch.zeros((batch_size, max_n, 2), dtype=dtype)
         features = torch.zeros((batch_size, max_n, feat_dim), dtype=dtype)
@@ -741,8 +851,10 @@ class GeometryOODDetector:
 
 __all__ = (
     "GEOMETRY_FEATURE_NAMES",
+    "GEOMETRY_LOAD_FEATURE_NAMES",
     "GEOMETRY_OOD_SCHEMA",
     "SUPPORTED_BC_ROLES",
+    "BoundaryLoadMap",
     "BoundaryRoleMap",
     "BoundaryTokenBatch",
     "GeometryDescriptor",

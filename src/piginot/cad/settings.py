@@ -12,6 +12,8 @@ from piginot.compiler.config_types import TrainingConfig
 from piginot.contracts import CanonicalMesh, ProblemSpec, strict_json_loads
 
 SCHEMA = "piginot.cad-settings-v1"
+SCHEMA_V2 = "formamech.cad-settings-v2"
+SUPPORTED_SCHEMAS = (SCHEMA, SCHEMA_V2)
 REQUIRED = (
     "schema",
     "name",
@@ -49,7 +51,7 @@ def load_settings(payload: bytes) -> dict[str, Any]:
     result = object_fields(
         strict_json_loads(payload), "CAD settings", REQUIRED, OPTIONAL
     )
-    if result["schema"] != SCHEMA:
+    if result["schema"] not in SUPPORTED_SCHEMAS:
         raise ValueError("unsupported CAD settings schema")
     sampling = object_fields(
         result["sampling"], "sampling", ("fit_cases", "screen_cases")
@@ -60,7 +62,7 @@ def load_settings(payload: bytes) -> dict[str, Any]:
     return result
 
 
-def _line_piece(mesh: CanonicalMesh, region: str) -> dict[str, Any]:
+def _chain_nodes(mesh: CanonicalMesh, region: str) -> list[int]:
     facets = tuple(mesh.boundary_facets[index] for index in mesh.semantic_tags[region])
     successors = dict(facets)
     ends = {end for _, end in facets}
@@ -75,7 +77,12 @@ def _line_piece(mesh: CanonicalMesh, region: str) -> dict[str, Any]:
         chain.append(successors[chain[-1]])
     if len(chain) != len(facets) + 1 or chain[-1] in successors:
         raise ValueError(f"{region}: essential line group must be connected")
-    first, last = mesh.nodes[start], mesh.nodes[chain[-1]]
+    return chain
+
+
+def _line_piece(mesh: CanonicalMesh, region: str) -> dict[str, Any]:
+    chain = _chain_nodes(mesh, region)
+    first, last = mesh.nodes[chain[0]], mesh.nodes[chain[-1]]
     dx, dy = last[0] - first[0], last[1] - first[1]
     length = math.hypot(dx, dy)
     if length == 0 or any(
@@ -90,8 +97,47 @@ def _line_piece(mesh: CanonicalMesh, region: str) -> dict[str, Any]:
     return {"line": {"start": [str(x) for x in first], "end": [str(x) for x in last]}}
 
 
+def _arc_piece(mesh: CanonicalMesh, region: str) -> dict[str, Any]:
+    """Fit an exact circular arc piece for ADF lifting on a curved CAD boundary."""
+    chain = _chain_nodes(mesh, region)
+    if len(chain) < 3:
+        raise ValueError(f"{region}: circular arc essential group needs >= 3 nodes")
+    p1 = mesh.nodes[chain[0]]
+    p2 = mesh.nodes[chain[len(chain) // 2]]
+    p3 = mesh.nodes[chain[-1]]
+    ax, ay = p1
+    bx, by = p2
+    cx, cy = p3
+    d = 2.0 * (ax * (by - cy) + bx * (cy - ay) + cx * (ay - by))
+    if abs(d) <= 1e-12:
+        raise ValueError(f"{region}: arc nodes are collinear; cannot determine center")
+    a2 = ax * ax + ay * ay
+    b2 = bx * bx + by * by
+    c2 = cx * cx + cy * cy
+    ux = (a2 * (by - cy) + b2 * (cy - ay) + c2 * (ay - by)) / d
+    uy = (a2 * (cx - bx) + b2 * (ax - cx) + c2 * (bx - ax)) / d
+    radius = math.hypot(ax - ux, ay - uy)
+    if radius <= 0.0 or any(
+        abs(math.hypot(mesh.nodes[n][0] - ux, mesh.nodes[n][1] - uy) - radius)
+        > 1e-5 * max(1.0, radius)
+        for n in chain
+    ):
+        raise ValueError(f"{region}: essential arc nodes do not lie on a single circle")
+    return {
+        "arc": {
+            "start": [str(x) for x in p1],
+            "end": [str(x) for x in p3],
+            "center": [str(ux), str(uy)],
+        }
+    }
+
+
 def _boundaries(
-    resource: GeometryResource, mesh: CanonicalMesh, supplied: object
+    resource: GeometryResource,
+    mesh: CanonicalMesh,
+    supplied: object,
+    *,
+    schema: str = SCHEMA,
 ) -> tuple[list[dict[str, Any]], dict[str, list[dict[str, Any]]]]:
     conditions = [
         object_fields(
@@ -115,11 +161,15 @@ def _boundaries(
                 "CAD preparation supports Dirichlet, symmetry and traction_free; Neumann is unsupported"
             )
         if kind != "traction_free":
-            if resource.boundary_kinds[region] != "line":
+            bkind = resource.boundary_kinds[region]
+            if bkind == "line":
+                pieces[condition["name"]] = [_line_piece(mesh, region)]
+            elif schema == SCHEMA_V2 and bkind == "arc":
+                pieces[condition["name"]] = [_arc_piece(mesh, region)]
+            else:
                 raise ValueError(
                     "essential CAD boundaries must be straight line groups"
                 )
-            pieces[condition["name"]] = [_line_piece(mesh, region)]
     return conditions, pieces
 
 
@@ -159,7 +209,12 @@ def _constants(mesh: CanonicalMesh, settings: dict[str, Any]) -> list[dict[str, 
 
 def build_problem(resource: GeometryResource, settings: dict[str, Any]) -> ProblemSpec:
     mesh = resource.mesh(1)
-    conditions, pieces = _boundaries(resource, mesh, settings["boundary_conditions"])
+    conditions, pieces = _boundaries(
+        resource,
+        mesh,
+        settings["boundary_conditions"],
+        schema=str(settings.get("schema", SCHEMA)),
+    )
     sampling = settings["sampling"]
     fem = object_fields(settings.get("fem", {}), "fem", (), tuple(FEM_DEFAULTS))
     spec = ProblemSpec.from_document(

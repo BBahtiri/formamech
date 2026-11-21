@@ -12,6 +12,8 @@ from piginot.contracts.specs import FrozenMap, SpecContract, _nonempty
 
 _CONTAINER_DIGEST = re.compile(r"sha256:[0-9a-f]{64}\Z")
 PLATFORM_FINGERPRINT_KEYS = frozenset({"os", "machine", "cpu_capability"})
+REPLAY_TIERS = frozenset({"cpu-deterministic-bitwise", "gpu-accelerated-tolerance"})
+GPU_FINGERPRINT_KEYS = frozenset({"device_name", "cuda_version", "cublas_workspace"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -28,6 +30,11 @@ class ExecutionProfile(SpecContract):
     # instruction set, which change trained weights bit for bit. Omitted from
     # the canonical form when unset, so every v1 profile keeps its hash.
     platform_fingerprint: Mapping[str, str] | None = field(
+        default=None, metadata={"omit_if_none": True}
+    )
+    # Dual execution tier (omitted when None so existing CPU profile hashes stay intact).
+    replay_tier: str | None = field(default=None, metadata={"omit_if_none": True})
+    gpu_fingerprint: Mapping[str, str] | None = field(
         default=None, metadata={"omit_if_none": True}
     )
 
@@ -79,3 +86,22 @@ class ExecutionProfile(SpecContract):
                     "platform_fingerprint values must be non-empty canonical text"
                 )
             object.__setattr__(self, "platform_fingerprint", fingerprint)
+        if self.replay_tier is not None and self.replay_tier not in REPLAY_TIERS:
+            raise ContractValidationError(
+                f"replay_tier must be one of {sorted(REPLAY_TIERS)}, got {self.replay_tier!r}"
+            )
+        if self.gpu_fingerprint is not None:
+            gpu_fp: FrozenMap[str] = FrozenMap.copy_of(self.gpu_fingerprint)
+            if set(gpu_fp) != GPU_FINGERPRINT_KEYS:
+                raise ContractValidationError(
+                    "gpu_fingerprint must have exactly the keys "
+                    + ", ".join(sorted(GPU_FINGERPRINT_KEYS))
+                )
+            if any(
+                not isinstance(value, str) or not value or value.strip() != value
+                for value in gpu_fp.values()
+            ):
+                raise ContractValidationError(
+                    "gpu_fingerprint values must be non-empty canonical text"
+                )
+            object.__setattr__(self, "gpu_fingerprint", gpu_fp)

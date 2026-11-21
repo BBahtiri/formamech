@@ -44,6 +44,11 @@ from piginot.contracts.units import Dimension, Unit
 
 SCHEMA: Final = "piginot.problem-spec-v1"
 PHYSICS: Final = ("2d-plane-stress-finite-strain",)
+EXTENDED_PHYSICS: Final = (
+    "2d-plane-stress-finite-strain",
+    "2d-plane-strain-finite-strain",
+    "2d-axisymmetric-finite-strain",
+)
 ROLES: Final = ("geometry", "material", "load")
 DISTRIBUTIONS: Final = ("uniform", "fixed")
 BOUNDARY_KINDS: Final = ("dirichlet", "symmetry", "traction_free", "neumann")

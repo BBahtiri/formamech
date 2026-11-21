@@ -37,6 +37,7 @@ from piginot.fem.field_providers import (
     TractionFieldProvider,
     immutable_provider_registry,
 )
+from piginot.fem.follower import assemble_follower_loads
 from piginot.fem.models import (
     FemAttempt,
     FemConvergenceEntry,
@@ -45,6 +46,7 @@ from piginot.fem.models import (
     FemResult,
     FemSolveFailure,
 )
+from piginot.fem.protocol import BackendCapabilities, DiscreteLinearization
 from piginot.fem.regularity import peak_stress_screen
 from piginot.store import ObjectStore
 
@@ -59,6 +61,26 @@ class ScikitFemBackend:
     """Solve S7 requests using sparse Total-Lagrangian FEM assembly."""
 
     backend_name = "scikit-fem"
+    backend_id = "scikit-fem-2d-v1"
+    capabilities = BackendCapabilities(
+        spatial_dimensions=(2,),
+        physics_modes=("2d-plane-stress-finite-strain",),
+        element_orders=(1, 2),
+        supports_warm_start=True,
+        supports_linearization=True,
+        supports_dead_tractions=True,
+        supports_follower_pressure=True,
+        supports_contact=False,
+        supports_gpu=False,
+        supports_mpi=False,
+        license_spdx="BSD-3-Clause",
+    )
+
+    def linearize(self, request: FemRequest) -> DiscreteLinearization:
+        """Build a reusable discrete linearization backed by this solver instance."""
+        from piginot.fem.linearization import FemLinearization
+
+        return FemLinearization(request, backend=self)
 
     def __init__(
         self,
@@ -190,6 +212,7 @@ class ScikitFemBackend:
         if initial is not None and initial.shape != (basis.N,):
             raise ValueError(f"initial displacement must have {basis.N} DOFs")
         displacement, state, history, residual = _solve_newton(
+            skmesh,
             basis,
             constraints,
             external_force,
@@ -272,6 +295,7 @@ def _validate_qois(request: FemRequest) -> None:
 
 
 def _solve_newton(
+    skmesh: Any,
     basis: Any,
     constraints: BoundConstraints,
     external_force: FloatArray,
@@ -318,7 +342,24 @@ def _solve_newton(
                 closure_iterations=request.config.plane_stress_max_iterations,
                 thickness=1.0,
             )
-            residual = state.internal_force - load_factor * external_force
+            follower = assemble_follower_loads(
+                basis,
+                skmesh,
+                request.mesh,
+                request.loads,
+                displacement,
+                thickness=1.0,
+            )
+            if follower.has_follower_loads:
+                state = replace(
+                    state,
+                    tangent=(
+                        state.tangent + load_factor * follower.load_stiffness
+                    ).tocsr(),
+                )
+            residual = state.internal_force - load_factor * (
+                external_force + follower.external_force
+            )
             residual_norm = _constrained_residual_norm(
                 residual,
                 displacement,
@@ -347,6 +388,7 @@ def _solve_newton(
                 load_factor,
             )
             displacement, increment_norm = _line_search(
+                skmesh,
                 basis,
                 displacement,
                 increment,
@@ -434,6 +476,7 @@ def _solve_increment(
 
 
 def _line_search(
+    skmesh: Any,
     basis: Any,
     displacement: FloatArray,
     increment: FloatArray,
@@ -459,12 +502,22 @@ def _line_search(
                 closure_iterations=request.config.plane_stress_max_iterations,
                 thickness=1.0,
             )
+            follower = assemble_follower_loads(
+                basis,
+                skmesh,
+                request.mesh,
+                request.loads,
+                candidate,
+                thickness=1.0,
+            )
         except FemSolveFailure as exc:
             if exc.code is not FemFailureCode.NEGATIVE_JACOBIAN:
                 raise
             step *= 0.5
             continue
-        candidate_residual = state.internal_force - load_factor * external_force
+        candidate_residual = state.internal_force - load_factor * (
+            external_force + follower.external_force
+        )
         candidate_norm = _constrained_residual_norm(
             candidate_residual,
             candidate,

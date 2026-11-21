@@ -82,8 +82,19 @@ class FemLinearization:
         return np.asarray(self.scalar_basis.doflocs, dtype=np.float64).T
 
     @property
+    def dof_count(self) -> int:
+        """Total number of scalar displacement DOFs."""
+
+        return int(self.basis.N)
+
+    @property
     def has_global_constraints(self) -> bool:
         return bool(self.constraints.global_matrix.shape[0])
+
+    @property
+    def is_tangent_symmetric(self) -> bool:
+        """Whether external loads are conservative (symmetric discrete tangent)."""
+        return not any(load.kind == "follower_pressure" for load in self.request.loads)
 
     def vector(self, nodal: FloatArray) -> FloatArray:
         """Full DOF vector from nodal ``(n, 2)`` displacements."""
@@ -125,6 +136,9 @@ class FemLinearization:
 
     def state(self, vector: FloatArray) -> LinearizedState:
         """Assemble at ``vector`` (raises ``FemSolveFailure`` if inadmissible)."""
+        from dataclasses import replace as _replace
+
+        from piginot.fem.follower import assemble_follower_loads
 
         assembly = assemble_state(
             self.basis,
@@ -133,7 +147,22 @@ class FemLinearization:
             closure_iterations=self.request.config.plane_stress_max_iterations,
             thickness=1.0,
         )
-        residual = assembly.internal_force - self.external_force
+        follower = assemble_follower_loads(
+            self.basis,
+            self.skmesh,
+            self.request.mesh,
+            self.request.loads,
+            vector,
+            thickness=1.0,
+        )
+        if follower.has_follower_loads:
+            assembly = _replace(
+                assembly,
+                tangent=(assembly.tangent + follower.load_stiffness).tocsr(),
+            )
+        residual = assembly.internal_force - (
+            self.external_force + follower.external_force
+        )
         potential = assembly.strain_energy - float(self.external_force @ vector)
         return LinearizedState(vector, assembly, residual, potential)
 
@@ -150,6 +179,13 @@ class FemLinearization:
     def free_tangent(self, state: LinearizedState) -> Any:
         free = self.constraints.free
         return state.assembly.tangent[free][:, free]
+
+    def solve_adjoint(self, state: LinearizedState, rhs_free: FloatArray) -> FloatArray:
+        """Solve the transpose linearized system ``K_free^T z = rhs_free``."""
+        from scipy.sparse.linalg import spsolve  # type: ignore[import-untyped]
+
+        k_free = self.free_tangent(state)
+        return np.asarray(spsolve(k_free.T.tocsc(), rhs_free), dtype=np.float64)
 
     def energy_norm(self, difference: FloatArray, state: LinearizedState) -> float:
         """``sqrt(d^T K d)`` on the free DOFs, ``K`` the tangent of ``state``."""

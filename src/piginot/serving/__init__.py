@@ -4,6 +4,8 @@ Importing this package needs only the runtime extra; the FEM stack is loaded
 when a certified or exact request is served.
 """
 
+from typing import Any
+
 from piginot.serving.hybrid import (
     MissingExtraError,
     ServingMode,
@@ -18,16 +20,61 @@ from piginot.serving.hybrid import (
     solve_ladder,
 )
 
+_LAZY_EXPORTS: dict[str, tuple[str, str]] = {
+    "SpectralRepairConfig": (
+        "piginot.serving.spectral_repair",
+        "SpectralRepairConfig",
+    ),
+    "SpectralRepairReport": (
+        "piginot.serving.spectral_repair",
+        "SpectralRepairReport",
+    ),
+    "TestTimeLoraConfig": (
+        "piginot.serving.test_time_lora",
+        "TestTimeLoraConfig",
+    ),
+    "TestTimeLoraReport": (
+        "piginot.serving.test_time_lora",
+        "TestTimeLoraReport",
+    ),
+    "adapt_operator_at_test_time": (
+        "piginot.serving.test_time_lora",
+        "adapt_operator_at_test_time",
+    ),
+    "spectrally_safe_repair": (
+        "piginot.serving.spectral_repair",
+        "spectrally_safe_repair",
+    ),
+}
+
+
+def __getattr__(name: str) -> Any:
+    if name not in _LAZY_EXPORTS:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    from importlib import import_module
+
+    module_name, attr_name = _LAZY_EXPORTS[name]
+    value = getattr(import_module(module_name), attr_name)
+    globals()[name] = value
+    return value
+
+
 __all__ = (
     "MissingExtraError",
     "ServingMode",
     "ServingPath",
     "SolveAttempt",
+    "SpectralRepairConfig",
+    "SpectralRepairReport",
+    "TestTimeLoraConfig",
+    "TestTimeLoraReport",
     "VerifiedPrediction",
+    "adapt_operator_at_test_time",
     "default_request_id",
     "load_recipe",
     "operator_displacement",
     "recipe_path",
     "serve",
     "solve_ladder",
+    "spectrally_safe_repair",
 )

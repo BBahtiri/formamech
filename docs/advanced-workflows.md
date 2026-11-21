@@ -106,6 +106,72 @@ formamech stateful rollout \
   --output .formamech-runs/visco-rollout.json
 ```
 
+## Three-Tier Verification Funnel, Trust Receipts & Pluggable Backends
+
+Every `predict` call can emit a canonical RFC 8785 Trust Receipt
+(`formamech.trust-receipt-v1`) separating orthogonal `VerificationTier` from
+release `ClaimLevel`, while enabling Tier 0 zero-FEM admissibility checks,
+Tier 1 per-CAD conformal calibration, Tier 1.5 test-time physics LoRA, and
+Tier 2 spectrally safe warm-start FEM across any registered `SolverBackend`
+(`scikit-fem` or `torch-fem`):
+
+```text
+formamech calibrate bundles/notched-v1-cp-freeze \
+  --scores cal-scores.json --alpha 0.05 \
+  --output .formamech-runs/notched-cal.json
+
+formamech predict bundles/notched-v1-cp-freeze \
+  --request bundles/requests/notched-in-domain.json \
+  --mode certified \
+  --backend torch-fem \
+  --tier0 \
+  --cad-calibration .formamech-runs/notched-cal.json \
+  --spectral-repair \
+  --escalate \
+  --receipt \
+  --output .formamech-runs/verified-with-receipt.json
+```
+
+For portable user-owned CAD bundles, `--mode certified` and `--mode exact`
+construct the discrete FEM problem directly from the bundle's embedded
+`PortableProblem` specification without requiring an external recipe file.
+
+## Verification & Trust Inspector UI, MCP Server & ONNX / FMI 3.0 Export
+
+- **Interactive Inspector (`formamech[ui]`)**: launch the Streamlit/Plotly field,
+  admissibility, FEM-diff, and downloadable dossier inspector:
+
+```text
+formamech ui --bundle bundles/notched-v1-cp-freeze --port 8501
+```
+
+- **MCP Server (`formamech mcp`)**: run the workspace-sandboxed JSON-RPC 2.0
+  Model Context Protocol server exposing `inspect_bundle`, `inspect_cad_project`,
+  `predict_verified`, `run_design_optimization`, and `verify_receipt`:
+
+```text
+formamech mcp list-tools --workspace .
+formamech mcp serve --workspace . --max-dofs 100000
+```
+
+- **ONNX & FMI 3.0 Co-Simulation FMU Export (`formamech export`)**:
+
+```text
+formamech export fmu bundles/notched-v1-cp-freeze --output .formamech-runs/notched.fmu
+formamech export onnx bundles/notched-v1-cp-freeze --output .formamech-runs/notched.onnx
+```
+
+## VVUQ Nonlinear Benchmark Suite (Levels 1–4)
+
+Run the backend-agnostic ASME V&V 10 / NAFEMS nonlinear benchmark suite
+(Level 1 MMS, Level 2 Cook's Membrane, Level 3a HGO arterial strip, Level 3b
+non-conservative follower pressure cantilever, Level 3c axisymmetric pressurized
+thick-walled cylinder, and Level 4 3D `TET10` / OOD conformal shift contracts):
+
+```text
+python -m campaigns.vvuq_suite
+```
+
 ## Diagnostic CPU pilot harness
 
 Run the reproducible CPU-sized pilot benchmark across all six features (writes

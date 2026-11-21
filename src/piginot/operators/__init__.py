@@ -58,8 +58,10 @@ from piginot.operators.gate import (
 )
 from piginot.operators.geometry_tokenizer import (
     GEOMETRY_FEATURE_NAMES,
+    GEOMETRY_LOAD_FEATURE_NAMES,
     GEOMETRY_OOD_SCHEMA,
     SUPPORTED_BC_ROLES,
+    BoundaryLoadMap,
     BoundaryRoleMap,
     BoundaryTokenBatch,
     GeometryDescriptor,
@@ -89,6 +91,13 @@ from piginot.operators.safetensors_io import (
     load_operator_state_dict_with_metadata,
     state_dict_schema,
 )
+from piginot.operators.surface_operator_3d import (
+    SURFACE_3D_ARCHITECTURE_ID,
+    PhysicsSliceAttention,
+    Surface3DConfig,
+    Surface3DEncoding,
+    Surface3DEnergyOperator,
+)
 
 __all__ = (
     "ADAPTATION_PLAN_SCHEMA",
@@ -103,10 +112,16 @@ __all__ = (
     "ENERGY_G11_MINIMUM_PARAMETER_VECTORS",
     "GEOMETRY_ADAPTER_ARTIFACT_SCHEMA",
     "GEOMETRY_FEATURE_NAMES",
+    "GEOMETRY_LOAD_FEATURE_NAMES",
     "GEOMETRY_OOD_ARTIFACT_SCHEMA",
     "GEOMETRY_OOD_SCHEMA",
     "LOCAL_STRESS_ARCHITECTURE_ID",
+    "SURFACE_3D_ARCHITECTURE_ID",
     "SUPPORTED_BC_ROLES",
+    "PhysicsSliceAttention",
+    "Surface3DConfig",
+    "Surface3DEncoding",
+    "Surface3DEnergyOperator",
     "AdaptationPlan",
     "AdaptationResult",
     "AdaptationStatus",
@@ -117,6 +132,7 @@ __all__ = (
     "BoundaryEnergyConfig",
     "BoundaryEnergyEncoding",
     "BoundaryEnergyOperator",
+    "BoundaryLoadMap",
     "BoundaryRoleMap",
     "BoundaryTokenBatch",
     "DirichletData",

@@ -12,23 +12,23 @@ error is a separate term, outside this certificate.
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
 
 from piginot.certify.certificate import Certificate, CertificateVerdict
-from piginot.certify.guards import symmetric_inertia
-from piginot.fem.linearization import FemLinearization, LinearizedState
+from piginot.certify.guards import coercive_inertia, symmetric_inertia
+from piginot.fem.linearization import LinearizedState
 from piginot.fem.models import FemSolveFailure
+from piginot.fem.protocol import DiscreteLinearization
 
 FloatArray = NDArray[np.float64]
-QoiFunction = Callable[[FemLinearization, LinearizedState], float]
+QoiFunction = Callable[[Any, LinearizedState], float]
 _TINY = 1e-300
 
 
-def field_l2(
-    linearization: FemLinearization, state: LinearizedState
-) -> tuple[float, float]:
+def field_l2(linearization: Any, state: LinearizedState) -> tuple[float, float]:
     """L2 norms of displacement and first Piola stress at the quadrature points."""
 
     weights = linearization.quadrature_weights()
@@ -42,7 +42,7 @@ def field_l2(
 
 
 def field_difference_l2(
-    linearization: FemLinearization, first: LinearizedState, second: LinearizedState
+    linearization: Any, first: LinearizedState, second: LinearizedState
 ) -> tuple[float, float]:
     """L2 norms of the displacement and stress differences between two states."""
 
@@ -64,7 +64,7 @@ def _relative(change: float, reference: float) -> float:
 
 
 def certify(
-    linearization: FemLinearization,
+    linearization: DiscreteLinearization,
     nodal_displacement: FloatArray,
     *,
     qoi_functions: Mapping[str, QoiFunction] | None = None,
@@ -77,7 +77,7 @@ def certify(
 
 
 def certify_with_correction(
-    linearization: FemLinearization,
+    linearization: DiscreteLinearization,
     nodal_displacement: FloatArray,
     *,
     qoi_functions: Mapping[str, QoiFunction] | None = None,
@@ -92,7 +92,7 @@ def certify_with_correction(
     raw = linearization.vector(nodal_displacement)
     deviation = linearization.dirichlet_deviation(raw)
     vector = linearization.with_exact_dirichlet(raw)
-    dofs = int(linearization.basis.N)
+    dofs = int(linearization.dof_count)
     try:
         before = linearization.state(vector)
     except FemSolveFailure as exc:
@@ -134,10 +134,15 @@ def certify_with_correction(
     guards["positive_curvature"] = curvature > 0.0
     if linearization.has_global_constraints:
         guards["positive_definite"] = None  # projected tangent: not tested
-    else:
+    elif linearization.is_tangent_symmetric:
         guards["positive_definite"] = symmetric_inertia(
             linearization.free_tangent(before)
         ).positive_definite
+    else:
+        coercive = coercive_inertia(linearization.free_tangent(before))
+        guards["positive_definite"] = coercive.positive_definite
+        if not coercive.tangent_symmetric:
+            guards["tangent_symmetric"] = False
     try:
         after = linearization.state(vector + increment)
         guards["step_admissible"] = True

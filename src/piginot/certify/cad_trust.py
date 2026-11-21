@@ -26,8 +26,8 @@ from piginot.certify.trust_report import (
     reduce_qoi_trust_status,
 )
 from piginot.fem.backend import ScikitFemBackend
-from piginot.fem.linearization import FemLinearization
 from piginot.fem.models import FemRequest, FemSolveFailure
+from piginot.fem.protocol import DiscreteLinearization, SolverBackend
 from piginot.verification.status import ClaimLevel
 
 FloatArray = NDArray[np.float64]
@@ -49,18 +49,21 @@ def evaluate_cad_trust(
     statistical_by_qoi: Mapping[str, StatisticalCalibrationRecord] | None = None,
     indicators_qualified: bool = False,
     solve_failed: bool = False,
-    backend: ScikitFemBackend | None = None,
+    backend: SolverBackend | None = None,
 ) -> CADTrustReport:
     """Evaluate per-QoI DWR + Newton indicators and assemble a ``CADTrustReport``."""
     if not qois:
         raise ValueError("evaluate_cad_trust requires at least one DifferentiableQoi")
 
     stat_map = {} if statistical_by_qoi is None else statistical_by_qoi
-    linearization: FemLinearization | None = None
+    linearization: DiscreteLinearization | None = None
     failure_reason = "exact FEM solve failed" if solve_failed else ""
     if not solve_failed:
         try:
-            linearization = FemLinearization(request, backend=backend)
+            solver: SolverBackend = (
+                backend if backend is not None else ScikitFemBackend()
+            )
+            linearization = solver.linearize(request)
         except FemSolveFailure as exc:
             solve_failed = True
             failure_reason = f"{exc.code.value}: {exc}"
