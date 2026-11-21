@@ -55,6 +55,34 @@ candidates remain `NOT_VERIFIED`. The
 lists every output and explains reuse. Keep raw model outputs locally in
 `.formamech-runs/` or outside the checkout.
 
+## End-to-end viscoelastic CAD showcase
+
+To see every FormaMech feature working together on one OpenCASCADE-generated
+**40 × 20 mm genus-2 viscoelastic elastomer mount bracket** (top relief notch +
+two asymmetric mounting holes, 2-branch Generalized Maxwell viscoelasticity),
+run:
+
+```text
+python -m pip install -e ".[cad,verify,plot]"
+python -m examples.viscoelastic_cad_showcase --output .formamech-runs/showcase
+```
+
+The showcase executes all six stages on CPU (`~2.5 min`, `float64`) and writes
+six multi-panel contribution plots, `showcase_summary.json`, a tamper-checked
+`safetensors` viscoelastic checkpoint, an RFC 8785 Trust Receipt, a `TRAIN`-only
+Tier 2 fallback ledger, a Verification Inspector dossier, and an FMI 3.0 FMU.
+Newly generated showcase models retain `claim_level = "NOT_VERIFIED"` and
+`experimental_validation = False`.
+
+![Stage 2: P6 cyclic viscoelastic hysteresis, hold stress relaxation, guarded FEM fallback, and deformed peak stress field](assets/examples/viscoelastic_showcase/02_viscoelastic_p6_rollout.png)
+
+![Stage 5: P3 DWR active learning, P5 FEM-guarded CAD lightweighting trajectory, and initial vs optimized CAD shape](assets/examples/viscoelastic_showcase/05_p3_active_learning_and_p5_design_opt.png)
+
+See the [full showcase walkthrough and code guide](https://github.com/BBahtiri/formamech/blob/main/examples/viscoelastic_cad_showcase/README.md)
+(or the repository README) for all six plots, per-panel reading guides,
+API call walkthroughs, and instructions on adapting the showcase to your own
+STEP profile and material.
+
 ## Current compiler and CAD workflows
 
 - [Custom material](campaigns/s29-custom-material.md): prepare the complete

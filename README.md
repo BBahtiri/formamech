@@ -133,77 +133,144 @@ SVG or PDF. New CAD candidates retain their own `NOT_VERIFIED` claim.
 
 ## End-to-end viscoelastic CAD showcase
 
-To see every FormaMech subsystem working together — and how each feature
-contributes quantitatively — run the reproducible end-to-end showcase in
-[examples/viscoelastic_cad_showcase/](examples/viscoelastic_cad_showcase/README.md):
+If you are new to FormaMech and want to see **how every subsystem fits together
+on one realistic engineering part** — from STEP CAD generation through
+viscoelastic physics, multi-CAD neural operators, mathematical verification
+gates, active learning, CAD lightweighting, contact/3D mechanics, and
+production deployment — start with the runnable showcase in
+[examples/viscoelastic_cad_showcase/](examples/viscoelastic_cad_showcase/README.md).
+
+```mermaid
+flowchart LR
+    S1["1. OpenCASCADE STEP\nMeshPolicy & M0/M1/M2"] --> S2["2. P6 Viscoelasticity\nFEM, Operator & Guard"]
+    S2 --> S3["3. P1 Energy & P2\nMulti-CAD OOD / LoRA"]
+    S3 --> S4["4. Dual-Backend DWR\nTier 0/1/1.5/2 & N*"]
+    S4 --> S5["5. P3 Active Learning\n& P5 CAD Design Opt"]
+    S5 --> S6["6. Follower, Contact,\n3D TET10 & MCP/FMU"]
+```
+
+### Run it locally in one command (~2.5 min on CPU, no GPU required)
 
 ```text
 python -m pip install -e ".[cad,verify,plot]"
 python -m examples.viscoelastic_cad_showcase --output .formamech-runs/showcase
 ```
 
-The showcase programmatically generates a **40 × 20 mm genus-2 elastomer mount
-bracket** in OpenCASCADE (`nominal-bracket.step`, top relief notch `R = 4.0 mm`
-plus two asymmetric internal mounting holes `R_L = 3.2 mm`, `R_R = 2.6 mm`),
-assigns a **2-branch Generalized Maxwell finite-strain viscoelastic** law
-(`E_inf = 8.0 MPa`, `nu = 0.38`, `gamma = (0.65, 0.35)`, `tau = (0.4, 2.0) s`),
-and executes all six stages on CPU (`147.2 s` total in `float64`). Consistent
-with FormaMech's ASME V&V 10 epistemic scope, newly trained showcase models
-carry `claim_level = "NOT_VERIFIED"` and `experimental_validation = False`
-(all errors are numerically verified against converged P2 FEM).
+Running this command writes every artifact locally under `.formamech-runs/showcase/`
+(gitignored): the generated STEP CAD files (`cad/`), all six multi-panel plots
+(`plots/01..06.png`), full numerical metrics (`showcase_summary.json`), a
+tamper-checked `safetensors` viscoelastic model & trajectory checkpoint, an
+RFC 8785 SHA-256 Trust Receipt (`showcase-trust-receipt.json`), a `TRAIN`-only
+Tier 2 fallback ledger (`tier2-fallback-ledger.json`), a Verification Inspector
+dossier (`inspector-trust-dossier.md`), and an FMI 3.0 Co-Simulation FMU
+(`notched-plate.fmu`). See the [detailed showcase walkthrough and code guide](examples/viscoelastic_cad_showcase/README.md)
+for API snippets and instructions on swapping in your own STEP file or material.
+
+### The engineering problem used throughout the showcase
+
+Instead of disconnected toy squares, all six stages operate on the same
+parametric elastomer part generated via OpenCASCADE (`gmsh.model.occ`):
+
+| Aspect | Showcase specification |
+| --- | --- |
+| **CAD part (`nominal-bracket.step`)** | **40 × 20 mm genus-2 elastomer mount bracket** with a top semi-circular relief notch (`R = 4.0 mm` at `(20, 20) mm`) and two asymmetric internal mounting holes (`R_L = 3.2 mm` at `(11, 10) mm`, `R_R = 2.6 mm` at `(29, 10) mm`); exact analytical area `721.46 mm²` |
+| **Boundary conditions** | Left vertical edge (`left_clamp`) fixed in `x, y`; right vertical edge (`right_load`) displaced axially (`u_x`); top, bottom, notch, and both internal hole boundaries traction-free (or pressurized/contacted in Stage 6) |
+| **Material model** | **2-branch Generalized Maxwell finite-strain viscoelasticity**: equilibrium modulus `E_inf = 8.0 MPa`, Poisson's ratio `nu = 0.38`, branch stiffness weights `gamma = (0.65, 0.35)`, relaxation times `tau = (0.4, 2.0) s` |
+| **Cyclic load history (Stage 2)** | **Ramp (`0 -> 0.5 s`) → Constant-strain Hold (`0.5 -> 1.5 s`) → Unload (`1.5 -> 2.0 s`)** evaluated at an unseen peak displacement `u_max = 3.6 mm` (9% nominal strain) |
+| **Epistemic scope (ASME V&V 10)** | Newly trained showcase artifacts carry `claim_level = "NOT_VERIFIED"` and `experimental_validation = False` — all accuracy and error metrics represent **numerical verification against converged P2 FEM** (`147.2 s` total wall time in `float64` on 1 CPU thread) |
 
 ### Feature-contribution summary
 
-| Stage | Feature | Measured contribution (live showcase run) |
-| --- | --- | --- |
-| **1** | STEP import, `MeshPolicy` & `M0/M1/M2` hierarchy | Maps 8 STEP edges to 7 semantic boundaries; builds `M0 = 369 -> M1 = 1,476 -> M2 = 5,904` triangles; distinct-remesh area error drops **`1.56% -> 0.51%`** and chord error drops **`0.348 -> 0.161 mm`** |
-| **2** | P6 viscoelastic FEM, energy operator & `GuardedStatefulStepper` | Algorithmic tangent FD error **`7.57e-11`**; **`27.3%`** hold stress relaxation; **`12.3x`** online rollout speedup (`0.231 s` vs `2.84 s` FEM); guarded hybrid stepping (`3` operator + `5` FEM fallback) zeros peak residuals and cuts worst reaction error **`8.44% -> 7.46%`** |
-| **3** | P1 hierarchical energy & P2 multi-CAD tokens / OOD / LoRA | `M0 -> M1` hierarchical energy cuts displacement error **`2.35% -> 1.68%` (`-28.5%`)**; 12-channel tokenizer covers all 3 loops; OOD gate separates unseen ID (`0.97`) from extreme CAD (**`24.97`**, refused); `1,256`-param LoRA (`0.35 s`) reaches **`2.38%`** error vs Zero-Shot **`3.07%`** & From-Scratch **`3.51%`** (`9.6x` faster) |
-| **4** | Dual-backend DWR, Tier 0/1/1.5/2 funnel, spectral repair & `N*` | `TorchFem` vs `ScikitFem` parity **`1.77e-15`**; Tier 0 gate **`11.6 ms`**; live DWR tracks true error across 4 QoIs (Reaction DWR `0.437` vs True `0.435`); Tier 1.5 TTA cuts energy **`3.41%`** & residual **`3.82 -> 3.12`**; Warm Newton cuts Cold FEM **`14 -> 4` iters (`3.5x`)** while **Spectral Repair** rescues a folded start (`det F: -1.00 -> +0.66`) to **`7` iters**; RFC 8785 Trust Receipt verified; break-even **`N* = 34.2` queries** |
-| **5** | P3 DWR active learning & P5 FEM-guarded CAD lightweighting | `physics_dwr_diversity` selects **`8.02%`** mean true FEM error (**`1.81x`** vs Random `4.42%`) and **`0.589`** geometry spread (**`1.93x`** vs `0.306`) plus `TRAIN`-only Tier 2 fallback ledger; P5 achieves **`-9.1%` P2-FEM-verified area reduction** (`749.1 -> 681.3 mm²`, Hole `R: 2.60 -> 4.26 mm`, Notch `R: 3.20 -> 4.00 mm`) while rejecting unsafe surrogate candidates |
-| **6** | Follower pressure, 2.5D contact, 3D `TET10` & deployment gates | Follower unsymmetric tangent FD err **`1.47e-10`**; 2.5D contact penetration **`5.74e-6 mm`** (`F_y = -3.54 N/mm`); `TET4` locking refused at `nu = 0.49`; 3D `O(N*S)` operator grad FD err **`5.35e-13`**; **7/7 deployment gates PASS** (Trust Receipt, `safetensors` checkpoint, Inspector dossier, sandboxed MCP server, FMI 3.0 FMU) |
+| Stage | Time | FormaMech feature | What problem it solves | Measured contribution (live run) |
+| --- | :---: | --- | --- | --- |
+| **1** | `4.8 s` | STEP import, `MeshPolicy` & `M0/M1/M2` hierarchy | Prevents coarse hole approximation or silent CAD defeaturing | Maps 8 STEP edges to 7 semantic boundaries; builds `M0 = 369 -> M1 = 1,476 -> M2 = 5,904` tris; distinct-remesh area error drops **`1.56% -> 0.51%`** & chord error drops **`0.348 -> 0.161 mm`** |
+| **2** | `77.1 s` | P6 viscoelastic FEM, energy operator & `GuardedStatefulStepper` | Captures rate-dependent hysteresis/relaxation & prevents neural rollout drift | Algorithmic tangent FD error **`7.57e-11`**; **`27.3%`** hold stress relaxation; **`12.3x`** online speedup (`0.231 s` vs `2.84 s` FEM); guarded hybrid (`3` operator + `5` FEM fallback) zeros peak residuals & cuts max reaction error **`8.44% -> 7.46%`** |
+| **3** | `31.9 s` | P1 hierarchical energy & P2 multi-CAD tokens / OOD / LoRA | Generalizes across CAD variants, refuses extrapolation, adapts cheaply | `M0 -> M1` energy cuts displacement error **`2.35% -> 1.68%` (`-28.5%`)**; 12-ch tokens cover all 3 loops; OOD gate separates ID (`0.97`) from extreme CAD (**`24.97`**, refused); `1,256`-param LoRA (`0.35 s`) reaches **`2.38%`** error vs Zero-Shot **`3.07%`** & From-Scratch **`3.51%`** (`9.6x` faster) |
+| **4** | `3.5 s` | Dual-backend DWR, Tier 0/1/1.5/2 funnel, spectral repair & `N*` | Certifies errors, repairs bad starts & proves when surrogates pay off | `TorchFem` vs `ScikitFem` parity **`1.77e-15`**; Tier 0 gate **`11.6 ms`**; live DWR tracks true error across 4 QoIs (Reaction DWR `0.437` vs True `0.435`); Tier 1.5 TTA cuts energy **`3.41%`** & residual **`3.82 -> 3.12`**; Warm Newton cuts Cold FEM **`14 -> 4` iters (`3.5x`)** while **Spectral Repair** rescues a folded start (`det F: -1.00 -> +0.66`) to **`7` iters**; RFC 8785 receipt verified; break-even **`N* = 34.2` queries** |
+| **5** | `22.0 s` | P3 DWR active learning & P5 FEM-guarded CAD lightweighting | Targets FEM budget to hard cases & prevents unsafe AI design optimization | `physics_dwr_diversity` selects **`8.02%`** mean true FEM error (**`1.81x`** vs Random `4.42%`) & **`0.589`** geometry spread (**`1.93x`** vs `0.306`) + `TRAIN`-only fallback ledger; P5 certifies **`-9.1%` P2-FEM-verified area reduction** (`749.1 -> 681.3 mm²`, Hole `R: 2.60 -> 4.26 mm`, Notch `R: 3.20 -> 4.00 mm`) |
+| **6** | `3.8 s` | Follower pressure, 2.5D contact, 3D `TET10` & deployment gates | Handles nonlinear loads/contact/3D locking & safe production serving | Follower unsymmetric tangent FD err **`1.47e-10`**; 2.5D contact penetration **`5.74e-6 mm`** (`F_y = -3.54 N/mm`); `TET4` locking refused at `nu = 0.49`; 3D `O(N*S)` operator grad FD err **`5.35e-13`**; **7/7 deployment gates PASS** (Trust Receipt, `safetensors` checkpoint, Inspector dossier, sandboxed MCP server, FMI 3.0 FMU) |
+
+---
 
 ### Stage 1 — OpenCASCADE STEP import, local `MeshPolicy` & `M0/M1/M2` hierarchy
 
 ![Stage 1: OpenCASCADE STEP import, local MeshPolicy refinement, and distinct-remesh geometric convergence](docs/assets/examples/viscoelastic_showcase/01_cad_import_and_hierarchy.png)
 
-- **Panels A & B:** Analytical OpenCASCADE `Circle` boundaries pass `MeshPolicy` curvature checks, tag all 7 boundary groups, apply local feature refinement around the notch and mounting holes, and construct the nested `M0 -> M1 -> M2` hierarchy.
-- **Panel C:** Distinct remeshing from `h = 4.5 mm` down to `1.8 mm` quantifies CAD-to-mesh fidelity directly before training (`1.56% -> 0.51%` area error; `0.348 -> 0.161 mm` max chord error).
+- **What is done:** FormaMech generates `nominal-bracket.step` via OpenCASCADE using exact analytical `Circle` curves (never coarse polygonal approximations), validates curve qualification and sagitta chord tolerances via `MeshPolicy`, labels all 8 CAD edges into 7 semantic boundary groups, builds a nested `M0 -> M1 -> M2` `MeshHierarchy`, and runs three independent STEP remeshes (`h = 4.5, 2.8, 1.8 mm`) to measure true CAD-to-mesh discretization error.
+- **How to read the plot:**
+  - **Panel A** shows the imported CAD geometry colored by semantic boundary group (`left_clamp` red, `right_load` orange, `notch_free` purple, `left_hole` teal, `right_hole` emerald, `top/bottom_free` dark slate) over the `M0` mesh (`369` triangles).
+  - **Panel B** shows the `M1` mesh (`1,476` triangles) with visibly denser local `PointSize` refinement clustered around the relief notch and both holes where stress gradients concentrate (`M2` further refines to `5,904` triangles).
+  - **Panel C** plots area error vs. the exact analytical CAD area (navy solid curve, left axis) and maximum curve chord error (amber dashed curve, right axis) as mesh size `h` gets finer from left to right.
+- **What it contributes:** Before a single neural weight is trained, users get quantitative proof of geometric fidelity — area error drops from **`1.56% -> 1.05% -> 0.51%`** and maximum curved-edge chord error drops from **`0.348 -> 0.161 mm`**.
+
+---
 
 ### Stage 2 — P6 finite-strain viscoelasticity & guarded hybrid rollout
 
 ![Stage 2: P6 cyclic viscoelastic hysteresis, hold stress relaxation, guarded FEM fallback, and deformed peak stress field](docs/assets/examples/viscoelastic_showcase/02_viscoelastic_p6_rollout.png)
 
-- **Panels A & B:** Unlike the hyperelastic equilibrium limit (`E_inf`, zero hysteresis), the 2-branch Generalized Maxwell model reproduces the open cyclic hysteresis loop and **`27.3%`** stress relaxation during the constant-strain hold (`t = 0.5–1.5 s`) on an unseen 9% strain trajectory (`cpu_replay_exact = True`, `dt`-halving diff `2.11%`).
-- **Panels C & D:** `GuardedStatefulStepper` keeps fast energy-trained operator steps where equilibrium residuals stay below threshold (`2.83 N/mm`) and automatically triggers exact P2 FEM fallback on high-stress peak/hold steps (red circles), enforcing nonnegative dissipation (`D >= 0`) and resolving peak stresses around the notch root and mounting holes (`min det F = 0.975`).
+- **What is done:** Assigns a **2-branch Generalized Maxwell** viscoelastic model to the bracket, verifies its closed-form algorithmic tangent against central finite differences (`7.57e-11`), runs a P2 incremental FEM reference over a cyclic **Ramp → Hold → Unload** history at an unseen 9% strain amplitude (`u_max = 3.6 mm`, checking both exact CPU state-hash replay and `dt`-halving sensitivity), trains `HistoryAwareViscoelasticOperator` **purely via incremental variational potential energy (zero FEM displacement labels)** over three training amplitudes (`2.0, 3.2, 4.4 mm`), saves/reloads a tamper-checked `safetensors` artifact, and compares pure neural rollout against `GuardedStatefulStepper`.
+- **How to read the plot:**
+  - **Panel A (Hysteresis Loop):** Axial reaction force vs. applied displacement `u_x`. The dash-dot grey baseline shows the equilibrium elastic limit (`E_inf`, zero memory, no hysteresis loop). The navy curve (P2 FEM reference) opens a wide hysteresis loop and drops vertically during the hold at `u_x = 3.6 mm`; orange dashes are the pure neural operator (`12.3x` faster) and green triangles are `GuardedStatefulStepper`.
+  - **Panel B (Stress Relaxation in Time):** Reaction force vs. time `t`. Inside the shaded yellow constant-strain hold (`0.5–1.5 s`), force relaxes by **`27.3%`** as the two Maxwell branches dissipate internal viscous energy. **Red circles** mark the exact steps where `GuardedStatefulStepper` detected elevated residual and triggered exact P2 FEM fallback.
+  - **Panel C (Residual & Dissipation):** Compares per-step discrete equilibrium residuals of the pure operator (orange bars) vs. the guarded stepper (green bars) against the guard threshold (red dashed line, `2.83 N/mm`). Whenever an orange bar crosses the red line (`t = 0.50–1.50 s`), the guarded stepper falls back to FEM and collapses the green residual bar to `~0`. The purple curve (right axis) verifies thermodynamically nonnegative viscous dissipation (`D >= 0`) at every step.
+  - **Panel D (Deformed Stress Field):** Actual 1×-scale deformed bracket at peak load (`t = 0.5 s`) shaded by first Piola-Kirchhoff stress norm `||P||` over the faint grey undeformed outline, highlighting stress concentrations at the top notch root and mounting-hole ligaments (`min det F = 0.975 > 0`).
+- **What it contributes:** Combines **`12.3x` online neural rollout speed** (`0.231 s` vs. `2.84 s` FEM) with an automatic physics guard that prevents unbounded rollout drift (`8.44% -> 7.46%` worst-step reaction error, zero peak residuals, verified state-bound checkpointing).
+
+---
 
 ### Stage 3 — P1 hierarchical energy & P2 multi-CAD tokenization, OOD gate & LoRA
 
 ![Stage 3: P1 hierarchical M0-to-M1 energy gain, P2 12-channel boundary/load tokens, OOD separation, and budgeted LoRA adaptation](docs/assets/examples/viscoelastic_showcase/03_p1_p2_hierarchical_and_lora.png)
 
-- **Panel A:** Coarse-to-fine `M0 -> M1` hierarchical energy training reduces displacement relative L2 error from **`2.35% -> 1.68%` (`-28.5%`)** at the same 80-step budget (stress error `27.8%` vs `24.0%` is reported transparently alongside displacement).
-- **Panels B, C & D:** 12-channel boundary/load tokenization encodes all 3 loops (`45` weighted tokens); `GeometryOODDetector` rejects an extreme extrapolated CAD (`24.97 > 3.50`) while passing unseen in-distribution brackets (`0.97`); and `<= 10%`-budget LoRA (`1,256` params, `0.35 s`) outperforms both Zero-Shot (`3.07%`) and 100%-budget From-Scratch (`3.51%`, `3.35 s`).
+- **What is done:** Evaluates two core modeling upgrades on the bracket family: (1) **P1 hierarchical `M0 -> M1` energy training** compared head-to-head against single-level training at the same 80-step budget; and (2) **P2 multi-CAD generalization** — encoding arbitrary genus-2 CAD brackets with 12-channel boundary/load tokens, fitting a `GeometryOODDetector` across 4 training bracket variants, testing an unseen in-distribution variant plus an extreme out-of-distribution bracket, and adapting a pretrained operator with a **`<= 10%`-budget Low-Rank Adapter (LoRA)** vs. zero-shot and from-scratch training.
+- **How to read the plot:**
+  - **Panel A (P1 Hierarchical Energy):** Compares Baseline (slate) vs. P1 Hierarchical `M0 -> M1` (teal) across displacement error (`u Rel L2`), first-Piola stress error (`P Rel L2`), and total energy gap.
+  - **Panel B (12-Channel Boundary/Load Tokens):** Shows the `45` area-weighted boundary tokens distributed around all 3 closed loops (outer perimeter + notch + 2 holes), colored by physical boundary role with arrows depicting unit outward normals.
+  - **Panel C (OOD Gate):** Horizontal bars show each CAD part's Mahalanobis distance from the training geometry manifold vs. the red dashed refusal threshold (`3.50`). Green bars pass; red bars are rejected before serving.
+  - **Panel D (LoRA Adaptation):** Compares displacement error and wall time on an unseen CAD bracket for Zero-Shot (orange, `0` steps), P2 LoRA (green, `1,256` adapter parameters, `0.35 s`), and From-Scratch training (navy, 100% step budget, `3.35 s`).
+- **What it contributes:** P1 cuts displacement error by **`-28.5%`** (`2.35% -> 1.68%`; stress error `27.8%` vs `24.0%` at this short 80-step budget is reported transparently rather than hidden). P2 cleanly blocks extrapolated CAD (`24.97 > 3.50` vs. `0.97` in-distribution) and adapts to unseen CAD parts **`9.6x` faster** than training from scratch while achieving **lower error** (`2.38%` vs. `3.07%` zero-shot and `3.51%` from-scratch).
+
+---
 
 ### Stage 4 — Dual-backend parity, three-tier verification funnel & break-even `N*`
 
 ![Stage 4: P4 live DWR adjoint QoI error attribution, Tier 1.5 test-time physics LoRA, Tier 2 spectrally safe warm-start repair, and amortized break-even curve](docs/assets/examples/viscoelastic_showcase/04_verification_funnel_and_receipts.png)
 
-- **Panels A & B:** `TorchFemBackend` matches `ScikitFemBackend` to **`1.77e-15`** strain-energy parity and computes live P4 DWR adjoint estimates that closely track true FEM errors across all 4 engineering QoIs; at unseen 12% strain, label-free Tier 1.5 Test-Time Physics LoRA reduces potential energy by **`3.41%`** and FEM residual from **`3.82 -> 3.12`**.
-- **Panels C & D:** Warm-starting FEM from the surrogate cuts Newton iterations from **`14 -> 4`** (`3.5x`), while **Spectral Repair** rescues a folded/inverted start (`det F: -1.00 -> +0.66`, where raw warm Newton fails) to converge in **`7` iterations**. Every certified call emits an RFC 8785 SHA-256 Trust Receipt alongside the honest break-even curve (**`N* = 34.2` queries**).
+- **What is done:** Runs FormaMech's complete verification and certification stack on the bracket: (1) cross-checks `TorchFemBackend` against `ScikitFemBackend`; (2) times the **Tier 0** zero-FEM admissibility gate on both clean and deliberately inverted fields; (3) runs **Tier 1** conformal bands and **P4 live DWR adjoint error attribution** across four engineering QoIs; (4) pushes the operator to an unseen **12% strain** and applies label-free **Tier 1.5 Test-Time Physics LoRA**; (5) benchmarks **Tier 2** cold FEM vs. warm Newton vs. a severely corrupted folded prediction (`det F = -1.00`) with and without **Spectrally Safe Warm-Start Repair**; and (6) emits an **RFC 8785 SHA-256 Trust Receipt** alongside the honest **amortized break-even query count `N*`**.
+- **How to read the plot:**
+  - **Panel A (P4 Live DWR Attribution):** Log-scale comparison of true surrogate-vs-FEM absolute error (navy) vs. the live P4 DWR adjoint estimate (teal) across Reaction Force, Avg `P11` Stress, Total Strain Energy, and Smoothed Peak von Mises stress (computed purely via one linear adjoint solve per QoI — no nonlinear FEM solve).
+  - **Panel B (Tier 1.5 TTA):** Label-free nondimensional potential energy decreasing monotonically across Test-Time Physics LoRA steps at unseen 12% strain.
+  - **Panel C (Tier 2 Spectral Repair):** Converged Newton iterations required for exact FEM solution from four starting guesses: Cold Zero Start (`14` iters), Surrogate Warm Start (`4` iters), Raw Folded Start (red **`FAILED (det F < 0)`**), and Spectrally Repaired Warm Start (`7` iters).
+  - **Panel D (Break-Even `N*`):** Cumulative wall-clock cost of Pure FEM (slate line) vs. FormaMech including full upfront training + calibration + serving (teal line). The orange dot marks `N*` — the exact query count where the surrogate becomes strictly faster end-to-end than running FEM directly.
+- **What it contributes:** Independent backends agree to machine precision (**`1.77e-15`**); Tier 0 filters bad fields in **`11.6 ms`**; P4 DWR closely predicts true QoI error (Reaction Force `0.437` vs. `0.435`); Tier 1.5 drops unseen-strain energy by **`3.41%`** and residual **`3.82 -> 3.12`**; Spectral Repair rescues an unsolvable folded prediction (`det F: -1.00 -> +0.66`) and still halves Cold FEM iterations; and `N* = 34.2` queries (`10.9` calibration-only) tells users honestly when amortization pays off.
+
+---
 
 ### Stage 5 — P3 DWR active learning + fallback loop & P5 FEM-guarded CAD design
 
 ![Stage 5: P3 DWR active learning vs random DOE, P5 FEM-guarded lightweighting trajectory, and initial vs optimized CAD geometry](docs/assets/examples/viscoelastic_showcase/05_p3_active_learning_and_p5_design_opt.png)
 
-- **Panel A:** On a `TRAIN`-only pool of 8 CAD bracket variants, `physics_dwr_diversity` achieves **`1.81x`** higher true error discovery (`8.02%` vs `4.42%`) and **`1.93x`** broader geometric diversity (`0.589` vs `0.306`) than random DOE, while recording Tier 2 escalations in a `TRAIN`-only `FallbackFeedbackLedger`.
-- **Panels B & C:** Minimizing bracket area subject to an 80% stiffness floor (`>= 8.22 N/mm`), P5 uses the surrogate to explore rapidly while **P2 FEM independently audits candidates**, rejects over-lightweighted steps, and certifies **`-9.1%` area reduction** (`749.1 -> 681.3 mm²`) with visibly enlarged cutouts (`Hole R: 2.60 -> 4.26 mm`, `Notch R: 3.20 -> 4.00 mm`).
+- **What is done:** Demonstrates two closed-loop workflows connecting neural surrogates back to authoritative FEM: (1) **P3 Active Learning** evaluates an 8-design `TRAIN`-only CAD candidate pool under a 3-solve FEM budget, comparing `random_doe`, `physics_indicator`, and `physics_dwr_diversity`, while logging Tier 2 escalations in a `TRAIN`-only `FallbackFeedbackLedger` (with explicit non-label-free disclosure for multi-fidelity loss); and (2) **P5 FEM-Guarded CAD Lightweighting** minimizes bracket material area by enlarging the mounting holes and top relief notch while enforcing a hard P2-FEM-verified axial stiffness floor (`>= 8.22 N/mm`, 80% of initial `10.28 N/mm`).
+- **How to read the plot:**
+  - **Panel A (P3 Active Learning):** For each selection strategy, the navy bar (left axis) shows the mean true FEM error of the 3 chosen designs (higher = better error discovery), and the teal bar (right axis) shows their geometric diversity spread (higher = broader shape coverage).
+  - **Panel B (P5 Lightweighting Trajectory):** Tracks bracket area (navy solid, left axis — lower is lighter) and surrogate reaction force (green dashed, right axis) across trust-region iterations relative to the red dotted minimum stiffness limit (`8.22 N/mm`). The **orange star** marks the final **P2-FEM-verified** feasible optimum (`8.21 N/mm`, within `0.05 N/mm` constraint tolerance). Notice how the surrogate explored further down to `659 mm²`, but P2 FEM rejected those overly flexible candidates and certified the safe `681.3 mm²` optimum instead.
+  - **Panel C (Shape Overlay):** Directly overlays the Initial CAD Bracket contour (grey) with the P5 Optimized P2-FEM-Verified contour (emerald green), visually showing the enlarged left/right mounting holes and deeper relief notch.
+- **What it contributes:** P3 discovers **`1.81x` higher true error** (`8.02%` vs. `4.42%`) and **`1.93x` broader geometry coverage** (`0.589` vs. `0.306`) than random sampling; P5 delivers a **`-9.1%` P2-FEM-verified mass/area reduction** (`749.1 -> 681.3 mm²`, Hole `R: 2.60 -> 4.26 mm`, Notch `R: 3.20 -> 4.00 mm`) while guaranteeing **zero unverified surrogate designs are ever accepted**.
+
+---
 
 ### Stage 6 — Extended nonlinear physics & production deployment gates
 
 ![Stage 6: Non-conservative follower pressure, 2.5D rigid-indenter contact, 3D TET10 operator, and 7-gate production deployment verification](docs/assets/examples/viscoelastic_showcase/06_extended_physics_3d_and_deployment.png)
 
-- **Panels A, B & C:** Exercises large-deformation follower pressure (`max ||u|| = 5.59 mm`, exact unsymmetric tangent FD error **`1.47e-10`**), 2.5D plane-strain rigid-indenter contact via Armijo energy-backtracking Augmented Lagrangian (`max penetration = 5.74e-6 mm`, `F_y = -3.54 N/mm`), and 3D `TET10` mechanics (`TET4` volumetric locking refused at `nu = 0.49`; `O(N*S)` `Surface3DEnergyOperator` 3D gradient FD error **`5.35e-13`**).
-- **Panel D:** Passes **7/7 production deployment & provenance gates** — RFC 8785 Trust Receipt, tamper-checked `safetensors` viscoelastic checkpoint, Verification & Trust Inspector Markdown dossier, sandboxed 5-tool MCP Server (path-traversal escape blocked), and FMI 3.0 Co-Simulation FMU (envelope & admissibility enforced).
+- **What is done:** Exercises FormaMech's extended nonlinear mechanics and production deployment interfaces: (1) **non-conservative follower pressure** (`0.06 MPa` remaining normal to the deformed top and notch edges, verifying the exact unsymmetric load-stiffness tangent against finite differences); (2) **2.5D plane-strain frictionless rigid-indenter contact** (pressing a rigid `R = 6.5 mm` circular punch into the elastomer shoulder using Armijo energy-backtracking Augmented Lagrangian Newton); (3) **3D volumetric `TET10` mechanics** (confirming linear `TET4` locking refusal at `nu = 0.49` and finite-difference accuracy of the `O(N*S)` `Surface3DEnergyOperator` 3D autograd gradients); and (4) **7 automated production & epistemic deployment checks** (RFC 8785 Trust Receipt, tamper-checked viscoelastic `safetensors` checkpoint, Verification & Trust Inspector Markdown dossier, sandboxed 5-tool MCP Server with path-escape refusal, and FMI 3.0 Co-Simulation FMU export + in-/out-of-envelope evaluation).
+- **How to read the plot:**
+  - **Panel A (Follower Pressure):** Deformed bracket under live normal pressure colored by displacement magnitude `||u||` (`max = 5.59 mm`) over the faint undeformed mesh; unsymmetric tangent FD error = **`1.47e-10`**.
+  - **Panel B (2.5D Rigid-Indenter Contact):** Rigid red circular punch indenting the top-left shoulder (`-u_y` up to `0.95 mm`), converging in `2` Augmented Lagrangian iterations to **`5.74e-6 mm`** maximum penetration and **`F_y = -3.54 N/mm`** contact reaction (`admissible = True`).
+  - **Panel C (3D `TET10` & Surface Operator):** 3D volumetric bracket block (`36` quadratic `TET10` elements); linear `TET4` is refused at `nu = 0.49` to prevent volumetric locking, and 3D `Surface3DEnergyOperator` displacement gradients match finite differences to **`5.35e-13`**.
+  - **Panel D (Deployment Scoreboard):** Live pass/fail summary of all 7 production, provenance, security-sandbox, and epistemic verification gates (**7/7 PASS**).
+- **What it contributes:** Proves the same codebase scales beyond static 2D displacement pulls into follower loads, large-deformation elastomer contact, locking-safe 3D mechanics, interactive trust dossiers, sandboxed LLM/agent tooling (MCP), and standard FMI 3.0 co-simulation digital twins.
 
 ## Train on your own CAD
 
