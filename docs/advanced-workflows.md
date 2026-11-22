@@ -180,3 +180,14 @@ strictly to gitignored `.formamech-runs/pilots/`):
 ```text
 python scripts/run_cpu_pilots.py
 ```
+
+## Specialized workflows (M1–M5)
+
+For full step-by-step walkthroughs, verified benchmark plots, CLI recipes, and
+Python API examples of FormaMech's specialized engineering workflows, see:
+
+- [Continuous model qualification & deployment gates](qualification.md)
+- [Interactive 2D Engineering Workbench (`formamech ui`)](workbench.md)
+- [Small-strain J2 elastoplasticity](plasticity.md)
+- [Parametric CAD & geometry-aware exploration](parametric_cad.md)
+- [End-to-end 3D CAD, nonlinear FEM & 3D PI-GINOT](workflow_3d.md)

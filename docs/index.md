@@ -16,9 +16,19 @@ explains local refinement and reference-convergence diagnostics.
 
 The installed [campaign compiler](campaigns/s28-compiler-guide.md) supports
 explicit execution and resume. Try the [custom-material example](campaigns/s29-custom-material.md)
-for complete inputs. New candidates retain `NOT_VERIFIED`; keep their inputs,
-weights and comparison reports locally under `.formamech-runs/` or outside the
-checkout, and assess suitability for their own geometry and input range.
+for complete inputs. New candidates retain `NOT_VERIFIED`; run the
+[model qualification pipeline](qualification.md) (`formamech qualify`) to
+evaluate policy-driven numerical verification gates, calibrate split-conformal
+bounds, and enforce fail-closed deployment gates. Keep inputs, weights, and
+comparison reports locally under `.formamech-runs/` or outside the checkout.
+
+## Specialized engineering workflows
+
+- [Continuous model qualification & deployment gates](qualification.md) (`formamech qualify`)
+- [Interactive 2D Engineering Workbench](workbench.md) (`formamech ui`)
+- [Small-strain J2 elastoplasticity](plasticity.md) (`formamech.stateful` & `formamech stateful verify-tangent`)
+- [Parametric CAD & geometry-aware exploration](parametric_cad.md) (`formamech cad parametric`)
+- [End-to-end 3D CAD, nonlinear FEM & 3D PI-GINOT](workflow_3d.md) (`formamech cad sample-3d|import-3d|inspect-3d`)
 
 ## Project history
 

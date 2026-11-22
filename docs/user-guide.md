@@ -11,6 +11,11 @@ Predictions belong to a declared geometry, material and input envelope.
 | [Train for your own CAD](#3-train-for-your-own-2d-cad-profile) | STEP/DXF, boundary settings and material/load ranges | A reusable fixed-geometry candidate and FEM comparisons |
 | [Use a custom material](campaigns/s29-custom-material.md) | An admitted strain-energy formula and explicit inputs | A material-specific candidate and its own reports |
 | [Advanced workflows (P1–P6)](advanced-workflows.md) | Hierarchical CAD, LoRA adaptation, active FEM, live DWR trust reports, design optimization, viscoelasticity | End-to-end CLI and Python workflows with explicit claim discipline |
+| [Model qualification](qualification.md) | Candidate bundle & `QualificationPolicy` | SHA-256 qualification manifest, split-conformal calibration & fail-closed deployment gates |
+| [Interactive workbench](workbench.md) | 2D STEP/DXF in the browser (`formamech ui`) | Visual boundary picking, plan preview, background train/qualify & Trust Inspector |
+| [J2 elastoplasticity](plasticity.md) | Linear/Voce J2 parameters & cyclic loads | Verified radial-return P2 FEM, Ortiz–Steinmann operator & guarded FEM fallback |
+| [Parametric CAD exploration](parametric_cad.md) | Bounded parametric 2D CAD family | Reusable geometry-aware operator, 100% OOD/genus refusal & FEM-guarded optimization |
+| [3D CAD & nonlinear FEM](workflow_3d.md) | Single-solid 3D STEP model & multi-axial loads | Quadratic `TET10` dual FEM (`torch-fem-3d` / `scikit-fem-3d`) & 3D `Surface3DEnergyOperator` |
 
 ## Install
 

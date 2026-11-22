@@ -1,10 +1,10 @@
 # FormaMech
 
-**Train physics-informed neural surrogates for your own 2D CAD geometry.**
+**An open-source, physics-informed engineering simulation platform combining neural-speed predictions with transparent numerical verification and FEM-backed reliability — across 2D & 3D CAD.**
 
 [![Python 3.11–3.13](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-3776AB?logo=python&logoColor=white)](pyproject.toml) [![MIT License](https://img.shields.io/badge/license-MIT-2ea44f)](LICENSE) [![Development](https://img.shields.io/badge/status-development-orange)](CHANGELOG.md)
 
-[Get started](#installation) · [Plots](#examples-with-plots) · [End-to-End Showcase](#end-to-end-viscoelastic-cad-showcase) · [Own CAD](#train-on-your-own-cad) · [Advanced workflows](#advanced-workflows-p1p6) · [Materials](#material-models) · [Cite](#how-to-cite) · [Limitations](docs/limitations.md)
+[Get started](#installation) · [Plots](#examples-with-plots) · [Viscoelastic Showcase](#end-to-end-viscoelastic-cad-showcase) · [Own CAD](#train-on-your-own-cad) · [Specialized workflows](#specialized-engineering-workflows) · [Advanced workflows](#advanced-workflows-p1p6) · [Materials](#material-models) · [Cite](#how-to-cite) · [Limitations](docs/limitations.md)
 
 Import a planar STEP or DXF profile, define its material and boundary conditions,
 and train a model over the loads and material ranges you choose. Compare its
@@ -35,6 +35,11 @@ flowchart LR
 | Refine a mesh around holes or other features | [Meshing and convergence guide](docs/campaigns/own-cad-meshing.md) |
 | Resume training or move a model to another machine | [Compiler guide](docs/campaigns/s28-compiler-guide.md) · [Bundle reuse](#save-and-reuse-your-model) |
 | Use hierarchical CAD training, LoRA adaptation, active FEM, live DWR trust reports, design optimization or viscoelastic rollouts | [Advanced workflows (P1–P6)](#advanced-workflows-p1p6) · [Guide](docs/advanced-workflows.md) |
+| Run continuous model qualification, split-conformal calibration & fail-closed deployment gates | [Model qualification guide](docs/qualification.md) |
+| Use the interactive browser GUI instead of hand-editing JSON/CLI | [Interactive 2D workbench](docs/workbench.md) |
+| Simulate cyclic J2 elastoplasticity (linear & Voce hardening) with guarded neural rollouts | [J2 elastoplasticity guide](docs/plasticity.md) |
+| Train one reusable surrogate across a parametric CAD family & run FEM-guarded optimization | [Parametric CAD exploration guide](docs/parametric_cad.md) |
+| Import 3D STEP solids, solve dual nonlinear 3D `TET10` FEM & train 3D PI-GINOT operators | [3D CAD & nonlinear FEM guide](docs/workflow_3d.md) |
 
 ## Installation
 
@@ -375,6 +380,32 @@ optimization reports and trajectory rollouts carry explicit
 | **P4** | CAD-level numerical trust reports (`CADTrustReport`) with live DWR adjoints in certified/exact serving | `formamech predict --mode certified --trust-report` |
 | **P5** | FEM-guarded differentiable design optimization with periodic FEM FD gradient checks & final FEM verification | `formamech optimize` |
 | **P6** | Stateful finite-strain generalized-Maxwell viscoelasticity, history-aware operator & guarded checkpoints | `formamech stateful rollout` |
+| **Q1** | Continuous numerical model qualification, split-conformal calibration, CI regression diffs & deployment gates | `formamech qualify run\|verify\|diff`, `--require-qualified` |
+| **W1** | Interactive 2D Engineering Workbench (CAD import, clickable boundary picker, material/plan forms, background train/qualify, trust inspector) | `formamech ui --workspace ...` |
+| **J2** | Small-strain J2 elastoplasticity (linear & Voce hardening; 3D, plane strain, Schur-condensed plane stress; Ortiz–Steinmann operator + guarded FEM rollout) | `formamech stateful verify-tangent`, `formamech.stateful` |
+| **PCAD** | Parametric 2D CAD families with `TopologyStabilityGuard`, `GeometryOODDetector`, `cad-parametric-v1` bundles & FEM-guarded lightweighting | `formamech cad parametric init\|sample\|train\|predict\|qualify` |
+| **3D** | End-to-end 3D solid STEP import, `TET10` meshing (`TET4` locking guard), dual nonlinear FEM (`torch-fem-3d` & `scikit-fem-3d`) & $O(N\cdot S)$ `Surface3DEnergyOperator` | `formamech cad sample-3d\|import-3d\|inspect-3d`, `piginot.training.energy_engine_3d` |
+
+## Specialized engineering workflows
+
+Beyond fixed-geometry 2D hyperelastic compilation, FormaMech ships five
+documented, end-to-end specialized workflows covering qualification, visual
+onboarding, elastoplasticity, parametric CAD exploration, and 3D solid
+mechanics:
+
+| Specialized workflow | Guide | Key capability & verified highlight |
+| --- | --- | --- |
+| **Continuous model qualification & deployment gates** | [docs/qualification.md](docs/qualification.md) | Policy-driven 7-family verification (`reduce_families`), `DEV`-fitted split-conformal calibration, CI regression diffs (`qualify diff`), and fail-closed `--require-qualified` gates on `predict`, `export`, and `mcp`. |
+| **Interactive 2D Engineering Workbench** | [docs/workbench.md](docs/workbench.md) | Guided 5-stage Streamlit + Plotly browser GUI (`formamech ui`) with clickable boundary assignment, live lifting validation, background compile/qualify jobs, and Trust Inspector writing 100% CLI-reproducible projects (plus `docker/Dockerfile.ui`). |
+| **Small-strain J2 elastoplasticity** | [docs/plasticity.md](docs/plasticity.md) | Unified radial-return kernel (3D, plane strain, Schur-condensed plane stress; tangent FD errors `4.7e-11–1.6e-9`), P2 cyclic hysteresis matching analytical to `<= 2.2e-12`, Ortiz–Steinmann variational operator, and `GuardedStatefulStepper` fallback capturing permanent 45° shear bands. |
+| **Parametric CAD & geometry-aware exploration** | [docs/parametric_cad.md](docs/parametric_cad.md) | Reusable `BoundaryEnergyOperator` + `GeometryOODDetector` across a parametric CAD family: **`1.72%`** mean displacement rel-$L^2$ across 12 unseen notched brackets (`HOLDOUT_VERIFIED`), **`100%`** OOD/genus-change refusal, and **`-25.29%`** P2-FEM-verified area reduction. |
+| **End-to-end 3D CAD, nonlinear FEM & 3D PI-GINOT** | [docs/workflow_3d.md](docs/workflow_3d.md) | OpenCASCADE 3D STEP $\to$ `TET10` (`TET4` locking refused at $\nu \ge 0.45$), dual 3D FEM (`0.0066%` L-bracket parity at 45% arm bending; `< 1.8e-15 mm` 25%-stretch patch parity), and a `316,851`-param `Surface3DEnergyOperator` on a `9,498`-DOF 3D mounting lug (`5.20%` mean unseen u rel-$L^2$, `4.19%` peak $\sigma_{vM}$ error, **`165.4×`** speedup, `-46%` warm-start Newton iters, $N^* = 59$). |
+
+![3D CAD and nonlinear FEM: 316,851-parameter Surface3DEnergyOperator on a 3,166-node TET10 industrial mounting lug showing unseen multi-axial holdout errors, honest break-even N*, and 3D FEM vs. neural stress fields](docs/assets/workflows/workflow_3d_mounting_lug_operator.png)
+
+![Parametric CAD exploration: FEM-guarded trust-region lightweighting achieving -25.29% P2-FEM-verified area reduction while enforcing stress and stiffness constraints](docs/assets/workflows/parametric_cad_fem_optimization.png)
+
+![Small-strain J2 elastoplasticity: cyclic load-unload-reload bracket hysteresis, GuardedStatefulStepper escalation, peak von Mises stress, and unloaded 45-degree permanent plastic shear bands](docs/assets/workflows/plasticity_bracket_guarded_rollout.png)
 
 Try live certified DWR trust reporting, FEM-guarded design optimization on a
 shipped bundle, and deterministic `TRAIN`-only active selection using the
@@ -404,6 +435,7 @@ artifact schemas, and claim boundaries.
 | In-plane fibre reinforcement | HGO, single-family HGO, GOH |
 | Custom energy functions | Declared isotropic or fibre strain-energy formulas with units, symmetry and small-strain moduli |
 | Stateful viscoelasticity (P6 / F1) | Finite-strain generalized-Maxwell incremental variational potential with closed-form algorithmic tangent and nonnegative discrete dissipation |
+| Small-strain J2 elastoplasticity (M3 / F2) | Linear & Voce isotropic hardening in 3D, 2D plane strain, and Schur-condensed 2D plane stress with consistent algorithmic tangent, Ortiz–Steinmann variational potential, and guarded rollouts |
 
 Training uses the declared strain-energy model; stresses come from displacement
 gradients and the constitutive law. Custom materials must pass admission checks
@@ -412,12 +444,14 @@ the [runnable custom-material example](examples/custom_material/README.md).
 
 ## Scope and interpretation
 
-The current CAD workflow covers **2D planar profiles, finite-strain
-plane-stress hyperelasticity and generalized-Maxwell viscoelasticity, and
-displacement-controlled loading**. Essential boundaries must be straight;
-curved free boundaries and holes are supported. Full 3D solids, applied
-force/traction loading, rate-independent plasticity and damage remain outside
-the current interface.
+FormaMech covers **2D planar STEP/DXF profiles** (finite-strain plane-stress
+hyperelasticity, generalized-Maxwell viscoelasticity, small-strain J2
+elastoplasticity in plane stress/plane strain, and parametric CAD families) as
+well as **single-solid 3D STEP components** (quadratic `TET10` finite-strain
+hyperelasticity with dead surface tractions, dual pure-MIT 3D FEM backends,
+and $O(N \cdot S)$ surface-conditioned 3D neural operators). Rate-independent
+finite-strain crystal/damage plasticity, 3D non-conservative follower loads,
+and 3D multi-body contact remain outside the current interface.
 
 New CAD/compiler candidates, low-rank geometry adapters, active-FEM
 multi-fidelity runs (explicitly disclosed as `multi-fidelity-label-efficient`,

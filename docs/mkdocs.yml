@@ -26,6 +26,12 @@ nav:
   - Bundles: bundle.md
   - Problem specification: problem-spec.md
   - Advanced workflows (P1-P6): advanced-workflows.md
+  - Specialized workflows:
+      - Model qualification: qualification.md
+      - Interactive workbench: workbench.md
+      - J2 elastoplasticity: plasticity.md
+      - Parametric CAD exploration: parametric_cad.md
+      - 3D CAD and nonlinear FEM: workflow_3d.md
   - Train with your own inputs:
       - Own 2D CAD: campaigns/own-cad-workflow.md
       - Meshing and FEM convergence: campaigns/own-cad-meshing.md
