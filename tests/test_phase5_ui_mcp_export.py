@@ -96,6 +96,7 @@ def test_mcp_server_jsonrpc_tools_sandbox_and_dof_limits(tmp_path: Path) -> None
         "inspect_cad_project",
         "predict_verified",
         "run_design_optimization",
+        "verify_qualification",
         "verify_receipt",
     }
 
@@ -176,7 +177,7 @@ def test_mcp_server_jsonrpc_tools_sandbox_and_dof_limits(tmp_path: Path) -> None
     )
     assert rc == 0
     listed = json.loads(tools_out.read_text(encoding="utf-8"))
-    assert len(listed["tools"]) == 5
+    assert len(listed["tools"]) == 6
 
 
 def test_onnx_export_module_parity_and_fmi3_fmu_export_and_step(tmp_path: Path) -> None:

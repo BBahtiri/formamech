@@ -7,6 +7,7 @@ single authoritative source of truth backed by ``serve(..., emit_receipt=True)``
 
 from __future__ import annotations
 
+import importlib
 import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -337,7 +338,7 @@ def render_trust_dossier_markdown(snapshot: InspectorSnapshot) -> str:
 def build_plotly_figures(snapshot: InspectorSnapshot) -> dict[str, Any]:
     """Build interactive Plotly field, admissibility, and FEM-diff figures."""
     try:
-        import plotly.graph_objects as go  # type: ignore[import-not-found]
+        go = importlib.import_module("plotly.graph_objects")
     except ImportError as exc:
         from piginot.serving.hybrid import MissingExtraError
 
@@ -371,12 +372,20 @@ def build_plotly_figures(snapshot: InspectorSnapshot) -> dict[str, Any]:
             ]
         )
         fig.update_layout(
-            title=title,
+            title={"text": title, "x": 0.01},
             scene={
                 "aspectmode": "data",
-                "camera": {"eye": {"x": 0.0, "y": 0.0, "z": 2.2}},
+                "xaxis": {"title": "x (mm)"},
+                "yaxis": {"title": "y (mm)"},
+                "zaxis": {"visible": False},
+                "camera": {
+                    "projection": {"type": "orthographic"},
+                    "eye": {"x": 0.0, "y": 0.0, "z": 2.6},
+                    "up": {"x": 0.0, "y": 1.0, "z": 0.0},
+                },
             },
-            margin={"l": 10, "r": 10, "t": 40, "b": 10},
+            margin={"l": 10, "r": 10, "t": 48, "b": 10},
+            height=380,
         )
         return fig
 

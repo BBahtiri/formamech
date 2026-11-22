@@ -1,0 +1,12 @@
+.git
+.venv
+.formamech-runs
+.piginot-runs
+.pytest_cache
+.mypy_cache
+.ruff_cache
+__pycache__
+*.pyc
+site
+dist
+experiments

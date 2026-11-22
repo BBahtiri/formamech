@@ -70,10 +70,13 @@ piginot = "piginot.cli:main"
 dogbone-v1 = "piginot_campaigns.adapters:DOGBONE"
 notched-v1 = "piginot_campaigns.adapters:NOTCHED"
 cad-fixed-v1 = "piginot.cad.adapter:FIXED_CAD"
+cad-parametric-v1 = "piginot.cad.parametric_adapter:PARAMETRIC_CAD"
 
 [project.entry-points."formamech.fem.backends"]
 scikit-fem = "piginot.fem.backend:ScikitFemBackend"
 torch-fem = "piginot.fem.torch_backend:TorchFemBackend"
+scikit-fem-3d = "piginot.fem.backend_3d:ScikitFemBackend3D"
+torch-fem-3d = "piginot.fem.backend_3d:TorchFemBackend3D"
 
 [tool.hatch.build]
 exclude = ["/experiments"]

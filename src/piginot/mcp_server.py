@@ -55,14 +55,18 @@ class FormaMechMcpServer:
         workspace_root: Path | str,
         *,
         max_dof_limit: int = DEFAULT_MAX_DOF_LIMIT,
+        require_qualified: bool = False,
     ) -> None:
         root = Path(workspace_root).resolve()
         if not root.exists() or not root.is_dir():
             raise ValueError(f"workspace_root must be an existing directory: {root}")
         if type(max_dof_limit) is not int or max_dof_limit < 2:
             raise ValueError("max_dof_limit must be an integer >= 2")
+        if not isinstance(require_qualified, bool):
+            raise TypeError("require_qualified must be boolean")
         self.workspace_root = root
         self.max_dof_limit = max_dof_limit
+        self.require_qualified = require_qualified
         self._tools: dict[str, McpToolSpec] = {
             spec.name: spec for spec in self._build_tools()
         }
@@ -294,6 +298,7 @@ class FormaMechMcpServer:
                         },
                         "recipe_path": {"type": "string"},
                         "cad_calibration_path": {"type": "string"},
+                        "qualification_manifest_path": {"type": "string"},
                         "backend": {"type": "string"},
                         "escalate": {"type": "boolean", "default": False},
                         "tolerance": {"type": "number"},
@@ -346,6 +351,29 @@ class FormaMechMcpServer:
                 },
                 handler=self._tool_verify_receipt,
             ),
+            McpToolSpec(
+                name="verify_qualification",
+                description=(
+                    "Verify a bundle's numerical qualification manifest and enforce "
+                    "the fail-closed deployment gate."
+                ),
+                input_schema={
+                    "type": "object",
+                    "required": ["bundle_path"],
+                    "properties": {
+                        "bundle_path": {"type": "string"},
+                        "manifest_path": {"type": "string"},
+                        "policy_path": {"type": "string"},
+                        "min_claim_level": {
+                            "type": "string",
+                            "enum": ["DEVELOPMENT_VERIFIED", "HOLDOUT_VERIFIED"],
+                            "default": "DEVELOPMENT_VERIFIED",
+                        },
+                    },
+                    "additionalProperties": False,
+                },
+                handler=self._tool_verify_qualification,
+            ),
         )
 
     def _tool_inspect_bundle(self, args: Mapping[str, Any]) -> dict[str, Any]:
@@ -371,6 +399,15 @@ class FormaMechMcpServer:
         from piginot.serving.test_time_lora import TestTimeLoraConfig
 
         bpath = self.resolve_path(str(args["bundle_path"]))
+        if self.require_qualified or args.get("qualification_manifest_path"):
+            from piginot.qualify import enforce_deployment_gate
+
+            mpath = (
+                self.resolve_path(str(args["qualification_manifest_path"]))
+                if args.get("qualification_manifest_path")
+                else None
+            )
+            enforce_deployment_gate(bpath, mpath)
         bundle = load_bundle(bpath)
         dof_estimate = len(bundle.reference_mesh.nodes) * 2
         if dof_estimate > self.max_dof_limit:
@@ -486,6 +523,32 @@ class FormaMechMcpServer:
             "verification_tier": receipt_obj.get("verification_tier"),
             "receipt_sha256": receipt_obj.get("receipt_sha256"),
         }
+
+    def _tool_verify_qualification(self, args: Mapping[str, Any]) -> dict[str, Any]:
+        from piginot.qualify import QualificationPolicy, check_deployment_gate
+        from piginot.verification.status import ClaimLevel
+
+        bpath = self.resolve_path(str(args["bundle_path"]))
+        mpath = (
+            self.resolve_path(str(args["manifest_path"]))
+            if args.get("manifest_path")
+            else None
+        )
+        policy = (
+            QualificationPolicy.load(self.resolve_path(str(args["policy_path"])))
+            if args.get("policy_path")
+            else None
+        )
+        min_claim = ClaimLevel(
+            str(args.get("min_claim_level", ClaimLevel.DEVELOPMENT_VERIFIED.value))
+        )
+        result = check_deployment_gate(
+            bpath,
+            mpath,
+            policy=policy,
+            min_claim_level=min_claim,
+        )
+        return result.document()
 
 
 __all__ = (

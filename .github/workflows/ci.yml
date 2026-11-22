@@ -83,6 +83,18 @@ jobs:
         run: python -m pytest tests/materials tests/contracts/test_energy_formula.py tests/contracts/test_energy_formula_fibres.py --cov=src/piginot/materials --cov=piginot.contracts.energy_formula --cov-fail-under=90
       - name: Check S24 problem coverage
         run: python -m pytest tests/problem tests/contracts/test_problem_spec.py --cov=src/piginot/problem --cov=piginot.contracts.problem_spec --cov-fail-under=90
+      - name: Check M1 qualification coverage
+        run: python -m pytest tests/qualify --cov=src/piginot/qualify --cov-fail-under=90
+      - name: Check M2 workbench coverage
+        run: python -m pytest tests/ui --cov=src/piginot/ui/workbench --cov-fail-under=85
+      - name: Check M3 plasticity coverage
+        run: python -m pytest tests/stateful tests/test_cli_and_compiler_wiring.py --cov=src/piginot/stateful --cov-fail-under=85
+      - name: Check M4 parametric CAD coverage
+        run: python -m pytest tests/cad/test_parametric_cad.py tests/optimization --cov=src/piginot/optimization --cov-fail-under=74
+      - name: Check M5 3D workflow coverage
+        run: |
+          python -m coverage run -m pytest tests/test_3d_workflow.py
+          python -m coverage report --include="*importing_3d.py,*backend_3d.py,*energy_engine_3d.py" --show-missing --fail-under=85
       - name: Audit dependencies
         run: python -m pip_audit
 

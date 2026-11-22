@@ -1,6 +1,19 @@
 """S7 primary finite-element solver surface."""
 
 from piginot.fem.backend import ScikitFemBackend
+from piginot.fem.backend_3d import (
+    FEM_REQUEST_3D_SCHEMA,
+    FEM_RESULT_3D_SCHEMA,
+    DirichletBC3D,
+    FemRequest3D,
+    FemResult3D,
+    ScikitFemBackend3D,
+    TorchFemBackend3D,
+    TractionBC3D,
+    analytical_3d_uniaxial_hyperelastic,
+    assemble_surface_tractions_3d,
+    face_node_indices_3d,
+)
 from piginot.fem.body_forces import BodyForceProvider, ConstantBodyForce
 from piginot.fem.contact import (
     ContactVerificationReport,
@@ -42,11 +55,14 @@ from piginot.fem.torch_backend import (
 
 __all__ = (
     "FEM_BACKEND_GROUP",
+    "FEM_REQUEST_3D_SCHEMA",
+    "FEM_RESULT_3D_SCHEMA",
     "TORCH_PHYSICS_MODES",
     "BackendCapabilities",
     "BodyForceProvider",
     "ConstantBodyForce",
     "ContactVerificationReport",
+    "DirichletBC3D",
     "DirichletFieldProvider",
     "DiscreteLinearization",
     "FemAttempt",
@@ -54,18 +70,26 @@ __all__ = (
     "FemConvergenceEntry",
     "FemFailureCode",
     "FemRequest",
+    "FemRequest3D",
     "FemResult",
+    "FemResult3D",
     "FemSolveFailure",
     "FemSolverConfig",
     "IndependentSolverAdapter",
     "RigidIndenterSpec",
     "ScikitFemBackend",
+    "ScikitFemBackend3D",
     "SolverBackend",
     "TorchFemBackend",
+    "TorchFemBackend3D",
     "TorchFemLinearization",
+    "TractionBC3D",
     "TractionFieldProvider",
+    "analytical_3d_uniaxial_hyperelastic",
     "assemble_contact_terms",
+    "assemble_surface_tractions_3d",
     "available_backends",
+    "face_node_indices_3d",
     "register_backend",
     "resolve_backend",
     "unregister_backend",

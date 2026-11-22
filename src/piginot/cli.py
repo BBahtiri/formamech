@@ -40,6 +40,7 @@ PLUGIN_GROUP = "piginot.campaigns"
 EXIT_OK = 0
 EXIT_ERROR = 1
 EXIT_REFUSED = 2
+EXIT_SCIENTIFIC_REFUSED = 3
 
 CampaignCommand = Callable[[list[str]], int]
 
@@ -216,11 +217,61 @@ def _attach_trust_report(
 
 def _predict(args: argparse.Namespace) -> int:
     from piginot.bundle import BundleIntegrityError, load_bundle, predict
+    from piginot.cad.parametric_adapter import (
+        is_parametric_bundle_dir,
+        load_parametric_bundle,
+        predict_parametric_cad,
+    )
+
+    if getattr(args, "cad_params", None) is not None or is_parametric_bundle_dir(
+        args.bundle
+    ):
+        if getattr(args, "cad_params", None) is None:
+            print(
+                f"{_program(args)} predict: parametric bundle requires --cad-params",
+                file=sys.stderr,
+            )
+            return EXIT_ERROR
+        try:
+            p_bundle = load_parametric_bundle(args.bundle)
+            raw_params = json.loads(args.cad_params.read_text(encoding="utf-8"))
+            if not isinstance(raw_params, dict):
+                raise ValueError("--cad-params JSON must be a parameter mapping")
+            report = predict_parametric_cad(
+                p_bundle,
+                parameters={str(k): float(v) for k, v in raw_params.items()},
+                mode=args.mode,
+            )
+        except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+            print(f"{_program(args)} predict: {exc}", file=sys.stderr)
+            return EXIT_ERROR
+        _emit({**report.document(), "report_hash": report.report_hash}, args.output)
+        return EXIT_OK if report.accepted else EXIT_REFUSED
+
+    if args.request is None:
+        print(f"{_program(args)} predict: --request is required", file=sys.stderr)
+        return EXIT_ERROR
 
     problem = _predict_option_error(args)
     if problem is not None:
         print(f"{_program(args)}: {problem}", file=sys.stderr)
         return EXIT_ERROR
+    if getattr(args, "require_qualified", False):
+        from piginot.qualify import DeploymentGateError, enforce_deployment_gate
+        from piginot.verification.status import ClaimLevel
+
+        try:
+            min_claim = ClaimLevel(
+                str(getattr(args, "min_claim", ClaimLevel.DEVELOPMENT_VERIFIED.value))
+            )
+            enforce_deployment_gate(
+                args.bundle,
+                getattr(args, "qualification_manifest", None),
+                min_claim_level=min_claim,
+            )
+        except (DeploymentGateError, ValueError) as exc:
+            print(f"{_program(args)} predict: {exc}", file=sys.stderr)
+            return EXIT_REFUSED
     try:
         bundle = load_bundle(args.bundle)
     except (BundleIntegrityError, OSError) as exc:
@@ -522,6 +573,11 @@ def _compile(args: argparse.Namespace) -> int:
         plan_only=args.plan_only,
         resume=args.resume,
         prog=_program(args),
+        qualify_policy=getattr(args, "qualify_policy", None),
+        qualify_dev_samples=int(getattr(args, "qualify_dev_samples", 9)),
+        qualify_holdout_samples=int(getattr(args, "qualify_holdout_samples", 0)),
+        qualify_backend=str(getattr(args, "qualify_backend", "scikit-fem")),
+        qualify_seed=int(getattr(args, "qualify_seed", 0)),
     )
 
 
@@ -604,14 +660,38 @@ def _active_select(args: argparse.Namespace) -> int:
 
 
 def _optimize(args: argparse.Namespace) -> int:
-    """Run FEM-guarded differentiable design optimization on a verified bundle (P5)."""
+    """Run FEM-guarded differentiable design optimization on a verified bundle (P5 / M4)."""
     from piginot.bundle import BundleIntegrityError, load_bundle
+    from piginot.cad.parametric_adapter import (
+        is_parametric_bundle_dir,
+        load_parametric_bundle,
+    )
     from piginot.optimization import (
         BundleDesignBridge,
         DesignOptimizationStatus,
+        ParametricBundleDesignBridge,
         parse_bundle_design_document,
+        parse_parametric_design_document,
     )
     from piginot.serving import MissingExtraError, load_recipe
+
+    if is_parametric_bundle_dir(args.bundle):
+        try:
+            p_bundle = load_parametric_bundle(args.bundle)
+            prob_doc = json.loads(args.problem.read_text(encoding="utf-8"))
+            p_spec = parse_parametric_design_document(prob_doc, bundle=p_bundle)
+            p_bridge = ParametricBundleDesignBridge(p_bundle, p_spec)
+            report = p_bridge.run()
+        except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+            print(f"{_program(args)} optimize: {exc}", file=sys.stderr)
+            return EXIT_ERROR
+        out_doc = {**report.document(), "report_hash": report.report_hash}
+        _emit(out_doc, args.output)
+        if report.status is DesignOptimizationStatus.REFUSED_UNSUPPORTED_GEOMETRY:
+            return EXIT_REFUSED
+        if report.status is DesignOptimizationStatus.FAILED_NO_FEASIBLE_FEM_DESIGN:
+            return EXIT_ERROR
+        return EXIT_OK
 
     try:
         bundle = load_bundle(args.bundle)
@@ -688,6 +768,86 @@ def _stateful_rollout(args: argparse.Namespace) -> int:
     return EXIT_OK if result.get("accepted") else EXIT_REFUSED
 
 
+def _stateful_verify_tangent(args: argparse.Namespace) -> int:
+    """Verify J2 elastoplastic algorithmic consistent tangent against central FD."""
+    import torch
+
+    from piginot.stateful import (
+        J2IsotropicPlasticity,
+        J2PlasticityConfig,
+        verify_algorithmic_tangent,
+        verify_plane_stress_tangent,
+    )
+
+    try:
+        raw = json.loads(args.material.read_text(encoding="utf-8"))
+        cfg = J2PlasticityConfig.from_document(raw)
+        model = J2IsotropicPlasticity(cfg)
+        yield_strain = cfg.yield_stress_mpa / cfg.youngs_modulus_mpa
+        mode = str(args.mode)
+        checks: dict[str, dict[str, Any]] = {}
+        eye3 = torch.eye(3, dtype=torch.float64)
+        eye2 = torch.eye(2, dtype=torch.float64)
+
+        regimes = (
+            ("elastic", 0.5 * yield_strain, 0.25 * yield_strain),
+            ("active_plastic", 2.5 * yield_strain, 1.0 * yield_strain),
+            ("unloading", 1.5 * yield_strain, 0.4 * yield_strain),
+        )
+        state_3d = model.initial_state((), dtype=torch.float64)
+        state_2d = model.initial_state((), dtype=torch.float64)
+        f3_prev = eye3.clone()
+        f2_prev = eye2.clone()
+        all_passed = True
+
+        for label, exx, exy in regimes:
+            if mode == "plane-stress":
+                f2 = eye2.clone()
+                f2[0, 0] = 1.0 + exx
+                f2[1, 1] = 1.0 - 0.3 * exx
+                f2[0, 1] = exy
+                f2[1, 0] = exy
+                res = verify_plane_stress_tangent(
+                    model, f2_prev, f2, state_2d, dt=1.0, rel_tol=float(args.rel_tol)
+                )
+                upd = model.plane_stress_update(f2_prev, f2, state_2d, dt=1.0)
+                state_2d = dict(upd.update_3d.state_new)
+                f2_prev = f2
+            else:
+                f3 = eye3.clone()
+                f3[0, 0] = 1.0 + exx
+                f3[1, 1] = 1.0 - (0.3 * exx if mode == "3d" else 0.2 * exx)
+                f3[2, 2] = 1.0 if mode == "plane-strain" else 1.0 - 0.1 * exx
+                f3[0, 1] = exy
+                f3[1, 0] = exy
+                res = verify_algorithmic_tangent(
+                    model, f3_prev, f3, state_3d, dt=1.0, rel_tol=float(args.rel_tol)
+                )
+                upd3 = model.update(f3_prev, f3, state_3d, dt=1.0)
+                state_3d = dict(upd3.state_new)
+                f3_prev = f3
+            all_passed = all_passed and res.passed
+            checks[label] = {
+                "passed": res.passed,
+                "relative_error": res.relative_error,
+                "max_abs_error": res.max_abs_error,
+                "tolerance": res.tolerance,
+            }
+    except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+        print(f"{_program(args)} stateful verify-tangent: {exc}", file=sys.stderr)
+        return EXIT_REFUSED
+
+    doc = {
+        "model_id": cfg.document()["model_id"],
+        "config_hash": cfg.config_hash,
+        "mode": mode,
+        "passed": all_passed,
+        "regimes": checks,
+    }
+    _emit(doc, args.output)
+    return EXIT_OK if all_passed else EXIT_SCIENTIFIC_REFUSED
+
+
 def _ui(args: argparse.Namespace) -> int:
     """Launch the Verification & Trust Inspector Streamlit app (`formamech[ui]`)."""
     import importlib.util
@@ -712,8 +872,14 @@ def _ui(args: argparse.Namespace) -> int:
     ]
     if args.headless:
         cmd.extend(["--server.headless", "true"])
+    extra_args: list[str] = []
     if args.bundle is not None:
-        cmd.extend(["--", str(args.bundle)])
+        extra_args.extend(["--bundle", str(args.bundle)])
+    if getattr(args, "workspace", None) is not None:
+        extra_args.extend(["--workspace", str(args.workspace)])
+    if extra_args:
+        cmd.append("--")
+        cmd.extend(extra_args)
     completed = subprocess.run(cmd, check=False)
     return int(completed.returncode)
 
@@ -726,6 +892,7 @@ def _mcp(args: argparse.Namespace) -> int:
         server = FormaMechMcpServer(
             args.workspace,
             max_dof_limit=int(args.max_dofs),
+            require_qualified=bool(getattr(args, "require_qualified", False)),
         )
     except ValueError as exc:
         print(f"{_program(args)} mcp: {exc}", file=sys.stderr)
@@ -737,11 +904,165 @@ def _mcp(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def _qualify(args: argparse.Namespace) -> int:
+    """Run, verify, or diff continuous numerical model qualification (Feature 5)."""
+    from piginot.bundle import BundleIntegrityError, load_bundle
+    from piginot.qualify import (
+        QualificationIntegrityError,
+        QualificationManifest,
+        QualificationPolicy,
+        check_deployment_gate,
+        compare_qualifications,
+        default_development_policy,
+        default_holdout_policy,
+        load_cases_file,
+        qualify_bundle,
+        sample_qualification_cases,
+    )
+    from piginot.verification.status import ClaimLevel
+
+    cmd = args.qualify_command
+    if cmd == "verify":
+        try:
+            policy = (
+                QualificationPolicy.load(args.policy)
+                if args.policy is not None
+                else None
+            )
+            min_claim = ClaimLevel(str(args.min_claim))
+            result = check_deployment_gate(
+                args.bundle,
+                args.manifest,
+                policy=policy,
+                min_claim_level=min_claim,
+            )
+        except (OSError, json.JSONDecodeError, ValueError) as exc:
+            print(f"{_program(args)} qualify verify: {exc}", file=sys.stderr)
+            return EXIT_REFUSED
+        _emit(result.document(), args.output)
+        return EXIT_OK if result.allowed else EXIT_REFUSED
+
+    if cmd == "diff":
+        try:
+            old_m = QualificationManifest.load(args.old_manifest)
+            new_m = QualificationManifest.load(args.new_manifest)
+            diff = compare_qualifications(
+                old_m,
+                new_m,
+                relative_regression_tol=float(args.regression_tol),
+            )
+        except (
+            OSError,
+            json.JSONDecodeError,
+            QualificationIntegrityError,
+            ValueError,
+        ) as exc:
+            print(f"{_program(args)} qualify diff: {exc}", file=sys.stderr)
+            return EXIT_REFUSED
+        _emit(diff.document(), args.output)
+        return EXIT_SCIENTIFIC_REFUSED if diff.regressed else EXIT_OK
+
+    # cmd == "run"
+    try:
+        if args.policy is not None:
+            policy = QualificationPolicy.load(args.policy)
+        elif args.preset == "holdout":
+            policy = default_holdout_policy()
+        else:
+            policy = default_development_policy()
+        bundle = load_bundle(args.bundle)
+
+        train_fps: set[str] = set()
+        if args.train_cases is not None:
+            for tc in load_cases_file(args.train_cases, default_partition="DEV"):
+                train_fps.add(tc.fingerprint)
+
+        if args.dev_cases is not None:
+            dev_cases = load_cases_file(args.dev_cases, default_partition="DEV")
+            holdout_cases = (
+                load_cases_file(args.holdout_cases, default_partition="HOLDOUT")
+                if args.holdout_cases is not None
+                else ()
+            )
+        else:
+            ho_count = int(args.sample_holdout)
+            if (
+                ho_count == 0
+                and args.holdout_cases is None
+                and policy.target_claim_level is ClaimLevel.HOLDOUT_VERIFIED
+            ):
+                ho_count = max(int(args.sample_dev), 5)
+            dev_cases, sampled_ho = sample_qualification_cases(
+                bundle,
+                dev_count=int(args.sample_dev),
+                holdout_count=0 if args.holdout_cases is not None else ho_count,
+                seed=int(args.seed),
+                exclude_fingerprints=frozenset(train_fps),
+            )
+            holdout_cases = (
+                load_cases_file(args.holdout_cases, default_partition="HOLDOUT")
+                if args.holdout_cases is not None
+                else sampled_ho
+            )
+
+        run_res = qualify_bundle(
+            args.bundle,
+            policy,
+            dev_cases=dev_cases,
+            holdout_cases=holdout_cases,
+            train_fingerprints=frozenset(train_fps),
+            recipe_path=args.recipe,
+            backend=args.backend,
+            output_dir=args.output,
+            emit_qualified_bundle=args.emit_qualified_bundle,
+        )
+    except (
+        BundleIntegrityError,
+        OSError,
+        json.JSONDecodeError,
+        LookupError,
+        KeyError,
+        TypeError,
+        ValueError,
+    ) as exc:
+        print(f"{_program(args)} qualify run: {exc}", file=sys.stderr)
+        return EXIT_REFUSED
+
+    summary_doc = {
+        **run_res.manifest.full_document(),
+        "output_dir": None if args.output is None else str(args.output),
+        "promoted_bundle_path": (
+            None
+            if run_res.promoted_bundle_path is None
+            else str(run_res.promoted_bundle_path)
+        ),
+    }
+    _emit(summary_doc, None)
+    return EXIT_OK if run_res.qualified else EXIT_SCIENTIFIC_REFUSED
+
+
 def _export(args: argparse.Namespace) -> int:
     """Export a verified FormaMech bundle to ONNX or FMI 3.0 Co-Simulation FMU."""
     from piginot.bundle import BundleIntegrityError
     from piginot.export import export_bundle_to_fmu, export_bundle_to_onnx
     from piginot.serving.hybrid import MissingExtraError
+
+    if getattr(args, "require_qualified", False):
+        from piginot.qualify import DeploymentGateError, enforce_deployment_gate
+        from piginot.verification.status import ClaimLevel
+
+        try:
+            min_claim = ClaimLevel(
+                str(getattr(args, "min_claim", ClaimLevel.DEVELOPMENT_VERIFIED.value))
+            )
+            enforce_deployment_gate(
+                args.bundle,
+                getattr(args, "qualification_manifest", None),
+                min_claim_level=min_claim,
+            )
+        except (DeploymentGateError, ValueError) as exc:
+            print(f"{_program(args)} export: {exc}", file=sys.stderr)
+            return EXIT_REFUSED
 
     try:
         if args.export_command == "onnx":
@@ -814,6 +1135,16 @@ def build_parser(*, prog: str = "piginot") -> argparse.ArgumentParser:
     action = compile_parser.add_mutually_exclusive_group()
     action.add_argument("--plan-only", action="store_true")
     action.add_argument("--resume", action="store_true")
+    compile_parser.add_argument(
+        "--qualify-policy",
+        type=Path,
+        default=None,
+        help="optional QualificationPolicy JSON to run automatically after export",
+    )
+    compile_parser.add_argument("--qualify-dev-samples", type=int, default=9)
+    compile_parser.add_argument("--qualify-holdout-samples", type=int, default=0)
+    compile_parser.add_argument("--qualify-backend", type=str, default="scikit-fem")
+    compile_parser.add_argument("--qualify-seed", type=int, default=0)
     compile_parser.set_defaults(handler=_compile)
 
     cad = subparsers.add_parser("cad", help="import and inspect a fixed CAD geometry")
@@ -876,6 +1207,105 @@ def build_parser(*, prog: str = "piginot") -> argparse.ArgumentParser:
     cad_adapt.add_argument("--ood-detector", type=Path, default=None)
     cad_adapt.set_defaults(handler=_cad)
 
+    cad_param = cad_commands.add_parser(
+        "parametric",
+        help="parametric CAD family init, DOE sampling, training, serving, and qualification (M4)",
+    )
+    param_commands = cad_param.add_subparsers(dest="parametric_command", required=True)
+    p_init = param_commands.add_parser(
+        "init", help="initialize a hash-bound parametric CAD project"
+    )
+    p_init.add_argument("--spec", type=Path, default=None)
+    p_init.add_argument(
+        "--template",
+        choices=("notched-mounting-bracket", "holed-plate"),
+        default="notched-mounting-bracket",
+    )
+    p_init.add_argument("--mesh-size-mm", type=float, default=2.5)
+    p_init.add_argument("--no-verify-nominal", action="store_true")
+    p_init.add_argument("--output", type=Path, required=True)
+    p_init.set_defaults(handler=_cad)
+
+    p_sample = param_commands.add_parser(
+        "sample", help="sample topology-verified DOE variants across the parameter box"
+    )
+    p_sample.add_argument("project", type=Path)
+    p_sample.add_argument("--count", type=int, default=16)
+    p_sample.add_argument("--seed-offset", type=int, default=1)
+    p_sample.add_argument("--write-steps", action="store_true")
+    p_sample.add_argument("--output", type=Path, required=True)
+    p_sample.set_defaults(handler=_cad)
+
+    p_train = param_commands.add_parser(
+        "train",
+        help="train a geometry-aware BoundaryEnergyOperator + GeometryOODDetector bundle",
+    )
+    p_train.add_argument("project", type=Path)
+    p_train.add_argument("--physics", type=Path, default=None)
+    p_train.add_argument("--count", type=int, default=12)
+    p_train.add_argument("--seed-offset", type=int, default=1)
+    p_train.add_argument("--epochs", type=int, default=60)
+    p_train.add_argument("--learning-rate", type=float, default=3.0e-3)
+    p_train.add_argument("--points-per-cell", type=int, default=2)
+    p_train.add_argument("--seed", type=int, default=0)
+    p_train.add_argument("--supervise", action="store_true")
+    p_train.add_argument("--output", type=Path, required=True)
+    p_train.set_defaults(handler=_cad)
+
+    p_pred = param_commands.add_parser(
+        "predict", help="predict and OOD-gate one parametric CAD variant"
+    )
+    p_pred.add_argument("bundle", type=Path)
+    p_pred.add_argument("--cad-params", type=Path, required=True)
+    p_pred.add_argument(
+        "--mode", choices=("fast", "certified", "exact"), default="certified"
+    )
+    p_pred.add_argument("--output", type=Path, default=None)
+    p_pred.set_defaults(handler=_cad)
+
+    p_qual = param_commands.add_parser(
+        "qualify",
+        help="qualify a parametric CAD bundle on held-out unseen geometries and OOD probes",
+    )
+    p_qual.add_argument("bundle", type=Path)
+    p_qual.add_argument("--count", type=int, default=10)
+    p_qual.add_argument("--seed-offset", type=int, default=101)
+    p_qual.add_argument("--max-disp-error", type=float, default=0.25)
+    p_qual.add_argument("--max-reaction-error", type=float, default=0.25)
+    p_qual.add_argument("--output", type=Path, default=None)
+    p_qual.set_defaults(handler=_cad)
+
+    cad_imp3d = cad_commands.add_parser(
+        "import-3d",
+        help="import a single-solid 3D STEP file into a TET10/TET4 CanonicalMesh3D project (M5)",
+    )
+    cad_imp3d.add_argument("source", type=Path)
+    cad_imp3d.add_argument("--unit", choices=("mm", "cm", "m"), default="mm")
+    cad_imp3d.add_argument("--mesh-size-mm", type=float, default=3.0)
+    cad_imp3d.add_argument("--element", choices=("tet10", "tet4"), default="tet10")
+    cad_imp3d.add_argument("--poisson-ratio", type=float, default=None)
+    cad_imp3d.add_argument("--output", type=Path, required=True)
+    cad_imp3d.set_defaults(handler=_cad)
+
+    cad_insp3d = cad_commands.add_parser(
+        "inspect-3d",
+        help="verify integrity and inspect a prepared 3D CAD geometry project (M5)",
+    )
+    cad_insp3d.add_argument("project", type=Path)
+    cad_insp3d.set_defaults(handler=_cad)
+
+    cad_samp3d = cad_commands.add_parser(
+        "sample-3d",
+        help="generate a built-in OpenCASCADE 3D STEP solid (box, l-bracket, mounting-lug)",
+    )
+    cad_samp3d.add_argument(
+        "--template",
+        choices=("box", "l-bracket", "mounting-lug"),
+        default="mounting-lug",
+    )
+    cad_samp3d.add_argument("--output", type=Path, required=True)
+    cad_samp3d.set_defaults(handler=_cad)
+
     active = subparsers.add_parser(
         "active", help="certificate-driven TRAIN-only active FEM acquisition (P3)"
     )
@@ -915,6 +1345,19 @@ def build_parser(*, prog: str = "piginot") -> argparse.ArgumentParser:
     st_roll.add_argument("--residual-tolerance", type=float, default=5.0)
     st_roll.add_argument("--output", type=Path, default=None)
     st_roll.set_defaults(handler=_stateful_rollout)
+    st_tan = stateful_commands.add_parser(
+        "verify-tangent",
+        help="verify J2 elastoplastic consistent tangent against central finite differences",
+    )
+    st_tan.add_argument("--material", type=Path, required=True)
+    st_tan.add_argument(
+        "--mode",
+        choices=("3d", "plane-strain", "plane-stress"),
+        default="plane-stress",
+    )
+    st_tan.add_argument("--rel-tol", type=float, default=1.0e-5)
+    st_tan.add_argument("--output", type=Path, default=None)
+    st_tan.set_defaults(handler=_stateful_verify_tangent)
 
     store = subparsers.add_parser("store")
     store_commands = store.add_subparsers(dest="store_command", required=True)
@@ -925,7 +1368,13 @@ def build_parser(*, prog: str = "piginot") -> argparse.ArgumentParser:
 
     predict = subparsers.add_parser("predict", help="serve one request from a bundle")
     predict.add_argument("bundle", type=Path)
-    predict.add_argument("--request", required=True, type=Path)
+    predict.add_argument("--request", default=None, type=Path)
+    predict.add_argument(
+        "--cad-params",
+        default=None,
+        type=Path,
+        help="parametric CAD parameter JSON when serving a formamech.parametric-bundle-v1",
+    )
     predict.add_argument("--output", type=Path, default=None)
     predict.add_argument(
         "--no-confidence",
@@ -1031,7 +1480,80 @@ def build_parser(*, prog: str = "piginot") -> argparse.ArgumentParser:
         action="store_true",
         help="emit a canonical RFC 8785 Trust Receipt (formamech.trust-receipt-v1)",
     )
+    predict.add_argument(
+        "--require-qualified",
+        action="store_true",
+        help="fail closed unless the bundle passes the qualification deployment gate",
+    )
+    predict.add_argument(
+        "--qualification-manifest",
+        type=Path,
+        default=None,
+        help="path to qualification-manifest.json used with --require-qualified",
+    )
+    predict.add_argument(
+        "--min-claim",
+        choices=("DEVELOPMENT_VERIFIED", "HOLDOUT_VERIFIED"),
+        default="DEVELOPMENT_VERIFIED",
+        help="minimum ClaimLevel enforced by --require-qualified",
+    )
     predict.set_defaults(handler=_predict)
+
+    qualify = subparsers.add_parser(
+        "qualify",
+        help="continuous numerical model qualification, verification gates, and diffs",
+    )
+    qualify_commands = qualify.add_subparsers(dest="qualify_command", required=True)
+    qual_run = qualify_commands.add_parser(
+        "run", help="qualify a bundle against a declarative QualificationPolicy"
+    )
+    qual_run.add_argument("bundle", type=Path)
+    qual_run.add_argument("--policy", type=Path, default=None)
+    qual_run.add_argument(
+        "--preset",
+        choices=("dev", "holdout"),
+        default="dev",
+        help="built-in policy preset when --policy is omitted",
+    )
+    qual_run.add_argument("--dev-cases", type=Path, default=None)
+    qual_run.add_argument("--holdout-cases", type=Path, default=None)
+    qual_run.add_argument("--train-cases", type=Path, default=None)
+    qual_run.add_argument("--sample-dev", type=int, default=9)
+    qual_run.add_argument("--sample-holdout", type=int, default=0)
+    qual_run.add_argument("--seed", type=int, default=0)
+    qual_run.add_argument("--recipe", type=Path, default=None)
+    qual_run.add_argument("--backend", type=str, default="scikit-fem")
+    qual_run.add_argument("--output", type=Path, required=True)
+    qual_run.add_argument(
+        "--emit-qualified-bundle",
+        type=Path,
+        default=None,
+        help="optional destination for a newly promoted bundle copy when QUALIFIED",
+    )
+    qual_run.set_defaults(handler=_qualify)
+
+    qual_verify = qualify_commands.add_parser(
+        "verify", help="enforce the deployment gate for a bundle and manifest"
+    )
+    qual_verify.add_argument("bundle", type=Path)
+    qual_verify.add_argument("--manifest", type=Path, default=None)
+    qual_verify.add_argument("--policy", type=Path, default=None)
+    qual_verify.add_argument(
+        "--min-claim",
+        choices=("DEVELOPMENT_VERIFIED", "HOLDOUT_VERIFIED"),
+        default="DEVELOPMENT_VERIFIED",
+    )
+    qual_verify.add_argument("--output", type=Path, default=None)
+    qual_verify.set_defaults(handler=_qualify)
+
+    qual_diff = qualify_commands.add_parser(
+        "diff", help="compare two qualification manifests for CI regression detection"
+    )
+    qual_diff.add_argument("old_manifest", type=Path)
+    qual_diff.add_argument("new_manifest", type=Path)
+    qual_diff.add_argument("--regression-tol", type=float, default=0.05)
+    qual_diff.add_argument("--output", type=Path, default=None)
+    qual_diff.set_defaults(handler=_qualify)
 
     calibrate = subparsers.add_parser(
         "calibrate",
@@ -1045,9 +1567,15 @@ def build_parser(*, prog: str = "piginot") -> argparse.ArgumentParser:
 
     ui = subparsers.add_parser(
         "ui",
-        help="launch the Verification & Trust Inspector web app (needs [ui] extra)",
+        help="launch the Interactive Engineering Workbench & Trust Inspector (needs [ui] extra)",
     )
     ui.add_argument("--bundle", type=Path, default=None)
+    ui.add_argument(
+        "--workspace",
+        type=Path,
+        default=None,
+        help="canonical workbench project directory (default: .formamech-runs/workbench/demo-project)",
+    )
     ui.add_argument("--port", type=int, default=8501)
     ui.add_argument("--headless", action="store_true")
     ui.set_defaults(handler=_ui)
@@ -1062,6 +1590,11 @@ def build_parser(*, prog: str = "piginot") -> argparse.ArgumentParser:
     )
     mcp_serve.add_argument("--workspace", type=Path, default=Path("."))
     mcp_serve.add_argument("--max-dofs", type=int, default=100_000)
+    mcp_serve.add_argument(
+        "--require-qualified",
+        action="store_true",
+        help="refuse predict_verified unless a valid QUALIFIED manifest is supplied",
+    )
     mcp_serve.set_defaults(handler=_mcp)
     mcp_list = mcp_commands.add_parser(
         "list-tools", help="print declared MCP tool descriptors as JSON"
@@ -1084,6 +1617,13 @@ def build_parser(*, prog: str = "piginot") -> argparse.ArgumentParser:
     exp_onnx.add_argument("--output", type=Path, required=True)
     exp_onnx.add_argument("--opset", type=int, default=17)
     exp_onnx.add_argument("--no-verify", action="store_true")
+    exp_onnx.add_argument("--require-qualified", action="store_true")
+    exp_onnx.add_argument("--qualification-manifest", type=Path, default=None)
+    exp_onnx.add_argument(
+        "--min-claim",
+        choices=("DEVELOPMENT_VERIFIED", "HOLDOUT_VERIFIED"),
+        default="DEVELOPMENT_VERIFIED",
+    )
     exp_onnx.set_defaults(handler=_export)
     exp_fmu = export_commands.add_parser(
         "fmu", help="package an FMI 3.0 Co-Simulation .fmu archive"
@@ -1092,6 +1632,13 @@ def build_parser(*, prog: str = "piginot") -> argparse.ArgumentParser:
     exp_fmu.add_argument("--output", type=Path, required=True)
     exp_fmu.add_argument("--model-name", type=str, default=None)
     exp_fmu.add_argument("--include-onnx", action="store_true")
+    exp_fmu.add_argument("--require-qualified", action="store_true")
+    exp_fmu.add_argument("--qualification-manifest", type=Path, default=None)
+    exp_fmu.add_argument(
+        "--min-claim",
+        choices=("DEVELOPMENT_VERIFIED", "HOLDOUT_VERIFIED"),
+        default="DEVELOPMENT_VERIFIED",
+    )
     exp_fmu.set_defaults(handler=_export)
 
     inspect = subparsers.add_parser("inspect", help="describe a bundle")

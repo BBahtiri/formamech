@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Literal, Protocol
 
 import numpy as np
 import torch
@@ -41,9 +41,36 @@ from piginot.contracts.stateful import (
 )
 from piginot.fem.binding import canonical_facet_map, facets_for_tag
 from piginot.stateful.stepper import STEP_CONTROLLER_VERSION, hash_state_tensors
-from piginot.stateful.viscoelastic import GeneralizedMaxwellViscoelastic
+from piginot.stateful.viscoelastic import PlaneStressMaterialUpdate
 
 FloatArray = NDArray[np.float64]
+KinematicsMode2D = Literal["plane_stress", "plane_strain"]
+
+
+class Incremental2DModel(Protocol):
+    """Protocol satisfied by stateful models supporting 2D incremental FEM."""
+
+    @property
+    def state_schema(self) -> Any: ...
+
+    def initial_state(
+        self,
+        batch_shape: tuple[int, ...],
+        *,
+        dtype: torch.dtype = torch.float64,
+        device: torch.device | None = None,
+    ) -> dict[str, torch.Tensor]: ...
+
+    def plane_stress_update(
+        self,
+        f2d_old: torch.Tensor,
+        f2d_new: torch.Tensor,
+        state_old: Mapping[str, torch.Tensor],
+        dt: float,
+        *,
+        f33_guess: torch.Tensor | None = None,
+        max_iterations: int = 32,
+    ) -> PlaneStressMaterialUpdate: ...
 
 
 @LinearForm  # type: ignore[untyped-decorator]
@@ -87,6 +114,7 @@ class IncrementalFemStep:
     step_dissipation: float
     min_det_f: float
     bound_state: BoundTrajectoryState
+    max_eq_plastic_strain: float | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -153,7 +181,7 @@ def _constrained_dofs(
 def _solve_single_increment(
     *,
     basis: Any,
-    model: GeneralizedMaxwellViscoelastic,
+    model: Incremental2DModel,
     u_old: FloatArray,
     state_old: Mapping[str, torch.Tensor],
     f33_old: torch.Tensor,
@@ -161,6 +189,7 @@ def _solve_single_increment(
     free_dofs: NDArray[np.int64],
     dt: float,
     integrator: IntegratorSpec,
+    kinematics_mode: KinematicsMode2D = "plane_stress",
 ) -> tuple[
     bool,
     FloatArray,
@@ -174,10 +203,6 @@ def _solve_single_increment(
     int,
     str,
 ]:
-    u = u_old.copy()
-    for dof, val in target_dirichlet.items():
-        u[dof] = val
-
     grad_old = np.asarray(basis.interpolate(u_old).grad, dtype=np.float64)
     f2d_old = torch.from_numpy(
         np.ascontiguousarray(np.transpose(grad_old, (2, 3, 0, 1)) + np.eye(2))
@@ -185,19 +210,76 @@ def _solve_single_increment(
     f33_guess = f33_old
     dx = np.asarray(basis.dx, dtype=np.float64)
 
+    # Linearized tangent predictor for Dirichlet increments avoids unphysical
+    # boundary-layer strain spikes on fine / P2 meshes when stamping BCs.
+    du_dirichlet = np.zeros_like(u_old)
+    has_dirichlet_increment = False
+    for dof, val in target_dirichlet.items():
+        diff = val - u_old[dof]
+        if abs(diff) > 0.0:
+            du_dirichlet[dof] = diff
+            has_dirichlet_increment = True
+
+    u = u_old.copy()
+    if has_dirichlet_increment and free_dofs.size > 0:
+        if kinematics_mode == "plane_strain":
+            ps_fn0 = getattr(model, "plane_strain_update", None)
+            if not callable(ps_fn0):
+                raise TypeError(
+                    f"{type(model).__name__} does not support kinematics_mode='plane_strain'"
+                )
+            ps0: PlaneStressMaterialUpdate = ps_fn0(f2d_old, f2d_old, state_old, dt)
+        else:
+            ps0 = model.plane_stress_update(
+                f2d_old,
+                f2d_old,
+                state_old,
+                dt,
+                f33_guess=f33_guess,
+                max_iterations=integrator.plane_stress_max_iterations,
+            )
+        if ps0.closure_converged and ps0.update_3d.admissible:
+            s0 = np.transpose(
+                ps0.update_3d.stress[..., :2, :2].detach().cpu().numpy(), (2, 3, 0, 1)
+            )
+            r0 = np.asarray(asm(_internal_form, basis, stress=s0), dtype=np.float64)
+            mod0 = np.transpose(
+                ps0.condensed_tangent_2d.detach().cpu().numpy(), (2, 3, 4, 5, 0, 1)
+            )
+            k0 = asm(_tangent_form, basis, modulus=mod0).tocsr()
+            rhs0 = -(r0 + k0 @ du_dirichlet)[free_dofs]
+            du_pred_free = np.asarray(
+                spsolve(k0[free_dofs][:, free_dofs].tocsc(), rhs0), dtype=np.float64
+            )
+            if np.all(np.isfinite(du_pred_free)):
+                u[free_dofs] += du_pred_free
+                f33_guess = ps0.f33
+
+    for dof, val in target_dirichlet.items():
+        u[dof] = val
+
+    prev_res = float("inf")
     for it in range(1, integrator.max_newton_iterations + 1):
         grad_new = np.asarray(basis.interpolate(u).grad, dtype=np.float64)
         f2d_new = torch.from_numpy(
             np.ascontiguousarray(np.transpose(grad_new, (2, 3, 0, 1)) + np.eye(2))
         )
-        ps = model.plane_stress_update(
-            f2d_old,
-            f2d_new,
-            state_old,
-            dt,
-            f33_guess=f33_guess,
-            max_iterations=integrator.plane_stress_max_iterations,
-        )
+        if kinematics_mode == "plane_strain":
+            ps_fn = getattr(model, "plane_strain_update", None)
+            if not callable(ps_fn):
+                raise TypeError(
+                    f"{type(model).__name__} does not support kinematics_mode='plane_strain'"
+                )
+            ps: PlaneStressMaterialUpdate = ps_fn(f2d_old, f2d_new, state_old, dt)
+        else:
+            ps = model.plane_stress_update(
+                f2d_old,
+                f2d_new,
+                state_old,
+                dt,
+                f33_guess=f33_guess,
+                max_iterations=integrator.plane_stress_max_iterations,
+            )
         if not ps.closure_converged or not ps.update_3d.admissible:
             return (
                 False,
@@ -259,7 +341,11 @@ def _solve_single_increment(
                 it,
                 "linear solve produced non-finite Newton increment",
             )
-        u[free_dofs] += du_free
+        step_scale = 1.0
+        if it >= 3 and res_norm >= 0.98 * prev_res:
+            step_scale = 0.25 if it >= 6 else 0.5
+        prev_res = res_norm
+        u[free_dofs] += step_scale * du_free
 
     return (
         False,
@@ -278,7 +364,7 @@ def _solve_single_increment(
 
 def solve_incremental_fem_trajectory(
     mesh: CanonicalMesh,
-    model: GeneralizedMaxwellViscoelastic,
+    model: Incremental2DModel,
     boundary_conditions: Sequence[DirichletHistoryBC],
     time_grid: TimeGrid,
     load_segments: Sequence[LoadSegment],
@@ -288,8 +374,13 @@ def solve_incremental_fem_trajectory(
     parameters: Mapping[str, float] | None = None,
     element_order: int = 1,
     integrator: IntegratorSpec | None = None,
+    kinematics_mode: KinematicsMode2D = "plane_stress",
 ) -> IncrementalFemTrajectory:
-    """Solve a 2D plane-stress viscoelastic load-path history with adaptive substepping."""
+    """Solve a 2D incremental stateful load-path history with adaptive substepping."""
+    if kinematics_mode not in ("plane_stress", "plane_strain"):
+        raise ValueError(
+            f"kinematics_mode must be 'plane_stress' or 'plane_strain', got {kinematics_mode!r}"
+        )
     integ = IntegratorSpec() if integrator is None else integrator
     skmesh, basis, _ = _build_mesh_and_basis(mesh, element_order)
     by_name, _, free_dofs = _constrained_dofs(basis, skmesh, mesh, boundary_conditions)
@@ -354,6 +445,7 @@ def solve_incremental_fem_trajectory(
                     free_dofs=free_dofs,
                     dt=sub_dt,
                     integrator=integ,
+                    kinematics_mode=kinematics_mode,
                 )
                 if not ok:
                     sub_ok = False
@@ -387,6 +479,12 @@ def solve_incremental_fem_trajectory(
                     step_controller_version=STEP_CONTROLLER_VERSION,
                     state_hash=hash_state_tensors(state_curr),
                 )
+                eq_p = state_curr.get("eq_plastic_strain")
+                max_eq_p = (
+                    float(eq_p.max().item())
+                    if eq_p is not None and eq_p.numel() > 0
+                    else None
+                )
                 steps.append(
                     IncrementalFemStep(
                         time_index=step_idx,
@@ -401,6 +499,7 @@ def solve_incremental_fem_trajectory(
                         step_dissipation=total_diss,
                         min_det_f=min_det,
                         bound_state=bound,
+                        max_eq_plastic_strain=max_eq_p,
                     )
                 )
                 solved_step = True
@@ -422,13 +521,15 @@ def solve_incremental_fem_trajectory(
         element_order=element_order,
         steps=tuple(steps),
         final_state=state_curr,
-        reason="all incremental viscoelastic FEM steps converged",
+        reason="all incremental stateful FEM steps converged",
     )
 
 
 __all__ = (
     "DirichletHistoryBC",
+    "Incremental2DModel",
     "IncrementalFemStep",
     "IncrementalFemTrajectory",
+    "KinematicsMode2D",
     "solve_incremental_fem_trajectory",
 )

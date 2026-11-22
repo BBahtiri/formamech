@@ -136,6 +136,113 @@ def _run_cad_adapt(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     return manifest, 0
 
 
+def _run_cad_parametric(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
+    """Handle ``formamech cad parametric init|sample|train|predict|qualify`` (M4)."""
+    from piginot.cad.parametric import (
+        ParametricCadSpec,
+        default_holed_plate_spec,
+        default_notched_bracket_spec,
+        init_parametric_project,
+        load_parametric_project,
+        sample_parametric_cad_doe,
+    )
+    from piginot.cad.parametric_adapter import (
+        ParametricPhysicsConfig,
+        ParametricTrainingConfig,
+        load_parametric_bundle,
+        predict_parametric_cad,
+        qualify_parametric_bundle,
+        save_parametric_bundle,
+        train_parametric_cad_surrogate,
+    )
+    from piginot.contracts import canonical_json_bytes
+
+    action = str(args.parametric_command)
+    if action == "init":
+        if args.spec is not None:
+            raw = json.loads(Path(args.spec).read_text(encoding="utf-8"))
+            spec = ParametricCadSpec.from_document(raw)
+        elif args.template == "holed-plate":
+            spec = default_holed_plate_spec(mesh_size_mm=float(args.mesh_size_mm))
+        else:
+            spec = default_notched_bracket_spec(mesh_size_mm=float(args.mesh_size_mm))
+        manifest = init_parametric_project(
+            spec, Path(args.output), verify_nominal=not bool(args.no_verify_nominal)
+        )
+        return manifest, 0
+
+    if action == "sample":
+        spec = load_parametric_project(Path(args.project))
+        out_dir = Path(args.output)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        doe = sample_parametric_cad_doe(
+            spec,
+            count=int(args.count),
+            seed_offset=int(args.seed_offset),
+            step_dir=out_dir / "steps" if bool(args.write_steps) else None,
+        )
+        doc = {**doe.document(), "report_hash": doe.report_hash}
+        (out_dir / "doe-manifest.json").write_bytes(canonical_json_bytes(doc) + b"\n")
+        return doc, 0
+
+    if action == "train":
+        spec = load_parametric_project(Path(args.project))
+        physics = (
+            ParametricPhysicsConfig.from_document(
+                json.loads(Path(args.physics).read_text(encoding="utf-8"))
+            )
+            if args.physics is not None
+            else ParametricPhysicsConfig()
+        )
+        doe = sample_parametric_cad_doe(
+            spec,
+            count=int(args.count),
+            seed_offset=int(args.seed_offset),
+        )
+        t_cfg = ParametricTrainingConfig(
+            epochs=int(args.epochs),
+            learning_rate=float(args.learning_rate),
+            points_per_cell=int(args.points_per_cell),
+            seed=int(args.seed),
+            use_fem_supervision=bool(args.supervise),
+        )
+        bundle = train_parametric_cad_surrogate(
+            spec, physics, doe.instances, config=t_cfg
+        )
+        manifest = save_parametric_bundle(bundle, Path(args.output))
+        return manifest, 0
+
+    if action == "predict":
+        bundle = load_parametric_bundle(Path(args.bundle))
+        params_doc = json.loads(Path(args.cad_params).read_text(encoding="utf-8"))
+        if not isinstance(params_doc, dict):
+            raise ValueError(
+                "cad-params JSON must be an object mapping parameter names"
+            )
+        params_map = {str(k): float(v) for k, v in params_doc.items()}
+        report = predict_parametric_cad(bundle, parameters=params_map, mode=args.mode)
+        doc = {**report.document(), "report_hash": report.report_hash}
+        if args.output is not None:
+            Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.output).write_bytes(canonical_json_bytes(doc) + b"\n")
+        return doc, (0 if report.accepted else 2)
+
+    if action == "qualify":
+        bundle = load_parametric_bundle(Path(args.bundle))
+        q_report = qualify_parametric_bundle(
+            bundle,
+            holdout_count=int(args.count),
+            seed_offset=int(args.seed_offset),
+            max_mean_displacement_rel_l2=float(args.max_disp_error),
+            max_mean_reaction_rel_error=float(args.max_reaction_error),
+            output_path=None if args.output is None else Path(args.output),
+        )
+        doc = {**q_report.document(), "manifest_hash": q_report.manifest_hash}
+        return doc, (0 if q_report.passed else 2)
+
+    raise ValueError(f"unknown parametric CAD command: {action}")
+
+
 def run(args: argparse.Namespace) -> int:
     try:
         if args.cad_command == "import":
@@ -187,6 +294,41 @@ def run(args: argparse.Namespace) -> int:
             result, code = _run_cad_adapt(args)
             print(json.dumps(result, indent=2, sort_keys=True, allow_nan=False))
             return code
+        elif args.cad_command == "parametric":
+            result, code = _run_cad_parametric(args)
+            print(json.dumps(result, indent=2, sort_keys=True, allow_nan=False))
+            return code
+        elif args.cad_command == "import-3d":
+            from piginot.cad.importing_3d import prepare_geometry_3d
+            from piginot.geometry.mesh3d import CellType3D
+
+            result = prepare_geometry_3d(
+                args.source,
+                args.output,
+                unit=Unit(args.unit),
+                mesh_size_mm=float(args.mesh_size_mm),
+                element_type=CellType3D(args.element),
+                poisson_ratio=args.poisson_ratio,
+            )
+        elif args.cad_command == "inspect-3d":
+            from piginot.cad.importing_3d import inspect_geometry_3d
+
+            result = inspect_geometry_3d(args.project)
+        elif args.cad_command == "sample-3d":
+            from piginot.cad.importing_3d import (
+                generate_3d_box_step,
+                generate_3d_l_bracket_step,
+                generate_3d_mounting_lug_step,
+            )
+
+            tmpl = str(args.template)
+            if tmpl == "box":
+                out_p = generate_3d_box_step(args.output)
+            elif tmpl == "l-bracket":
+                out_p = generate_3d_l_bracket_step(args.output)
+            else:
+                out_p = generate_3d_mounting_lug_step(args.output)
+            result = {"template": tmpl, "step_path": str(out_p)}
         else:
             raise ValueError(f"unknown CAD action: {args.cad_command}")
     except (OSError, ValueError, ImportError, KeyError, TypeError) as error:

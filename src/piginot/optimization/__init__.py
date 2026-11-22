@@ -38,6 +38,22 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
         "piginot.optimization.bundle_bridge",
         "parse_bundle_design_document",
     ),
+    "ParametricBundleDesignBridge": (
+        "piginot.optimization.parametric_bridge",
+        "ParametricBundleDesignBridge",
+    ),
+    "ParametricDesignSpec": (
+        "piginot.optimization.parametric_bridge",
+        "ParametricDesignSpec",
+    ),
+    "SUPPORTED_PARAMETRIC_METRICS": (
+        "piginot.optimization.parametric_bridge",
+        "SUPPORTED_PARAMETRIC_METRICS",
+    ),
+    "parse_parametric_design_document": (
+        "piginot.optimization.parametric_bridge",
+        "parse_parametric_design_document",
+    ),
 }
 
 
@@ -67,9 +83,13 @@ __all__ = (
     "FemDesignEvaluation",
     "FemEvaluator",
     "GradientConsistencyCheck",
+    "ParametricBundleDesignBridge",
+    "ParametricDesignSpec",
+    "SUPPORTED_PARAMETRIC_METRICS",
     "SurrogateDesignEvaluation",
     "SurrogateEvaluator",
     "VerifiedDesignSolution",
     "parse_bundle_design_document",
+    "parse_parametric_design_document",
     "run_fem_guarded_design_optimization",
 )
