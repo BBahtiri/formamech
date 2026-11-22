@@ -63,7 +63,12 @@ def test_wheel_and_source_distribution_include_public_adapter_package():
         in document["tool"]["hatch"]["build"]["targets"]["sdist"]["only-include"]
     )
     entries = document["project"]["entry-points"]["piginot.compiler.adapters"]
-    assert set(entries) == {"dogbone-v1", "notched-v1", "cad-fixed-v1"}
+    assert set(entries) == {
+        "dogbone-v1",
+        "notched-v1",
+        "cad-fixed-v1",
+        "cad-parametric-v1",
+    }
 
 
 def test_adapter_metadata_imports_no_numerical_or_private_campaign_modules():
