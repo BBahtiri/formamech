@@ -20,8 +20,13 @@ from piginot.contracts import canonical_json_bytes
 
 
 @contextmanager
-def run_lock(output: Path) -> Iterator[None]:
-    path = output / ".compiler.lock"
+def run_lock(
+    output: Path,
+    *,
+    lock_name: str = ".compiler.lock",
+    resource: str = "this compiler run",
+) -> Iterator[None]:
+    path = output / lock_name
     if path.is_symlink():
         raise PlanError("output", "run lock cannot be a symlink")
     with path.open("a+b") as handle:
@@ -39,9 +44,7 @@ def run_lock(output: Path) -> Iterator[None]:
 
                 fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
         except OSError as error:
-            raise PlanError(
-                "locked", "another process owns this compiler run"
-            ) from error
+            raise PlanError("locked", f"another process owns {resource}") from error
         try:
             yield
         finally:

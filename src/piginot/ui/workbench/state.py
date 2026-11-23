@@ -12,8 +12,12 @@ import hashlib
 import json
 import os
 import shutil
+import subprocess
+import sys
 import tempfile
+import uuid
 from collections.abc import Mapping
+from contextlib import AbstractContextManager
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
@@ -199,6 +203,59 @@ def _file_sha256(path: Path) -> str | None:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def publish_artifacts(staging: Path, changes: Mapping[Path, Path | None]) -> None:
+    """Install complete staged files and restore originals if publication fails."""
+    backups = Path(tempfile.mkdtemp(dir=staging.parent, prefix=".previous-"))
+    moved: dict[Path, Path] = {}
+    installed: list[tuple[Path, Path]] = []
+    try:
+        for target, replacement in changes.items():
+            if target.exists():
+                backup = backups / target.relative_to(staging.parent)
+                backup.parent.mkdir(parents=True, exist_ok=True)
+                target.replace(backup)
+                moved[target] = backup
+            if replacement is not None:
+                target.parent.mkdir(parents=True, exist_ok=True)
+                replacement.replace(target)
+                installed.append((target, replacement))
+    except OSError:
+        try:
+            for target, replacement in reversed(installed):
+                target.replace(replacement)
+            for target, backup in moved.items():
+                backup.replace(target)
+        except OSError as exc:
+            raise OSError(f"Study recovery files are in {backups}.") from exc
+        shutil.rmtree(backups, ignore_errors=True)
+        raise
+    shutil.rmtree(backups, ignore_errors=True)
+
+
+def _run_cad_child(args: list[str]) -> None:
+    completed = subprocess.run(
+        [sys.executable, *args],
+        capture_output=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+    )
+    if completed.returncode != 0:
+        diagnostic = "\n".join(
+            filter(None, (completed.stderr.strip(), completed.stdout.strip()))
+        )
+        raise RuntimeError(
+            diagnostic or f"CAD process exited with status {completed.returncode}"
+        )
+
+
+def _state_text(data: Mapping[str, Any]) -> str:
+    return (
+        json.dumps({**data, "schema": WORKBENCH_STATE_SCHEMA}, indent=2, sort_keys=True)
+        + "\n"
+    )
+
+
 @dataclass(frozen=True, slots=True)
 class StageProgress:
     """Boolean progress tracker across the guided workbench stages."""
@@ -219,6 +276,14 @@ class StageProgress:
             "bundle_trained": self.bundle_trained,
             "bundle_qualified": self.bundle_qualified,
         }
+
+
+@dataclass(frozen=True, slots=True)
+class ReplacementReview:
+    revision: str
+    part: str | None
+    artifacts: tuple[str, ...]
+    populated: bool
 
 
 class WorkbenchWorkspace:
@@ -301,7 +366,8 @@ class WorkbenchWorkspace:
         )
         return StageProgress(
             cad_imported=(self.geometry_dir / "preview.json").is_file(),
-            physics_saved=self.physics_path.is_file(),
+            physics_saved=self.physics_path.is_file()
+            or "physics_draft" in self.load_state(),
             inputs_prepared=(
                 (self.inputs_dir / "problem.json").is_file()
                 and (self.inputs_dir / "config.json").is_file()
@@ -399,6 +465,14 @@ class WorkbenchWorkspace:
         if self.qualification_manifest_path is not None and not progress.bundle_trained:
             stale.append("qualification/ exists without a trained candidate-bundle")
 
+        if progress.plan_previewed:
+            from piginot.ui.workbench.study_plan import plan_blocker
+
+            if message := plan_blocker(self):
+                stale.append(message)
+                rec_trigger = "prepare_and_plan"
+                rec_hint = "Update the plan in Step 3 before training."
+
         return WORKBENCH_STAGE_MACHINE.snapshot(
             stage,
             blockers=blockers,
@@ -431,14 +505,7 @@ class WorkbenchWorkspace:
         return loaded
 
     def save_state(self, data: Mapping[str, Any]) -> None:
-        payload = {
-            "schema": WORKBENCH_STATE_SCHEMA,
-            **{str(k): v for k, v in data.items()},
-        }
-        _atomic_write_text(
-            self.state_path,
-            json.dumps(payload, indent=2, sort_keys=True) + "\n",
-        )
+        _atomic_write_text(self.state_path, _state_text(data))
 
     def load_state(self) -> dict[str, Any]:
         if not self.state_path.is_file():
@@ -453,6 +520,81 @@ class WorkbenchWorkspace:
             return {"schema": WORKBENCH_STATE_SCHEMA}
         return raw
 
+    def locked(self) -> AbstractContextManager[None]:
+        from piginot.compiler.records import run_lock
+
+        return run_lock(self.root, lock_name=".workbench.lock", resource="this study")
+
+    def replacement_review(self) -> ReplacementReview:
+        state = self.load_state()
+        source = state.get("source_filename")
+        has_geometry = (self.geometry_dir / "geometry.json").is_file()
+        part = str(source or "current part") if has_geometry else None
+        artifacts = tuple(
+            label
+            for directory, label in (
+                (self.inputs_dir, "Prepared campaign inputs"),
+                (self.preview_dir, "Plan preview"),
+                (self.run_dir, "Training run and checkpoints"),
+                (self.qualification_dir, "Qualification evidence"),
+            )
+            if directory.is_dir() and any(directory.iterdir())
+        )
+        if (
+            self.physics_path.is_file()
+            or state.get("boundaries")
+            or state.get("physics_draft")
+        ):
+            artifacts = ("Saved physics and boundary conditions", *artifacts)
+        revision = hashlib.sha256(
+            canonical_json_bytes(
+                {
+                    "root": str(self.root),
+                    "artifacts": artifacts,
+                    "files": [
+                        _file_sha256(path)
+                        for path in (
+                            self.state_path,
+                            self.geometry_dir / "geometry.json",
+                            self.physics_path,
+                            self.preview_dir / "plan.json",
+                            self.run_dir / "report.json",
+                            self.qualification_dir / "qualification-manifest.json",
+                        )
+                    ],
+                }
+            )
+        ).hexdigest()
+        populated = bool(
+            part
+            or artifacts
+            or any(self.jobs_dir.glob("*.json"))
+            or (self.source_dir.is_dir() and any(self.source_dir.iterdir()))
+        )
+        return ReplacementReview(revision, part, artifacts, populated)
+
+    def sample_workspace(self, review: ReplacementReview) -> WorkbenchWorkspace:
+        if not review.populated:
+            return self
+        return WorkbenchWorkspace(
+            tempfile.mkdtemp(
+                prefix=f"{self.root.name}-sample-",
+                dir=self.root.parent,
+            )
+        )
+
+    def _check_replacement(self, expected: ReplacementReview | None) -> None:
+        from piginot.ui.workbench.job_runner import WorkbenchJobRunner
+
+        if expected is not None and self.replacement_review() != expected:
+            raise RuntimeError(
+                "The study changed. Review the current study before replacing geometry."
+            )
+        if WorkbenchJobRunner(self.jobs_dir, cwd=self.root).active_jobs():
+            raise RuntimeError(
+                "Finish or cancel the active study job before replacing geometry."
+            )
+
     def import_cad_bytes(
         self,
         payload: bytes,
@@ -461,8 +603,10 @@ class WorkbenchWorkspace:
         unit: Unit = Unit.MM,
         mesh_size_mm: float | None = 2.5,
         mesh_policy: MeshPolicy | None = None,
+        isolated: bool = False,
+        expected_study: ReplacementReview | None = None,
     ) -> dict[str, Any]:
-        """Store uploaded CAD bytes, mesh via ``prepare_geometry``, and return preview."""
+        """Mesh uploaded CAD before replacing any files in the workspace."""
         safe_name = Path(filename).name
         suffix = Path(safe_name).suffix.lower()
         if suffix not in SUPPORTED_CAD_EXTENSIONS:
@@ -473,55 +617,133 @@ class WorkbenchWorkspace:
         if not payload:
             raise ValueError("CAD file payload must be non-empty")
 
-        self.source_dir.mkdir(parents=True, exist_ok=True)
-        src_path = self.source_dir / safe_name
-        src_path.write_bytes(payload)
+        self._check_replacement(expected_study)
+        with tempfile.TemporaryDirectory(
+            dir=self.root, prefix=".geometry-staging-"
+        ) as tmp:
+            source = Path(tmp) / safe_name
+            source.write_bytes(payload)
+            return self._mesh_staged_cad(
+                source, unit, mesh_size_mm, mesh_policy, isolated, expected_study
+            )
 
-        # Stage geometry preparation into a temp directory first so a meshing failure
-        # never destroys an already-valid geometry/ directory.
-        staging_root = Path(
-            tempfile.mkdtemp(dir=str(self.root), prefix=".geometry-staging-")
-        )
-        staged_geom = staging_root / "geometry"
-        try:
+    def import_sample(
+        self, *, mesh_size_mm: float, expected_study: ReplacementReview | None = None
+    ) -> dict[str, Any]:
+        """Generate and mesh the sample outside the Streamlit script thread."""
+        with tempfile.TemporaryDirectory(
+            dir=self.root, prefix=".geometry-staging-"
+        ) as tmp:
+            source = Path(tmp) / "sample-bracket.step"
+            _run_cad_child(
+                [
+                    "-c",
+                    "import sys; from piginot.ui.workbench import generate_sample_bracket_step; "
+                    "generate_sample_bracket_step(sys.argv[1])",
+                    str(source),
+                ]
+            )
+            return self._mesh_staged_cad(
+                source, Unit.MM, mesh_size_mm, None, True, expected_study
+            )
+
+    def _mesh_staged_cad(
+        self,
+        source: Path,
+        unit: Unit,
+        mesh_size_mm: float | None,
+        mesh_policy: MeshPolicy | None,
+        isolated: bool,
+        expected_study: ReplacementReview | None,
+    ) -> dict[str, Any]:
+        staging = source.parent
+        geometry = staging / "geometry"
+        if isolated:
+            if mesh_policy is None:
+                sizing = ["--mesh-size-mm", str(mesh_size_mm)]
+            else:
+                policy_path = staging / "mesh-policy.json"
+                policy_path.write_bytes(
+                    canonical_settings_bytes(mesh_policy.document())
+                )
+                sizing = ["--mesh-policy", str(policy_path)]
+            _run_cad_child(
+                [
+                    "-m",
+                    "formamech",
+                    "cad",
+                    "import",
+                    str(source),
+                    "--unit",
+                    unit.value,
+                    *sizing,
+                    "--output",
+                    str(geometry),
+                ]
+            )
+        else:
             prepare_geometry(
-                src_path,
-                staged_geom,
+                source,
+                geometry,
                 unit=unit,
                 mesh_size_mm=mesh_size_mm if mesh_policy is None else None,
                 mesh_policy=mesh_policy,
             )
-            if self.geometry_dir.exists():
-                shutil.rmtree(self.geometry_dir)
-            shutil.move(str(staged_geom), str(self.geometry_dir))
-        finally:
-            if staging_root.exists():
-                shutil.rmtree(staging_root, ignore_errors=True)
-
-        # Invalidate downstream artifacts that depended on the previous geometry.
-        for stale_dir in (
-            self.inputs_dir,
-            self.preview_dir,
-            self.run_dir,
-            self.qualification_dir,
-        ):
-            if stale_dir.exists():
-                shutil.rmtree(stale_dir)
-        if self.physics_path.is_file():
-            self.physics_path.unlink()
-
-        preview = self.load_preview()
-        if preview is None:
-            raise RuntimeError("prepare_geometry did not emit preview.json")
-        state = self.load_state()
-        state.pop("boundaries", None)
-        state.pop("physics_sha256", None)
-        state["source_filename"] = safe_name
-        state["unit"] = unit.value
-        state["mesh_size_mm"] = mesh_size_mm
-        state["geometry_sha256"] = _file_sha256(self.geometry_dir / "geometry.json")
-        self.save_state(state)
+        preview = json.loads((geometry / "preview.json").read_text(encoding="utf-8"))
+        if not isinstance(preview, dict):
+            raise ValueError("geometry/preview.json must be a JSON object")
+        with self.locked():
+            self._check_replacement(expected_study)
+            self._publish_geometry(source, geometry, unit, mesh_size_mm)
         return preview
+
+    def _publish_geometry(
+        self, source: Path, geometry: Path, unit: Unit, mesh_size_mm: float | None
+    ) -> None:
+        staging = source.parent
+        state = self.load_state()
+        for key in (
+            "boundaries",
+            "physics_sha256",
+            "physics_draft",
+            "draft_revision",
+            "prepared_draft_revision",
+            "changed_boundary",
+            "preparation_pending",
+            "project_name",
+            "material_model",
+            "execution_profile",
+            "reviewed_boundaries",
+            "boundary_events",
+        ):
+            state.pop(key, None)
+        state_file = staging / self.state_path.name
+        state_file.write_text(
+            _state_text(
+                {
+                    **state,
+                    "source_filename": source.name,
+                    "unit": unit.value,
+                    "mesh_size_mm": mesh_size_mm,
+                    "geometry_sha256": _file_sha256(geometry / "geometry.json"),
+                    "geometry_revision": uuid.uuid4().hex,
+                }
+            ),
+            encoding="utf-8",
+        )
+        publish_artifacts(
+            staging,
+            {
+                self.source_dir / source.name: source,
+                self.geometry_dir: geometry,
+                self.inputs_dir: None,
+                self.preview_dir: None,
+                self.run_dir: None,
+                self.qualification_dir: None,
+                self.physics_path: None,
+                self.state_path: state_file,
+            },
+        )
 
     def import_cad_path(
         self,

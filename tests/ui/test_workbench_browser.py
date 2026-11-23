@@ -1,0 +1,604 @@
+"""Browser regressions against the installed FormaMech CLI and Streamlit host."""
+
+from __future__ import annotations
+
+import os
+import re
+import signal
+import socket
+import subprocess
+import sys
+import sysconfig
+import time
+from pathlib import Path
+from statistics import median
+from urllib.error import URLError
+from urllib.request import urlopen
+
+import pytest
+
+playwright = pytest.importorskip("playwright.sync_api")
+pytest.importorskip("streamlit")
+
+PLATE = (
+    Path(__file__).resolve().parents[1] / "fixtures" / "cad" / "plate-with-hole.step"
+)
+BUNDLE = Path(__file__).resolve().parents[2] / "bundles" / "notched-v1-cp-freeze"
+
+
+def _free_port() -> int:
+    with socket.socket() as listener:
+        listener.bind(("127.0.0.1", 0))
+        return listener.getsockname()[1]
+
+
+@pytest.fixture(scope="module")
+def browser():
+    with playwright.sync_playwright() as runtime:
+        chromium = runtime.chromium.launch()
+        yield chromium
+        chromium.close()
+
+
+def _probe_inspector(tmp_path):
+    (tmp_path / "sitecustomize.py").write_text(
+        """
+from pathlib import Path
+from piginot.ui import inspector
+from piginot.ui.workbench.job_runner import WorkbenchJobRunner
+
+def count(kind, wrapped):
+    def measured(*args, **kwargs):
+        with (Path(__file__).parent / 'probe.log').open('a', encoding='utf-8') as log:
+            log.write(kind + '\\n')
+        return wrapped(*args, **kwargs)
+    return measured
+
+inspector.build_inspector_snapshot = count('inspector', inspector.build_inspector_snapshot)
+WorkbenchJobRunner.list_jobs = count('jobs', WorkbenchJobRunner.list_jobs)
+""",
+        encoding="utf-8",
+    )
+
+
+@pytest.fixture
+def workbench_server(tmp_path, request):
+    port = _free_port()
+    url = f"http://127.0.0.1:{port}"
+    workspace = tmp_path / "study"
+    cli = Path(sysconfig.get_path("scripts")) / (
+        "formamech.exe" if os.name == "nt" else "formamech"
+    )
+    log = tmp_path / "streamlit.log"
+    environment = {
+        **os.environ,
+        "STREAMLIT_BROWSER_GATHER_USAGE_STATS": "false",
+        "STREAMLIT_SERVER_ADDRESS": "127.0.0.1",
+    }
+    bundle_args = []
+    if getattr(request, "param", None) == "probe":
+        _probe_inspector(tmp_path)
+        environment["PYTHONPATH"] = os.pathsep.join(
+            filter(None, (str(tmp_path), os.environ.get("PYTHONPATH")))
+        )
+        bundle_args = ["--bundle", str(BUNDLE)]
+    with log.open("wb") as output:
+        server = subprocess.Popen(
+            [
+                str(cli),
+                "ui",
+                "--headless",
+                "--port",
+                str(port),
+                "--workspace",
+                str(workspace),
+                *bundle_args,
+            ],
+            cwd=tmp_path,
+            env=environment,
+            stdout=output,
+            stderr=subprocess.STDOUT,
+            start_new_session=os.name != "nt",
+        )
+    try:
+        deadline = time.monotonic() + 45
+        while server.poll() is None and time.monotonic() < deadline:
+            try:
+                with urlopen(f"{url}/_stcore/health", timeout=1) as response:
+                    if response.status == 200:
+                        break
+            except (URLError, TimeoutError):
+                time.sleep(0.1)
+        else:
+            pytest.fail(
+                f"Workbench server did not start:\n{log.read_text(errors='replace')}"
+            )
+        yield url, workspace
+    finally:
+        if server.poll() is None:
+            if os.name == "nt":
+                subprocess.run(
+                    ["taskkill", "/F", "/T", "/PID", str(server.pid)],
+                    capture_output=True,
+                    timeout=10,
+                    check=False,
+                )
+            else:
+                os.killpg(server.pid, signal.SIGTERM)
+            server.wait(timeout=10)
+
+
+@pytest.fixture
+def workbench_page(browser, workbench_server, request):
+    url, _ = workbench_server
+    page = browser.new_page(service_workers="block", **getattr(request, "param", {}))
+    page.route(
+        "**/*",
+        lambda route: (
+            route.continue_()
+            if route.request.url.startswith(f"{url}/")
+            else route.abort()
+        ),
+    )
+    try:
+        page.goto(url)
+        playwright.expect(
+            page.get_by_role(
+                "heading", name=re.compile("Interactive Engineering Workbench")
+            )
+        ).to_be_visible(timeout=45_000)
+        yield page
+    finally:
+        page.close()
+
+
+def _assert_mesh_and_boundaries(page):
+    metrics = page.get_by_test_id("stMetric")
+    nodes = metrics.filter(has_text="Nodes").get_by_test_id("stMetricValue")
+    error = page.get_by_text(re.compile(r"^(CAD import|Sample generation) failed"))
+    playwright.expect(nodes.or_(error)).to_be_visible(timeout=45_000)
+    assert not error.is_visible(), error.inner_text()
+    for name in ("Nodes", "Triangles", "Boundaries"):
+        value = metrics.filter(has_text=name).get_by_test_id("stMetricValue")
+        playwright.expect(value).to_have_text(re.compile(r"^\s*[1-9][\d,]*\s*$"))
+
+    page.get_by_role("tab", name=re.compile("Boundary Picker")).click()
+    selector = page.get_by_role("combobox", name="Selected CAD Boundary Group")
+    selector.select_option("edge-000002")
+    playwright.expect(page.get_by_role("textbox", name="Condition Name")).to_have_value(
+        "right_load"
+    )
+
+
+def test_import_uploaded_cad_in_fresh_workbench(workbench_page):
+    workbench_page.locator('input[type="file"]').set_input_files(PLATE)
+    workbench_page.get_by_role("button", name="Import Uploaded CAD").click()
+    _assert_mesh_and_boundaries(workbench_page)
+
+
+def test_generate_sample_in_fresh_workbench(workbench_page):
+    workbench_page.get_by_role("button", name="Generate Sample 2D Bracket").click()
+    _assert_mesh_and_boundaries(workbench_page)
+
+
+def test_retries_invalid_upload_in_same_session(workbench_page):
+    page = workbench_page
+    uploader = page.locator('input[type="file"]')
+    uploader.set_input_files(
+        {
+            "name": PLATE.name,
+            "mimeType": "application/octet-stream",
+            "buffer": b"bad CAD",
+        }
+    )
+    size = page.get_by_role("spinbutton", name="Target Mesh Size (mm)")
+    size.fill("4")
+    size.press("Tab")
+    upload = page.get_by_role("button", name="Import Uploaded CAD")
+    upload.click()
+    playwright.expect(
+        page.get_by_text(re.compile("^CAD import failed"))
+    ).to_be_visible()
+    playwright.expect(page.get_by_text("Technical details")).to_be_visible()
+    playwright.expect(page.get_by_text(PLATE.name, exact=True)).to_be_visible()
+    playwright.expect(size).to_have_value(re.compile(r"^4(?:\.0+)?$"))
+    page.get_by_role("button", name=f"Remove {PLATE.name}").click()
+    playwright.expect(page.get_by_text(re.compile("^CAD import failed"))).to_be_hidden(
+        timeout=20_000
+    )
+    uploader.set_input_files(PLATE)
+    playwright.expect(page.get_by_text(PLATE.name, exact=True)).to_be_visible()
+    upload.click()
+    _assert_mesh_and_boundaries(page)
+
+
+@pytest.fixture
+def populated_study(workbench_server):
+    from formamech.ui import (
+        WorkbenchWorkspace,
+        default_draft_from_preview,
+        prepare_and_plan_workspace,
+    )
+
+    _, root = workbench_server
+    study = WorkbenchWorkspace(root)
+    preview = study.import_cad_path(PLATE)
+    prepare_and_plan_workspace(
+        study, default_draft_from_preview(preview), execution_profile=False
+    )
+    study.run_dir.mkdir()
+    study.qualification_dir.mkdir()
+    (study.run_dir / "report.json").write_text("{}", encoding="utf-8")
+    (study.qualification_dir / "qualification-manifest.json").write_text(
+        "{}", encoding="utf-8"
+    )
+    return study
+
+
+def test_sample_and_replacement_preserve_a_populated_study(
+    populated_study, workbench_page
+):
+    study, page = populated_study, workbench_page
+    original = {
+        p: p.read_bytes()
+        for p in (
+            study.source_dir / PLATE.name,
+            study.geometry_dir / "geometry.json",
+            study.physics_path,
+            study.preview_dir / "plan.json",
+            study.run_dir / "report.json",
+            study.qualification_manifest_path,
+        )
+    }
+    path = page.get_by_role("textbox", name="Workspace Directory")
+    page.get_by_role("button", name="Open Sample in New Workspace").click()
+    playwright.expect(path).not_to_have_value(str(study.root), timeout=45_000)
+    playwright.expect(
+        page.get_by_test_id("stMetric").filter(has_text="Triangles")
+    ).to_be_visible()
+    assert all(p.read_bytes() == payload for p, payload in original.items())
+    path.fill(str(study.root))
+    path.press("Enter")
+
+    uploader = page.locator('input[type="file"]')
+    uploader.set_input_files(
+        {
+            "name": PLATE.name,
+            "mimeType": "application/octet-stream",
+            "buffer": b"bad CAD",
+        }
+    )
+    upload = page.get_by_role("button", name="Import Uploaded CAD")
+    upload.click()
+    review = page.get_by_text(re.compile(r"Replace .*plate-with-hole.step"))
+    playwright.expect(review).to_be_visible()
+    playwright.expect(
+        page.get_by_text("Qualification evidence", exact=True)
+    ).to_be_visible()
+    page.get_by_role("button", name="Keep current study").click()
+    playwright.expect(review).to_be_hidden(timeout=20_000)
+    assert all(p.read_bytes() == payload for p, payload in original.items())
+
+    upload.click()
+    replace = page.get_by_role("button", name="Replace geometry", exact=True)
+    replace.click()
+    playwright.expect(
+        page.get_by_text(re.compile("^CAD import failed"))
+    ).to_be_visible()
+    assert all(p.read_bytes() == payload for p, payload in original.items())
+    page.get_by_role("button", name=f"Remove {PLATE.name}").click()
+    uploader.set_input_files(PLATE)
+    playwright.expect(page.get_by_text(PLATE.name, exact=True)).to_be_visible()
+    size = page.get_by_role("spinbutton", name="Target Mesh Size (mm)")
+    size.fill("4")
+    size.press("Tab")
+    upload.click()
+    replace.click()
+    playwright.expect(replace).to_be_hidden(timeout=45_000)
+    playwright.expect(page.get_by_text(re.compile("^CAD import failed"))).to_be_hidden()
+    playwright.expect(
+        page.get_by_text("Imported and meshed plate-with-hole.step.")
+    ).to_be_visible()
+    assert (study.geometry_dir / "geometry.json").read_bytes() != original[
+        study.geometry_dir / "geometry.json"
+    ]
+    assert all(
+        not p.exists()
+        for p in original
+        if p.parent not in (study.source_dir, study.geometry_dir)
+    )
+
+
+def _picker(page):
+    page.get_by_role("tab", name=re.compile("Boundary Picker")).click()
+    selector = page.get_by_role("combobox", name="Selected CAD Boundary Group")
+    error = page.get_by_text("BidiComponent Error:", exact=True)
+    playwright.expect(selector.or_(error)).to_be_visible(timeout=30_000)
+    assert not error.is_visible(), error.locator("..").inner_text()
+    return selector
+
+
+def _assert_picker_selection(page, selector, region):
+    playwright.expect(selector).to_have_value(region)
+    playwright.expect(page.get_by_test_id("boundary-plot")).to_have_attribute(
+        "data-highlighted-region", region, timeout=20_000
+    )
+    playwright.expect(page.get_by_test_id("boundary-editor")).to_have_attribute(
+        "data-region", region
+    )
+    playwright.expect(page.locator('tr[aria-current="true"]')).to_contain_text(region)
+
+
+def test_picker_keyboard_pointer_and_apply_through_streamlit(
+    populated_study, workbench_page
+):
+    page = workbench_page
+    first, second = "edge-000001", "edge-000002"
+    selector = _picker(page)
+    _assert_picker_selection(page, selector, first)
+    selector.focus()
+    selector.press("ArrowDown")
+    _assert_picker_selection(page, selector, second)
+
+    plot = page.get_by_test_id("boundary-plot")
+    handle = plot.locator(".scatterlayer .trace:last-child .points .point").first
+    handle.scroll_into_view_if_needed()
+    bounds = handle.bounding_box()
+    assert bounds is not None
+    page.mouse.click(
+        bounds["x"] + bounds["width"] / 2, bounds["y"] + bounds["height"] / 2
+    )
+    _assert_picker_selection(page, selector, first)
+
+    selector.press("ArrowDown")
+    expression = page.get_by_role("textbox", name="u_x expression (mm)")
+    expression.fill("ux / 2")
+    selector.press("ArrowUp")
+    _assert_picker_selection(page, selector, first)
+    selector.press("ArrowDown")
+    _assert_picker_selection(page, selector, second)
+    playwright.expect(expression).to_have_value("ux / 2")
+    playwright.expect(page.locator('tr[aria-current="true"]')).not_to_contain_text(
+        "ux / 2"
+    )
+    page.get_by_role("button", name="Apply boundary condition", exact=True).press(
+        "Enter"
+    )
+    playwright.expect(
+        page.get_by_text(f"Applied boundary condition to {second}.")
+    ).to_be_visible(timeout=30_000)
+    page.reload()
+    selector = _picker(page)
+    selector.press("ArrowDown")
+    playwright.expect(
+        page.get_by_role("textbox", name="u_x expression (mm)")
+    ).to_have_value("ux / 2")
+    saved = populated_study.load_state()["physics_draft"]["boundary_conditions"]
+    assert next(b for b in saved if b["region"] == second)["values"] == [
+        {"expression": "ux / 2", "unit": "mm"}
+    ]
+
+    page.get_by_role("tab", name=re.compile("Material & Plan")).click()
+    playwright.expect(page.get_by_role("button", name="Update plan")).to_be_enabled()
+    page.get_by_role("tab", name=re.compile("Train & Qualify")).click()
+    playwright.expect(
+        page.get_by_role("button", name="Start Compile Job")
+    ).to_be_disabled()
+    playwright.expect(
+        page.get_by_role("button", name=re.compile("Resume Compile"))
+    ).to_be_disabled()
+
+
+@pytest.mark.parametrize(
+    "workbench_page",
+    [
+        {"viewport": {"width": 320, "height": 900}, "color_scheme": theme}
+        for theme in ("light", "dark")
+    ],
+    indirect=True,
+    ids=["light", "dark"],
+)
+def test_picker_at_320_css_pixels(populated_study, workbench_page):
+    page = workbench_page
+    theme = (
+        "dark"
+        if page.evaluate("matchMedia('(prefers-color-scheme: dark)').matches")
+        else "light"
+    )
+    selector = _picker(page)
+    selector.focus()
+    selector.press("ArrowDown")
+    _assert_picker_selection(page, selector, "edge-000002")
+    drawing = page.get_by_test_id("boundary-plot").bounding_box()
+    field = page.get_by_role("textbox", name="Condition Name").bounding_box()
+    select = selector.bounding_box()
+    assert select and drawing and field
+    assert select["y"] < drawing["y"] < field["y"]
+    assert all(
+        box["x"] >= 0 and box["x"] + box["width"] <= 321
+        for box in (select, drawing, field)
+    )
+    apply = page.get_by_role("button", name="Apply boundary condition", exact=True)
+    apply.scroll_into_view_if_needed()
+    playwright.expect(apply).to_be_in_viewport()
+
+    ratio = selector.evaluate("""element => {
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = 1;
+      const ctx = canvas.getContext('2d', {willReadFrequently: true});
+      const parents = [];
+      for (let node = element; node; node = node.parentElement) parents.unshift(node);
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, 1, 1);
+      for (const node of parents) {
+        ctx.fillStyle = getComputedStyle(node).backgroundColor;
+        ctx.fillRect(0, 0, 1, 1);
+      }
+      const luminance = () => [...ctx.getImageData(0, 0, 1, 1).data].slice(0, 3)
+        .map(value => value / 255)
+        .map(value => value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4)
+        .reduce((total, value, i) => total + value * [0.2126, 0.7152, 0.0722][i], 0);
+      const background = luminance();
+      const style = getComputedStyle(element);
+      const contrast = color => {
+        const before = ctx.getImageData(0, 0, 1, 1);
+        ctx.fillStyle = color;
+        ctx.fillRect(0, 0, 1, 1);
+        const foreground = luminance();
+        ctx.putImageData(before, 0, 0);
+        return (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05);
+      };
+      return {background, text: contrast(style.color), outline: contrast(style.outlineColor),
+              visibleOutline: style.outlineStyle !== 'none' && parseFloat(style.outlineWidth) >= 2};
+    }""")
+    assert (ratio["background"] > 0.5) == (theme == "light"), ratio
+    assert ratio["text"] >= 4.5, ratio
+    assert ratio["visibleOutline"] and ratio["outline"] >= 3.0, ratio
+    print(
+        f"{theme} theme at 320 CSS px. Text {ratio['text']:.2f}:1, focus {ratio['outline']:.2f}:1"
+    )
+
+
+@pytest.fixture(params=["fixture", "refined_bracket"])
+def short_job(workbench_server, request):
+    from formamech.ui import WorkbenchJobRunner, WorkbenchWorkspace
+
+    from piginot.ui.workbench.job_runner import JobRecord
+
+    _, root = workbench_server
+    workspace = WorkbenchWorkspace(root)
+    if request.param == "refined_bracket":
+        preview = workspace.import_sample(mesh_size_mm=0.35)
+        assert preview["mesh"]["triangle_count"] > 10_000
+    else:
+        preview = workspace.import_cad_path(PLATE)
+    workspace.run_dir.mkdir()
+    finished = root / "finish-test-job"
+    response = workspace.run_dir / "report.json"
+    command = (
+        sys.executable,
+        "-c",
+        "import pathlib, time, sys\n"
+        "while not pathlib.Path(sys.argv[1]).exists(): time.sleep(0.05)\n"
+        "pathlib.Path(sys.argv[2]).write_text('{\"exit_code\":0}', encoding='utf-8')",
+        str(finished),
+        str(response),
+    )
+    runner = WorkbenchJobRunner(workspace.jobs_dir, cwd=root)
+    with subprocess.Popen(command, cwd=root, stdout=subprocess.DEVNULL) as process:
+        try:
+            runner._save(
+                JobRecord(
+                    job_id="picker-test-job",
+                    kind="compile",
+                    command=command,
+                    pid=process.pid,
+                    state="RUNNING",
+                    exit_code=None,
+                    started_utc="2026-11-23T00:00:00Z",
+                    finished_utc=None,
+                    log_path=str(workspace.jobs_dir / "picker-test-job.log"),
+                    output_dir=str(workspace.run_dir),
+                )
+            )
+            yield runner, workspace, finished, process, preview["mesh"]
+        finally:
+            if process.poll() is None:
+                process.terminate()
+                process.wait(timeout=5)
+
+
+def _wait_for_job_record(runner, page, predicate):
+    deadline = time.monotonic() + 12
+    while time.monotonic() < deadline:
+        if predicate(runner.load("picker-test-job")):
+            return
+        page.wait_for_timeout(100)
+    pytest.fail("The job monitor did not publish the expected update.")
+
+
+def _selection_latencies(page, selector):
+    selector.evaluate("""select => {
+      const drawing = document.querySelector('[data-testid="boundary-plot"]');
+      const samples = [];
+      let started = null;
+      select.measurements = samples;
+      select.addEventListener('change', () => { started = performance.now(); }, true);
+      new MutationObserver(() => {
+        if (started !== null && drawing.dataset.highlightedRegion === select.value) {
+          samples.push(performance.now() - started);
+          started = null;
+        }
+      }).observe(drawing, {attributes: true, attributeFilter: ['data-highlighted-region']});
+    }""")
+    for edge in (2, 3, 4, 5, 1) * 3 + (2,):
+        region = f"edge-{edge:06d}"
+        selector.select_option(region)
+        _assert_picker_selection(page, selector, region)
+    samples = selector.evaluate("select => select.measurements")
+    assert len(samples) == 16
+    return samples
+
+
+@pytest.mark.parametrize("workbench_server", ["probe"], indirect=True)
+def test_job_poll_preserves_picker_and_does_not_evaluate_inspector(
+    short_job,
+    workbench_page,
+    browser,
+):
+    page = workbench_page
+    runner, study, finished, process, mesh = short_job
+    probe = study.root.parent / "probe.log"
+    tabs = page.get_by_role("tab")
+    tabs.filter(has_text="Trust Inspector").click()
+    playwright.expect(
+        page.get_by_test_id("stMetric").filter(has_text="Verification Tier")
+    ).to_be_visible(timeout=45_000)
+    inspector_calls = probe.read_text(encoding="utf-8").splitlines().count("inspector")
+    assert inspector_calls > 0
+    selector = _picker(page)
+    _assert_picker_selection(page, selector, "edge-000001")
+    latencies = _selection_latencies(page, selector)
+    plot = page.get_by_test_id("boundary-plot")
+    read_zoom = "plot => plot._fullLayout.xaxis.range.slice()"
+    initial_zoom = plot.evaluate(read_zoom)
+    plot.locator('[data-title="Zoom in"]').click()
+    zoom = plot.evaluate(read_zoom)
+    assert zoom != initial_zoom
+    expression = page.get_by_role("textbox", name="u_x expression (mm)")
+    expression.fill("ux / 4")
+    (study.run_dir / "checkpoints" / "step-000000010").mkdir(parents=True)
+    _wait_for_job_record(runner, page, lambda job: job.latest_checkpoint_step == 10)
+    playwright.expect(expression).to_be_focused()
+    playwright.expect(expression).to_have_value("ux / 4")
+    assert plot.evaluate(read_zoom) == pytest.approx(zoom)
+
+    finished.touch()
+    process.wait(timeout=5)
+    _wait_for_job_record(runner, page, lambda job: job.state == "SUCCEEDED")
+    playwright.expect(page.get_by_text("SUCCEEDED", exact=True)).to_be_attached(
+        timeout=15_000
+    )
+    playwright.expect(expression).to_be_focused()
+    playwright.expect(expression).to_have_value("ux / 4")
+    assert plot.evaluate(read_zoom) == pytest.approx(zoom)
+    started = probe.read_text(encoding="utf-8").splitlines()
+    page.wait_for_timeout(2200)
+    assert probe.read_text(encoding="utf-8").splitlines() == started
+    assert started.count("inspector") == inspector_calls
+    page.get_by_role("button", name="Apply boundary condition", exact=True).click()
+    playwright.expect(
+        page.get_by_text("Applied boundary condition to edge-000002.")
+    ).to_be_visible(timeout=30_000)
+    assignments = study.load_state()["physics_draft"]["boundary_conditions"]
+    assert assignments[1]["values"][0]["expression"] == "ux / 4"
+    tabs.filter(has_text="Train & Qualify").click()
+    job_panel = page.get_by_role("tabpanel", name=re.compile("Train & Qualify"))
+    playwright.expect(
+        job_panel.get_by_role("button", name="Refresh Job Status")
+    ).to_be_visible()
+    print(
+        f"Chromium {browser.version}, {mesh['node_count']} nodes and {mesh['triangle_count']} triangles. "
+        f"{len(latencies)} selections, {median(latencies):.1f} ms median and {max(latencies):.1f} ms max. "
+        "Zero selection mismatches, draft or zoom losses, or extra Inspector evaluations."
+    )

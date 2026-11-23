@@ -1,0 +1,103 @@
+.boundary-picker {
+  --picker-text: var(--st-text-color, #263238);
+  --picker-surface: var(--st-background-color, #fff);
+  --picker-border: color-mix(in srgb, var(--picker-text) 65%, var(--picker-surface));
+  background: var(--picker-surface);
+  color: var(--picker-text);
+  font-family: var(--st-font, system-ui, sans-serif);
+  container-type: inline-size;
+}
+
+.boundary-picker *, .boundary-picker *::before, .boundary-picker *::after { box-sizing: border-box; }
+.boundary-picker :is(p, h3, figure) { margin: 0; }
+.boundary-picker :is(input, select, button) { color: inherit; font: inherit; }
+.boundary-picker :is(input, select, button, [tabindex]):focus-visible {
+  outline: 2px solid var(--picker-text);
+  outline-offset: 2px;
+}
+.boundary-picker :is(input:not([type="checkbox"]), select, button) {
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: 0.4rem 0.6rem;
+  background: var(--picker-surface);
+  border: 1px solid var(--picker-border);
+  border-radius: 0.4rem;
+}
+.boundary-picker input[type="checkbox"] {
+  inline-size: 1rem;
+  block-size: 1rem;
+  margin: 0;
+  accent-color: var(--picker-text);
+}
+.boundary-picker .boundary-field { display: grid; gap: 0.35rem; }
+.boundary-picker .boundary-selector { max-width: 38rem; margin: 0 0 0.9rem; }
+.boundary-picker .boundary-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 1rem;
+  align-items: start;
+}
+.boundary-picker .boundary-figure {
+  min-width: 0;
+  padding: 0.55rem;
+  border: 1px solid var(--picker-border);
+  border-radius: 0.5rem;
+}
+.boundary-picker .boundary-plot {
+  width: 100%;
+  height: clamp(19rem, 48cqw, 30rem);
+  background: var(--picker-surface);
+}
+.boundary-picker .boundary-figure figcaption { padding: 0.35rem 0.2rem; overflow-wrap: anywhere; }
+.boundary-picker .boundary-mesh-toggle, .boundary-picker .boundary-component {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 1.75rem;
+}
+.boundary-picker .boundary-controls {
+  display: grid;
+  gap: 0.7rem;
+  padding: 0.8rem;
+  min-width: 0;
+  border: 1px solid var(--picker-border);
+  border-radius: 0.5rem;
+}
+.boundary-picker .boundary-editor { display: grid; gap: 0.65rem; }
+.boundary-picker h3 { font-size: 1.02rem; line-height: 1.35; }
+.boundary-picker fieldset {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.4rem 0.55rem;
+  margin: 0;
+  min-inline-size: 0;
+  border: 1px solid var(--picker-border);
+  border-radius: 0.4rem;
+}
+.boundary-picker .boundary-field-error { font-weight: 600; overflow-wrap: anywhere; }
+.boundary-picker [aria-invalid="true"] { border-width: 2px; }
+.boundary-picker .boundary-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.boundary-picker button { cursor: pointer; }
+.boundary-picker button:disabled { cursor: default; }
+.boundary-picker button.boundary-apply:not(:disabled) {
+  background: var(--picker-text);
+  color: var(--picker-surface);
+  font-weight: 600;
+}
+.boundary-picker .boundary-status:empty { position: absolute; }
+.boundary-picker .boundary-status { overflow-wrap: anywhere; }
+.boundary-picker .boundary-readiness { margin-block-start: 1rem; }
+.boundary-picker .boundary-readiness ul { margin-block: 0.3rem 0; padding-inline-start: 1.25rem; }
+.boundary-picker .boundary-table { margin-block-start: 1rem; overflow: auto; }
+.boundary-picker table { width: 100%; border-collapse: collapse; }
+.boundary-picker caption { text-align: start; font-weight: 600; padding-block-end: 0.45rem; }
+.boundary-picker :is(th, td) { padding: 0.45rem; border-bottom: 1px solid var(--picker-border); text-align: start; }
+.boundary-picker [aria-current="true"] {
+  background: color-mix(in srgb, var(--picker-text) 9%, var(--picker-surface));
+  border-inline-start: 3px solid var(--picker-text);
+}
+.boundary-picker small { display: block; font-size: 0.85em; }
+
+@container (max-width: 41rem) {
+  .boundary-picker .boundary-grid { grid-template-columns: minmax(0, 1fr); }
+}

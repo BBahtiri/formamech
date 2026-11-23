@@ -4,11 +4,10 @@ The Interactive 2D Engineering Workbench removes the manual JSON and CLI
 onboarding barrier while preserving FormaMech's exact canonical file contracts
 and epistemic verification boundaries.
 
-Every action taken in the browser writes the same hash-bound project files
-(`geometry/`, `physics.json`, `inputs/`, `preview/plan.json`, `run/`,
-`qualification/`) that `formamech cad`, `formamech compile`, and
-`formamech qualify` read, so any project created in the GUI is 100%
-reproducible in headless CI pipelines.
+The workbench prepares the same hash-bound project files (`geometry/`,
+`physics.json`, `inputs/`, `preview/plan.json`, `run/`, `qualification/`) read by
+`formamech cad`, `formamech compile`, and `formamech qualify`. Boundary Picker
+selection, zoom, and unapplied edits stay in the browser.
 
 > **Epistemic scope (ASME V&V 10):** Newly compiled candidates remain
 > `NOT_VERIFIED` until they pass policy-driven numerical qualification against
@@ -17,18 +16,20 @@ reproducible in headless CI pipelines.
 
 ## 1. Launch the workbench
 
-Install the CAD, verification, and UI extras, then launch the Streamlit app:
+Install the CAD, verification, and UI extras, then launch the Streamlit app.
 
 ```text
 python -m pip install -e ".[cad,verify,ui]"
 formamech ui --workspace .formamech-runs/workbench/my-bracket --bundle bundles/notched-v1-cp-freeze
 ```
 
-Or run from the included container image (`docker/Dockerfile.ui`):
+FormaMech wheels and source distributions include the built Boundary Picker.
+An installed workbench can serve it offline with Streamlit 1.51 or later. Use
+Node.js 24 or later when rebuilding the picker from frontend source.
 
 ```text
-docker build -f docker/Dockerfile.ui -t formamech-ui .
-docker run -p 8501:8501 -v "$(pwd)/.formamech-runs:/workspace" formamech-ui
+npm --prefix frontend/boundary-picker ci
+npm --prefix frontend/boundary-picker run build
 ```
 
 ## 2. Five guided workflow stages
@@ -43,21 +44,34 @@ flowchart LR
 
 ### Stage 1 — Import CAD & Mesh
 
-Upload any planar `.step`, `.stp`, or `.dxf` profile (or generate the built-in
-40 × 20 mm OpenCASCADE sample bracket), select length units and mesh size, and
-inspect mesh counts, bounding boxes, and extracted curve groups before moving
-on.
+Upload a planar `.step`, `.stp`, or `.dxf` profile, choose its length unit and
+target mesh size, then select **Import Uploaded CAD**. The mesh summary reports
+nodes, triangles, and boundary groups. If meshing fails, open **Technical
+details** for the diagnostic. The upload and settings stay available for retry.
+
+**Generate Sample 2D Bracket** opens the 40 × 20 mm example in an empty
+workspace. In a populated study, **Open Sample in New Workspace** saves the
+example to a unique sibling directory and opens it there.
+
+An uploaded replacement lists the current part and its dependent artifacts.
+Choose **Keep current study** to cancel, or **Replace geometry** to mesh the
+new part and clear the listed artifacts after a successful import. Finish or
+cancel active study jobs before replacing geometry.
 
 ![Workbench Stage 1: CAD upload, OpenCASCADE sample generator, and live mesh summary](assets/workflows/workbench_tab1_import.png)
 
 ### Stage 2 — Visual Boundary Picker
 
-Click any boundary segment or midpoint handle directly on the interactive Plotly
-CAD canvas (`on_select="rerun"`) to assign explicit `dirichlet`, `symmetry`, or
-`traction_free` conditions. The workbench validates FormaMech's straight-line
-and circular-arc lifting rules live before allowing plan preparation.
+Choose an edge with the keyboard-accessible selector or by clicking a segment
+or midpoint in the drawing. The outline, editor, and active assignment row
+follow the same edge. Conditions labelled **Suggested from geometry** are
+starting points to review.
 
-![Workbench Stage 2: Interactive Plotly boundary picker with clickable edge handles and live validation](assets/workflows/workbench_tab2_boundary_picker.png)
+Edit the condition and select **Apply boundary condition** to save it. The
+assignment table shows the applied conditions. You can visit another edge and
+return to an unapplied edit during the same browser session. Field errors
+appear next to the fields. If another session has changed the study, use
+**Reload accepted conditions** and compare your draft before applying again.
 
 ### Stage 3 — Material, Loads & Plan
 
@@ -67,13 +81,23 @@ ranges and training budgets, and execute `formamech cad prepare` followed by
 `formamech compile --plan-only` to review `preview/plan.json` without hand-editing
 JSON.
 
+Reopening a workspace restores its saved settings. An applied boundary change
+identifies the edited edge and makes the previous plan stale. Choose **Update
+plan** to regenerate and review the inputs before training. If preparation
+fails, the last complete set of prepared files remains available and the draft
+still needs a successful preparation.
+
 ![Workbench Stage 3: Constitutive material selector, load envelope controls, and dry-run plan preview](assets/workflows/workbench_tab3_material_plan.png)
 
 ### Stage 4 — Background Train & Qualify
 
-Launch detached `formamech compile` (with `--resume` and cancel controls) and
-`formamech qualify run` jobs directly from the browser. The workbench polls
-checkpoint state and streaming log tails while preserving full CLI parity.
+Launch detached `formamech compile` and `formamech qualify run` jobs directly
+from the browser. **Start Compile Job** and **Resume Compile** require a plan
+that matches the current geometry and saved draft. Resume also requires a
+compatible checkpoint. You can qualify a selected external bundle independently.
+
+The job monitor updates checkpoints and log tails while a job is active. You
+can refresh the status manually or cancel a running job.
 
 ### Stage 5 — Verification & Trust Inspector
 
@@ -86,8 +110,8 @@ Receipts, downloadable Markdown dossiers, and FMI 3.0 `.fmu` exports.
 
 ## 3. Reproducing a GUI workspace in CI
 
-Because every browser action writes standard FormaMech artifacts under
-`--workspace`, you can run the exact same pipeline headlessly on a build server:
+Once the workbench has prepared a current plan, run the same pipeline
+headlessly with the files under `--workspace`.
 
 ```text
 formamech compile --spec <workspace>/inputs/problem.json --config <workspace>/inputs/config.json --output <workspace>/run

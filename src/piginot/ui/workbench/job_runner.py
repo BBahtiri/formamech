@@ -14,6 +14,7 @@ import signal
 import subprocess
 import sys
 import tempfile
+import time
 import uuid
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
@@ -292,6 +293,8 @@ def _pid_alive(pid: int) -> bool:
     try:
         os.kill(pid, 0)
         return True
+    except PermissionError:
+        return True
     except OSError:
         return False
 
@@ -472,6 +475,34 @@ class WorkbenchJobRunner:
         ]
         if resume:
             args.append("--resume")
+        root = self.jobs_dir.parent
+        output = Path(output_dir).resolve()
+        inputs = (Path(spec_path).resolve(), Path(config_path).resolve())
+        expected = (root / "inputs" / "problem.json", root / "inputs" / "config.json")
+        if self.jobs_dir.name == "jobs" and (
+            output == root / "run" or inputs == expected
+        ):
+            from piginot.ui.workbench.state import WorkbenchWorkspace
+            from piginot.ui.workbench.study_plan import (
+                has_compatible_checkpoint,
+                plan_blocker,
+            )
+
+            workspace = WorkbenchWorkspace(root)
+            with workspace.locked():
+                if inputs != expected:
+                    raise ValueError(
+                        "Compile requires this study's prepared problem and configuration."
+                    )
+                if blocker := plan_blocker(workspace):
+                    raise ValueError(blocker)
+                if self.active_jobs(kind="compile"):
+                    raise ValueError("A compile job is already active for this study.")
+                if resume and not has_compatible_checkpoint(workspace, output):
+                    raise ValueError(
+                        "Resume requires a compatible checkpoint from this plan."
+                    )
+                return self.launch(kind="compile", cli_args=args, output_dir=output_dir)
         return self.launch(kind="compile", cli_args=args, output_dir=output_dir)
 
     def start_qualify(
@@ -510,6 +541,19 @@ class WorkbenchJobRunner:
             args.extend(
                 ["--emit-qualified-bundle", str(Path(emit_qualified_bundle).resolve())]
             )
+        root = self.jobs_dir.parent
+        if (
+            self.jobs_dir.name == "jobs"
+            and Path(output_dir).resolve() == root / "qualification"
+        ):
+            from piginot.ui.workbench.state import WorkbenchWorkspace
+
+            with WorkbenchWorkspace(root).locked():
+                if self.active_jobs(kind="qualify"):
+                    raise ValueError(
+                        "A qualification job is already active for this study."
+                    )
+                return self.launch(kind="qualify", cli_args=args, output_dir=output_dir)
         return self.launch(kind="qualify", cli_args=args, output_dir=output_dir)
 
     def poll(self, job_id: str) -> JobRecord:
@@ -582,15 +626,25 @@ class WorkbenchJobRunner:
             trigger="cancel",
             reason="cannot cancel a job already in a terminal state",
         )
-        proc = _LIVE_PROCS.pop(self._proc_key(job_id), None)
+        key = self._proc_key(job_id)
+        proc = _LIVE_PROCS.get(key)
         if proc is not None and proc.poll() is None:
             proc.terminate()
             try:
                 proc.wait(timeout=5)
             except subprocess.TimeoutExpired:
                 proc.kill()
+                proc.wait(timeout=5)
         elif proc is None and record.pid is not None:
             _terminate_external_pid(record.pid)
+            deadline = time.monotonic() + 5
+            while _pid_alive(record.pid):
+                if time.monotonic() >= deadline:
+                    raise RuntimeError(
+                        f"Job {job_id} is still running after cancellation."
+                    )
+                time.sleep(0.1)
+        _LIVE_PROCS.pop(key, None)
 
         cancelled = replace(
             record,

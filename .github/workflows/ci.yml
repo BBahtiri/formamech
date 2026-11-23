@@ -85,8 +85,6 @@ jobs:
         run: python -m pytest tests/problem tests/contracts/test_problem_spec.py --cov=src/piginot/problem --cov=piginot.contracts.problem_spec --cov-fail-under=90
       - name: Check M1 qualification coverage
         run: python -m pytest tests/qualify --cov=src/piginot/qualify --cov-fail-under=90
-      - name: Check M2 workbench coverage
-        run: python -m pytest tests/ui --cov=src/piginot/ui/workbench --cov-fail-under=85
       - name: Check M3 plasticity coverage
         run: python -m pytest tests/stateful tests/test_cli_and_compiler_wiring.py --cov=src/piginot/stateful --cov-fail-under=85
       - name: Check M4 parametric CAD coverage
@@ -97,6 +95,59 @@ jobs:
           python -m coverage report --include="*importing_3d.py,*backend_3d.py,*energy_engine_3d.py" --show-missing --fail-under=85
       - name: Audit dependencies
         run: python -m pip_audit
+
+  workbench-ui:
+    name: Windows workbench and installed wheels
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - name: Set up Python
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: "3.12"
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/boundary-picker/package-lock.json
+      - name: Build and test Boundary Picker
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          npm.cmd --prefix frontend/boundary-picker ci
+          npm.cmd --prefix frontend/boundary-picker run typecheck
+          npm.cmd --prefix frontend/boundary-picker test
+          npm.cmd --prefix frontend/boundary-picker run build
+      - name: Install the minimum Streamlit release and Chromium
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          python -m pip install -e ".[cad,dev,plot,ui,verify]" "streamlit==1.51.0" "playwright==1.65.2" "uv==0.8.17"
+          python -m playwright install chromium
+      - name: Check M2 workbench coverage and Windows browser flows
+        run: python -m pytest tests/ui --cov=src/piginot/ui/workbench --cov-fail-under=85
+      - name: Smoke-test the direct and sdist-built wheels
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          $packageDir = Join-Path $env:RUNNER_TEMP 'workbench-wheels'
+          uv build --wheel --out-dir "$packageDir/direct"
+          uv build --sdist --out-dir "$packageDir/source"
+          $sdist = (Get-ChildItem -LiteralPath "$packageDir/source" -Filter '*.tar.gz').FullName
+          uv build --wheel "$sdist" --out-dir "$packageDir/rebuilt"
+          $env:PYTHONPATH = ''
+          $env:Path = ($env:Path -split ';' | Where-Object {
+            $_ -and -not (Test-Path -LiteralPath (Join-Path $_ 'node.exe'))
+          }) -join ';'
+          foreach ($variant in 'direct', 'rebuilt') {
+            $venv = Join-Path $packageDir "$variant-env"
+            $wheel = (Get-ChildItem -LiteralPath "$packageDir/$variant" -Filter '*.whl').FullName
+            uv venv "$venv"
+            $python = Join-Path $venv 'Scripts/python.exe'
+            uv pip install --python "$python" "$wheel[ui,cad,verify,plot]" "streamlit==1.51.0" "playwright==1.65.2" pytest
+            & $python -c "import shutil, formamech; from pathlib import Path; assert shutil.which('node') is None; assert Path(formamech.__file__).is_relative_to(Path(r'$venv'))"
+            & $python -m pytest -q tests/ui/test_workbench_browser.py -k 'fresh_workbench or picker_keyboard'
+          }
 
   release-metadata:
     name: Lockfile, citation and distributions

@@ -10,17 +10,25 @@ from __future__ import annotations
 import json
 import math
 import re
+import shutil
+import tempfile
+import uuid
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from pathlib import Path
 from typing import Any, Final, Literal
 
 from piginot.cad.configuration import prepare_campaign
 from piginot.cad.settings import SCHEMA_V2, load_settings
-from piginot.compiler.adapters import resolve_configured_adapter
-from piginot.compiler.config import CampaignConfig
 from piginot.compiler.planning import build_plan
-from piginot.compiler.records import write_plan
-from piginot.ui.workbench.state import WorkbenchWorkspace
+from piginot.ui.workbench.job_runner import WorkbenchJobRunner
+from piginot.ui.workbench.state import (
+    WorkbenchWorkspace,
+    _file_sha256,
+    _state_text,
+    canonical_settings_bytes,
+    publish_artifacts,
+)
 
 BoundaryKind = Literal["dirichlet", "symmetry", "traction_free"]
 ParamRole = Literal["material", "load"]
@@ -138,6 +146,7 @@ class BoundaryAssignment:
         }
         if self.kind != "traction_free":
             base["components"] = list(self.components)
+        if self.kind == "dirichlet":
             base["values"] = [
                 {"expression": expr, "unit": unit} for expr, unit in self.values
             ]
@@ -377,7 +386,9 @@ def validate_boundaries_against_preview(
                     f"{bc.region} ({bc.name}): essential condition requires a "
                     f"'line' or 'arc' boundary, found {bkind!r}"
                 )
-            if not bc.components or len(bc.components) != len(bc.values):
+            if not bc.components or (
+                bc.kind == "dirichlet" and len(bc.components) != len(bc.values)
+            ):
                 errors.append(
                     f"{bc.region} ({bc.name}): components and values must be non-empty "
                     "and have matching length"
@@ -395,7 +406,9 @@ def validate_boundaries_against_preview(
     return len(errors) == 0, tuple(errors)
 
 
-def build_settings_document(draft: WorkbenchPhysicsDraft) -> dict[str, Any]:
+def build_settings_document(
+    draft: WorkbenchPhysicsDraft, *, saved: Mapping[str, Any] | None = None
+) -> dict[str, Any]:
     """Emit a validated canonical ``formamech.cad-settings-v2`` settings document."""
     if not draft.project_name.strip():
         raise ValueError("project_name must be non-empty")
@@ -454,9 +467,126 @@ def build_settings_document(draft: WorkbenchPhysicsDraft) -> dict[str, Any]:
             "screen_cases": int(draft.screen_cases),
         },
     }
-    # Validate strictly against the canonical CAD settings loader
+    if saved is not None:
+        material = saved["material"]
+        if material["model"] == draft.material_model:
+            doc["material"] = {**material, **doc["material"]}
+        doc["qois"] = [
+            {**qoi, "region": qoi_region, "exclude_regions": exclude_regions}
+            if qoi["name"] == "free_stress_peak" and qoi["region"] in essential_regions
+            else qoi
+            for qoi in saved["qois"]
+        ]
+        verification = saved["verification"]
+        doc["verification"] = {
+            **verification,
+            **doc["verification"],
+            "tolerances": {
+                **verification["tolerances"],
+                **doc["verification"]["tolerances"],
+            },
+        }
+        doc = {**saved, **doc}
     load_settings(json.dumps(doc).encode("utf-8"))
     return doc
+
+
+def load_applied_settings(
+    workspace: WorkbenchWorkspace, preview: Mapping[str, Any]
+) -> dict[str, Any]:
+    state = workspace.load_state()
+    if isinstance(state.get("physics_draft"), dict):
+        return load_settings(canonical_settings_bytes(state["physics_draft"]))
+    try:
+        settings = load_settings(workspace.physics_path.read_bytes())
+    except (OSError, ValueError):
+        defaults = replace(
+            default_draft_from_preview(preview),
+            optimizer_steps=40,
+            checkpoint_interval=20,
+        )
+        settings = build_settings_document(defaults)
+    if isinstance(state.get("boundaries"), list):
+        saved = state["boundaries"]
+        if {item.get("region") for item in saved if isinstance(item, dict)} == {
+            region["name"] for region in preview["boundaries"]
+        } and all(isinstance(item, dict) for item in saved):
+            return {**settings, "boundary_conditions": saved}
+    return settings
+
+
+def load_physics_draft(
+    workspace: WorkbenchWorkspace, preview: Mapping[str, Any]
+) -> WorkbenchPhysicsDraft:
+    settings = load_applied_settings(workspace, preview)
+    verification = settings["verification"]
+    return WorkbenchPhysicsDraft(
+        project_name=settings["name"],
+        material_model=settings["material"]["model"],
+        material_param_map=settings["material"]["parameters"],
+        parameters=tuple(
+            ParameterSpecDraft(p["name"], p["role"], p["lo"], p["hi"], p["unit"])
+            for p in settings["parameters"]
+        ),
+        boundaries=tuple(
+            BoundaryAssignment.from_document(b) for b in settings["boundary_conditions"]
+        ),
+        displacement_scale=settings["displacement_scale"],
+        qoi_region=next(
+            (
+                qoi["region"]
+                for qoi in settings["qois"]
+                if qoi["name"] == "free_stress_peak"
+            ),
+            None,
+        ),
+        quantile=verification["quantile"],
+        u_tol=verification["tolerances"]["u_relative_l2"],
+        p_tol=verification["tolerances"]["p_relative_l2"],
+        peak_tol=verification["tolerances"]["absolute_peak_error"],
+        **settings["training"],
+        **settings["sampling"],
+    )
+
+
+def boundary_draft_update(
+    state: dict[str, Any],
+    settings: dict[str, Any],
+    assignment: BoundaryAssignment,
+) -> dict[str, Any]:
+    """Return the applied study state for one accepted edit."""
+    boundaries = settings["boundary_conditions"]
+    previous = next(item for item in boundaries if item["region"] == assignment.region)
+    if previous == assignment.document():
+        return state
+    return {
+        **state,
+        "physics_draft": {
+            **settings,
+            "boundary_conditions": [
+                assignment.document() if item is previous else item
+                for item in boundaries
+            ],
+        },
+        "draft_revision": uuid.uuid4().hex,
+        "changed_boundary": assignment.region,
+    }
+
+
+def apply_boundary(
+    workspace: WorkbenchWorkspace,
+    preview: Mapping[str, Any],
+    assignment: BoundaryAssignment,
+) -> bool:
+    with workspace.locked():
+        state = workspace.load_state()
+        updated = boundary_draft_update(
+            state, load_applied_settings(workspace, preview), assignment
+        )
+        if updated is state:
+            return False
+        workspace.save_state(updated)
+        return True
 
 
 def prepare_and_plan_workspace(
@@ -466,54 +596,96 @@ def prepare_and_plan_workspace(
     execution_profile: bool = True,
 ) -> dict[str, Any]:
     """Write ``physics.json``, run ``cad prepare``, and emit ``preview/plan.json``."""
-    preview = workspace.load_preview()
-    if preview is None:
-        raise ValueError("import a CAD file before preparing physics inputs")
+    with workspace.locked():
+        preview = workspace.load_preview()
+        if preview is None:
+            raise ValueError("import a CAD file before preparing physics inputs")
+        ok, errors = validate_boundaries_against_preview(preview, draft.boundaries)
+        if not ok:
+            raise ValueError("; ".join(errors))
+        current = load_applied_settings(workspace, preview)
+        settings = build_settings_document(draft, saved=current)
+        state = {
+            **workspace.load_state(),
+            "physics_draft": settings,
+            "preparation_pending": True,
+        }
+        if current != settings:
+            state = {**state, "draft_revision": uuid.uuid4().hex}
+        workspace.save_state(state)
+        if WorkbenchJobRunner(workspace.jobs_dir, cwd=workspace.root).active_jobs(
+            kind="compile"
+        ):
+            raise ValueError(
+                "Finish or cancel the active compile job before updating the plan."
+            )
+        return _prepare_staged(workspace, settings, state, execution_profile)
 
-    ok, errors = validate_boundaries_against_preview(preview, draft.boundaries)
-    if not ok:
-        raise ValueError("; ".join(errors))
 
-    settings_doc = build_settings_document(draft)
-    workspace.reset_prepared_inputs()
-    from piginot.ui.workbench.state import _atomic_write_text, _file_sha256
-
-    _atomic_write_text(
-        workspace.physics_path,
-        json.dumps(settings_doc, indent=2, sort_keys=True) + "\n",
-    )
-    prep_record = prepare_campaign(
-        workspace.geometry_dir,
-        workspace.physics_path,
-        workspace.inputs_dir,
-        execution_profile=execution_profile,
-    )
-
-    config_path = workspace.inputs_dir / "config.json"
-    problem_path = workspace.inputs_dir / "problem.json"
-    campaign = CampaignConfig.load(config_path)
-    adapter = resolve_configured_adapter(campaign.adapter, config_path)
-    plan = build_plan(
-        problem_path,
-        config_path,
-        workspace.preview_dir,
-        descriptor=adapter.descriptor,
-    )
-    write_plan(plan)
-
-    state = workspace.load_state()
-    state["project_name"] = draft.project_name
-    state["material_model"] = draft.material_model
-    state["boundaries"] = [b.document() for b in draft.boundaries]
-    state["physics_sha256"] = _file_sha256(workspace.physics_path)
-    state["geometry_sha256"] = _file_sha256(workspace.geometry_dir / "geometry.json")
-    workspace.save_state(state)
-
-    return {
-        "settings": settings_doc,
-        "preparation": prep_record,
-        "plan": plan.document(),
-    }
+def _prepare_staged(
+    workspace: WorkbenchWorkspace,
+    settings: dict[str, Any],
+    state: dict[str, Any],
+    execution_profile: bool,
+) -> dict[str, Any]:
+    with tempfile.TemporaryDirectory(dir=workspace.root, prefix=".prepare-") as tmp:
+        staging = Path(tmp)
+        physics = staging / "physics.json"
+        physics.write_bytes(canonical_settings_bytes(settings))
+        # A sibling of inputs/ gives the configuration the same relative geometry path.
+        inputs = staging.with_name(staging.name + "-inputs")
+        try:
+            record = prepare_campaign(
+                workspace.geometry_dir,
+                physics,
+                inputs,
+                execution_profile=execution_profile,
+            )
+            staged_plan = build_plan(
+                inputs / "problem.json", inputs / "config.json", workspace.preview_dir
+            )
+            plan = replace(
+                staged_plan,
+                input_paths=tuple(
+                    workspace.inputs_dir / path.relative_to(inputs)
+                    if path.is_relative_to(inputs)
+                    else path
+                    for path in staged_plan.input_paths
+                ),
+                source_path=workspace.inputs_dir
+                / staged_plan.source_path.relative_to(inputs),
+            ).document()
+            preview = staging / "preview"
+            preview.mkdir()
+            (preview / "plan.json").write_bytes(canonical_settings_bytes(plan))
+            prepared_state = staging / workspace.state_path.name
+            prepared_state.write_text(
+                _state_text(
+                    {
+                        **state,
+                        "preparation_pending": False,
+                        "changed_boundary": None,
+                        "execution_profile": execution_profile,
+                        "physics_sha256": _file_sha256(physics),
+                        "geometry_sha256": record["geometry_resource_sha256"],
+                        "prepared_draft_revision": state.get("draft_revision"),
+                    }
+                ),
+                encoding="utf-8",
+            )
+            publish_artifacts(
+                staging,
+                {
+                    workspace.inputs_dir: inputs,
+                    workspace.preview_dir: preview,
+                    workspace.physics_path: physics,
+                    workspace.state_path: prepared_state,
+                },
+            )
+            return {"settings": settings, "preparation": record, "plan": plan}
+        finally:
+            if inputs.exists():
+                shutil.rmtree(inputs)
 
 
 __all__ = (

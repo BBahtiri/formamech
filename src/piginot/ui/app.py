@@ -11,6 +11,8 @@ import argparse
 import importlib
 import json
 import sys
+import uuid
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -23,43 +25,29 @@ from piginot.ui.inspector import (
 from piginot.ui.workbench import (
     MATERIAL_PRESETS,
     BoundaryAssignment,
-    BoundaryKind,
     ParameterSpecDraft,
     WorkbenchJobRunner,
-    WorkbenchPhysicsDraft,
     WorkbenchWorkspace,
     build_cad_boundary_figure,
-    default_draft_from_preview,
-    extract_selected_region,
-    generate_sample_bracket_step,
     prepare_and_plan_workspace,
     validate_boundaries_against_preview,
 )
+from piginot.ui.workbench.physics_forms import (
+    load_applied_settings,
+    load_physics_draft,
+)
+from piginot.ui.workbench.state import _file_sha256
+from piginot.ui.workbench.study_plan import has_compatible_checkpoint, plan_blocker
 
 
 def _load_or_init_boundaries(
-    st: Any, workspace: WorkbenchWorkspace, preview: dict[str, Any]
+    workspace: WorkbenchWorkspace, preview: dict[str, Any]
 ) -> list[BoundaryAssignment]:
-    state_key = f"wb_boundaries::{workspace.root}"
-    preview_regions = [str(b["name"]) for b in preview.get("boundaries", ())]
-    if state_key in st.session_state:
-        existing: list[BoundaryAssignment] = list(st.session_state[state_key])
-        if [b.region for b in existing] == preview_regions:
-            return existing
-
-    persisted = workspace.load_state().get("boundaries")
-    if isinstance(persisted, list):
-        try:
-            loaded = [BoundaryAssignment.from_document(item) for item in persisted]
-            if [b.region for b in loaded] == preview_regions:
-                st.session_state[state_key] = loaded
-                return loaded
-        except (KeyError, TypeError, ValueError):
-            pass
-
-    defaults = list(default_draft_from_preview(preview).boundaries)
-    st.session_state[state_key] = defaults
-    return defaults
+    settings = load_applied_settings(workspace, preview)
+    return [
+        BoundaryAssignment.from_document(item)
+        for item in settings["boundary_conditions"]
+    ]
 
 
 def _render_stage_1_import(st: Any, workspace: WorkbenchWorkspace) -> None:
@@ -85,40 +73,104 @@ def _render_stage_1_import(st: Any, workspace: WorkbenchWorkspace) -> None:
             step=0.5,
         )
 
+        review = workspace.replacement_review()
+        pending_key = "wb_cad_replacement"
+        choices = (
+            str(workspace.root),
+            getattr(uploaded, "file_id", None),
+            unit_str,
+            mesh_size,
+        )
+        pending = st.session_state.get(pending_key)
+        if pending is not None and pending[0] != choices:
+            st.session_state.pop(pending_key)
+            pending = None
         btn_a, btn_b = st.columns(2)
-        if btn_a.button("Import Uploaded CAD", type="primary", width="stretch"):
+        upload_clicked = btn_a.button(
+            "Import Uploaded CAD", type="primary", width="stretch"
+        )
+        sample_label = (
+            "Open Sample in New Workspace"
+            if review.populated
+            else "Generate Sample 2D Bracket"
+        )
+        sample_clicked = btn_b.button(sample_label, width="stretch")
+        expected = None
+        if upload_clicked:
             if uploaded is None:
                 st.warning("Upload a .step, .stp, or .dxf file first.")
+            elif review.populated:
+                pending = (choices, review, uuid.uuid4().hex)
+                st.session_state[pending_key] = pending
             else:
-                try:
+                expected = review
+        if pending is not None and uploaded is not None:
+            previous = pending[1]
+            st.markdown(
+                f"**Replace {previous.part or 'geometry in the current study'}?**"
+            )
+            if previous.artifacts:
+                st.markdown("\n".join(f"- {item}" for item in previous.artifacts))
+            keep, replace = st.columns(2)
+            keep.button(
+                "Keep current study",
+                width="stretch",
+                key=f"keep_cad::{pending[2]}",
+                on_click=st.session_state.pop,
+                args=(pending_key, None),
+            )
+            if replace.button(
+                "Replace geometry", width="stretch", key=f"replace_cad::{pending[2]}"
+            ):
+                st.session_state.pop(pending_key, None)
+                expected = previous
+
+        if expected is not None and uploaded is not None:
+            try:
+                with st.spinner("Meshing…"):
                     workspace.import_cad_bytes(
                         uploaded.getvalue(),
                         uploaded.name,
                         unit=Unit(unit_str),
                         mesh_size_mm=float(mesh_size),
+                        isolated=True,
+                        expected_study=expected,
                     )
-                    st.session_state.pop(f"wb_boundaries::{workspace.root}", None)
-                    st.success(f"Imported and meshed {uploaded.name}.")
-                    st.rerun()
-                except Exception as exc:
-                    st.error(f"CAD import failed: {exc}")
-
-        if btn_b.button("Generate Sample 2D Bracket", width="stretch"):
-            try:
-                sample_step = generate_sample_bracket_step(
-                    workspace.source_dir / "sample-bracket.step"
+                st.session_state[f"wb_import_notice::{workspace.root}"] = (
+                    f"Imported and meshed {uploaded.name}."
                 )
-                workspace.import_cad_path(
-                    sample_step,
-                    unit=Unit.MM,
-                    mesh_size_mm=float(mesh_size),
-                )
-                st.session_state.pop(f"wb_boundaries::{workspace.root}", None)
-                st.success("Generated and meshed sample 40 x 20 mm bracket STEP.")
                 st.rerun()
             except Exception as exc:
-                st.error(f"Sample generation failed: {exc}")
+                st.error("CAD import failed. Check the diagnostic and retry.")
+                with st.expander("Technical details"):
+                    st.code(str(exc), language=None)
 
+        if sample_clicked:
+            try:
+                with st.spinner("Meshing…"):
+                    target = workspace.sample_workspace(review)
+                    target.import_sample(
+                        mesh_size_mm=float(mesh_size),
+                        expected_study=(
+                            review
+                            if target is workspace
+                            else target.replacement_review()
+                        ),
+                    )
+                st.session_state["wb_open_workspace"] = str(target.root)
+                st.session_state[f"wb_import_notice::{target.root}"] = (
+                    "Generated and meshed sample 40 x 20 mm bracket STEP."
+                )
+                st.rerun()
+            except Exception as exc:
+                st.error(
+                    "Sample generation failed. Check the meshing settings, then retry."
+                )
+                with st.expander("Technical details"):
+                    st.code(str(exc), language=None)
+
+        if notice := st.session_state.pop(f"wb_import_notice::{workspace.root}", None):
+            st.success(notice)
         preview = workspace.load_preview()
         if preview is not None:
             mesh_info = preview.get("mesh", {})
@@ -144,7 +196,7 @@ def _render_stage_1_import(st: Any, workspace: WorkbenchWorkspace) -> None:
                 "**Generate Sample 2D Bracket** to begin."
             )
         else:
-            assignments = _load_or_init_boundaries(st, workspace, preview)
+            assignments = _load_or_init_boundaries(workspace, preview)
             fig = build_cad_boundary_figure(
                 preview, assignments=assignments, show_mesh=True
             )
@@ -153,166 +205,13 @@ def _render_stage_1_import(st: Any, workspace: WorkbenchWorkspace) -> None:
 
 def _render_stage_2_boundaries(st: Any, workspace: WorkbenchWorkspace) -> None:
     st.subheader("Step 2 — Visual Boundary Condition Picker")
-    preview = workspace.load_preview()
-    if preview is None:
+    if not (workspace.geometry_dir / "preview.json").is_file():
         st.info("Import a 2D CAD profile in Step 1 first.")
         return
 
-    assignments = _load_or_init_boundaries(st, workspace, preview)
-    regions = [b.region for b in assignments]
-    kinds_by_region = {
-        str(entry["name"]): str(entry.get("kind", "other"))
-        for entry in preview.get("boundaries", ())
-    }
-    sel_key = f"wb_selected_region::{workspace.root}"
-    select_widget_key = f"wb_region_select::{workspace.root}"
-    if sel_key not in st.session_state or st.session_state[sel_key] not in regions:
-        st.session_state[sel_key] = regions[0]
-        st.session_state[select_widget_key] = regions[0]
-    elif (
-        select_widget_key in st.session_state
-        and st.session_state[select_widget_key] not in regions
-    ):
-        st.session_state[select_widget_key] = st.session_state[sel_key]
+    from piginot.ui.workbench.picker_component import render_boundary_picker
 
-    col_canvas, col_editor = st.columns([1.45, 1.0], gap="large")
-    with col_canvas:
-        show_mesh = st.checkbox(
-            "Show mesh wireframe", value=True, key=f"wb_show_mesh::{workspace.root}"
-        )
-        fig = build_cad_boundary_figure(
-            preview,
-            assignments=assignments,
-            selected_region=str(st.session_state[sel_key]),
-            show_mesh=show_mesh,
-        )
-        selection = st.plotly_chart(
-            fig,
-            width="stretch",
-            on_select="rerun",
-            selection_mode="points",
-            key=f"wb_cad_picker_chart::{workspace.root}",
-        )
-        clicked = extract_selected_region(selection)
-        if (
-            clicked is not None
-            and clicked in regions
-            and clicked != st.session_state[sel_key]
-        ):
-            st.session_state[sel_key] = clicked
-            st.session_state[select_widget_key] = clicked
-            st.rerun()
-
-    with col_editor:
-        active_region = st.selectbox(
-            "Selected CAD Boundary Group",
-            options=regions,
-            index=regions.index(str(st.session_state[sel_key])),
-            key=select_widget_key,
-        )
-        st.session_state[sel_key] = active_region
-        bkind = kinds_by_region.get(active_region, "other")
-        st.caption(f"Geometry entity kind: `{bkind}`")
-
-        current_idx = regions.index(active_region)
-        current = assignments[current_idx]
-        ws_ns = str(workspace.root)
-
-        bc_name = st.text_input(
-            "Condition Name",
-            value=current.name,
-            key=f"bc_name::{ws_ns}::{active_region}",
-        )
-        kind_options: list[BoundaryKind] = ["dirichlet", "symmetry", "traction_free"]
-        bc_kind_str = st.selectbox(
-            "Boundary Condition Type",
-            options=kind_options,
-            index=kind_options.index(current.kind),
-            key=f"bc_kind::{ws_ns}::{active_region}",
-        )
-        bc_kind: BoundaryKind = (
-            "dirichlet"
-            if bc_kind_str == "dirichlet"
-            else ("symmetry" if bc_kind_str == "symmetry" else "traction_free")
-        )
-
-        comps: list[str] = []
-        vals: list[tuple[str, str]] = []
-        if bc_kind != "traction_free":
-            cur_map = {
-                c: v for c, v in zip(current.components, current.values, strict=False)
-            }
-            use_x = st.checkbox(
-                "Prescribe u_x",
-                value="x" in cur_map or not cur_map,
-                key=f"use_x::{ws_ns}::{active_region}",
-            )
-            expr_x = st.text_input(
-                "u_x expression (mm)",
-                value=cur_map.get("x", ("0", "mm"))[0],
-                disabled=not use_x,
-                key=f"expr_x::{ws_ns}::{active_region}",
-            )
-            use_y = st.checkbox(
-                "Prescribe u_y",
-                value="y" in cur_map,
-                key=f"use_y::{ws_ns}::{active_region}",
-            )
-            expr_y = st.text_input(
-                "u_y expression (mm)",
-                value=cur_map.get("y", ("0", "mm"))[0],
-                disabled=not use_y,
-                key=f"expr_y::{ws_ns}::{active_region}",
-            )
-            if use_x:
-                comps.append("x")
-                vals.append((expr_x.strip() or "0", "mm"))
-            if use_y:
-                comps.append("y")
-                vals.append((expr_y.strip() or "0", "mm"))
-
-        if st.button("Apply Boundary Condition", type="primary", width="stretch"):
-            updated = BoundaryAssignment(
-                region=active_region,
-                name=bc_name.strip(),
-                kind=bc_kind,
-                components=tuple(comps),
-                values=tuple(vals),
-            )
-            assignments[current_idx] = updated
-            st.session_state[f"wb_boundaries::{workspace.root}"] = assignments
-            state = workspace.load_state()
-            state["boundaries"] = [b.document() for b in assignments]
-            workspace.save_state(state)
-            st.success(f"Updated {active_region} -> {updated.name} ({updated.kind}).")
-            st.rerun()
-
-        st.divider()
-        ok, errors = validate_boundaries_against_preview(preview, assignments)
-        if ok:
-            st.success("All boundary groups are explicitly assigned and valid.")
-        else:
-            for err in errors:
-                st.error(err)
-
-    st.subheader("Assigned Boundary Table")
-    st.table(
-        [
-            {
-                "Region": b.region,
-                "Kind": kinds_by_region.get(b.region, "other"),
-                "Name": b.name,
-                "BC Type": b.kind,
-                "Prescribed": ", ".join(
-                    f"u_{c}={e} {u}"
-                    for c, (e, u) in zip(b.components, b.values, strict=False)
-                )
-                if b.kind != "traction_free"
-                else "traction-free",
-            }
-            for b in assignments
-        ]
-    )
+    render_boundary_picker(st, workspace)
 
 
 def _render_stage_3_physics_plan(st: Any, workspace: WorkbenchWorkspace) -> None:
@@ -322,7 +221,8 @@ def _render_stage_3_physics_plan(st: Any, workspace: WorkbenchWorkspace) -> None
         st.info("Import a 2D CAD profile in Step 1 first.")
         return
 
-    assignments = _load_or_init_boundaries(st, workspace, preview)
+    saved = load_physics_draft(workspace, preview)
+    assignments = saved.boundaries
     ok_bc, err_bc = validate_boundaries_against_preview(preview, assignments)
     if not ok_bc:
         st.warning("Fix boundary assignments in Step 2 before preparing inputs:")
@@ -330,43 +230,81 @@ def _render_stage_3_physics_plan(st: Any, workspace: WorkbenchWorkspace) -> None
             st.error(err)
 
     saved_state = workspace.load_state()
+    scope = f"{workspace.root}::{saved_state.get('geometry_revision', '')}"
     model_keys = list(MATERIAL_PRESETS.keys())
-    default_model = str(saved_state.get("material_model", "compressible_neo_hookean"))
-    if default_model not in model_keys:
-        default_model = "compressible_neo_hookean"
+    if saved.material_model not in model_keys:
+        model_keys.append(saved.material_model)
+    saved_params = {p.name: p for p in saved.parameters}
+    plan = workspace.load_plan()
+    blocker = plan_blocker(workspace) if plan is not None else None
+    if blocker:
+        st.warning(blocker)
 
     col_left, col_right = st.columns(2, gap="large")
     with col_left:
         project_name = st.text_input(
             "Campaign / Model Name",
-            value=str(saved_state.get("project_name", "cad-workbench-model")),
+            value=saved.project_name,
+            key=f"project_name::{scope}",
         )
         mat_model = st.selectbox(
             "Hyperelastic Material Model",
             options=model_keys,
-            index=model_keys.index(default_model),
-            format_func=lambda k: f"{MATERIAL_PRESETS[k].display_name} ({k})",
+            index=model_keys.index(saved.material_model),
+            format_func=lambda k: (
+                f"{MATERIAL_PRESETS[k].display_name} ({k})"
+                if k in MATERIAL_PRESETS
+                else k
+            ),
+            key=f"material_model::{scope}",
         )
-        preset = MATERIAL_PRESETS[mat_model]
-        st.caption(preset.description)
+        preset = MATERIAL_PRESETS.get(mat_model)
+        if preset:
+            st.caption(preset.description)
 
         st.markdown("**Material Parameter Bounds**")
         param_drafts: list[ParameterSpecDraft] = []
-        param_map: dict[str, str] = {}
-        for prop_name, pname, default_lo, default_hi, unit in preset.parameters:
+        same_material = mat_model == saved.material_model
+        param_map = dict(saved.material_param_map) if same_material else {}
+        defaults = (
+            preset.parameters
+            if preset
+            else tuple(
+                (
+                    prop,
+                    name,
+                    saved_params[name].lo,
+                    saved_params[name].hi,
+                    saved_params[name].unit,
+                )
+                for prop, name in param_map.items()
+                if name in saved_params
+            )
+        )
+        for prop_name, pname, default_lo, default_hi, unit in defaults:
+            if same_material:
+                pname = param_map.get(prop_name, pname)
+                if pname not in saved_params:
+                    continue
+                parameter = saved_params[pname]
+                default_lo, default_hi, unit = (
+                    parameter.lo,
+                    parameter.hi,
+                    parameter.unit,
+                )
             c1, c2, c3 = st.columns([1.2, 1.0, 1.0])
             c1.markdown(f"`{pname}` ({prop_name}, {unit})")
             lo_v = c2.number_input(
                 f"{pname} min",
                 value=float(default_lo),
                 format="%.4f",
-                key=f"mat_lo_{mat_model}_{pname}",
+                key=f"mat_lo::{scope}::{mat_model}::{prop_name}",
             )
             hi_v = c3.number_input(
                 f"{pname} max",
                 value=float(default_hi),
                 format="%.4f",
-                key=f"mat_hi_{mat_model}_{pname}",
+                key=f"mat_hi::{scope}::{mat_model}::{prop_name}",
             )
             param_drafts.append(
                 ParameterSpecDraft(
@@ -380,93 +318,145 @@ def _render_stage_3_physics_plan(st: Any, workspace: WorkbenchWorkspace) -> None
             param_map[prop_name] = pname
 
         st.markdown("**Prescribed Load Parameter Bounds**")
-        bbox = preview.get("bounding_box_mm", {})
-        extent_x = max(
-            float(bbox.get("max", [10.0, 10.0])[0])
-            - float(bbox.get("min", [0.0, 0.0])[0]),
-            1.0,
-        )
         lc1, lc2, lc3 = st.columns([1.2, 1.0, 1.0])
-        load_name = lc1.text_input("Load symbol", value="ux")
-        load_lo = lc2.number_input(
-            "Load min (mm)", value=round(0.02 * extent_x, 4), format="%.4f"
-        )
-        load_hi = lc3.number_input(
-            "Load max (mm)", value=round(0.08 * extent_x, 4), format="%.4f"
-        )
-        param_drafts.append(
-            ParameterSpecDraft(
-                name=load_name.strip() or "ux",
-                role="load",
+        load = next((p for p in saved.parameters if p.role == "load"), None)
+        edited_params = {p.name: p for p in param_drafts}
+        if load is not None:
+            load_name = lc1.text_input(
+                "Load symbol", value=load.name, key=f"load_name::{scope}"
+            )
+            load_lo = lc2.number_input(
+                f"Load min ({load.unit})",
+                value=float(load.lo),
+                format="%.4f",
+                key=f"load_lo::{scope}",
+            )
+            load_hi = lc3.number_input(
+                f"Load max ({load.unit})",
+                value=float(load.hi),
+                format="%.4f",
+                key=f"load_hi::{scope}",
+            )
+            edited_params[load.name] = replace(
+                load,
+                name=load_name.strip() or load.name,
                 lo=float(load_lo),
                 hi=float(load_hi),
-                unit="mm",
             )
+        old_material_names = (
+            set(saved.material_param_map.values()) if not same_material else set()
         )
+        parameters = tuple(
+            edited_params.pop(p.name, p)
+            for p in saved.parameters
+            if p.name not in old_material_names
+        ) + tuple(edited_params.values())
 
     with col_right:
         st.markdown("**Training & Sampling Budget**")
         t1, t2 = st.columns(2)
         opt_steps = t1.number_input(
-            "Optimizer steps", min_value=1, max_value=50000, value=40
+            "Optimizer steps",
+            min_value=1,
+            max_value=max(50000, saved.optimizer_steps),
+            value=saved.optimizer_steps,
+            key=f"steps::{scope}",
         )
         batch_sz = t2.number_input(
-            "Case batch size", min_value=1, max_value=128, value=2
+            "Case batch size",
+            min_value=1,
+            max_value=max(128, saved.case_batch_size),
+            value=saved.case_batch_size,
+            key=f"batch::{scope}",
         )
         t3, t4 = st.columns(2)
         fit_cases = t3.number_input(
-            "TRAIN-fit cases", min_value=2, max_value=1024, value=4
+            "TRAIN-fit cases",
+            min_value=2,
+            max_value=max(1024, saved.fit_cases),
+            value=saved.fit_cases,
+            key=f"fit::{scope}",
         )
         screen_cases = t4.number_input(
-            "TRAIN-screen cases", min_value=0, max_value=256, value=2
+            "TRAIN-screen cases",
+            min_value=0,
+            max_value=max(256, saved.screen_cases),
+            value=saved.screen_cases,
+            key=f"screen::{scope}",
         )
         t5, t6 = st.columns(2)
         ckpt_int = t5.number_input(
-            "Checkpoint interval", min_value=1, max_value=5000, value=20
+            "Checkpoint interval",
+            min_value=1,
+            max_value=max(5000, saved.checkpoint_interval),
+            value=saved.checkpoint_interval,
+            key=f"checkpoint::{scope}",
         )
         seed_val = t6.number_input(
-            "Random seed", min_value=0, max_value=1000000, value=42
+            "Random seed",
+            min_value=0,
+            max_value=max(1000000, saved.seed),
+            value=saved.seed,
+            key=f"seed::{scope}",
         )
 
         st.markdown("**Verification Tolerances**")
         v1, v2, v3 = st.columns(3)
         u_tol = v1.number_input(
-            "u rel-L2", min_value=0.001, max_value=0.5, value=0.05, format="%.3f"
+            "u rel-L2",
+            min_value=0.0,
+            value=float(saved.u_tol),
+            format="%.3f",
+            key=f"u_tol::{scope}",
         )
         p_tol = v2.number_input(
-            "P rel-L2", min_value=0.001, max_value=0.5, value=0.10, format="%.3f"
+            "P rel-L2",
+            min_value=0.0,
+            value=float(saved.p_tol),
+            format="%.3f",
+            key=f"p_tol::{scope}",
         )
         peak_tol = v3.number_input(
-            "Peak err", min_value=0.001, max_value=0.5, value=0.10, format="%.3f"
+            "Peak err",
+            min_value=0.0,
+            value=float(saved.peak_tol),
+            format="%.3f",
+            key=f"peak_tol::{scope}",
         )
         exec_profile = st.checkbox(
             "Capture installed execution profile (ready for `formamech compile`)",
-            value=True,
+            value=saved_state.get("execution_profile", True),
+            key=f"profile::{scope}",
         )
 
+        draft = replace(
+            saved,
+            project_name=project_name.strip(),
+            material_model=mat_model,
+            material_param_map=param_map,
+            parameters=parameters,
+            optimizer_steps=int(opt_steps),
+            case_batch_size=int(batch_sz),
+            checkpoint_interval=int(ckpt_int),
+            seed=int(seed_val),
+            fit_cases=int(fit_cases),
+            screen_cases=int(screen_cases),
+            u_tol=float(u_tol),
+            p_tol=float(p_tol),
+            peak_tol=float(peak_tol),
+        )
+        if draft != saved:
+            st.caption("Unprepared changes")
         if st.button(
-            "Prepare Inputs & Preview Plan (No Training Yet)",
+            "Update plan"
+            if blocker
+            else "Prepare Inputs & Preview Plan (No Training Yet)",
             type="primary",
             disabled=not ok_bc,
             width="stretch",
+            key=f"prepare::{scope}",
         ):
             try:
-                draft = WorkbenchPhysicsDraft(
-                    project_name=project_name.strip(),
-                    material_model=mat_model,
-                    material_param_map=param_map,
-                    parameters=tuple(param_drafts),
-                    boundaries=tuple(assignments),
-                    optimizer_steps=int(opt_steps),
-                    case_batch_size=int(batch_sz),
-                    checkpoint_interval=int(ckpt_int),
-                    seed=int(seed_val),
-                    fit_cases=int(fit_cases),
-                    screen_cases=int(screen_cases),
-                    u_tol=float(u_tol),
-                    p_tol=float(p_tol),
-                    peak_tol=float(peak_tol),
-                )
                 prepare_and_plan_workspace(
                     workspace, draft, execution_profile=exec_profile
                 )
@@ -476,14 +466,15 @@ def _render_stage_3_physics_plan(st: Any, workspace: WorkbenchWorkspace) -> None
                 st.rerun()
             except Exception as exc:
                 st.error(f"Preparation failed: {exc}")
+                blocker = plan_blocker(workspace)
 
-    plan = workspace.load_plan()
     if plan is not None:
         st.divider()
-        st.success(
-            f"Campaign plan verified (`plan_sha256`: `{str(plan.get('plan_sha256', ''))[:16]}...`). "
-            "Proceed to Step 4 to train or qualify."
-        )
+        if not blocker:
+            st.success(
+                f"Campaign plan verified (`plan_sha256`: `{str(plan.get('plan_sha256', ''))[:16]}...`). "
+                "Proceed to Step 4 to train or qualify."
+            )
         c_a, c_b = st.columns(2)
         with c_a.expander("Generated Canonical `physics.json` (read-only)"):
             if workspace.physics_path.is_file():
@@ -507,40 +498,37 @@ def _render_stage_4_train_qualify(
         if not prog.inputs_prepared:
             st.info("Prepare inputs in Step 3 before launching compilation.")
         else:
+            blocker = plan_blocker(workspace)
+            if blocker:
+                st.warning(blocker)
             if active_compile:
                 st.info(
                     f"Compile job `{active_compile[0].job_id}` is currently RUNNING."
                 )
             b1, b2 = st.columns(2)
-            if b1.button(
-                "Start Compile Job",
-                type="primary",
-                disabled=bool(active_compile),
-                width="stretch",
-            ):
-                job = runner.start_compile(
-                    spec_path=workspace.inputs_dir / "problem.json",
-                    config_path=workspace.inputs_dir / "config.json",
-                    output_dir=workspace.run_dir,
-                    resume=False,
-                )
-                st.success(
-                    f"Launched background compile job `{job.job_id}` (PID {job.pid})."
-                )
-                st.rerun()
-            if b2.button(
+            disabled = bool(active_compile or blocker)
+            start = b1.button(
+                "Start Compile Job", type="primary", disabled=disabled, width="stretch"
+            )
+            resume = b2.button(
                 "Resume Compile (`--resume`)",
-                disabled=bool(active_compile),
+                disabled=disabled or not has_compatible_checkpoint(workspace),
                 width="stretch",
-            ):
-                job = runner.start_compile(
-                    spec_path=workspace.inputs_dir / "problem.json",
-                    config_path=workspace.inputs_dir / "config.json",
-                    output_dir=workspace.run_dir,
-                    resume=True,
-                )
-                st.success(f"Resumed compile job `{job.job_id}`.")
-                st.rerun()
+            )
+            if start or resume:
+                try:
+                    job = runner.start_compile(
+                        spec_path=workspace.inputs_dir / "problem.json",
+                        config_path=workspace.inputs_dir / "config.json",
+                        output_dir=workspace.run_dir,
+                        resume=resume,
+                    )
+                    st.success(
+                        f"Launched background compile job `{job.job_id}` (PID {job.pid})."
+                    )
+                    st.rerun()
+                except (OSError, ValueError) as exc:
+                    st.error(str(exc))
 
     with col_qual:
         st.markdown("### B. Numerical Qualification (`formamech qualify`)")
@@ -592,57 +580,23 @@ def _render_stage_4_train_qualify(
             disabled=not qual_bundle_str.strip() or bool(active_qualify),
             width="stretch",
         ):
-            job = runner.start_qualify(
-                bundle_path=qual_bundle_str.strip(),
-                output_dir=workspace.qualification_dir,
-                preset=preset,
-                sample_dev=int(q_dev_n),
-                sample_holdout=5 if preset == "holdout" else 0,
-                backend=q_backend,
-            )
-            st.success(f"Launched qualification job `{job.job_id}` (PID {job.pid}).")
-            st.rerun()
-
-    # Live Job Monitor — poll all non-terminal jobs plus recent history
-    jobs = runner.list_jobs()
-    if jobs:
-        st.divider()
-        hdr_a, hdr_b = st.columns([3, 1])
-        hdr_a.markdown("### Background Jobs")
-        if hdr_b.button("Refresh Job Status", width="stretch"):
-            st.rerun()
-        refreshed_all = [
-            runner.poll(j.job_id) if not j.is_terminal else j for j in jobs
-        ]
-        refreshed = refreshed_all[:6]
-        st.table(
-            [
-                {
-                    "Job ID": j.job_id,
-                    "Kind": j.kind,
-                    "State": j.state,
-                    "Exit": j.exit_code if j.exit_code is not None else "—",
-                    "Checkpoint": j.latest_checkpoint_step
-                    if j.latest_checkpoint_step is not None
-                    else "—",
-                    "Started (UTC)": j.started_utc,
-                }
-                for j in refreshed
-            ]
-        )
-        running_jobs = [j for j in refreshed_all if not j.is_terminal]
-        for running in running_jobs:
-            if st.button(
-                f"Cancel `{running.job_id}` ({running.kind})",
-                key=f"cancel_job::{running.job_id}",
-            ):
-                runner.cancel(running.job_id)
+            try:
+                job = runner.start_qualify(
+                    bundle_path=qual_bundle_str.strip(),
+                    output_dir=workspace.qualification_dir,
+                    preset=preset,
+                    sample_dev=int(q_dev_n),
+                    sample_holdout=5 if preset == "holdout" else 0,
+                    backend=q_backend,
+                )
+                st.success(
+                    f"Launched qualification job `{job.job_id}` (PID {job.pid})."
+                )
                 st.rerun()
-        latest = refreshed[0]
-        log_tail = runner.read_log_tail(latest.job_id, max_lines=40)
-        if log_tail:
-            with st.expander(f"Log tail — `{latest.job_id}`"):
-                st.code(log_tail, language="text")
+            except (OSError, ValueError) as exc:
+                st.error(str(exc))
+
+    _render_job_monitor(st, runner)
 
     # Qualification Manifest Display
     mpath = workspace.qualification_manifest_path
@@ -673,6 +627,62 @@ def _render_stage_4_train_qualify(
                 mime="text/markdown",
                 width="stretch",
             )
+
+
+def _render_job_monitor(st: Any, runner: WorkbenchJobRunner) -> None:
+    from streamlit import fragment
+
+    jobs = runner.list_jobs()
+    if not jobs:
+        return
+    watched = {job.job_id for job in jobs if not job.is_terminal}
+
+    @fragment(run_every=1.0 if watched else None)
+    def monitor() -> None:
+        st.divider()
+        title, refresh = st.columns([3, 1])
+        title.markdown("### Background Jobs")
+        refresh_clicked = refresh.button("Refresh Job Status", width="stretch")
+        current = runner.list_jobs() if watched or refresh_clicked else jobs
+        refreshed = [
+            runner.poll(job.job_id) if not job.is_terminal else job for job in current
+        ]
+        running = [job for job in refreshed if not job.is_terminal]
+        if watched != {job.job_id for job in running}:
+            # The full rerun updates the workflow and registers the next polling interval.
+            st.rerun()
+        st.table(
+            [
+                {
+                    "Job ID": job.job_id,
+                    "Kind": job.kind,
+                    "State": job.state,
+                    "Exit": job.exit_code if job.exit_code is not None else "—",
+                    "Checkpoint": job.latest_checkpoint_step
+                    if job.latest_checkpoint_step is not None
+                    else "—",
+                    "Started (UTC)": job.started_utc,
+                }
+                for job in refreshed[:6]
+            ]
+        )
+        for job in running:
+            if st.button(
+                f"Cancel `{job.job_id}` ({job.kind})", key=f"cancel_job::{job.job_id}"
+            ):
+                try:
+                    runner.cancel(job.job_id)
+                except (OSError, RuntimeError, ValueError) as exc:
+                    st.error(str(exc))
+                else:
+                    st.rerun()
+        if refreshed:
+            latest = refreshed[0]
+            if log_tail := runner.read_log_tail(latest.job_id, max_lines=40):
+                with st.expander(f"Log tail — `{latest.job_id}`"):
+                    st.code(log_tail, language="text")
+
+    monitor()
 
 
 def _render_stage_5_inspector(
@@ -850,17 +860,37 @@ def _render_stage_5_inspector(
                 "Workspace CAD calibration belongs to a different bundle; "
                 "serving without workspace conformal bounds."
             )
+    use_repair = spectral_repair and effective_mode != "fast"
+    repair_steps = tta_steps if effective_mode != "fast" else 0
+    use_escalation = escalate and effective_mode == "certified"
     try:
-        snapshot = build_inspector_snapshot(
-            bundle_path,
+        request = (
+            bundle_path.resolve(),
+            bundle.manifest.manifest_sha256,
             inputs,
-            mode=effective_mode,
-            cad_calibration_path=cad_cal_path,
-            backend=backend,
-            spectral_repair=spectral_repair if effective_mode != "fast" else False,
-            tta_steps=tta_steps if effective_mode != "fast" else 0,
-            escalate=escalate if effective_mode == "certified" else False,
+            effective_mode,
+            backend,
+            use_repair,
+            repair_steps,
+            use_escalation,
+            cad_cal_path,
+            _file_sha256(cad_cal_path) if cad_cal_path is not None else None,
         )
+        cached = st.session_state.get("wb_inspector_snapshot")
+        if cached is not None and cached[0] == request and not one_click_exact:
+            snapshot = cached[1]
+        else:
+            snapshot = build_inspector_snapshot(
+                bundle_path,
+                inputs,
+                mode=effective_mode,
+                cad_calibration_path=cad_cal_path,
+                backend=backend,
+                spectral_repair=use_repair,
+                tta_steps=repair_steps,
+                escalate=use_escalation,
+            )
+            st.session_state["wb_inspector_snapshot"] = (request, snapshot)
     except Exception as exc:
         st.error(f"Inspector evaluation failed: {exc}")
         return
@@ -940,13 +970,15 @@ def run_streamlit_app(
 ) -> None:
     """Render the Interactive 2D Engineering Workbench & Trust Inspector."""
     st: Any = importlib.import_module("streamlit")
+    # Plotly's optional probe can see an incomplete pandas import from another session.
+    importlib.import_module("pandas")
 
     st.set_page_config(
         page_title="FormaMech — Interactive Engineering Workbench",
         layout="wide",
     )
     st.title("FormaMech — Interactive Engineering Workbench")
-    st.caption(
+    st.markdown(
         "Physics-informed simulation intelligence with FEM-backed trust: "
         "CAD import, visual boundary picking, campaign planning, numerical "
         "qualification, and RFC 8785 Trust Receipts."
@@ -954,9 +986,13 @@ def run_streamlit_app(
 
     with st.sidebar:
         st.header("Workbench Session")
+        if opened := st.session_state.pop("wb_open_workspace", None):
+            st.session_state["wb_workspace_path"] = opened
+        if "wb_workspace_path" not in st.session_state:
+            st.session_state["wb_workspace_path"] = default_workspace
         ws_str = st.text_input(
             "Workspace Directory",
-            value=default_workspace,
+            key="wb_workspace_path",
             help="Canonical project directory storing geometry/, physics.json, inputs/, run/, qualification/.",
         )
         workspace = WorkbenchWorkspace(Path(ws_str.strip() or default_workspace))

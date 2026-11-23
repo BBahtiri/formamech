@@ -804,7 +804,7 @@ requires-dist = [
     { name = "scipy", marker = "extra == 'fem'", specifier = ">=1.12,<2" },
     { name = "scipy", marker = "extra == 'verify'", specifier = ">=1.12,<2" },
     { name = "setuptools", marker = "extra == 'dev'", specifier = ">=83" },
-    { name = "streamlit", marker = "extra == 'ui'", specifier = ">=1.40,<2" },
+    { name = "streamlit", marker = "extra == 'ui'", specifier = ">=1.51,<2" },
     { name = "sympy", marker = "extra == 'fem'", specifier = ">=1.13,<2" },
     { name = "sympy", marker = "extra == 'verify'", specifier = ">=1.13,<2" },
     { name = "threadpoolctl", marker = "extra == 'verify'", specifier = ">=3.1,<4" },
