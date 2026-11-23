@@ -218,6 +218,7 @@ def _attach_trust_report(
 def _predict(args: argparse.Namespace) -> int:
     from piginot.bundle import BundleIntegrityError, load_bundle, predict
     from piginot.cad.parametric_adapter import (
+        PARAMETRIC_QUALIFICATION_SCHEMA,
         is_parametric_bundle_dir,
         load_parametric_bundle,
         predict_parametric_cad,
@@ -226,6 +227,10 @@ def _predict(args: argparse.Namespace) -> int:
     if getattr(args, "cad_params", None) is not None or is_parametric_bundle_dir(
         args.bundle
     ):
+        problem = _predict_option_error(args)
+        if problem is not None:
+            print(f"{_program(args)}: {problem}", file=sys.stderr)
+            return EXIT_ERROR
         if getattr(args, "cad_params", None) is None:
             print(
                 f"{_program(args)} predict: parametric bundle requires --cad-params",
@@ -234,6 +239,57 @@ def _predict(args: argparse.Namespace) -> int:
             return EXIT_ERROR
         try:
             p_bundle = load_parametric_bundle(args.bundle)
+        except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+            print(f"{_program(args)} predict: {exc}", file=sys.stderr)
+            return EXIT_ERROR
+        if getattr(args, "require_qualified", False):
+            from piginot.contracts.state_machine import ClaimLevel as ContractClaimLevel
+
+            try:
+                p_min_claim = ContractClaimLevel(
+                    str(
+                        getattr(
+                            args,
+                            "min_claim",
+                            ContractClaimLevel.DEVELOPMENT_VERIFIED.value,
+                        )
+                    )
+                )
+                granted = ContractClaimLevel(p_bundle.claim_level)
+                q_path = getattr(args, "qualification_manifest", None)
+                if q_path is None:
+                    cand = Path(args.bundle) / "parametric-qualification.json"
+                    if cand.is_file():
+                        q_path = cand
+                if q_path is not None:
+                    q_doc = json.loads(Path(q_path).read_text(encoding="utf-8"))
+                    if (
+                        not isinstance(q_doc, dict)
+                        or q_doc.get("schema") != PARAMETRIC_QUALIFICATION_SCHEMA
+                    ):
+                        raise ValueError(
+                            f"expected {PARAMETRIC_QUALIFICATION_SCHEMA!r} manifest"
+                        )
+                    if q_doc.get("bundle_hash") != p_bundle.bundle_hash:
+                        raise ValueError(
+                            "parametric qualification manifest bundle_hash mismatch"
+                        )
+                    if q_doc.get("passed") is not True:
+                        raise ValueError(
+                            "parametric qualification manifest did not pass"
+                        )
+                    granted = ContractClaimLevel(
+                        str(q_doc.get("claim_level", "NOT_VERIFIED"))
+                    )
+                if not granted.satisfies(p_min_claim):
+                    raise ValueError(
+                        f"parametric bundle claim_level {granted.value!r} does not satisfy "
+                        f"required minimum {p_min_claim.value!r}"
+                    )
+            except (OSError, json.JSONDecodeError, ValueError) as exc:
+                print(f"{_program(args)} predict: {exc}", file=sys.stderr)
+                return EXIT_REFUSED
+        try:
             raw_params = json.loads(args.cad_params.read_text(encoding="utf-8"))
             if not isinstance(raw_params, dict):
                 raise ValueError("--cad-params JSON must be a parameter mapping")

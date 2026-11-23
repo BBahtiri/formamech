@@ -103,6 +103,14 @@ class DeploymentGateResult:
     detail: str
 
     def __post_init__(self) -> None:
+        if not isinstance(self.granted_claim_level, ClaimLevel):
+            object.__setattr__(
+                self, "granted_claim_level", ClaimLevel(str(self.granted_claim_level))
+            )
+        if not isinstance(self.min_claim_level, ClaimLevel):
+            object.__setattr__(
+                self, "min_claim_level", ClaimLevel(str(self.min_claim_level))
+            )
         if self.allowed and self.reason_codes:
             raise ValueError("allowed=True forbids non-empty reason_codes")
         if not self.allowed and not self.reason_codes:
@@ -139,7 +147,7 @@ def check_deployment_gate(
     manifest_path: Path | str | None = None,
     *,
     policy: QualificationPolicy | None = None,
-    min_claim_level: ClaimLevel = ClaimLevel.DEVELOPMENT_VERIFIED,
+    min_claim_level: ClaimLevel | StrEnum = ClaimLevel.DEVELOPMENT_VERIFIED,
 ) -> DeploymentGateResult:
     """Evaluate deployment eligibility fail-closed; never raises on policy refusal."""
     from piginot.bundle import BundleIntegrityError, load_bundle
@@ -268,7 +276,7 @@ def enforce_deployment_gate(
     manifest_path: Path | str | None = None,
     *,
     policy: QualificationPolicy | None = None,
-    min_claim_level: ClaimLevel = ClaimLevel.DEVELOPMENT_VERIFIED,
+    min_claim_level: ClaimLevel | StrEnum = ClaimLevel.DEVELOPMENT_VERIFIED,
 ) -> DeploymentGateResult:
     """Enforce deployment qualification; raise :class:`DeploymentGateError` if refused."""
     result = check_deployment_gate(

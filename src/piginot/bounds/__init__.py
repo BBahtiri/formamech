@@ -5,7 +5,9 @@ the FEM stack.
 """
 
 from piginot.bounds.cad_calibration import (
+    CAD_CALIBRATION_MACHINE,
     CAD_CALIBRATION_SCHEMA,
+    CadCalibrationGateState,
     CadCalibrationRecord,
     FunctionalBandCalibration,
     ScalarQoiCalibration,
@@ -38,9 +40,11 @@ from piginot.bounds.record import (
 
 __all__ = (
     "BOUND_KINDS",
+    "CAD_CALIBRATION_MACHINE",
     "CAD_CALIBRATION_SCHEMA",
     "IN_CALIBRATION",
     "OUT_OF_CALIBRATION",
+    "CadCalibrationGateState",
     "CadCalibrationRecord",
     "CalibrationError",
     "CalibrationRecord",

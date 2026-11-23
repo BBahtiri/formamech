@@ -28,6 +28,7 @@ from piginot.operators.geometry_tokenizer import (
 )
 from piginot.operators.low_rank_adapter import (
     AdaptationResult,
+    AdaptationStatus,
     AdaptedBoundaryEnergyOperator,
     LowRankAdapterConfig,
 )
@@ -177,6 +178,13 @@ def save_geometry_adapter(
 ) -> dict[str, Any]:
     """Write a tamper-checked low-rank adapter delta sidecar (``safetensors`` + JSON)."""
     from safetensors.torch import save as save_tensors
+
+    if result.status is not AdaptationStatus.COMPLETED:
+        raise ValueError(
+            f"cannot persist geometry adapter with non-COMPLETED status {result.status.value!r}"
+        )
+    if result.adapter_digest != adapted_operator.adapter_digest():
+        raise ValueError("result.adapter_digest does not match adapted_operator")
 
     directory.mkdir(parents=True, exist_ok=True)
     adapter_tensors = {

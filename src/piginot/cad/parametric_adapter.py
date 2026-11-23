@@ -20,6 +20,7 @@ import math
 import platform
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from enum import StrEnum
 from pathlib import Path
 from typing import Any, Final, Literal
 
@@ -47,6 +48,12 @@ from piginot.contracts import (
     Quantity,
     Unit,
     canonical_json_bytes,
+)
+from piginot.contracts.state_machine import (
+    ClaimLevel,
+    StateMachineSpec,
+    TransitionSpec,
+    register_state_machine,
 )
 from piginot.fem.backend import ScikitFemBackend
 from piginot.fem.models import FemRequest, FemSolverConfig
@@ -915,11 +922,33 @@ def load_parametric_bundle(bundle_dir: Path) -> ParametricSurrogateBundle:
     spec = ParametricCadSpec.from_document(
         json.loads(spec_path.read_text(encoding="utf-8"))
     )
+    if spec.spec_hash != manifest.get("spec_hash"):
+        raise ValueError("parametric-spec.json spec_hash mismatch")
     physics = ParametricPhysicsConfig.from_document(manifest["physics"])
-    operator = load_boundary_operator_checkpoint(root / str(manifest["operator_dir"]))
-    detector = load_geometry_ood_detector(root / str(manifest["ood_detector_file"]))
+    op_dir = root / str(manifest["operator_dir"])
+    if _sha256_file(op_dir / "weights.safetensors") != manifest.get(
+        "operator_weights_sha256"
+    ):
+        raise ValueError("parametric bundle operator_weights_sha256 mismatch")
+    operator = load_boundary_operator_checkpoint(op_dir)
+    if boundary_energy_module_digest(operator) != manifest.get("operator_base_digest"):
+        raise ValueError("parametric bundle operator_base_digest mismatch")
+    ood_path = root / str(manifest["ood_detector_file"])
+    ood_doc = json.loads(ood_path.read_text(encoding="utf-8"))
+    if not isinstance(ood_doc, dict) or ood_doc.get("detector_sha256") != manifest.get(
+        "ood_detector_sha256"
+    ):
+        raise ValueError("parametric bundle ood_detector_sha256 mismatch")
+    detector = load_geometry_ood_detector(ood_path)
 
     ts_doc = manifest["training_summary"]
+    try:
+        claim_level = ClaimLevel(str(manifest.get("claim_level", "NOT_VERIFIED"))).value
+        summary_claim = ClaimLevel(str(ts_doc.get("claim_level", "NOT_VERIFIED"))).value
+    except ValueError as exc:
+        raise ValueError(
+            f"refused unsupported claim_level {manifest.get('claim_level')!r}"
+        ) from exc
     summary = ParametricTrainingSummary(
         epochs=int(ts_doc["epochs"]),
         n_train_geometries=int(ts_doc["n_train_geometries"]),
@@ -928,12 +957,9 @@ def load_parametric_bundle(bundle_dir: Path) -> ParametricSurrogateBundle:
         loss_history=tuple(float(v) for v in ts_doc["loss_history"]),
         min_det_f_seen=float(ts_doc["min_det_f_seen"]),
         training_mode=str(ts_doc["training_mode"]),
-        claim_level=str(ts_doc.get("claim_level", "NOT_VERIFIED")),
+        claim_level=summary_claim,
     )
-    claim_level = str(manifest.get("claim_level", "NOT_VERIFIED"))
-    if claim_level not in ("NOT_VERIFIED", "DEVELOPMENT_VERIFIED", "HOLDOUT_VERIFIED"):
-        raise ValueError(f"refused unsupported claim_level {claim_level!r}")
-    return ParametricSurrogateBundle(
+    loaded = ParametricSurrogateBundle(
         spec=spec,
         physics=physics,
         operator=operator,
@@ -942,6 +968,9 @@ def load_parametric_bundle(bundle_dir: Path) -> ParametricSurrogateBundle:
         claim_level=claim_level,
         bundle_dir=root,
     )
+    if loaded.bundle_hash != manifest.get("bundle_hash"):
+        raise ValueError("parametric bundle_hash mismatch")
+    return loaded
 
 
 def is_parametric_bundle_dir(path: Path) -> bool:
@@ -956,18 +985,133 @@ def is_parametric_bundle_dir(path: Path) -> bool:
     return isinstance(doc, dict) and doc.get("schema") == PARAMETRIC_BUNDLE_SCHEMA
 
 
+class ParametricPredictionStatus(StrEnum):
+    """Terminal outcomes of geometry-aware parametric CAD prediction."""
+
+    SERVED_FAST = "SERVED_FAST"
+    SERVED_CERTIFIED = "SERVED_CERTIFIED"
+    SERVED_EXACT = "SERVED_EXACT"
+    REFUSED_TOPOLOGY = "REFUSED_TOPOLOGY"
+    REFUSED_OOD = "REFUSED_OOD"
+    REFUSED_FEM_FAILED = "REFUSED_FEM_FAILED"
+
+
+class ParametricPredictPhase(StrEnum):
+    """Explicit stages of the parametric CAD prediction and OOD-gating pipeline."""
+
+    RECEIVED = "RECEIVED"
+    TOPOLOGY_VERIFIED = "TOPOLOGY_VERIFIED"
+    DESCRIPTOR_OOD_PASSED = "DESCRIPTOR_OOD_PASSED"
+    OPERATOR_EVALUATED = "OPERATOR_EVALUATED"
+    SERVED_FAST = "SERVED_FAST"
+    SERVED_CERTIFIED = "SERVED_CERTIFIED"
+    SERVED_EXACT = "SERVED_EXACT"
+    REFUSED_TOPOLOGY = "REFUSED_TOPOLOGY"
+    REFUSED_OOD = "REFUSED_OOD"
+    REFUSED_FEM_FAILED = "REFUSED_FEM_FAILED"
+
+
+PARAMETRIC_PREDICT_MACHINE: Final[StateMachineSpec[ParametricPredictPhase]] = (
+    register_state_machine(
+        StateMachineSpec(
+            machine_id="formamech.cad.parametric_predict",
+            description=(
+                "Parametric CAD serving pipeline: topology stability guard -> "
+                "descriptor OOD gate -> boundary energy operator -> token OOD gate -> "
+                "fast response or P2 FEM verification."
+            ),
+            states=tuple(ParametricPredictPhase),
+            initial_states=(ParametricPredictPhase.RECEIVED,),
+            terminal_states=(
+                ParametricPredictPhase.SERVED_FAST,
+                ParametricPredictPhase.SERVED_CERTIFIED,
+                ParametricPredictPhase.SERVED_EXACT,
+                ParametricPredictPhase.REFUSED_TOPOLOGY,
+                ParametricPredictPhase.REFUSED_OOD,
+                ParametricPredictPhase.REFUSED_FEM_FAILED,
+            ),
+            transitions=(
+                TransitionSpec(
+                    ParametricPredictPhase.RECEIVED,
+                    ParametricPredictPhase.REFUSED_TOPOLOGY,
+                    "topology_guard_failed",
+                    "Parameter box, derived ligament bound, or topological genus check failed.",
+                ),
+                TransitionSpec(
+                    ParametricPredictPhase.RECEIVED,
+                    ParametricPredictPhase.TOPOLOGY_VERIFIED,
+                    "verify_topology",
+                    "TopologyStabilityGuard verified mesh genus and boundary groups.",
+                ),
+                TransitionSpec(
+                    ParametricPredictPhase.TOPOLOGY_VERIFIED,
+                    ParametricPredictPhase.REFUSED_OOD,
+                    "refuse_descriptor_ood",
+                    "GeometryOODDetector rejected descriptor Mahalanobis distance or hole count.",
+                ),
+                TransitionSpec(
+                    ParametricPredictPhase.TOPOLOGY_VERIFIED,
+                    ParametricPredictPhase.DESCRIPTOR_OOD_PASSED,
+                    "pass_descriptor_ood",
+                    "Boundary geometry descriptor lies within calibrated training envelope.",
+                ),
+                TransitionSpec(
+                    ParametricPredictPhase.DESCRIPTOR_OOD_PASSED,
+                    ParametricPredictPhase.OPERATOR_EVALUATED,
+                    "evaluate_operator",
+                    "BoundaryEnergyOperator evaluated displacement, stress, and latent tokens.",
+                ),
+                TransitionSpec(
+                    ParametricPredictPhase.OPERATOR_EVALUATED,
+                    ParametricPredictPhase.REFUSED_OOD,
+                    "refuse_token_ood",
+                    "Latent geometry token distance exceeded calibrated OOD threshold.",
+                ),
+                TransitionSpec(
+                    ParametricPredictPhase.OPERATOR_EVALUATED,
+                    ParametricPredictPhase.SERVED_FAST,
+                    "serve_fast",
+                    "Mode is fast and both descriptor and token OOD gates passed.",
+                ),
+                TransitionSpec(
+                    ParametricPredictPhase.OPERATOR_EVALUATED,
+                    ParametricPredictPhase.SERVED_CERTIFIED,
+                    "serve_certified",
+                    "Mode is certified and reference P2 FEM converged.",
+                ),
+                TransitionSpec(
+                    ParametricPredictPhase.OPERATOR_EVALUATED,
+                    ParametricPredictPhase.SERVED_EXACT,
+                    "serve_exact",
+                    "Mode is exact and reference P2 FEM converged.",
+                ),
+                TransitionSpec(
+                    ParametricPredictPhase.OPERATOR_EVALUATED,
+                    ParametricPredictPhase.REFUSED_FEM_FAILED,
+                    "fem_solve_failed",
+                    "Reference P2 nonlinear FEM solve failed to converge.",
+                ),
+            ),
+        )
+    )
+)
+
+
 @dataclass(frozen=True, slots=True)
 class ParametricPredictionReport:
     """Auditable prediction & geometry-OOD trust report for one CAD variant."""
 
-    status: Literal[
-        "SERVED_FAST",
-        "SERVED_CERTIFIED",
-        "SERVED_EXACT",
-        "REFUSED_TOPOLOGY",
-        "REFUSED_OOD",
-        "REFUSED_FEM_FAILED",
-    ]
+    status: (
+        ParametricPredictionStatus
+        | Literal[
+            "SERVED_FAST",
+            "SERVED_CERTIFIED",
+            "SERVED_EXACT",
+            "REFUSED_TOPOLOGY",
+            "REFUSED_OOD",
+            "REFUSED_FEM_FAILED",
+        ]
+    )
     mode: PredictMode
     bundle_hash: str
     parameters: dict[str, float] | None
@@ -981,14 +1125,74 @@ class ParametricPredictionReport:
     claim_level: str
     reason: str
 
+    def __post_init__(self) -> None:
+        st = ParametricPredictionStatus(str(self.status))
+        object.__setattr__(self, "status", st)
+        claim = ClaimLevel(str(self.claim_level)).value
+        object.__setattr__(self, "claim_level", claim)
+        if self.mode not in ("fast", "certified", "exact"):
+            raise ValueError(f"unsupported mode {self.mode!r}")
+        if st is ParametricPredictionStatus.REFUSED_TOPOLOGY:
+            if (
+                self.ood_report is not None
+                or self.surrogate_metrics is not None
+                or self.fem_metrics is not None
+            ):
+                raise ValueError(
+                    "REFUSED_TOPOLOGY report must not carry ood_report, surrogate_metrics, or fem_metrics"
+                )
+        elif st is ParametricPredictionStatus.REFUSED_OOD:
+            if self.ood_report is None or self.fem_metrics is not None:
+                raise ValueError(
+                    "REFUSED_OOD report requires ood_report and forbids fem_metrics"
+                )
+        elif st is ParametricPredictionStatus.SERVED_FAST:
+            if (
+                self.mode != "fast"
+                or self.surrogate_metrics is None
+                or self.fem_metrics is not None
+            ):
+                raise ValueError(
+                    "SERVED_FAST requires mode='fast', surrogate_metrics, and fem_metrics=None"
+                )
+        elif st in (
+            ParametricPredictionStatus.SERVED_CERTIFIED,
+            ParametricPredictionStatus.SERVED_EXACT,
+        ):
+            expected_mode = (
+                "certified"
+                if st is ParametricPredictionStatus.SERVED_CERTIFIED
+                else "exact"
+            )
+            if (
+                self.mode != expected_mode
+                or self.surrogate_metrics is None
+                or self.fem_metrics is None
+                or not self.fem_metrics.converged
+                or self.displacement_rel_l2_error is None
+            ):
+                raise ValueError(
+                    f"{st.value} requires mode={expected_mode!r}, surrogate_metrics, "
+                    "converged fem_metrics, and relative error metrics"
+                )
+        elif st is ParametricPredictionStatus.REFUSED_FEM_FAILED:
+            if self.fem_metrics is None or self.fem_metrics.converged:
+                raise ValueError(
+                    "REFUSED_FEM_FAILED requires non-converged fem_metrics"
+                )
+
     @property
     def accepted(self) -> bool:
-        return self.status in ("SERVED_FAST", "SERVED_CERTIFIED", "SERVED_EXACT")
+        return self.status in (
+            ParametricPredictionStatus.SERVED_FAST,
+            ParametricPredictionStatus.SERVED_CERTIFIED,
+            ParametricPredictionStatus.SERVED_EXACT,
+        )
 
     def document(self) -> dict[str, Any]:
         return {
             "schema": PARAMETRIC_PREDICTION_SCHEMA,
-            "status": self.status,
+            "status": str(self.status),
             "mode": self.mode,
             "bundle_hash": self.bundle_hash,
             "parameters": None
@@ -1444,11 +1648,14 @@ __all__ = (
     "PARAMETRIC_CAD",
     "PARAMETRIC_CAD_ADAPTER_ID",
     "PARAMETRIC_PREDICTION_SCHEMA",
+    "PARAMETRIC_PREDICT_MACHINE",
     "PARAMETRIC_QUALIFICATION_SCHEMA",
     "ParametricCadAdapter",
     "ParametricFieldMetrics",
     "ParametricPhysicsConfig",
+    "ParametricPredictPhase",
     "ParametricPredictionReport",
+    "ParametricPredictionStatus",
     "ParametricQualificationReport",
     "ParametricSurrogateBundle",
     "ParametricTrainingConfig",
