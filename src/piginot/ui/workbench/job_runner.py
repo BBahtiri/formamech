@@ -7,16 +7,27 @@ reruns never interrupt long-running training or FEM solves.
 
 from __future__ import annotations
 
+import csv
 import json
 import os
+import signal
 import subprocess
 import sys
+import tempfile
 import uuid
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
+from enum import StrEnum
 from pathlib import Path
 from typing import Any, Final, Literal
+
+from piginot.contracts.state_machine import (
+    StateMachineSpec,
+    StateSnapshot,
+    TransitionSpec,
+    register_state_machine,
+)
 
 JOB_STATUS_SCHEMA: Final = "formamech.workbench-job-v1"
 JobKind = Literal["compile", "qualify"]
@@ -24,8 +35,90 @@ JobState = Literal[
     "PENDING", "RUNNING", "SUCCEEDED", "REFUSED_SCIENTIFIC", "FAILED", "CANCELLED"
 ]
 
-# In-process registry mapping job_id -> live Popen handle for the current UI server
-_LIVE_PROCS: dict[str, subprocess.Popen[Any]] = {}
+
+class JobLifecycleState(StrEnum):
+    """Explicit finite-state-machine states for a detached workbench job."""
+
+    PENDING = "PENDING"
+    RUNNING = "RUNNING"
+    SUCCEEDED = "SUCCEEDED"
+    REFUSED_SCIENTIFIC = "REFUSED_SCIENTIFIC"
+    FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
+
+
+JOB_LIFECYCLE_MACHINE: Final[StateMachineSpec[JobLifecycleState]] = (
+    register_state_machine(
+        StateMachineSpec(
+            machine_id="formamech.workbench.job",
+            description=(
+                "Detached subprocess lifecycle for Workbench compile and "
+                "qualification jobs. Terminal states are strictly immutable."
+            ),
+            states=tuple(JobLifecycleState),
+            initial_states=(JobLifecycleState.PENDING, JobLifecycleState.RUNNING),
+            terminal_states=(
+                JobLifecycleState.SUCCEEDED,
+                JobLifecycleState.REFUSED_SCIENTIFIC,
+                JobLifecycleState.FAILED,
+                JobLifecycleState.CANCELLED,
+            ),
+            transitions=(
+                TransitionSpec(
+                    JobLifecycleState.PENDING,
+                    JobLifecycleState.RUNNING,
+                    "start",
+                    "Subprocess spawned with a live OS PID.",
+                ),
+                TransitionSpec(
+                    JobLifecycleState.PENDING,
+                    JobLifecycleState.CANCELLED,
+                    "cancel",
+                    "Job cancelled before subprocess launch.",
+                ),
+                TransitionSpec(
+                    JobLifecycleState.PENDING,
+                    JobLifecycleState.FAILED,
+                    "launch_failed",
+                    "Subprocess failed to start.",
+                ),
+                TransitionSpec(
+                    JobLifecycleState.RUNNING,
+                    JobLifecycleState.RUNNING,
+                    "poll_alive",
+                    "Process is still alive; refresh checkpoint progress.",
+                ),
+                TransitionSpec(
+                    JobLifecycleState.RUNNING,
+                    JobLifecycleState.SUCCEEDED,
+                    "exit_ok",
+                    "Subprocess exited cleanly with code 0.",
+                ),
+                TransitionSpec(
+                    JobLifecycleState.RUNNING,
+                    JobLifecycleState.REFUSED_SCIENTIFIC,
+                    "exit_scientific_refusal",
+                    "Subprocess exited with code 3 (scientific refusal or NOT_QUALIFIED).",
+                ),
+                TransitionSpec(
+                    JobLifecycleState.RUNNING,
+                    JobLifecycleState.FAILED,
+                    "exit_error",
+                    "Subprocess exited with a non-zero operational/refusal error code.",
+                ),
+                TransitionSpec(
+                    JobLifecycleState.RUNNING,
+                    JobLifecycleState.CANCELLED,
+                    "cancel",
+                    "User or caller terminated the running subprocess.",
+                ),
+            ),
+        )
+    )
+)
+
+# In-process registry mapping (jobs_dir, job_id) -> live Popen handle for current UI server
+_LIVE_PROCS: dict[tuple[str, str], subprocess.Popen[Any]] = {}
 
 
 def _utc_now() -> str:
@@ -38,6 +131,26 @@ def _state_from_exit_code(code: int) -> JobState:
     if code == 3:
         return "REFUSED_SCIENTIFIC"
     return "FAILED"
+
+
+def _atomic_write_json(path: Path, payload: Mapping[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_name = tempfile.mkstemp(
+        dir=str(path.parent),
+        prefix=f".{path.name}.",
+        suffix=".tmp",
+    )
+    tmp_path = Path(tmp_name)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(tmp_path, path)
+    except BaseException:
+        if tmp_path.exists():
+            tmp_path.unlink(missing_ok=True)
+        raise
 
 
 @dataclass(frozen=True, slots=True)
@@ -55,6 +168,44 @@ class JobRecord:
     log_path: str
     output_dir: str
     latest_checkpoint_step: int | None = None
+
+    def __post_init__(self) -> None:
+        lifecycle = JobLifecycleState(str(self.state))
+        object.__setattr__(self, "state", lifecycle.value)
+
+    @property
+    def lifecycle_state(self) -> JobLifecycleState:
+        return JobLifecycleState(self.state)
+
+    @property
+    def is_terminal(self) -> bool:
+        return JOB_LIFECYCLE_MACHINE.is_terminal(self.lifecycle_state)
+
+    def snapshot(self) -> StateSnapshot[JobLifecycleState]:
+        """Self-describing state snapshot for UI badges and agent polling."""
+        state = self.lifecycle_state
+        hint = (
+            "Job is running; poll for checkpoint progress or cancel."
+            if state is JobLifecycleState.RUNNING
+            else (
+                "Job is queued to launch."
+                if state is JobLifecycleState.PENDING
+                else f"Job finished in terminal state {state.value}."
+            )
+        )
+        return JOB_LIFECYCLE_MACHINE.snapshot(
+            state,
+            recommended_trigger="poll_alive"
+            if state is JobLifecycleState.RUNNING
+            else None,
+            recommended_hint=hint,
+            metadata={
+                "job_id": self.job_id,
+                "kind": self.kind,
+                "exit_code": self.exit_code,
+                "latest_checkpoint_step": self.latest_checkpoint_step,
+            },
+        )
 
     def document(self) -> dict[str, Any]:
         return {
@@ -81,17 +232,11 @@ class JobRecord:
             raise ValueError(f"unsupported job kind {kind_raw!r}")
         kind: JobKind = "compile" if kind_raw == "compile" else "qualify"
         state_raw = str(doc["state"])
-        valid_states = (
-            "PENDING",
-            "RUNNING",
-            "SUCCEEDED",
-            "REFUSED_SCIENTIFIC",
-            "FAILED",
-            "CANCELLED",
-        )
-        if state_raw not in valid_states:
-            raise ValueError(f"unsupported job state {state_raw!r}")
-        state: JobState = state_raw  # type: ignore[assignment]
+        try:
+            state_enum = JobLifecycleState(state_raw)
+        except ValueError as exc:
+            raise ValueError(f"unsupported job state {state_raw!r}") from exc
+        state: JobState = state_enum.value
         raw_pid = doc.get("pid")
         raw_code = doc.get("exit_code")
         raw_step = doc.get("latest_checkpoint_step")
@@ -131,13 +276,17 @@ def _pid_alive(pid: int) -> bool:
     if os.name == "nt":
         try:
             proc = subprocess.run(
-                ["tasklist", "/FI", f"PID eq {pid}", "/NH"],
+                ["tasklist", "/FI", f"PID eq {pid}", "/FO", "CSV", "/NH"],
                 capture_output=True,
                 text=True,
                 check=False,
                 timeout=5,
             )
-            return str(pid) in proc.stdout
+            pid_str = str(pid)
+            for row in csv.reader(proc.stdout.splitlines()):
+                if len(row) >= 2 and row[1].strip() == pid_str:
+                    return True
+            return False
         except OSError:
             return False
     try:
@@ -145,6 +294,63 @@ def _pid_alive(pid: int) -> bool:
         return True
     except OSError:
         return False
+
+
+def _terminate_external_pid(pid: int) -> None:
+    """Best-effort termination of a running subprocess from a prior server session."""
+    if pid <= 0 or not _pid_alive(pid):
+        return
+    if os.name == "nt":
+        try:
+            subprocess.run(
+                ["taskkill", "/PID", str(pid), "/T", "/F"],
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=5,
+            )
+        except OSError:
+            return
+    else:
+        try:
+            os.kill(pid, signal.SIGTERM)
+        except OSError:
+            return
+
+
+def _infer_external_terminal(
+    kind: JobKind, out_path: Path
+) -> tuple[JobLifecycleState, int]:
+    """Infer terminal state & exit code when an externally-owned PID has exited."""
+    if kind == "compile":
+        report_path = out_path / "report.json"
+        if report_path.is_file():
+            try:
+                report_doc = json.loads(report_path.read_text(encoding="utf-8"))
+                if isinstance(report_doc, dict) and isinstance(
+                    report_doc.get("exit_code"), int
+                ):
+                    code = int(report_doc["exit_code"])
+                    return JobLifecycleState(_state_from_exit_code(code)), code
+            except (OSError, json.JSONDecodeError, ValueError):
+                pass
+        if (out_path / "candidate-bundle" / "bundle.json").is_file():
+            return JobLifecycleState.SUCCEEDED, 0
+        return JobLifecycleState.FAILED, 1
+
+    manifest_path = out_path / "qualification-manifest.json"
+    if not manifest_path.is_file():
+        return JobLifecycleState.FAILED, 1
+    try:
+        manifest_doc = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return JobLifecycleState.FAILED, 1
+    if (
+        isinstance(manifest_doc, dict)
+        and manifest_doc.get("verdict") == "NOT_QUALIFIED"
+    ):
+        return JobLifecycleState.REFUSED_SCIENTIFIC, 3
+    return JobLifecycleState.SUCCEEDED, 0
 
 
 class WorkbenchJobRunner:
@@ -155,14 +361,14 @@ class WorkbenchJobRunner:
         self.jobs_dir.mkdir(parents=True, exist_ok=True)
         self.cwd = None if cwd is None else Path(cwd).resolve()
 
+    def _proc_key(self, job_id: str) -> tuple[str, str]:
+        return (str(self.jobs_dir), job_id)
+
     def _record_path(self, job_id: str) -> Path:
         return self.jobs_dir / f"{job_id}.json"
 
     def _save(self, record: JobRecord) -> None:
-        self._record_path(record.job_id).write_text(
-            json.dumps(record.document(), indent=2, sort_keys=True) + "\n",
-            encoding="utf-8",
-        )
+        _atomic_write_json(self._record_path(record.job_id), record.document())
 
     def load(self, job_id: str) -> JobRecord:
         path = self._record_path(job_id)
@@ -181,6 +387,18 @@ class WorkbenchJobRunner:
                 continue
         records.sort(key=lambda r: r.started_utc, reverse=True)
         return tuple(records)
+
+    def active_jobs(self, *, kind: JobKind | None = None) -> tuple[JobRecord, ...]:
+        """Poll and return all currently non-terminal jobs (optionally filtered by kind)."""
+        active: list[JobRecord] = []
+        for rec in self.list_jobs():
+            if kind is not None and rec.kind != kind:
+                continue
+            if not rec.is_terminal:
+                refreshed = self.poll(rec.job_id)
+                if not refreshed.is_terminal:
+                    active.append(refreshed)
+        return tuple(active)
 
     def launch(
         self,
@@ -213,7 +431,12 @@ class WorkbenchJobRunner:
         finally:
             handle.close()
 
-        _LIVE_PROCS[jid] = proc
+        JOB_LIFECYCLE_MACHINE.require_transition(
+            JobLifecycleState.PENDING,
+            JobLifecycleState.RUNNING,
+            trigger="start",
+        )
+        _LIVE_PROCS[self._proc_key(jid)] = proc
         record = JobRecord(
             job_id=jid,
             kind=kind,
@@ -292,26 +515,35 @@ class WorkbenchJobRunner:
     def poll(self, job_id: str) -> JobRecord:
         """Refresh state, exit code, and checkpoint progress for ``job_id``."""
         record = self.load(job_id)
-        out_path = Path(record.output_dir)
-        step = _latest_checkpoint_step(out_path)
-        if record.state != "RUNNING":
-            if step != record.latest_checkpoint_step:
-                updated = replace(record, latest_checkpoint_step=step)
-                self._save(updated)
-                return updated
+        current = record.lifecycle_state
+        # Terminal states are strictly immutable: never contaminate finished records
+        # with checkpoints written by later runs in the same output_dir.
+        if JOB_LIFECYCLE_MACHINE.is_terminal(current):
+            return record
+        if current is JobLifecycleState.PENDING:
             return record
 
-        proc = _LIVE_PROCS.get(job_id)
+        out_path = Path(record.output_dir)
+        step = _latest_checkpoint_step(out_path)
+
+        proc_key = self._proc_key(job_id)
+        proc = _LIVE_PROCS.get(proc_key)
         if proc is not None:
             ret = proc.poll()
             if ret is None:
+                JOB_LIFECYCLE_MACHINE.require_transition(
+                    current, JobLifecycleState.RUNNING, trigger="poll_alive"
+                )
                 updated = replace(record, latest_checkpoint_step=step)
                 self._save(updated)
                 return updated
-            _LIVE_PROCS.pop(job_id, None)
+            _LIVE_PROCS.pop(proc_key, None)
+            next_state_str = _state_from_exit_code(int(ret))
+            next_state = JobLifecycleState(next_state_str)
+            JOB_LIFECYCLE_MACHINE.require_transition(current, next_state)
             finished = replace(
                 record,
-                state=_state_from_exit_code(int(ret)),
+                state=next_state_str,
                 exit_code=int(ret),
                 finished_utc=_utc_now(),
                 latest_checkpoint_step=step,
@@ -321,20 +553,20 @@ class WorkbenchJobRunner:
 
         # Process started in a prior server session: probe OS PID
         if record.pid is not None and _pid_alive(record.pid):
+            JOB_LIFECYCLE_MACHINE.require_transition(
+                current, JobLifecycleState.RUNNING, trigger="poll_alive"
+            )
             updated = replace(record, latest_checkpoint_step=step)
             self._save(updated)
             return updated
 
-        # Infer terminal state from expected output artifacts when PID exited externally
-        inferred_ok = (
-            (out_path / "candidate-bundle" / "bundle.json").is_file()
-            if record.kind == "compile"
-            else (out_path / "qualification-manifest.json").is_file()
-        )
+        # Infer terminal state accurately from persisted report/manifest artifacts
+        inferred_state, inferred_code = _infer_external_terminal(record.kind, out_path)
+        JOB_LIFECYCLE_MACHINE.require_transition(current, inferred_state)
         finished = replace(
             record,
-            state="SUCCEEDED" if inferred_ok else "FAILED",
-            exit_code=0 if inferred_ok else 1,
+            state=inferred_state.value,
+            exit_code=inferred_code,
             finished_utc=_utc_now(),
             latest_checkpoint_step=step,
         )
@@ -342,15 +574,24 @@ class WorkbenchJobRunner:
         return finished
 
     def cancel(self, job_id: str) -> JobRecord:
-        """Terminate a running workbench job cleanly."""
+        """Terminate a non-terminal workbench job cleanly (refuses terminal jobs)."""
         record = self.load(job_id)
-        proc = _LIVE_PROCS.pop(job_id, None)
+        JOB_LIFECYCLE_MACHINE.require_transition(
+            record.lifecycle_state,
+            JobLifecycleState.CANCELLED,
+            trigger="cancel",
+            reason="cannot cancel a job already in a terminal state",
+        )
+        proc = _LIVE_PROCS.pop(self._proc_key(job_id), None)
         if proc is not None and proc.poll() is None:
             proc.terminate()
             try:
                 proc.wait(timeout=5)
             except subprocess.TimeoutExpired:
                 proc.kill()
+        elif proc is None and record.pid is not None:
+            _terminate_external_pid(record.pid)
+
         cancelled = replace(
             record,
             state="CANCELLED",
@@ -369,8 +610,10 @@ class WorkbenchJobRunner:
 
 
 __all__ = (
+    "JOB_LIFECYCLE_MACHINE",
     "JOB_STATUS_SCHEMA",
     "JobKind",
+    "JobLifecycleState",
     "JobRecord",
     "JobState",
     "WorkbenchJobRunner",

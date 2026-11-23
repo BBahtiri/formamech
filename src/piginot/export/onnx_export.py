@@ -9,8 +9,12 @@ ONNX Runtime parity checking.
 from __future__ import annotations
 
 import hashlib
+import math
+import os
+import tempfile
 from collections.abc import Mapping
 from dataclasses import dataclass
+from enum import StrEnum
 from pathlib import Path
 from typing import Any, Final
 
@@ -18,9 +22,69 @@ import torch
 from torch import nn
 
 from piginot.contracts import canonical_json_bytes
+from piginot.contracts.state_machine import (
+    StateMachineSpec,
+    TransitionSpec,
+    register_state_machine,
+)
 from piginot.operators.energy_operator import EnergyFormOperator, QueryFrame
 
 ONNX_EXPORT_SCHEMA: Final = "formamech.onnx-export-v1"
+
+
+class OnnxParityStatus(StrEnum):
+    """Explicit outcome state for ONNX Runtime numerical parity verification."""
+
+    PENDING = "PENDING"
+    SKIPPED_BY_REQUEST = "SKIPPED_BY_REQUEST"
+    SKIPPED_RUNTIME_UNAVAILABLE = "SKIPPED_RUNTIME_UNAVAILABLE"
+    VERIFIED_PASS = "VERIFIED_PASS"
+    VERIFIED_FAIL = "VERIFIED_FAIL"
+
+
+ONNX_PARITY_MACHINE: Final[StateMachineSpec[OnnxParityStatus]] = register_state_machine(
+    StateMachineSpec(
+        machine_id="formamech.export.onnx_parity",
+        description=(
+            "Explicit ONNX export parity verification lifecycle separating "
+            "caller opt-out, missing onnxruntime, verified pass, and fail-closed abort."
+        ),
+        states=tuple(OnnxParityStatus),
+        initial_states=(OnnxParityStatus.PENDING,),
+        terminal_states=(
+            OnnxParityStatus.SKIPPED_BY_REQUEST,
+            OnnxParityStatus.SKIPPED_RUNTIME_UNAVAILABLE,
+            OnnxParityStatus.VERIFIED_PASS,
+            OnnxParityStatus.VERIFIED_FAIL,
+        ),
+        transitions=(
+            TransitionSpec(
+                OnnxParityStatus.PENDING,
+                OnnxParityStatus.SKIPPED_BY_REQUEST,
+                "skip_requested",
+                "Caller passed verify_parity=False.",
+            ),
+            TransitionSpec(
+                OnnxParityStatus.PENDING,
+                OnnxParityStatus.SKIPPED_RUNTIME_UNAVAILABLE,
+                "runtime_unavailable",
+                "onnxruntime is not installed in the active environment.",
+            ),
+            TransitionSpec(
+                OnnxParityStatus.PENDING,
+                OnnxParityStatus.VERIFIED_PASS,
+                "parity_passed",
+                "Max absolute error between PyTorch and ONNX Runtime <= tolerance.",
+            ),
+            TransitionSpec(
+                OnnxParityStatus.PENDING,
+                OnnxParityStatus.VERIFIED_FAIL,
+                "parity_failed",
+                "Max absolute error exceeded tolerance; staged ONNX artifact discarded.",
+            ),
+        ),
+    )
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -35,8 +99,38 @@ class OnnxExportResult:
     input_names: tuple[str, ...]
     parity_checked: bool
     parity_max_abs_error: float | None
+    parity_status: OnnxParityStatus | None = None
+
+    def __post_init__(self) -> None:
+        if self.parity_checked:
+            if self.parity_max_abs_error is None or not math.isfinite(
+                self.parity_max_abs_error
+            ):
+                raise ValueError(
+                    "parity_checked=True requires a finite parity_max_abs_error"
+                )
+        elif self.parity_max_abs_error is not None:
+            raise ValueError(
+                "parity_checked=False forbids a non-None parity_max_abs_error"
+            )
+        if self.parity_status is None:
+            inferred = (
+                OnnxParityStatus.VERIFIED_PASS
+                if self.parity_checked
+                else OnnxParityStatus.SKIPPED_BY_REQUEST
+            )
+            object.__setattr__(self, "parity_status", inferred)
+        else:
+            status = OnnxParityStatus(self.parity_status)
+            object.__setattr__(self, "parity_status", status)
+            if (status is OnnxParityStatus.VERIFIED_PASS) != self.parity_checked:
+                raise ValueError(
+                    f"parity_status={status.value!r} inconsistent with "
+                    f"parity_checked={self.parity_checked}"
+                )
 
     def document(self) -> dict[str, Any]:
+        assert self.parity_status is not None
         return {
             "schema": ONNX_EXPORT_SCHEMA,
             "onnx_path": str(self.onnx_path),
@@ -46,6 +140,7 @@ class OnnxExportResult:
             "opset_version": self.opset_version,
             "input_names": list(self.input_names),
             "parity_checked": self.parity_checked,
+            "parity_status": self.parity_status.value,
             "parity_max_abs_error": self.parity_max_abs_error,
         }
 
@@ -207,45 +302,85 @@ def export_bundle_to_onnx(
     )
     out = Path(output_path)
     out.parent.mkdir(parents=True, exist_ok=True)
-
-    torch.onnx.export(
-        export_mod,
-        (sample_xy, sample_params),
-        str(out),
-        opset_version=opset_version,
-        input_names=["query_xy", "normalized_params"],
-        output_names=["displacement_u"],
-        dynamic_axes={
-            "query_xy": {0: "num_points"},
-            "displacement_u": {0: "num_points"},
-        },
+    fd, tmp_name = tempfile.mkstemp(
+        dir=str(out.parent),
+        prefix=f".{out.name}.",
+        suffix=".onnx.tmp",
     )
+    os.close(fd)
+    staged_onnx = Path(tmp_name)
 
-    onnx_sha = hashlib.sha256(out.read_bytes()).hexdigest()
-    parity_checked = False
-    parity_err: float | None = None
-    if verify_parity:
-        try:
-            import onnxruntime as ort  # type: ignore[import-not-found]
-        except ImportError:
-            parity_checked = False
+    try:
+        torch.onnx.export(
+            export_mod,
+            (sample_xy, sample_params),
+            str(staged_onnx),
+            opset_version=opset_version,
+            input_names=["query_xy", "normalized_params"],
+            output_names=["displacement_u"],
+            dynamic_axes={
+                "query_xy": {0: "num_points"},
+                "displacement_u": {0: "num_points"},
+            },
+        )
+
+        onnx_sha = hashlib.sha256(staged_onnx.read_bytes()).hexdigest()
+        parity_checked = False
+        parity_err: float | None = None
+        if not verify_parity:
+            ONNX_PARITY_MACHINE.require_transition(
+                OnnxParityStatus.PENDING,
+                OnnxParityStatus.SKIPPED_BY_REQUEST,
+                trigger="skip_requested",
+            )
+            parity_status = OnnxParityStatus.SKIPPED_BY_REQUEST
         else:
-            with torch.no_grad():
-                ref = export_mod(sample_xy, sample_params).cpu().numpy()
-            sess = ort.InferenceSession(str(out), providers=["CPUExecutionProvider"])
-            ort_out = sess.run(
-                None,
-                {
-                    "query_xy": sample_xy.cpu().numpy(),
-                    "normalized_params": sample_params.cpu().numpy(),
-                },
-            )[0]
-            parity_err = float(abs(ref - ort_out).max())
-            parity_checked = True
-            if parity_err > max_abs_tol:
-                raise ValueError(
-                    f"ONNX Runtime parity failed: max_abs_error={parity_err:.3e} > {max_abs_tol:.3e}"
+            try:
+                import onnxruntime as ort  # type: ignore[import-not-found]
+            except ImportError:
+                ONNX_PARITY_MACHINE.require_transition(
+                    OnnxParityStatus.PENDING,
+                    OnnxParityStatus.SKIPPED_RUNTIME_UNAVAILABLE,
+                    trigger="runtime_unavailable",
                 )
+                parity_checked = False
+                parity_status = OnnxParityStatus.SKIPPED_RUNTIME_UNAVAILABLE
+            else:
+                with torch.no_grad():
+                    ref = export_mod(sample_xy, sample_params).cpu().numpy()
+                sess = ort.InferenceSession(
+                    str(staged_onnx), providers=["CPUExecutionProvider"]
+                )
+                ort_out = sess.run(
+                    None,
+                    {
+                        "query_xy": sample_xy.cpu().numpy(),
+                        "normalized_params": sample_params.cpu().numpy(),
+                    },
+                )[0]
+                parity_err = float(abs(ref - ort_out).max())
+                if parity_err > max_abs_tol:
+                    ONNX_PARITY_MACHINE.require_transition(
+                        OnnxParityStatus.PENDING,
+                        OnnxParityStatus.VERIFIED_FAIL,
+                        trigger="parity_failed",
+                    )
+                    raise ValueError(
+                        f"ONNX Runtime parity failed: max_abs_error={parity_err:.3e} > {max_abs_tol:.3e}"
+                    )
+                ONNX_PARITY_MACHINE.require_transition(
+                    OnnxParityStatus.PENDING,
+                    OnnxParityStatus.VERIFIED_PASS,
+                    trigger="parity_passed",
+                )
+                parity_checked = True
+                parity_status = OnnxParityStatus.VERIFIED_PASS
+
+        os.replace(staged_onnx, out)
+    except BaseException:
+        if staged_onnx.exists():
+            staged_onnx.unlink(missing_ok=True)
+        raise
 
     meta_path = out.with_suffix(out.suffix + ".json")
     full_meta = {
@@ -254,6 +389,7 @@ def export_bundle_to_onnx(
         "onnx_sha256": onnx_sha,
         "opset_version": opset_version,
         "parity_checked": parity_checked,
+        "parity_status": parity_status.value,
         "parity_max_abs_error": parity_err,
     }
     meta_path.write_bytes(canonical_json_bytes(full_meta) + b"\n")
@@ -266,4 +402,5 @@ def export_bundle_to_onnx(
         input_names=tuple(meta["input_names"]),
         parity_checked=parity_checked,
         parity_max_abs_error=parity_err,
+        parity_status=parity_status,
     )

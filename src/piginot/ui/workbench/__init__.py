@@ -7,8 +7,10 @@ from piginot.ui.workbench.cad_viewer import (
     render_workbench_cad_png,
 )
 from piginot.ui.workbench.job_runner import (
+    JOB_LIFECYCLE_MACHINE,
     JOB_STATUS_SCHEMA,
     JobKind,
+    JobLifecycleState,
     JobRecord,
     JobState,
     WorkbenchJobRunner,
@@ -29,22 +31,27 @@ from piginot.ui.workbench.physics_forms import (
 )
 from piginot.ui.workbench.state import (
     SUPPORTED_CAD_EXTENSIONS,
+    WORKBENCH_STAGE_MACHINE,
     WORKBENCH_STATE_SCHEMA,
     StageProgress,
+    WorkbenchStage,
     WorkbenchWorkspace,
     canonical_settings_bytes,
     generate_sample_bracket_step,
 )
 
 __all__ = (
+    "JOB_LIFECYCLE_MACHINE",
     "JOB_STATUS_SCHEMA",
     "MATERIAL_PRESETS",
     "ROLE_COLORS",
     "SUPPORTED_CAD_EXTENSIONS",
+    "WORKBENCH_STAGE_MACHINE",
     "WORKBENCH_STATE_SCHEMA",
     "BoundaryAssignment",
     "BoundaryKind",
     "JobKind",
+    "JobLifecycleState",
     "JobRecord",
     "JobState",
     "MaterialPreset",
@@ -53,6 +60,7 @@ __all__ = (
     "StageProgress",
     "WorkbenchJobRunner",
     "WorkbenchPhysicsDraft",
+    "WorkbenchStage",
     "WorkbenchWorkspace",
     "build_cad_boundary_figure",
     "build_settings_document",

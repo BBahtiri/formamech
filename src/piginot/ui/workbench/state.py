@@ -8,24 +8,200 @@ be reproduced headlessly via ``formamech compile`` and ``formamech qualify``.
 
 from __future__ import annotations
 
+import hashlib
 import json
+import os
 import shutil
+import tempfile
 from collections.abc import Mapping
 from dataclasses import dataclass
+from enum import StrEnum
 from pathlib import Path
 from typing import Any, Final
 
 from piginot.cad.mesh_policy import MeshPolicy
 from piginot.cad.project import prepare_geometry
 from piginot.contracts import Unit, canonical_json_bytes
+from piginot.contracts.state_machine import (
+    StateMachineSpec,
+    StateSnapshot,
+    TransitionSpec,
+    register_state_machine,
+)
 
 WORKBENCH_STATE_SCHEMA: Final = "formamech.workbench-state-v1"
 SUPPORTED_CAD_EXTENSIONS: Final = (".step", ".stp", ".dxf")
 
 
+class WorkbenchStage(StrEnum):
+    """Explicit lifecycle stage of a FormaMech 2D workbench workspace."""
+
+    EMPTY = "EMPTY"
+    CAD_IMPORTED = "CAD_IMPORTED"
+    PHYSICS_SAVED = "PHYSICS_SAVED"
+    INPUTS_PREPARED = "INPUTS_PREPARED"
+    PLAN_PREVIEWED = "PLAN_PREVIEWED"
+    BUNDLE_TRAINED = "BUNDLE_TRAINED"
+    BUNDLE_QUALIFIED = "BUNDLE_QUALIFIED"
+
+
+WORKBENCH_STAGE_MACHINE: Final[StateMachineSpec[WorkbenchStage]] = (
+    register_state_machine(
+        StateMachineSpec(
+            machine_id="formamech.workbench.workspace",
+            description=(
+                "Guided 2D CAD workbench artifact progression from raw CAD import "
+                "through physics definition, campaign planning, training, and "
+                "numerical qualification."
+            ),
+            states=tuple(WorkbenchStage),
+            initial_states=(WorkbenchStage.EMPTY,),
+            terminal_states=(),
+            transitions=(
+                TransitionSpec(
+                    WorkbenchStage.EMPTY,
+                    WorkbenchStage.CAD_IMPORTED,
+                    "import_cad",
+                    "Import a planar STEP or DXF profile and build its canonical mesh.",
+                ),
+                TransitionSpec(
+                    WorkbenchStage.CAD_IMPORTED,
+                    WorkbenchStage.CAD_IMPORTED,
+                    "import_cad",
+                    "Re-import CAD geometry and invalidate stale downstream artifacts.",
+                ),
+                TransitionSpec(
+                    WorkbenchStage.CAD_IMPORTED,
+                    WorkbenchStage.PHYSICS_SAVED,
+                    "save_physics",
+                    "Assign boundary conditions, material model, and parameter ranges.",
+                ),
+                TransitionSpec(
+                    WorkbenchStage.CAD_IMPORTED,
+                    WorkbenchStage.PLAN_PREVIEWED,
+                    "prepare_and_plan",
+                    "Save physics, prepare canonical campaign inputs, and preview plan.",
+                ),
+                TransitionSpec(
+                    WorkbenchStage.PHYSICS_SAVED,
+                    WorkbenchStage.INPUTS_PREPARED,
+                    "prepare_inputs",
+                    "Generate canonical problem.json and config.json inputs.",
+                ),
+                TransitionSpec(
+                    WorkbenchStage.PHYSICS_SAVED,
+                    WorkbenchStage.PLAN_PREVIEWED,
+                    "prepare_and_plan",
+                    "Prepare inputs and generate --plan-only execution plan.",
+                ),
+                TransitionSpec(
+                    WorkbenchStage.PHYSICS_SAVED,
+                    WorkbenchStage.CAD_IMPORTED,
+                    "import_cad",
+                    "Re-import CAD geometry and invalidate stale physics.",
+                ),
+                TransitionSpec(
+                    WorkbenchStage.INPUTS_PREPARED,
+                    WorkbenchStage.PLAN_PREVIEWED,
+                    "preview_plan",
+                    "Generate preview/plan.json without running numerical work.",
+                ),
+                TransitionSpec(
+                    WorkbenchStage.INPUTS_PREPARED,
+                    WorkbenchStage.CAD_IMPORTED,
+                    "import_cad",
+                    "Re-import CAD geometry and invalidate prepared inputs.",
+                ),
+                TransitionSpec(
+                    WorkbenchStage.PLAN_PREVIEWED,
+                    WorkbenchStage.BUNDLE_TRAINED,
+                    "compile_bundle",
+                    "Run formamech compile to train and export candidate-bundle.",
+                ),
+                TransitionSpec(
+                    WorkbenchStage.PLAN_PREVIEWED,
+                    WorkbenchStage.PLAN_PREVIEWED,
+                    "prepare_and_plan",
+                    "Update physics settings and regenerate preview/plan.json.",
+                ),
+                TransitionSpec(
+                    WorkbenchStage.PLAN_PREVIEWED,
+                    WorkbenchStage.CAD_IMPORTED,
+                    "import_cad",
+                    "Re-import CAD geometry and reset downstream campaign artifacts.",
+                ),
+                TransitionSpec(
+                    WorkbenchStage.BUNDLE_TRAINED,
+                    WorkbenchStage.BUNDLE_QUALIFIED,
+                    "qualify_bundle",
+                    "Run formamech qualify and obtain a passing QUALIFIED manifest.",
+                ),
+                TransitionSpec(
+                    WorkbenchStage.BUNDLE_TRAINED,
+                    WorkbenchStage.PLAN_PREVIEWED,
+                    "prepare_and_plan",
+                    "Modify physics settings and regenerate plan for retraining.",
+                ),
+                TransitionSpec(
+                    WorkbenchStage.BUNDLE_TRAINED,
+                    WorkbenchStage.CAD_IMPORTED,
+                    "import_cad",
+                    "Re-import CAD geometry and reset downstream campaign artifacts.",
+                ),
+                TransitionSpec(
+                    WorkbenchStage.BUNDLE_QUALIFIED,
+                    WorkbenchStage.BUNDLE_QUALIFIED,
+                    "qualify_bundle",
+                    "Re-run qualification against an updated policy or sample suite.",
+                ),
+                TransitionSpec(
+                    WorkbenchStage.BUNDLE_QUALIFIED,
+                    WorkbenchStage.PLAN_PREVIEWED,
+                    "prepare_and_plan",
+                    "Modify physics settings and regenerate plan for retraining.",
+                ),
+                TransitionSpec(
+                    WorkbenchStage.BUNDLE_QUALIFIED,
+                    WorkbenchStage.CAD_IMPORTED,
+                    "import_cad",
+                    "Re-import CAD geometry and reset downstream campaign artifacts.",
+                ),
+            ),
+        )
+    )
+)
+
+
+def _atomic_write_text(path: Path, text: str) -> None:
+    """Atomically write UTF-8 text via a sibling temporary file and os.replace."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_name = tempfile.mkstemp(
+        dir=str(path.parent),
+        prefix=f".{path.name}.",
+        suffix=".tmp",
+    )
+    tmp_path = Path(tmp_name)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(text)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(tmp_path, path)
+    except BaseException:
+        if tmp_path.exists():
+            tmp_path.unlink(missing_ok=True)
+        raise
+
+
+def _file_sha256(path: Path) -> str | None:
+    if not path.is_file():
+        return None
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
 @dataclass(frozen=True, slots=True)
 class StageProgress:
-    """Boolean progress tracker across the five guided workbench stages."""
+    """Boolean progress tracker across the guided workbench stages."""
 
     cad_imported: bool
     physics_saved: bool
@@ -102,7 +278,27 @@ class WorkbenchWorkspace:
             return manifest
         return None
 
+    def _qualification_verdict(self) -> str | None:
+        manifest = self.qualification_manifest_path
+        if manifest is None:
+            return None
+        try:
+            raw = json.loads(manifest.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return "INVALID"
+        if not isinstance(raw, dict):
+            return "INVALID"
+        verdict = raw.get("verdict")
+        return None if verdict is None else str(verdict)
+
     def stage_progress(self) -> StageProgress:
+        verdict = self._qualification_verdict()
+        # Only a genuinely QUALIFIED manifest (or legacy manifest lacking a verdict key)
+        # counts as qualified; an explicit NOT_QUALIFIED or corrupt manifest does not.
+        is_qualified = self.qualification_manifest_path is not None and verdict in (
+            "QUALIFIED",
+            None,
+        )
         return StageProgress(
             cad_imported=(self.geometry_dir / "preview.json").is_file(),
             physics_saved=self.physics_path.is_file(),
@@ -112,7 +308,108 @@ class WorkbenchWorkspace:
             ),
             plan_previewed=(self.preview_dir / "plan.json").is_file(),
             bundle_trained=self.candidate_bundle_path is not None,
-            bundle_qualified=self.qualification_manifest_path is not None,
+            bundle_qualified=is_qualified,
+        )
+
+    def workflow_snapshot(self) -> StateSnapshot[WorkbenchStage]:
+        """Return a self-describing FSM snapshot with staleness and next-action hints."""
+        progress = self.stage_progress()
+        state_doc = self.load_state()
+        stale: list[str] = []
+        blockers: list[str] = []
+
+        # Determine highest contiguous valid stage (never skip missing prerequisites).
+        if not progress.cad_imported:
+            stage = WorkbenchStage.EMPTY
+            if progress.physics_saved:
+                stale.append("physics.json exists without imported geometry")
+            if progress.inputs_prepared:
+                stale.append("inputs/ exists without imported geometry")
+            if progress.bundle_trained:
+                stale.append("run/candidate-bundle exists without imported geometry")
+            rec_trigger: str | None = "import_cad"
+            rec_hint = "Import a 2D STEP or DXF profile in Step 1."
+        elif not progress.physics_saved:
+            stage = WorkbenchStage.CAD_IMPORTED
+            if progress.inputs_prepared:
+                stale.append("inputs/ exists without physics.json")
+            if progress.bundle_trained:
+                stale.append("run/candidate-bundle is stale relative to new geometry")
+            rec_trigger = "prepare_and_plan"
+            rec_hint = (
+                "Assign boundaries in Step 2, then prepare inputs & plan in Step 3."
+            )
+        elif not progress.inputs_prepared:
+            stage = WorkbenchStage.PHYSICS_SAVED
+            if progress.plan_previewed:
+                stale.append("preview/plan.json exists without prepared inputs/")
+            if progress.bundle_trained:
+                stale.append("run/candidate-bundle predates updated physics.json")
+            rec_trigger = "prepare_and_plan"
+            rec_hint = (
+                "Prepare canonical campaign inputs and preview the plan in Step 3."
+            )
+        elif not progress.plan_previewed:
+            stage = WorkbenchStage.INPUTS_PREPARED
+            rec_trigger = "preview_plan"
+            rec_hint = "Generate preview/plan.json in Step 3 before training."
+        elif not progress.bundle_trained:
+            stage = WorkbenchStage.PLAN_PREVIEWED
+            rec_trigger = "compile_bundle"
+            rec_hint = "Launch training via formamech compile in Step 4."
+        elif not progress.bundle_qualified:
+            stage = WorkbenchStage.BUNDLE_TRAINED
+            verdict = self._qualification_verdict()
+            if verdict == "NOT_QUALIFIED":
+                blockers.append("latest qualification manifest returned NOT_QUALIFIED")
+            elif verdict == "INVALID":
+                blockers.append("qualification-manifest.json is malformed")
+            rec_trigger = "qualify_bundle"
+            rec_hint = (
+                "Run numerical qualification in Step 4 to obtain a QUALIFIED manifest."
+            )
+        else:
+            stage = WorkbenchStage.BUNDLE_QUALIFIED
+            rec_trigger = "qualify_bundle"
+            rec_hint = (
+                "Inspect verified fields, Trust Receipts, or export FMU in Step 5."
+            )
+
+        # Detect artifact drift relative to recorded geometry / physics digests.
+        current_geom_sha = _file_sha256(self.geometry_dir / "geometry.json")
+        recorded_geom_sha = state_doc.get("geometry_sha256")
+        if (
+            current_geom_sha is not None
+            and isinstance(recorded_geom_sha, str)
+            and recorded_geom_sha != current_geom_sha
+            and progress.inputs_prepared
+        ):
+            stale.append("prepared inputs/ may be stale relative to geometry.json")
+
+        current_phys_sha = _file_sha256(self.physics_path)
+        recorded_phys_sha = state_doc.get("physics_sha256")
+        if (
+            current_phys_sha is not None
+            and isinstance(recorded_phys_sha, str)
+            and recorded_phys_sha != current_phys_sha
+            and progress.inputs_prepared
+        ):
+            stale.append("prepared inputs/ are stale relative to edited physics.json")
+
+        if self.qualification_manifest_path is not None and not progress.bundle_trained:
+            stale.append("qualification/ exists without a trained candidate-bundle")
+
+        return WORKBENCH_STAGE_MACHINE.snapshot(
+            stage,
+            blockers=blockers,
+            stale_items=stale,
+            recommended_trigger=rec_trigger,
+            recommended_hint=rec_hint,
+            metadata={
+                "progress": progress.document(),
+                "qualification_verdict": self._qualification_verdict(),
+                "workspace_root": str(self.root),
+            },
         )
 
     def load_preview(self) -> dict[str, Any] | None:
@@ -138,15 +435,21 @@ class WorkbenchWorkspace:
             "schema": WORKBENCH_STATE_SCHEMA,
             **{str(k): v for k, v in data.items()},
         }
-        self.state_path.write_text(
-            json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        _atomic_write_text(
+            self.state_path,
+            json.dumps(payload, indent=2, sort_keys=True) + "\n",
         )
 
     def load_state(self) -> dict[str, Any]:
         if not self.state_path.is_file():
             return {"schema": WORKBENCH_STATE_SCHEMA}
-        raw = json.loads(self.state_path.read_text(encoding="utf-8"))
+        try:
+            raw = json.loads(self.state_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return {"schema": WORKBENCH_STATE_SCHEMA}
         if not isinstance(raw, dict):
+            return {"schema": WORKBENCH_STATE_SCHEMA}
+        if raw.get("schema") not in (None, WORKBENCH_STATE_SCHEMA):
             return {"schema": WORKBENCH_STATE_SCHEMA}
         return raw
 
@@ -174,25 +477,49 @@ class WorkbenchWorkspace:
         src_path = self.source_dir / safe_name
         src_path.write_bytes(payload)
 
-        # Clean stale downstream artifacts when re-importing geometry
-        for stale_dir in (self.geometry_dir, self.inputs_dir, self.preview_dir):
+        # Stage geometry preparation into a temp directory first so a meshing failure
+        # never destroys an already-valid geometry/ directory.
+        staging_root = Path(
+            tempfile.mkdtemp(dir=str(self.root), prefix=".geometry-staging-")
+        )
+        staged_geom = staging_root / "geometry"
+        try:
+            prepare_geometry(
+                src_path,
+                staged_geom,
+                unit=unit,
+                mesh_size_mm=mesh_size_mm if mesh_policy is None else None,
+                mesh_policy=mesh_policy,
+            )
+            if self.geometry_dir.exists():
+                shutil.rmtree(self.geometry_dir)
+            shutil.move(str(staged_geom), str(self.geometry_dir))
+        finally:
+            if staging_root.exists():
+                shutil.rmtree(staging_root, ignore_errors=True)
+
+        # Invalidate downstream artifacts that depended on the previous geometry.
+        for stale_dir in (
+            self.inputs_dir,
+            self.preview_dir,
+            self.run_dir,
+            self.qualification_dir,
+        ):
             if stale_dir.exists():
                 shutil.rmtree(stale_dir)
+        if self.physics_path.is_file():
+            self.physics_path.unlink()
 
-        prepare_geometry(
-            src_path,
-            self.geometry_dir,
-            unit=unit,
-            mesh_size_mm=mesh_size_mm if mesh_policy is None else None,
-            mesh_policy=mesh_policy,
-        )
         preview = self.load_preview()
         if preview is None:
             raise RuntimeError("prepare_geometry did not emit preview.json")
         state = self.load_state()
+        state.pop("boundaries", None)
+        state.pop("physics_sha256", None)
         state["source_filename"] = safe_name
         state["unit"] = unit.value
         state["mesh_size_mm"] = mesh_size_mm
+        state["geometry_sha256"] = _file_sha256(self.geometry_dir / "geometry.json")
         self.save_state(state)
         return preview
 
@@ -266,8 +593,10 @@ def canonical_settings_bytes(settings_doc: Mapping[str, Any]) -> bytes:
 
 __all__ = (
     "SUPPORTED_CAD_EXTENSIONS",
+    "WORKBENCH_STAGE_MACHINE",
     "WORKBENCH_STATE_SCHEMA",
     "StageProgress",
+    "WorkbenchStage",
     "WorkbenchWorkspace",
     "canonical_settings_bytes",
     "generate_sample_bracket_step",

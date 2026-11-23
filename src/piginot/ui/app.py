@@ -165,12 +165,21 @@ def _render_stage_2_boundaries(st: Any, workspace: WorkbenchWorkspace) -> None:
         for entry in preview.get("boundaries", ())
     }
     sel_key = f"wb_selected_region::{workspace.root}"
+    select_widget_key = f"wb_region_select::{workspace.root}"
     if sel_key not in st.session_state or st.session_state[sel_key] not in regions:
         st.session_state[sel_key] = regions[0]
+        st.session_state[select_widget_key] = regions[0]
+    elif (
+        select_widget_key in st.session_state
+        and st.session_state[select_widget_key] not in regions
+    ):
+        st.session_state[select_widget_key] = st.session_state[sel_key]
 
     col_canvas, col_editor = st.columns([1.45, 1.0], gap="large")
     with col_canvas:
-        show_mesh = st.checkbox("Show mesh wireframe", value=True, key="wb_show_mesh")
+        show_mesh = st.checkbox(
+            "Show mesh wireframe", value=True, key=f"wb_show_mesh::{workspace.root}"
+        )
         fig = build_cad_boundary_figure(
             preview,
             assignments=assignments,
@@ -182,7 +191,7 @@ def _render_stage_2_boundaries(st: Any, workspace: WorkbenchWorkspace) -> None:
             width="stretch",
             on_select="rerun",
             selection_mode="points",
-            key="wb_cad_picker_chart",
+            key=f"wb_cad_picker_chart::{workspace.root}",
         )
         clicked = extract_selected_region(selection)
         if (
@@ -191,6 +200,7 @@ def _render_stage_2_boundaries(st: Any, workspace: WorkbenchWorkspace) -> None:
             and clicked != st.session_state[sel_key]
         ):
             st.session_state[sel_key] = clicked
+            st.session_state[select_widget_key] = clicked
             st.rerun()
 
     with col_editor:
@@ -198,7 +208,7 @@ def _render_stage_2_boundaries(st: Any, workspace: WorkbenchWorkspace) -> None:
             "Selected CAD Boundary Group",
             options=regions,
             index=regions.index(str(st.session_state[sel_key])),
-            key="wb_region_select",
+            key=select_widget_key,
         )
         st.session_state[sel_key] = active_region
         bkind = kinds_by_region.get(active_region, "other")
@@ -206,16 +216,19 @@ def _render_stage_2_boundaries(st: Any, workspace: WorkbenchWorkspace) -> None:
 
         current_idx = regions.index(active_region)
         current = assignments[current_idx]
+        ws_ns = str(workspace.root)
 
         bc_name = st.text_input(
-            "Condition Name", value=current.name, key=f"bc_name_{active_region}"
+            "Condition Name",
+            value=current.name,
+            key=f"bc_name::{ws_ns}::{active_region}",
         )
         kind_options: list[BoundaryKind] = ["dirichlet", "symmetry", "traction_free"]
         bc_kind_str = st.selectbox(
             "Boundary Condition Type",
             options=kind_options,
             index=kind_options.index(current.kind),
-            key=f"bc_kind_{active_region}",
+            key=f"bc_kind::{ws_ns}::{active_region}",
         )
         bc_kind: BoundaryKind = (
             "dirichlet"
@@ -232,22 +245,24 @@ def _render_stage_2_boundaries(st: Any, workspace: WorkbenchWorkspace) -> None:
             use_x = st.checkbox(
                 "Prescribe u_x",
                 value="x" in cur_map or not cur_map,
-                key=f"use_x_{active_region}",
+                key=f"use_x::{ws_ns}::{active_region}",
             )
             expr_x = st.text_input(
                 "u_x expression (mm)",
                 value=cur_map.get("x", ("0", "mm"))[0],
                 disabled=not use_x,
-                key=f"expr_x_{active_region}",
+                key=f"expr_x::{ws_ns}::{active_region}",
             )
             use_y = st.checkbox(
-                "Prescribe u_y", value="y" in cur_map, key=f"use_y_{active_region}"
+                "Prescribe u_y",
+                value="y" in cur_map,
+                key=f"use_y::{ws_ns}::{active_region}",
             )
             expr_y = st.text_input(
                 "u_y expression (mm)",
                 value=cur_map.get("y", ("0", "mm"))[0],
                 disabled=not use_y,
-                key=f"expr_y_{active_region}",
+                key=f"expr_y::{ws_ns}::{active_region}",
             )
             if use_x:
                 comps.append("x")
@@ -483,6 +498,8 @@ def _render_stage_4_train_qualify(
     st.subheader("Step 4 — Background Compile & Continuous Model Qualification")
     runner = WorkbenchJobRunner(workspace.jobs_dir, cwd=workspace.root)
     prog = workspace.stage_progress()
+    active_compile = runner.active_jobs(kind="compile")
+    active_qualify = runner.active_jobs(kind="qualify")
 
     col_train, col_qual = st.columns(2, gap="large")
     with col_train:
@@ -490,27 +507,38 @@ def _render_stage_4_train_qualify(
         if not prog.inputs_prepared:
             st.info("Prepare inputs in Step 3 before launching compilation.")
         else:
+            if active_compile:
+                st.info(
+                    f"Compile job `{active_compile[0].job_id}` is currently RUNNING."
+                )
             b1, b2 = st.columns(2)
-            if b1.button("Start Compile Job", type="primary", width="stretch"):
+            if b1.button(
+                "Start Compile Job",
+                type="primary",
+                disabled=bool(active_compile),
+                width="stretch",
+            ):
                 job = runner.start_compile(
                     spec_path=workspace.inputs_dir / "problem.json",
                     config_path=workspace.inputs_dir / "config.json",
                     output_dir=workspace.run_dir,
                     resume=False,
                 )
-                st.session_state["wb_active_compile_job"] = job.job_id
                 st.success(
                     f"Launched background compile job `{job.job_id}` (PID {job.pid})."
                 )
                 st.rerun()
-            if b2.button("Resume Compile (`--resume`)", width="stretch"):
+            if b2.button(
+                "Resume Compile (`--resume`)",
+                disabled=bool(active_compile),
+                width="stretch",
+            ):
                 job = runner.start_compile(
                     spec_path=workspace.inputs_dir / "problem.json",
                     config_path=workspace.inputs_dir / "config.json",
                     output_dir=workspace.run_dir,
                     resume=True,
                 )
-                st.session_state["wb_active_compile_job"] = job.job_id
                 st.success(f"Resumed compile job `{job.job_id}`.")
                 st.rerun()
 
@@ -521,29 +549,47 @@ def _render_stage_4_train_qualify(
             if workspace.candidate_bundle_path is not None
             else default_bundle
         )
+        qual_bundle_key = f"wb_qual_bundle_path::{workspace.root}"
+        if (
+            qual_bundle_key in st.session_state
+            and not str(st.session_state[qual_bundle_key]).strip()
+            and candidate_default
+        ):
+            st.session_state[qual_bundle_key] = candidate_default
         qual_bundle_str = st.text_input(
             "Bundle to Qualify",
             value=candidate_default,
-            key="wb_qual_bundle_path",
+            key=qual_bundle_key,
         )
         q1, q2, q3 = st.columns(3)
         preset = q1.selectbox(
-            "Policy Preset", options=["dev", "holdout"], index=0, key="wb_qual_preset"
+            "Policy Preset",
+            options=["dev", "holdout"],
+            index=0,
+            key=f"wb_qual_preset::{workspace.root}",
         )
         q_backend = q2.selectbox(
             "FEM Backend",
             options=["torch-fem", "scikit-fem"],
             index=0,
-            key="wb_qual_backend",
+            key=f"wb_qual_backend::{workspace.root}",
         )
         q_dev_n = q3.number_input(
-            "DEV samples", min_value=3, max_value=100, value=9, key="wb_qual_dev_n"
+            "DEV samples",
+            min_value=3,
+            max_value=100,
+            value=9,
+            key=f"wb_qual_dev_n::{workspace.root}",
         )
 
+        if active_qualify:
+            st.info(
+                f"Qualification job `{active_qualify[0].job_id}` is currently RUNNING."
+            )
         if st.button(
             "Run Qualification Pipeline",
             type="primary",
-            disabled=not qual_bundle_str.strip(),
+            disabled=not qual_bundle_str.strip() or bool(active_qualify),
             width="stretch",
         ):
             job = runner.start_qualify(
@@ -554,11 +600,10 @@ def _render_stage_4_train_qualify(
                 sample_holdout=5 if preset == "holdout" else 0,
                 backend=q_backend,
             )
-            st.session_state["wb_active_qual_job"] = job.job_id
             st.success(f"Launched qualification job `{job.job_id}` (PID {job.pid}).")
             st.rerun()
 
-    # Live Job Monitor
+    # Live Job Monitor — poll all non-terminal jobs plus recent history
     jobs = runner.list_jobs()
     if jobs:
         st.divider()
@@ -566,7 +611,10 @@ def _render_stage_4_train_qualify(
         hdr_a.markdown("### Background Jobs")
         if hdr_b.button("Refresh Job Status", width="stretch"):
             st.rerun()
-        refreshed = [runner.poll(j.job_id) for j in jobs[:6]]
+        refreshed_all = [
+            runner.poll(j.job_id) if not j.is_terminal else j for j in jobs
+        ]
+        refreshed = refreshed_all[:6]
         st.table(
             [
                 {
@@ -582,10 +630,15 @@ def _render_stage_4_train_qualify(
                 for j in refreshed
             ]
         )
+        running_jobs = [j for j in refreshed_all if not j.is_terminal]
+        for running in running_jobs:
+            if st.button(
+                f"Cancel `{running.job_id}` ({running.kind})",
+                key=f"cancel_job::{running.job_id}",
+            ):
+                runner.cancel(running.job_id)
+                st.rerun()
         latest = refreshed[0]
-        if latest.state == "RUNNING" and st.button(f"Cancel `{latest.job_id}`"):
-            runner.cancel(latest.job_id)
-            st.rerun()
         log_tail = runner.read_log_tail(latest.job_id, max_lines=40)
         if log_tail:
             with st.expander(f"Log tail — `{latest.job_id}`"):
@@ -635,30 +688,68 @@ def _render_stage_5_inspector(
         if workspace.candidate_bundle_path is not None
         else default_bundle
     )
+    insp_bundle_key = f"wb_inspector_bundle::{workspace.root}"
+    if (
+        insp_bundle_key in st.session_state
+        and not str(st.session_state[insp_bundle_key]).strip()
+        and active_default
+    ):
+        st.session_state[insp_bundle_key] = active_default
     c_path, c_mode, c_back = st.columns([2.2, 1.0, 1.0])
     bundle_str = c_path.text_input(
         "Bundle Directory",
         value=active_default,
         help="Path to a FormaMech verified or compiled candidate bundle directory.",
-        key="wb_inspector_bundle",
+        key=insp_bundle_key,
     )
     mode = c_mode.selectbox(
         "Verification Mode",
         options=["fast", "certified", "exact"],
         index=1,
-        key="wb_insp_mode",
+        key=f"wb_insp_mode::{workspace.root}",
     )
+    is_fast_mode = mode == "fast"
     backend = c_back.selectbox(
         "FEM Backend",
         options=["torch-fem", "scikit-fem"],
         index=0,
-        key="wb_insp_backend",
+        disabled=is_fast_mode,
+        key=f"wb_insp_backend::{workspace.root}",
     )
 
     o1, o2, o3, o4 = st.columns([1.2, 1.2, 1.4, 1.6])
-    spectral_repair = o1.checkbox("Spectral Warm-Start Repair", value=True)
-    escalate = o2.checkbox("Auto-Escalate to FEM", value=False)
-    tta_steps = o3.slider("Tier 1.5 Physics LoRA Steps", 0, 50, 0, 5)
+    spectral_repair = (
+        o1.checkbox(
+            "Spectral Warm-Start Repair",
+            value=not is_fast_mode,
+            disabled=is_fast_mode,
+            key=f"wb_insp_repair::{workspace.root}",
+        )
+        and not is_fast_mode
+    )
+    escalate = (
+        o2.checkbox(
+            "Auto-Escalate to FEM",
+            value=False,
+            disabled=mode != "certified",
+            key=f"wb_insp_escalate::{workspace.root}",
+        )
+        and mode == "certified"
+    )
+    tta_steps = (
+        0
+        if is_fast_mode
+        else int(
+            o3.slider(
+                "Tier 1.5 Physics LoRA Steps",
+                0,
+                50,
+                0,
+                5,
+                key=f"wb_insp_tta::{workspace.root}",
+            )
+        )
+    )
     qual_manifest_str = o4.text_input(
         "Qualification Manifest (optional)",
         value=(
@@ -666,6 +757,7 @@ def _render_stage_5_inspector(
             if workspace.qualification_manifest_path is not None
             else ""
         ),
+        key=f"wb_insp_qual_manifest::{workspace.root}",
     )
 
     if not bundle_str.strip():
@@ -680,10 +772,17 @@ def _render_stage_5_inspector(
         st.error(f"Bundle path does not exist: {bundle_path}")
         return
 
-    bundle = load_bundle(bundle_path)
+    try:
+        bundle = load_bundle(bundle_path)
+    except Exception as exc:
+        st.error(f"Failed to load bundle `{bundle_path}`: {exc}")
+        return
+
     gate_badge = "UNCHECKED"
+    gate_refused = False
     if qual_manifest_str.strip():
         gate_res = check_deployment_gate(bundle_path, Path(qual_manifest_str.strip()))
+        gate_refused = not gate_res.allowed
         gate_badge = (
             f"QUALIFIED ({gate_res.granted_claim_level.value})"
             if gate_res.allowed
@@ -717,16 +816,40 @@ def _render_stage_5_inspector(
 
     act1, act2 = st.columns([1.2, 1.2])
     one_click_exact = act1.button("Run Warm-Start FEM & Compare", type="primary")
-    export_fmu_clicked = act2.button("Export FMI 3.0 Co-Simulation FMU")
+    export_fmu_clicked = act2.button(
+        "Export FMI 3.0 Co-Simulation FMU",
+        disabled=gate_refused,
+    )
     effective_mode = "exact" if one_click_exact else mode
+    if gate_refused:
+        st.warning(
+            f"Deployment gate {gate_badge}: FMU export is blocked until qualification passes."
+        )
 
-    if export_fmu_clicked:
-        fmu_dest = workspace.root / f"{bundle.manifest.name}.fmu"
-        fmu_res = export_bundle_to_fmu(bundle_path, fmu_dest)
-        st.success(f"Exported FMI 3.0 FMU to `{fmu_res.fmu_path}`.")
+    if export_fmu_clicked and not gate_refused:
+        try:
+            fmu_dest = workspace.root / f"{bundle.manifest.name}.fmu"
+            fmu_res = export_bundle_to_fmu(bundle_path, fmu_dest)
+            st.success(f"Exported FMI 3.0 FMU to `{fmu_res.fmu_path}`.")
+        except Exception as exc:
+            st.error(f"FMU export failed: {exc}")
 
     cal_default = workspace.qualification_dir / "cad-calibration.json"
-    cad_cal_path: Path | None = cal_default if cal_default.is_file() else None
+    cad_cal_path: Path | None = None
+    if cal_default.is_file():
+        from piginot.bounds import CadCalibrationRecord
+
+        try:
+            CadCalibrationRecord.load(
+                cal_default,
+                expected_manifest_sha256=bundle.manifest.manifest_sha256,
+            )
+            cad_cal_path = cal_default
+        except (OSError, ValueError):
+            st.caption(
+                "Workspace CAD calibration belongs to a different bundle; "
+                "serving without workspace conformal bounds."
+            )
     try:
         snapshot = build_inspector_snapshot(
             bundle_path,
@@ -734,21 +857,13 @@ def _render_stage_5_inspector(
             mode=effective_mode,
             cad_calibration_path=cad_cal_path,
             backend=backend,
-            spectral_repair=spectral_repair,
-            tta_steps=tta_steps,
-            escalate=escalate,
+            spectral_repair=spectral_repair if effective_mode != "fast" else False,
+            tta_steps=tta_steps if effective_mode != "fast" else 0,
+            escalate=escalate if effective_mode == "certified" else False,
         )
-    except ValueError:
-        snapshot = build_inspector_snapshot(
-            bundle_path,
-            inputs,
-            mode=effective_mode,
-            cad_calibration_path=None,
-            backend=backend,
-            spectral_repair=spectral_repair,
-            tta_steps=tta_steps,
-            escalate=escalate,
-        )
+    except Exception as exc:
+        st.error(f"Inspector evaluation failed: {exc}")
+        return
     summary = snapshot.summary()
 
     r1c1, r1c2, r1c3 = st.columns(3)
@@ -846,8 +961,10 @@ def run_streamlit_app(
         )
         workspace = WorkbenchWorkspace(Path(ws_str.strip() or default_workspace))
         progress = workspace.stage_progress()
+        wf_snapshot = workspace.workflow_snapshot()
 
         st.subheader("Guided Workflow Progress")
+        st.caption(f"Current stage: `{wf_snapshot.state.value}`")
         steps = [
             ("1. CAD & Mesh Imported", progress.cad_imported),
             ("2. Physics & Boundaries Saved", progress.physics_saved),
@@ -858,6 +975,14 @@ def run_streamlit_app(
         ]
         for label, done in steps:
             st.markdown(f"{'[x]' if done else '[ ]'} **{label}**")
+        if wf_snapshot.stale_items:
+            for item in wf_snapshot.stale_items:
+                st.warning(f"Stale: {item}")
+        if wf_snapshot.blockers:
+            for blocker in wf_snapshot.blockers:
+                st.error(f"Blocker: {blocker}")
+        if wf_snapshot.recommended_hint:
+            st.info(f"Next: {wf_snapshot.recommended_hint}")
 
         st.divider()
         st.caption(
