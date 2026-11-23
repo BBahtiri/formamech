@@ -14,7 +14,6 @@ from pathlib import Path
 from typing import Any, Final
 
 from piginot.contracts.state_machine import (
-    ClaimLevel,
     StateMachineSpec,
     TransitionSpec,
     register_state_machine,
@@ -26,6 +25,7 @@ from piginot.qualify.manifest import (
     verify_manifest_document,
 )
 from piginot.qualify.policy import QualificationPolicy
+from piginot.verification.status import ClaimLevel
 
 DEPLOYMENT_GATE_SCHEMA: Final = "formamech.deployment-gate-v1"
 

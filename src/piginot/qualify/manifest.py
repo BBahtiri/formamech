@@ -17,7 +17,8 @@ from typing import Any, Final
 
 from piginot.bundle.limitations import REQUIRED_LIMITATION_PARAGRAPH
 from piginot.contracts.canonical import canonical_json_bytes
-from piginot.contracts.state_machine import CheckStatus, ClaimLevel
+from piginot.contracts.state_machine import claim_level_rank
+from piginot.verification.status import CheckStatus, ClaimLevel
 
 QUALIFICATION_MANIFEST_SCHEMA: Final = "formamech.qualification-manifest-v1"
 QUALIFICATION_DIFF_SCHEMA: Final = "formamech.qualification-diff-v1"
@@ -42,7 +43,7 @@ class QualificationIntegrityError(ValueError):
 
 def claim_rank(level: ClaimLevel) -> int:
     """Monotonic integer rank for comparing :class:`ClaimLevel` values."""
-    return level.rank
+    return claim_level_rank(level)
 
 
 @dataclass(frozen=True, slots=True)

@@ -109,9 +109,9 @@ NOTCHED_REQUEST = ROOT / "bundles" / "requests" / "notched-in-domain.json"
 
 
 def test_state_machine_kernel_isolation_identity_and_registry() -> None:
-    # Single identity shared across contracts & verification packages
-    assert ClaimLevel is VerificationClaimLevel
-    assert CheckStatus is VerificationCheckStatus
+    # Exact vocabulary and StrEnum equality shared with byte-frozen S14 verification/status.py
+    assert [c.value for c in ClaimLevel] == [c.value for c in VerificationClaimLevel]
+    assert [s.value for s in CheckStatus] == [s.value for s in VerificationCheckStatus]
     assert ALLOWED_CLAIM_LEVELS == (
         "NOT_VERIFIED",
         "DEVELOPMENT_VERIFIED",
@@ -121,6 +121,9 @@ def test_state_machine_kernel_isolation_identity_and_registry() -> None:
     assert ClaimLevel.DEVELOPMENT_VERIFIED.rank == 1
     assert ClaimLevel.HOLDOUT_VERIFIED.rank == 2
     assert ClaimLevel.HOLDOUT_VERIFIED.satisfies(ClaimLevel.DEVELOPMENT_VERIFIED)
+    assert ClaimLevel.HOLDOUT_VERIFIED.satisfies(
+        VerificationClaimLevel.DEVELOPMENT_VERIFIED
+    )
     assert not ClaimLevel.NOT_VERIFIED.satisfies(ClaimLevel.DEVELOPMENT_VERIFIED)
 
     # Zero heavy dependency leakage in pure stdlib contract module

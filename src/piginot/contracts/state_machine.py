@@ -59,11 +59,11 @@ class ClaimLevel(StrEnum):
         """Monotonic ordinal rank (0 = NOT_VERIFIED, 1 = DEVELOPMENT, 2 = HOLDOUT)."""
         return _CLAIM_LEVEL_RANK[self]
 
-    def satisfies(self, minimum: ClaimLevel) -> bool:
+    def satisfies(self, minimum: StrEnum) -> bool:
         """Return True iff this claim level is at least as strong as ``minimum``."""
-        if not isinstance(minimum, ClaimLevel):
+        if not isinstance(minimum, StrEnum) or minimum.value not in _CLAIM_LEVEL_VALUES:
             raise TypeError(f"minimum must be a ClaimLevel, got {type(minimum)!r}")
-        return self.rank >= minimum.rank
+        return self.rank >= _CLAIM_LEVEL_RANK[ClaimLevel(minimum.value)]
 
 
 _CLAIM_LEVEL_RANK: Final[dict[ClaimLevel, int]] = {
@@ -75,6 +75,14 @@ _CLAIM_LEVEL_RANK: Final[dict[ClaimLevel, int]] = {
 ALLOWED_CLAIM_LEVELS: Final[tuple[str, ...]] = tuple(
     level.value for level in ClaimLevel
 )
+_CLAIM_LEVEL_VALUES: Final[frozenset[str]] = frozenset(ALLOWED_CLAIM_LEVELS)
+
+
+def claim_level_rank(level: StrEnum) -> int:
+    """Monotonic ordinal rank for any ``ClaimLevel`` enum member."""
+    if not isinstance(level, StrEnum) or level.value not in _CLAIM_LEVEL_VALUES:
+        raise TypeError(f"level must be a ClaimLevel, got {type(level)!r}")
+    return _CLAIM_LEVEL_RANK[ClaimLevel(level.value)]
 
 
 class InvalidTransitionError(ValueError):
@@ -418,6 +426,7 @@ __all__ = (
     "StateSnapshot",
     "TransitionRecord",
     "TransitionSpec",
+    "claim_level_rank",
     "get_state_machine",
     "register_state_machine",
     "registered_state_machines",
