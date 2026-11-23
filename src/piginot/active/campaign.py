@@ -133,7 +133,12 @@ def run_active_fem_campaign(
                 )
             )
             acquired_ids.append(cand.case_id)
-            acquired_features.append(cand.feature_vector)
+            if plan.arm_kind == "physics_dwr_diversity" and cand.geometry_token_vector:
+                acquired_features.append(
+                    (*cand.feature_vector, *cand.geometry_token_vector)
+                )
+            else:
+                acquired_features.append(cand.feature_vector)
             round_outcomes.append((cand, outcome))
 
         if on_round_complete is not None:

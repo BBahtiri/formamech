@@ -22,7 +22,7 @@ import hashlib
 import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Final
 
 import numpy as np
 
@@ -38,6 +38,11 @@ from piginot.certify.receipt import (
     ArtifactDigests,
     TrustReceipt,
     VerificationTier,
+)
+from piginot.contracts.state_machine import (
+    StateMachineSpec,
+    TransitionSpec,
+    register_state_machine,
 )
 
 if TYPE_CHECKING:
@@ -66,6 +71,89 @@ class ServingPath(enum.StrEnum):
     COLD_FEM = "cold_fem"
     SOLVE_FAILED = "solve_failed"
     REFUSED = "refused"
+
+
+class ServingStage(enum.StrEnum):
+    """Explicit stages of the FormaMech three-tier verification serving funnel."""
+
+    RECEIVED = "RECEIVED"
+    ENVELOPE_REFUSED = "ENVELOPE_REFUSED"
+    FAST_SERVED = "FAST_SERVED"
+    CERTIFIED_EVALUATED = "CERTIFIED_EVALUATED"
+    TTA_ADAPTED = "TTA_ADAPTED"
+    TIER2_ESCALATED = "TIER2_ESCALATED"
+    EXACT_SOLVED = "EXACT_SOLVED"
+    EXACT_FAILED = "EXACT_FAILED"
+
+
+SERVING_FUNNEL_MACHINE: Final[StateMachineSpec[ServingStage]] = register_state_machine(
+    StateMachineSpec(
+        machine_id="formamech.serving.funnel",
+        description=(
+            "Three-tier hybrid verification funnel: envelope gate -> Tier 0 "
+            "admissibility -> Tier 1a/1b conformal & DWR certification -> optional "
+            "Tier 1.5 physics LoRA TTA -> Tier 2 spectral repair & FEM solve ladder."
+        ),
+        states=tuple(ServingStage),
+        initial_states=(ServingStage.RECEIVED,),
+        terminal_states=(
+            ServingStage.ENVELOPE_REFUSED,
+            ServingStage.FAST_SERVED,
+            ServingStage.EXACT_SOLVED,
+            ServingStage.EXACT_FAILED,
+        ),
+        transitions=(
+            TransitionSpec(
+                ServingStage.RECEIVED,
+                ServingStage.ENVELOPE_REFUSED,
+                "refuse_envelope",
+                "Request outside executable envelope, invalid morph, or inadmissible field.",
+            ),
+            TransitionSpec(
+                ServingStage.RECEIVED,
+                ServingStage.FAST_SERVED,
+                "serve_fast",
+                "Mode is FAST; emit operator prediction with optional Tier 0 / conformal.",
+            ),
+            TransitionSpec(
+                ServingStage.RECEIVED,
+                ServingStage.CERTIFIED_EVALUATED,
+                "evaluate_certificate",
+                "Mode is CERTIFIED or EXACT; linearize FEM problem and compute S21/DWR certificate.",
+            ),
+            TransitionSpec(
+                ServingStage.CERTIFIED_EVALUATED,
+                ServingStage.TTA_ADAPTED,
+                "apply_tier15_tta",
+                "Run Tier 1.5 label-free test-time physics LoRA and re-certify.",
+            ),
+            TransitionSpec(
+                ServingStage.CERTIFIED_EVALUATED,
+                ServingStage.TIER2_ESCALATED,
+                "escalate_tier2",
+                "Mode is EXACT or certified escalation guard fired (Tier 0 / DWR / tolerance).",
+            ),
+            TransitionSpec(
+                ServingStage.TTA_ADAPTED,
+                ServingStage.TIER2_ESCALATED,
+                "escalate_tier2",
+                "Post-TTA prediction still requires Tier 2 FEM solve.",
+            ),
+            TransitionSpec(
+                ServingStage.TIER2_ESCALATED,
+                ServingStage.EXACT_SOLVED,
+                "ladder_converged",
+                "Solve ladder converged via warm Newton, repaired warm Newton, continuation, or cold FEM.",
+            ),
+            TransitionSpec(
+                ServingStage.TIER2_ESCALATED,
+                ServingStage.EXACT_FAILED,
+                "ladder_exhausted",
+                "Every rung of the Tier 2 FEM solve ladder failed (SOLVE_FAILED).",
+            ),
+        ),
+    )
+)
 
 
 class MissingExtraError(ImportError):
@@ -120,6 +208,32 @@ class VerifiedPrediction:
     test_time_adaptation: Mapping[str, Any] | None = None
     trust_receipt: Mapping[str, Any] | None = None
     trust_receipt_sha256: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.mode is ServingMode.FAST and self.path not in (
+            ServingPath.OPERATOR,
+            ServingPath.REFUSED,
+        ):
+            raise ValueError(
+                f"FAST mode only allows OPERATOR or REFUSED path, got {self.path.value!r}"
+            )
+        if (
+            self.path
+            in (
+                ServingPath.WARM_NEWTON,
+                ServingPath.REPAIRED_WARM_NEWTON,
+                ServingPath.CONTINUATION,
+                ServingPath.COLD_FEM,
+            )
+            and self.exact is None
+        ):
+            raise ValueError(
+                f"exact FEM path {self.path.value!r} requires a converged exact FemResult"
+            )
+        if self.path is ServingPath.SOLVE_FAILED and self.exact is not None:
+            raise ValueError(
+                "SOLVE_FAILED path cannot carry a converged exact FemResult"
+            )
 
     def document(self) -> dict[str, Any]:
         """JSON form; ``fast`` without bounds is exactly the v0.1.0 document.
@@ -437,6 +551,8 @@ def _build_trust_receipt(
     tier0_passed = bool(isinstance(tier0, Mapping) and tier0.get("passed") is True)
     if path is ServingPath.REFUSED:
         tier = VerificationTier.REFUSED
+    elif path is ServingPath.SOLVE_FAILED:
+        tier = VerificationTier.SURROGATE_UNCHECKED
     elif exact_converged:
         tier = VerificationTier.DISCRETE_FEM_VERIFIED
     elif dwr_evidence is not None and dwr_evidence.get("verdict") == "OK":
@@ -472,11 +588,12 @@ def solve_ladder(
     linearization: Any | None = None,
     spectral_repair: bool = False,
     spectral_repair_config: SpectralRepairConfig | None = None,
+    first_path: ServingPath | None = None,
 ) -> tuple[Any | None, tuple[SolveAttempt, ...]]:
     """Warm Newton (optionally spectrally repaired), continuation, cold solve."""
 
     start_vec = initial
-    first_path = ServingPath.WARM_NEWTON
+    resolved_first_path = ServingPath.WARM_NEWTON if first_path is None else first_path
     if spectral_repair and linearization is not None:
         from piginot.serving.spectral_repair import (
             SpectralRepairConfig as RepairCfg,
@@ -494,12 +611,12 @@ def solve_ladder(
         )
         if report.needed_repair and report.succeeded:
             start_vec = repaired
-            first_path = ServingPath.REPAIRED_WARM_NEWTON
+            resolved_first_path = ServingPath.REPAIRED_WARM_NEWTON
 
     ladder: Sequence[
         tuple[ServingPath, np.ndarray[Any, Any] | None, tuple[float, ...]]
     ] = (
-        (first_path, start_vec, (1.0,)),
+        (resolved_first_path, start_vec, (1.0,)),
         (ServingPath.CONTINUATION, 0.5 * start_vec, (0.5, 0.75, 1.0)),
         (ServingPath.COLD_FEM, None, ()),
     )
@@ -536,6 +653,8 @@ def _build_live_cad_trust_report(
     solve_failed: bool = False,
     backend: Any | None = None,
     statistical_by_qoi: Mapping[str, Any] | None = None,
+    in_parameter_envelope: bool = True,
+    in_geometry_envelope: bool = True,
 ) -> tuple[dict[str, Any], str]:
     """Evaluate live DWR adjoint QoI error budgets and assemble ``CADTrustReport``."""
     from piginot.certify import (
@@ -592,8 +711,8 @@ def _build_live_cad_trust_report(
         discretization_error=disc_rec,
         bundle_digest=str(bundle.manifest.manifest_sha256),
         claim_level=bundle.claim_level,
-        in_parameter_envelope=True,
-        in_geometry_envelope=True,
+        in_parameter_envelope=in_parameter_envelope,
+        in_geometry_envelope=in_geometry_envelope,
         statistical_by_qoi=statistical_by_qoi,
         indicators_qualified=indicators_qualified,
         solve_failed=solve_failed,
@@ -759,6 +878,7 @@ def serve(
     certificate, corrected_vector = certify_with_correction(linearization, surrogate)
     p_change = certificate.indicators.get("p_l2_change", float("inf"))
     tta_doc: dict[str, Any] | None = None
+    adapted_tier0_fields: dict[str, Any] | None = None
     if tta_config is not None and (
         certificate.verdict.value != "OK"
         or (tolerance is not None and p_change > tolerance)
@@ -804,14 +924,47 @@ def serve(
                     linearization, surrogate
                 )
                 p_change = certificate.indicators.get("p_l2_change", float("inf"))
+                # Re-evaluate adapted vertex displacement & deformation gradient for Tier 0.
+                verts_t = torch.tensor(
+                    prediction.mesh.nodes, dtype=dtype, requires_grad=True
+                ).unsqueeze(0)
+                u_v, grad_u_v = adapted_op.displacement_and_gradient(
+                    query_xy=verts_t,
+                    parameters=req_ctx.parameters.to(dtype=dtype),
+                    frame=req_ctx.frame,
+                    lifting=req_ctx.lifting,
+                    create_graph=False,
+                )
+                eye2 = torch.eye(2, dtype=dtype).view(1, 2, 2)
+                f2d_v = eye2 + grad_u_v[0]
+                adapted_tier0_fields = {
+                    "u": u_v[0].detach().cpu().numpy(),
+                    "F_2D": f2d_v.detach().cpu().numpy(),
+                }
 
     tier0_v_doc: dict[str, Any] | None = None
     if tier0_check or emit_receipt:
-        tier0_v_doc = _evaluate_tier0(
-            prediction,
-            thresholds=tier0_thresholds,
-            dirichlet_deviation=certificate.dirichlet_deviation,
-        ).document()
+        if adapted_tier0_fields is not None:
+            from piginot.certify.admissibility import (
+                AdmissibilityThresholds as ThresholdsCls,
+            )
+            from piginot.certify.admissibility import (
+                evaluate_tier0_admissibility,
+            )
+
+            tier0_v_doc = evaluate_tier0_admissibility(
+                adapted_tier0_fields,
+                thresholds=(
+                    ThresholdsCls() if tier0_thresholds is None else tier0_thresholds
+                ),
+                dirichlet_deviation=certificate.dirichlet_deviation,
+            ).document()
+        else:
+            tier0_v_doc = _evaluate_tier0(
+                prediction,
+                thresholds=tier0_thresholds,
+                dirichlet_deviation=certificate.dirichlet_deviation,
+            ).document()
 
     corrected_nodal = (
         linearization.nodal(corrected_vector)
@@ -830,6 +983,7 @@ def serve(
     request_hash = str(request.recipe_hash)
     bounds_v: Mapping[str, Any] | None = None
     stat_by_qoi: dict[str, Any] | None = None
+    in_cal_env = True
     if calibration is not None:
         bounds_v = calibration.evaluate(inputs, "reference_terms")
     elif cad_calibration is not None:
@@ -854,6 +1008,7 @@ def serve(
                 solve_failed=False,
                 backend=solver,
                 statistical_by_qoi=stat_by_qoi,
+                in_parameter_envelope=in_cal_env,
             )
         rc_doc: dict[str, Any] | None = None
         rc_sha: str | None = None
@@ -892,6 +1047,7 @@ def serve(
 
     start = linearization.with_exact_dirichlet(linearization.vector(surrogate))
     repair_doc: dict[str, Any] | None = None
+    first_ladder_path = ServingPath.WARM_NEWTON
     if spectral_repair:
         from piginot.serving.spectral_repair import (
             SpectralRepairConfig as RepairCfg,
@@ -910,24 +1066,16 @@ def serve(
         repair_doc = repair_report.document()
         if repair_report.needed_repair and repair_report.succeeded:
             start = repaired_vec
+            first_ladder_path = ServingPath.REPAIRED_WARM_NEWTON
     attempt, attempts = solve_ladder(
         solver,
         request,
         start,
         linearization=None,
         spectral_repair=False,
+        first_path=first_ladder_path,
     )
-    final_path = (
-        ServingPath.REPAIRED_WARM_NEWTON
-        if (
-            attempt is not None
-            and attempts[-1].path is ServingPath.WARM_NEWTON
-            and repair_doc is not None
-            and repair_doc.get("needed_repair") is True
-            and repair_doc.get("succeeded") is True
-        )
-        else (attempts[-1].path if attempt is not None else ServingPath.SOLVE_FAILED)
-    )
+    final_path = attempts[-1].path if attempt is not None else ServingPath.SOLVE_FAILED
     tr_doc_ex: dict[str, Any] | None = None
     tr_sha_ex: str | None = None
     if trust_report:
@@ -939,6 +1087,7 @@ def serve(
             solve_failed=attempt is None,
             backend=solver,
             statistical_by_qoi=stat_by_qoi,
+            in_parameter_envelope=in_cal_env,
         )
     reason_ex = "" if attempt is not None else "every rung of the solve ladder failed"
     rc_doc_ex: dict[str, Any] | None = None

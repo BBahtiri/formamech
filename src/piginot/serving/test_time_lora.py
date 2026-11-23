@@ -15,12 +15,18 @@ import hashlib
 import math
 import time
 from dataclasses import dataclass
-from typing import Any, TypeVar
+from enum import StrEnum
+from typing import Any, Final, TypeVar
 
 import torch
 from torch import nn
 
 from piginot.contracts import MaterialSpec, canonical_json_bytes
+from piginot.contracts.state_machine import (
+    StateMachineSpec,
+    TransitionSpec,
+    register_state_machine,
+)
 from piginot.lifting.base import DirichletLifting
 from piginot.objectives.energy import (
     PotentialEnergyConfig,
@@ -37,6 +43,45 @@ from piginot.operators.low_rank_adapter import (
     DEFAULT_TARGET_MODULES,
     LowRankLinear,
     _replace_target_linears,
+)
+
+
+class TestTimeLoraStatus(StrEnum):
+    """Explicit outcome states for Tier 1.5 test-time physics LoRA adaptation."""
+
+    ADAPTING = "ADAPTING"
+    APPLIED = "APPLIED"
+    ROLLED_BACK = "ROLLED_BACK"
+
+
+TestTimeLoraStatus.__test__ = False  # type: ignore[attr-defined]
+
+
+TTA_LORA_MACHINE: Final[StateMachineSpec[TestTimeLoraStatus]] = register_state_machine(
+    StateMachineSpec(
+        machine_id="formamech.serving.test_time_lora",
+        description=(
+            "Tier 1.5 label-free test-time physics LoRA lifecycle: adapt under "
+            "variational energy and commit only on admissible energy drop."
+        ),
+        states=tuple(TestTimeLoraStatus),
+        initial_states=(TestTimeLoraStatus.ADAPTING,),
+        terminal_states=(TestTimeLoraStatus.APPLIED, TestTimeLoraStatus.ROLLED_BACK),
+        transitions=(
+            TransitionSpec(
+                TestTimeLoraStatus.ADAPTING,
+                TestTimeLoraStatus.APPLIED,
+                "commit_improved",
+                "Admissible energy strictly decreased; keep adapted LoRA weights.",
+            ),
+            TransitionSpec(
+                TestTimeLoraStatus.ADAPTING,
+                TestTimeLoraStatus.ROLLED_BACK,
+                "rollback_to_base",
+                "No admissible energy drop (or non-finite loss); zero LoRA B weights.",
+            ),
+        ),
+    )
 )
 
 
@@ -103,6 +148,23 @@ class TestTimeLoraReport:
     rolled_back: bool
     adapter_digest: str
     wall_seconds: float
+
+    def __post_init__(self) -> None:
+        if self.improved == self.rolled_back:
+            raise ValueError(
+                "TestTimeLoraReport invariant violated: improved and rolled_back "
+                f"must be strictly opposite (got improved={self.improved}, "
+                f"rolled_back={self.rolled_back})"
+            )
+
+    @property
+    def status(self) -> TestTimeLoraStatus:
+        """Explicit finite-state outcome (APPLIED vs ROLLED_BACK)."""
+        return (
+            TestTimeLoraStatus.APPLIED
+            if self.improved
+            else TestTimeLoraStatus.ROLLED_BACK
+        )
 
     def document(self) -> dict[str, Any]:
         return {

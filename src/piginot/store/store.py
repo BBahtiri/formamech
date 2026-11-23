@@ -27,7 +27,13 @@ from piginot.store.errors import (
     StoreFormatError,
     StoreValidationError,
 )
-from piginot.store.models import ContentInfo, PruneResult, RetentionTier
+from piginot.store.models import (
+    ContentInfo,
+    ContentLifecycleState,
+    PruneResult,
+    RecipeState,
+    RetentionTier,
+)
 
 _HASH_PATTERN: Final = re.compile(r"^[0-9a-f]{64}$")
 _STORE_FORMAT: Final = "piginot.store.v1"
@@ -152,6 +158,25 @@ class ObjectStore:
             raise ContentNotFoundError(f"content {digest} is not committed")
         return info
 
+    def content_state(self, content_hash_value: str) -> ContentLifecycleState:
+        """Inspect explicit object lifecycle state without throwing on missing hashes."""
+
+        digest = _validate_digest(content_hash_value)
+        info = self._content_info_optional(digest)
+        if info is None:
+            return ContentLifecycleState.UNCOMMITTED
+        return info.lifecycle_state
+
+    def recipe_state(self, recipe_hash: str) -> RecipeState:
+        """Inspect explicit recipe resolution state (UNRECORDED/RESOLVED/DIVERGENT)."""
+
+        results = self.recipe_results(recipe_hash)
+        if not results:
+            return RecipeState.UNRECORDED
+        if len(results) == 1:
+            return RecipeState.RESOLVED
+        return RecipeState.DIVERGENT
+
     def has_object(self, content_hash_value: str) -> bool:
         """Return whether a content hash has committed, verified bytes."""
 
@@ -208,6 +233,11 @@ class ObjectStore:
         ):
             raise RetentionPolicyError(
                 f"PERMANENT content {current.content_hash} cannot be downgraded"
+            )
+        if not current.materialized and requested_tier is not RetentionTier.PRUNABLE:
+            raise RetentionPolicyError(
+                f"pruned content {current.content_hash} cannot be promoted to "
+                f"{requested_tier.value} before rehydration via put()"
             )
         updated = ContentInfo(
             content_hash=current.content_hash,
@@ -453,12 +483,17 @@ class ObjectStore:
             raise StoreFormatError(
                 f"content metadata for {digest} has invalid retention"
             ) from exc
-        return ContentInfo(
-            content_hash=digest,
-            size_bytes=size,
-            retention=retention,
-            materialized=materialized,
-        )
+        try:
+            return ContentInfo(
+                content_hash=digest,
+                size_bytes=size,
+                retention=retention,
+                materialized=materialized,
+            )
+        except ValueError as exc:
+            raise StoreFormatError(
+                f"content metadata for {digest} has inconsistent retention/materialized state"
+            ) from exc
 
     def _content_metadata_path(self, content_hash_value: str) -> Path:
         digest = _validate_digest(content_hash_value)
@@ -510,9 +545,9 @@ class ObjectStore:
             raise StoreFormatError(
                 f"recipe metadata for {recipe_hash} contains an invalid hash"
             ) from exc
-        if validated != sorted(set(validated)):
+        if not validated or validated != sorted(set(validated)):
             raise StoreFormatError(
-                f"recipe metadata for {recipe_hash} is not sorted and unique"
+                f"recipe metadata for {recipe_hash} must be non-empty, sorted, and unique"
             )
         return document
 

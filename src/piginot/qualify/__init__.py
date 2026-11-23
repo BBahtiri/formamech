@@ -1,9 +1,11 @@
 """Continuous numerical model qualification and deployment gating (Feature 5)."""
 
 from piginot.qualify.gate import (
+    DEPLOYMENT_GATE_MACHINE,
     DEPLOYMENT_GATE_SCHEMA,
     DeploymentGateError,
     DeploymentGateResult,
+    DeploymentGateState,
     GateReasonCode,
     check_deployment_gate,
     default_manifest_path,
@@ -45,6 +47,7 @@ from piginot.qualify.policy import (
 from piginot.qualify.report import render_qualification_report_markdown
 
 __all__ = (
+    "DEPLOYMENT_GATE_MACHINE",
     "DEPLOYMENT_GATE_SCHEMA",
     "EPISTEMIC_SCOPE_STATEMENT",
     "QUALIFICATION_DIFF_SCHEMA",
@@ -53,6 +56,7 @@ __all__ = (
     "CalibrationPolicy",
     "DeploymentGateError",
     "DeploymentGateResult",
+    "DeploymentGateState",
     "DwrPolicy",
     "FieldTolerance",
     "GateReasonCode",

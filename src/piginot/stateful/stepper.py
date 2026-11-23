@@ -25,6 +25,11 @@ from safetensors.torch import load as load_safetensors_bytes
 from safetensors.torch import save_file
 
 from piginot.contracts import canonical_json_bytes
+from piginot.contracts.state_machine import (
+    StateMachineSpec,
+    TransitionSpec,
+    register_state_machine,
+)
 from piginot.contracts.stateful import (
     BoundTrajectoryState,
     StatefulVerificationPolicy,
@@ -59,6 +64,98 @@ class StepStatus(enum.StrEnum):
     SOLVE_FAILED = "SOLVE_FAILED"
 
 
+class StepPhase(enum.StrEnum):
+    """Explicit stages of one guarded stateful rollout step."""
+
+    RECEIVED = "RECEIVED"
+    BINDING_VERIFIED = "BINDING_VERIFIED"
+    OPERATOR_TRIED = "OPERATOR_TRIED"
+    FEM_FALLBACK_TRIED = "FEM_FALLBACK_TRIED"
+    ACCEPTED_OPERATOR = "ACCEPTED_OPERATOR"
+    ACCEPTED_FEM_FALLBACK = "ACCEPTED_FEM_FALLBACK"
+    UNVERIFIED = "UNVERIFIED"
+    REFUSED_STATE_MISMATCH = "REFUSED_STATE_MISMATCH"
+    REFUSED_ADMISSIBILITY = "REFUSED_ADMISSIBILITY"
+    SOLVE_FAILED = "SOLVE_FAILED"
+
+
+STATEFUL_STEP_MACHINE: Final[StateMachineSpec[StepPhase]] = register_state_machine(
+    StateMachineSpec(
+        machine_id="formamech.stateful.guarded_step",
+        description=(
+            "Guarded stateful trajectory step: binding/state-hash verification -> "
+            "neural operator with substep halving -> optional FEM fallback -> terminal outcome."
+        ),
+        states=tuple(StepPhase),
+        initial_states=(StepPhase.RECEIVED,),
+        terminal_states=(
+            StepPhase.ACCEPTED_OPERATOR,
+            StepPhase.ACCEPTED_FEM_FALLBACK,
+            StepPhase.UNVERIFIED,
+            StepPhase.REFUSED_STATE_MISMATCH,
+            StepPhase.REFUSED_ADMISSIBILITY,
+            StepPhase.SOLVE_FAILED,
+        ),
+        transitions=(
+            TransitionSpec(
+                StepPhase.RECEIVED,
+                StepPhase.REFUSED_STATE_MISMATCH,
+                "binding_or_hash_mismatch",
+                "Trajectory binding or state tensor hash failed verification.",
+            ),
+            TransitionSpec(
+                StepPhase.RECEIVED,
+                StepPhase.BINDING_VERIFIED,
+                "verify_binding",
+                "Trajectory binding and state tensor hash verified.",
+            ),
+            TransitionSpec(
+                StepPhase.BINDING_VERIFIED,
+                StepPhase.OPERATOR_TRIED,
+                "try_operator",
+                "Evaluate neural operator with bounded substep halving.",
+            ),
+            TransitionSpec(
+                StepPhase.OPERATOR_TRIED,
+                StepPhase.ACCEPTED_OPERATOR,
+                "accept_operator",
+                "Operator passed det(F), dissipation, and residual guards.",
+            ),
+            TransitionSpec(
+                StepPhase.OPERATOR_TRIED,
+                StepPhase.FEM_FALLBACK_TRIED,
+                "escalate_fem_fallback",
+                "Operator violated guards; escalate to authoritative FEM stepper.",
+            ),
+            TransitionSpec(
+                StepPhase.OPERATOR_TRIED,
+                StepPhase.REFUSED_ADMISSIBILITY,
+                "refuse_fail_closed",
+                "Operator violated guards with no FEM fallback and fail_closed=True.",
+            ),
+            TransitionSpec(
+                StepPhase.OPERATOR_TRIED,
+                StepPhase.UNVERIFIED,
+                "emit_unverified",
+                "Operator violated guards with fail_closed=False and no fallback.",
+            ),
+            TransitionSpec(
+                StepPhase.FEM_FALLBACK_TRIED,
+                StepPhase.ACCEPTED_FEM_FALLBACK,
+                "accept_fem",
+                "Authoritative FEM fallback satisfied all physical guards.",
+            ),
+            TransitionSpec(
+                StepPhase.FEM_FALLBACK_TRIED,
+                StepPhase.SOLVE_FAILED,
+                "fem_failed",
+                "FEM fallback failed all substep halvings.",
+            ),
+        ),
+    )
+)
+
+
 @dataclass(frozen=True, slots=True)
 class CandidateStepOutput:
     """Output returned by a candidate transition operator or reference step callback."""
@@ -89,6 +186,17 @@ class StepResult:
     total_dissipation: float | None
     residual_norm: float | None
     reason: str
+
+    def __post_init__(self) -> None:
+        if self.accepted and (
+            self.displacement is None
+            or self.state_new is None
+            or self.bound_state is None
+        ):
+            raise ValueError(
+                f"accepted StepResult ({self.status.value}) requires non-None "
+                "displacement, state_new, and bound_state"
+            )
 
     @property
     def accepted(self) -> bool:

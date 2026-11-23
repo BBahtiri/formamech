@@ -42,11 +42,13 @@ from piginot.stateful.plasticity_operator import (
     train_plasticity_operator_variational,
 )
 from piginot.stateful.stepper import (
+    STATEFUL_STEP_MACHINE,
     STEP_CONTROLLER_VERSION,
     TRAJECTORY_CHECKPOINT_SCHEMA,
     CandidateStepOutput,
     GuardedStatefulStepper,
     StatefulStepper,
+    StepPhase,
     StepPredictor,
     StepResult,
     StepStatus,
@@ -101,6 +103,7 @@ def __getattr__(name: str) -> Any:
 __all__ = (
     "J2_PLASTICITY_MODEL_ID",
     "PLASTICITY_OPERATOR_ARCH_ID",
+    "STATEFUL_STEP_MACHINE",
     "STEP_CONTROLLER_VERSION",
     "TRAJECTORY_CHECKPOINT_SCHEMA",
     "VISCOELASTIC_ARTIFACT_SCHEMA",
@@ -127,6 +130,7 @@ __all__ = (
     "PlasticityTrainingSummary",
     "StatefulStepper",
     "StatelessHyperelasticModel",
+    "StepPhase",
     "StepPredictor",
     "StepResult",
     "StepStatus",
