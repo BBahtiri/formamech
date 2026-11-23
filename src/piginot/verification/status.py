@@ -2,33 +2,7 @@
 
 from __future__ import annotations
 
-from enum import StrEnum
-
-
-class CheckStatus(StrEnum):
-    """Outcome of one verification check.
-
-    ``NOT_RUN`` is never a pass, and a ``SKIPPED`` required check is not a pass
-    either; only ``PASS`` counts towards a claim.
-    """
-
-    PASS = "PASS"
-    FAIL = "FAIL"
-    ERROR = "ERROR"
-    NOT_RUN = "NOT_RUN"
-    SKIPPED = "SKIPPED"
-
-
-class ClaimLevel(StrEnum):
-    """Claim levels this code can emit, weakest first.
-
-    ``HOLDOUT_VERIFIED`` is the ceiling: no stronger level exists here.
-    """
-
-    NOT_VERIFIED = "NOT_VERIFIED"
-    DEVELOPMENT_VERIFIED = "DEVELOPMENT_VERIFIED"
-    HOLDOUT_VERIFIED = "HOLDOUT_VERIFIED"
-
+from piginot.contracts.state_machine import CheckStatus, ClaimLevel
 
 _SEVERITY = {
     CheckStatus.ERROR: 4,

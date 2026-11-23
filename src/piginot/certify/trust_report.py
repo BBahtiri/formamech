@@ -23,7 +23,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, Final
 
-from piginot.contracts import canonical_json_bytes
+from piginot.contracts import ALLOWED_CLAIM_LEVELS, canonical_json_bytes
 
 CAD_TRUST_REPORT_SCHEMA: Final = "piginot.cad-trust-report-v1"
 SUPPORTED_QOI_KINDS: Final = frozenset(
@@ -34,11 +34,6 @@ SUPPORTED_QOI_KINDS: Final = frozenset(
         "smoothed_peak_stress",
         "total_strain_energy",
     )
-)
-ALLOWED_CLAIM_LEVELS: Final = (
-    "NOT_VERIFIED",
-    "DEVELOPMENT_VERIFIED",
-    "HOLDOUT_VERIFIED",
 )
 
 
