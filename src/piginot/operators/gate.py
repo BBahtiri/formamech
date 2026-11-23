@@ -4,21 +4,13 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from enum import StrEnum
+
+from piginot.contracts.state_machine import GateStatus as GateStatus
 
 _PERMUTATION_LIMIT = 1.0e-5
 _RESAMPLING_LIMIT = 0.02
 _ORDER_LIMIT = 1.0e-6
 _MINIMUM_COVERAGE_PERCENT = 80.0
-
-
-class GateStatus(StrEnum):
-    """Status vocabulary used by persisted gate evidence."""
-
-    PASS = "PASS"
-    FAIL = "FAIL"
-    ERROR = "ERROR"
-    NOT_RUN = "NOT_RUN"
 
 
 @dataclass(frozen=True, slots=True)

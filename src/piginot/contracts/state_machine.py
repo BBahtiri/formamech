@@ -44,6 +44,15 @@ class CheckStatus(StrEnum):
     SKIPPED = "SKIPPED"
 
 
+class GateStatus(StrEnum):
+    """Canonical step-gate status vocabulary shared across S8, S9, S10, S11, and S12."""
+
+    PASS = "PASS"
+    FAIL = "FAIL"
+    ERROR = "ERROR"
+    NOT_RUN = "NOT_RUN"
+
+
 class ClaimLevel(StrEnum):
     """Claim levels this code can emit, weakest first.
 
@@ -421,6 +430,7 @@ __all__ = (
     "STATE_SNAPSHOT_SCHEMA",
     "CheckStatus",
     "ClaimLevel",
+    "GateStatus",
     "InvalidTransitionError",
     "StateMachineSpec",
     "StateSnapshot",

@@ -890,3 +890,39 @@ def test_active_campaign_preserves_joint_geometry_token_anchors_across_rounds() 
     # tokens rather than dropping anchors and falling back to tie-broken c1.
     assert res.acquired_case_ids[0] == "c0"
     assert res.acquired_case_ids[1] == "c3"
+
+
+def test_wave2_unified_gate_status_and_registered_machines() -> None:
+    from piginot.bounds import CAD_CALIBRATION_MACHINE
+    from piginot.cad import PARAMETRIC_PREDICT_MACHINE
+    from piginot.contracts import GateStatus, claim_level_rank
+    from piginot.datasets.gate import GateStatus as DatasetsGateStatus
+    from piginot.doe.gate import GateStatus as DoeGateStatus
+    from piginot.fem.s8_gate import GateStatus as FemS8GateStatus
+    from piginot.objectives.gate import GateStatus as ObjectivesGateStatus
+    from piginot.operators import LORA_ADAPTATION_MACHINE
+    from piginot.operators.gate import GateStatus as OperatorsGateStatus
+    from piginot.optimization import DESIGN_OPTIMIZATION_MACHINE
+
+    assert GateStatus is DoeGateStatus
+    assert GateStatus is DatasetsGateStatus
+    assert GateStatus is OperatorsGateStatus
+    assert GateStatus is ObjectivesGateStatus
+    assert GateStatus is FemS8GateStatus
+    assert [g.value for g in GateStatus] == ["PASS", "FAIL", "ERROR", "NOT_RUN"]
+
+    assert claim_level_rank(ClaimLevel.NOT_VERIFIED) == 0
+    assert claim_level_rank(VerificationClaimLevel.HOLDOUT_VERIFIED) == 2
+    with pytest.raises(TypeError, match="ClaimLevel"):
+        claim_level_rank("NOT_VERIFIED")  # type: ignore[arg-type]
+
+    reg = registered_state_machines()
+    for spec in (
+        PARAMETRIC_PREDICT_MACHINE,
+        CAD_CALIBRATION_MACHINE,
+        LORA_ADAPTATION_MACHINE,
+        DESIGN_OPTIMIZATION_MACHINE,
+    ):
+        assert reg[spec.machine_id] == spec
+        assert spec.describe()["machine_id"] == spec.machine_id
+        assert "stateDiagram-v2" in spec.to_mermaid()
