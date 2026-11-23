@@ -493,3 +493,92 @@ def test_guarded_stepper_refusal_fallback_and_checkpoint_tamper(tmp_path: Path) 
         GeneralizedMaxwellConfig(100.0, 0.5, (MaxwellBranch(0.5, 1.0),))
     with pytest.raises(ValueError, match="stiffness_ratio"):
         MaxwellBranch(0.0, 1.0)
+
+
+def test_viscoelastic_artifact_rollout_checkpoint_and_fallback_guards(
+    tmp_path: Path,
+) -> None:
+    from piginot.operators.energy_operator import QueryFrame
+    from piginot.stateful import (
+        HistoryAwareViscoelasticOperator,
+        ViscoelasticOperatorConfig,
+        load_viscoelastic_artifact,
+        run_viscoelastic_rollout,
+        save_viscoelastic_artifact,
+    )
+
+    mesh = _rect_mesh()
+    visco = _visco_model()
+    op = HistoryAwareViscoelasticOperator(
+        ViscoelasticOperatorConfig(
+            load_dim=1, n_branches=2, hidden_dim=16, num_layers=2
+        )
+    ).to(torch.float64)
+    frame = QueryFrame(
+        origin=torch.tensor([[0.0, 0.0]], dtype=torch.float64),
+        extent=torch.tensor([[2.0, 1.0]], dtype=torch.float64),
+    )
+
+    with pytest.raises(ValueError):
+        save_viscoelastic_artifact(
+            tmp_path / "bad-claim",
+            operator=op,
+            material=visco,
+            mesh=mesh,
+            frame=frame,
+            claim_level="INVALID_CLAIM",
+        )
+
+    art_dir = tmp_path / "visco-art"
+    save_viscoelastic_artifact(
+        art_dir, operator=op, material=visco, mesh=mesh, frame=frame
+    )
+    artifact = load_viscoelastic_artifact(art_dir)
+    segments = (
+        LoadSegment(0.0, 0.5, "ramp", {"ux": DerivedExpression.parse("0.1 * s")}),
+    )
+    grid = TimeGrid(0.0, 0.5, dt_initial=0.25, dt_min=0.05, dt_max=0.25)
+
+    # allow_fem_fallback=True without fem_fallback must fail closed
+    with pytest.raises(ValueError, match="explicit fem_fallback"):
+        run_viscoelastic_rollout(
+            artifact,
+            time_grid=grid,
+            segments=segments,
+            parameters={},
+            allow_fem_fallback=True,
+        )
+
+    # Save checkpoint at t=0.5 (time_index=2), then verify resuming against a mismatched
+    # or shorter time grid raises ValueError instead of silently succeeding with 0 steps
+    ckpt_dir = tmp_path / "ckpt-end"
+    res = run_viscoelastic_rollout(
+        artifact,
+        time_grid=grid,
+        segments=segments,
+        parameters={},
+        save_checkpoint_to=ckpt_dir,
+    )
+    assert res["accepted"] is True
+    short_grid = TimeGrid(0.0, 0.25, dt_initial=0.25, dt_min=0.05, dt_max=0.25)
+    with pytest.raises(ValueError, match="outside time_grid"):
+        run_viscoelastic_rollout(
+            artifact,
+            time_grid=short_grid,
+            segments=segments,
+            parameters={},
+            resume_checkpoint=ckpt_dir,
+        )
+    shifted_grid = TimeGrid(0.0, 0.6, dt_initial=0.2, dt_min=0.05, dt_max=0.2)
+    with pytest.raises(ValueError, match="time_value"):
+        run_viscoelastic_rollout(
+            artifact,
+            time_grid=shifted_grid,
+            segments=(
+                LoadSegment(
+                    0.0, 0.6, "ramp", {"ux": DerivedExpression.parse("0.1 * s")}
+                ),
+            ),
+            parameters={},
+            resume_checkpoint=ckpt_dir,
+        )

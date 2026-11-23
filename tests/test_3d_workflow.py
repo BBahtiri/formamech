@@ -614,3 +614,30 @@ def test_3d_validation_guards(tmp_path: Path) -> None:
         load_surface_3d_bundle(tmp_path / "does_not_exist")
     with pytest.raises(ValueError):
         analytical_3d_uniaxial_hyperelastic(_neo_hookean(), -1.0)
+
+    # Wave 2: Failed FemResult3D with non-finite residual/det serializes cleanly to RFC 8785 JSON
+    from piginot.contracts import canonical_json_bytes
+    from piginot.fem.backend_3d import FemResult3D
+
+    failed_3d = FemResult3D(
+        request_id="fail-3d",
+        backend_name="scikit-fem-3d",
+        mesh_id="a" * 64,
+        converged=False,
+        nodal_displacement=np.zeros((4, 3), dtype=np.float64),
+        nodal_von_mises_mpa=np.zeros(4, dtype=np.float64),
+        reactions_n={},
+        total_strain_energy_n_mm=0.0,
+        external_work_n_mm=0.0,
+        min_det_f=float("-inf"),
+        max_displacement_mm=0.0,
+        peak_von_mises_mpa=0.0,
+        final_residual_norm=float("inf"),
+        total_newton_iterations=5,
+        wall_time_s=0.01,
+        reason="skfem 3D line search failed to preserve det(F) > 0",
+    )
+    summary_doc = failed_3d.summary_document()
+    assert summary_doc["final_residual_norm"] is None
+    assert summary_doc["min_det_f"] is None
+    assert len(canonical_json_bytes(summary_doc)) > 0

@@ -30,13 +30,9 @@ from dataclasses import dataclass
 from typing import Any, Final
 
 from piginot.contracts.canonical import canonical_json_bytes
+from piginot.contracts.state_machine import ALLOWED_CLAIM_LEVELS
 
 TRUST_RECEIPT_SCHEMA: Final = "formamech.trust-receipt-v1"
-ALLOWED_CLAIM_LEVELS: Final = (
-    "NOT_VERIFIED",
-    "DEVELOPMENT_VERIFIED",
-    "HOLDOUT_VERIFIED",
-)
 
 
 class VerificationTier(enum.StrEnum):
@@ -323,11 +319,26 @@ def verify_receipt_document(
             )
         except ValueError as exc:
             errors.append(str(exc))
+        if isinstance(scope, Mapping):
+            tier1_conf = evidence.get("tier1_conformal")
+            has_conformal = bool(
+                isinstance(tier1_conf, Mapping) and tier1_conf.get("refused") is False
+            )
+            expected_scope = epistemic_scope(tier, has_conformal_bound=has_conformal)
+            if dict(scope) != expected_scope:
+                errors.append(
+                    "epistemic_scope does not match declared verification_tier "
+                    f"{tier.value!r}"
+                )
     elif not isinstance(evidence, Mapping):
         errors.append("receipt must contain an evidence object")
 
     recorded_sha = document.get("receipt_sha256")
-    if not isinstance(recorded_sha, str) or len(recorded_sha) != 64:
+    if (
+        not isinstance(recorded_sha, str)
+        or len(recorded_sha) != 64
+        or any(ch not in "0123456789abcdef" for ch in recorded_sha)
+    ):
         errors.append("receipt_sha256 must be a 64-character hex digest")
     else:
         body = {k: v for k, v in document.items() if k != "receipt_sha256"}
@@ -340,6 +351,7 @@ def verify_receipt_document(
 
 
 __all__ = (
+    "ALLOWED_CLAIM_LEVELS",
     "TRUST_RECEIPT_SCHEMA",
     "ArtifactDigests",
     "TrustReceipt",

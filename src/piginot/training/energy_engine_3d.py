@@ -847,6 +847,10 @@ def predict_3d_bundle(
     u_pred_np[list(clamp_nids), :] = 0.0
     inf_time = time.perf_counter() - t0
 
+    if mode not in ("fast", "certified", "exact"):
+        raise ValueError(
+            f"unsupported 3D prediction mode {mode!r}; expected 'fast', 'certified', or 'exact'"
+        )
     if mode == "fast":
         return Prediction3DReport(
             mode="fast",

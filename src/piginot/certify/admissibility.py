@@ -101,6 +101,15 @@ class Tier0AdmissibilityResult:
     section_force_imbalance: float | None
     failed_checks: tuple[str, ...]
 
+    def __post_init__(self) -> None:
+        expected_passed = bool(self.all_finite) and len(self.failed_checks) == 0
+        if self.passed is not expected_passed:
+            raise ValueError(
+                f"Tier0AdmissibilityResult invariant violated: passed={self.passed} "
+                f"with all_finite={self.all_finite} and "
+                f"failed_checks={self.failed_checks!r}"
+            )
+
     def document(self) -> dict[str, Any]:
         return {
             "passed": self.passed,

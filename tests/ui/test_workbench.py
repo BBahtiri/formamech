@@ -307,3 +307,188 @@ def test_streamlit_apptest_workbench_renders_cleanly(tmp_path: Path) -> None:
     assert (ws.preview_dir / "plan.json").is_file()
     plan_doc = json.loads((ws.preview_dir / "plan.json").read_text(encoding="utf-8"))
     assert plan_doc["status"] == "PLANNED"
+
+
+def test_workbench_state_machines_staleness_and_job_invariants(tmp_path: Path) -> None:
+    from formamech.contracts import InvalidTransitionError
+    from formamech.ui import JobLifecycleState, WorkbenchStage
+    from formamech.ui.workbench.cad_viewer import _classify_assignment
+    from formamech.ui.workbench.job_runner import _infer_external_terminal
+
+    # 1) Boundary visual role classifier edge cases
+    assert _classify_assignment(None)[0] == "unassigned"
+    assert (
+        _classify_assignment(
+            BoundaryAssignment("e1", "c", "dirichlet", ("x",), (("0.00", "mm"),))
+        )[0]
+        == "dirichlet_fixed"
+    )
+    assert (
+        _classify_assignment(BoundaryAssignment("e1", "bad", "dirichlet", (), ()))[0]
+        == "unassigned"
+    )
+    assert (
+        _classify_assignment(
+            BoundaryAssignment("e1", "c", "dirichlet", ("x",), (("", "mm"),))
+        )[0]
+        == "dirichlet_loaded"
+    )
+
+    # 2) Workspace FSM progression across all stages, stale items, and blockers
+    ws = WorkbenchWorkspace(tmp_path / "ws-fsm")
+    assert ws.workflow_snapshot().state is WorkbenchStage.EMPTY
+
+    # Stale downstream artifacts without geometry are flagged cleanly
+    ws.physics_path.write_text("{}", encoding="utf-8")
+    ws.inputs_dir.mkdir(parents=True, exist_ok=True)
+    (ws.inputs_dir / "problem.json").write_text("{}", encoding="utf-8")
+    (ws.inputs_dir / "config.json").write_text("{}", encoding="utf-8")
+    (ws.run_dir / "candidate-bundle").mkdir(parents=True, exist_ok=True)
+    (ws.run_dir / "candidate-bundle" / "bundle.json").write_text("{}", encoding="utf-8")
+    snap_empty_stale = ws.workflow_snapshot()
+    assert snap_empty_stale.state is WorkbenchStage.EMPTY
+    assert len(snap_empty_stale.stale_items) >= 3
+
+    # Corrupt workbench-state.json falls back cleanly to default schema
+    ws.state_path.write_text("{corrupt", encoding="utf-8")
+    assert ws.load_state()["schema"] == "formamech.workbench-state-v1"
+    ws.state_path.write_text('{"schema": "other"}', encoding="utf-8")
+    assert ws.load_state()["schema"] == "formamech.workbench-state-v1"
+    ws.state_path.write_text("[]", encoding="utf-8")
+    assert ws.load_state()["schema"] == "formamech.workbench-state-v1"
+
+    # Import CAD clears stale downstream artifacts atomically
+    step_path = generate_sample_bracket_step(tmp_path / "fsm.step")
+    preview = ws.import_cad_path(step_path, unit=Unit.MM, mesh_size_mm=5.0)
+    assert ws.workflow_snapshot().state is WorkbenchStage.CAD_IMPORTED
+
+    # Stale inputs/bundle relative to fresh CAD
+    ws.inputs_dir.mkdir(parents=True, exist_ok=True)
+    (ws.inputs_dir / "problem.json").write_text("{}", encoding="utf-8")
+    (ws.inputs_dir / "config.json").write_text("{}", encoding="utf-8")
+    (ws.run_dir / "candidate-bundle").mkdir(parents=True, exist_ok=True)
+    (ws.run_dir / "candidate-bundle" / "bundle.json").write_text("{}", encoding="utf-8")
+    assert len(ws.workflow_snapshot().stale_items) >= 2
+
+    # PHYSICS_SAVED without inputs (and stale preview/bundle)
+    ws.reset_prepared_inputs()
+    ws.physics_path.write_text("{}", encoding="utf-8")
+    ws.preview_dir.mkdir(parents=True, exist_ok=True)
+    (ws.preview_dir / "plan.json").write_text("{}", encoding="utf-8")
+    snap_phys = ws.workflow_snapshot()
+    assert snap_phys.state is WorkbenchStage.PHYSICS_SAVED
+    assert len(snap_phys.stale_items) >= 2
+
+    # INPUTS_PREPARED without plan
+    ws.inputs_dir.mkdir(parents=True, exist_ok=True)
+    (ws.inputs_dir / "problem.json").write_text("{}", encoding="utf-8")
+    (ws.inputs_dir / "config.json").write_text("{}", encoding="utf-8")
+    (ws.preview_dir / "plan.json").unlink()
+    assert ws.workflow_snapshot().state is WorkbenchStage.INPUTS_PREPARED
+
+    # Full prepare + plan -> PLAN_PREVIEWED
+    (ws.run_dir / "candidate-bundle" / "bundle.json").unlink()
+    draft = default_draft_from_preview(preview, project_name="fsm-full")
+    prepare_and_plan_workspace(ws, draft, execution_profile=False)
+    assert ws.workflow_snapshot().state is WorkbenchStage.PLAN_PREVIEWED
+
+    # Mutating physics.json or geometry.json after prepare flags staleness
+    orig_phys = ws.physics_path.read_text(encoding="utf-8")
+    ws.physics_path.write_text(orig_phys + "\n", encoding="utf-8")
+    assert any("physics.json" in s for s in ws.workflow_snapshot().stale_items)
+    ws.physics_path.write_text(orig_phys, encoding="utf-8")
+
+    # Qualification without trained bundle flags staleness
+    ws.qualification_dir.mkdir(parents=True, exist_ok=True)
+    qfile = ws.qualification_dir / "qualification-manifest.json"
+    qfile.write_text(json.dumps({"verdict": "QUALIFIED"}), encoding="utf-8")
+    assert any("without a trained" in s for s in ws.workflow_snapshot().stale_items)
+
+    # Trained bundle + NOT_QUALIFIED / invalid manifest -> BUNDLE_TRAINED with blocker
+    (ws.run_dir / "candidate-bundle").mkdir(parents=True, exist_ok=True)
+    (ws.run_dir / "candidate-bundle" / "bundle.json").write_text("{}", encoding="utf-8")
+    qfile.write_text("{bad-json", encoding="utf-8")
+    assert any("malformed" in b for b in ws.workflow_snapshot().blockers)
+    qfile.write_text("[]", encoding="utf-8")
+    assert any("malformed" in b for b in ws.workflow_snapshot().blockers)
+    qfile.write_text(json.dumps({"verdict": "NOT_QUALIFIED"}), encoding="utf-8")
+    snap_nq = ws.workflow_snapshot()
+    assert snap_nq.state is WorkbenchStage.BUNDLE_TRAINED
+    assert any("NOT_QUALIFIED" in b for b in snap_nq.blockers)
+
+    # Passing QUALIFIED manifest -> BUNDLE_QUALIFIED
+    qfile.write_text(json.dumps({"verdict": "QUALIFIED"}), encoding="utf-8")
+    assert ws.workflow_snapshot().state is WorkbenchStage.BUNDLE_QUALIFIED
+
+    # 3) Job runner FSM, snapshots, active_jobs, external inference, and terminal immutability
+    runner = WorkbenchJobRunner(tmp_path / "jobs-fsm", cwd=ROOT)
+    assert runner.active_jobs() == ()
+
+    # External inference paths for compile and qualify
+    c_dir = tmp_path / "ext-compile"
+    c_dir.mkdir()
+    assert _infer_external_terminal("compile", c_dir) == (JobLifecycleState.FAILED, 1)
+    (c_dir / "candidate-bundle").mkdir()
+    (c_dir / "candidate-bundle" / "bundle.json").write_text("{}", encoding="utf-8")
+    assert _infer_external_terminal("compile", c_dir) == (
+        JobLifecycleState.SUCCEEDED,
+        0,
+    )
+    (c_dir / "report.json").write_text(json.dumps({"exit_code": 3}), encoding="utf-8")
+    assert _infer_external_terminal("compile", c_dir) == (
+        JobLifecycleState.REFUSED_SCIENTIFIC,
+        3,
+    )
+    (c_dir / "report.json").write_text("{corrupt", encoding="utf-8")
+    assert _infer_external_terminal("compile", c_dir) == (
+        JobLifecycleState.SUCCEEDED,
+        0,
+    )
+
+    q_dir = tmp_path / "ext-qual-fsm"
+    q_dir.mkdir()
+    assert _infer_external_terminal("qualify", q_dir) == (JobLifecycleState.FAILED, 1)
+    (q_dir / "qualification-manifest.json").write_text("{bad", encoding="utf-8")
+    assert _infer_external_terminal("qualify", q_dir) == (JobLifecycleState.FAILED, 1)
+    (q_dir / "qualification-manifest.json").write_text(
+        json.dumps({"verdict": "NOT_QUALIFIED"}), encoding="utf-8"
+    )
+    assert _infer_external_terminal("qualify", q_dir) == (
+        JobLifecycleState.REFUSED_SCIENTIFIC,
+        3,
+    )
+
+    # Pending & terminal record snapshots + terminal cancel refusal
+    pending_rec = JobRecord(
+        job_id="pend-1",
+        kind="compile",
+        command=("python",),
+        pid=None,
+        state="PENDING",
+        exit_code=None,
+        started_utc="2026-11-22T00:00:00Z",
+        finished_utc=None,
+        log_path=str(tmp_path / "p.log"),
+        output_dir=str(c_dir),
+    )
+    assert pending_rec.is_terminal is False
+    assert pending_rec.snapshot().state is JobLifecycleState.PENDING
+    (tmp_path / "jobs-fsm" / "pend-1.json").write_text(
+        json.dumps(pending_rec.document()), encoding="utf-8"
+    )
+    assert runner.poll("pend-1").lifecycle_state is JobLifecycleState.PENDING
+    assert len(runner.active_jobs(kind="compile")) == 1
+    assert runner.active_jobs(kind="qualify") == ()
+    cancelled_p = runner.cancel("pend-1")
+    assert cancelled_p.is_terminal is True
+    assert cancelled_p.snapshot().terminal is True
+    with pytest.raises(InvalidTransitionError):
+        runner.cancel("pend-1")
+    # Polling a terminal job is a strict no-op
+    assert runner.poll("pend-1") == cancelled_p
+
+    # Invalid kind / state rejected cleanly
+    with pytest.raises(ValueError, match="job kind"):
+        JobRecord.from_document({**pending_rec.document(), "kind": "unknown"})
+    with pytest.raises(ValueError, match="job state"):
+        JobRecord.from_document({**pending_rec.document(), "state": "BOGUS"})

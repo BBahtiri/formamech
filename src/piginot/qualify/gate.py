@@ -13,6 +13,11 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any, Final
 
+from piginot.contracts.state_machine import (
+    StateMachineSpec,
+    TransitionSpec,
+    register_state_machine,
+)
 from piginot.qualify.manifest import (
     QualificationManifest,
     QualificationVerdict,
@@ -23,6 +28,44 @@ from piginot.qualify.policy import QualificationPolicy
 from piginot.verification.status import ClaimLevel
 
 DEPLOYMENT_GATE_SCHEMA: Final = "formamech.deployment-gate-v1"
+
+
+class DeploymentGateState(StrEnum):
+    """Explicit outcome states of the fail-closed deployment gate."""
+
+    UNCHECKED = "UNCHECKED"
+    ALLOWED = "ALLOWED"
+    REFUSED = "REFUSED"
+
+
+DEPLOYMENT_GATE_MACHINE: Final[StateMachineSpec[DeploymentGateState]] = (
+    register_state_machine(
+        StateMachineSpec(
+            machine_id="formamech.qualify.deployment_gate",
+            description=(
+                "Fail-closed deployment eligibility gate verifying bundle integrity, "
+                "qualification manifest bindings, QUALIFIED verdict, and min ClaimLevel."
+            ),
+            states=tuple(DeploymentGateState),
+            initial_states=(DeploymentGateState.UNCHECKED,),
+            terminal_states=(DeploymentGateState.ALLOWED, DeploymentGateState.REFUSED),
+            transitions=(
+                TransitionSpec(
+                    DeploymentGateState.UNCHECKED,
+                    DeploymentGateState.ALLOWED,
+                    "pass_gate",
+                    "All integrity, binding, verdict, and claim-level checks passed.",
+                ),
+                TransitionSpec(
+                    DeploymentGateState.UNCHECKED,
+                    DeploymentGateState.REFUSED,
+                    "refuse_gate",
+                    "One or more fail-closed GateReasonCode checks failed.",
+                ),
+            ),
+        )
+    )
+)
 
 
 class GateReasonCode(StrEnum):
@@ -59,6 +102,26 @@ class DeploymentGateResult:
     reason_codes: tuple[GateReasonCode, ...]
     detail: str
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.granted_claim_level, ClaimLevel):
+            object.__setattr__(
+                self, "granted_claim_level", ClaimLevel(str(self.granted_claim_level))
+            )
+        if not isinstance(self.min_claim_level, ClaimLevel):
+            object.__setattr__(
+                self, "min_claim_level", ClaimLevel(str(self.min_claim_level))
+            )
+        if self.allowed and self.reason_codes:
+            raise ValueError("allowed=True forbids non-empty reason_codes")
+        if not self.allowed and not self.reason_codes:
+            raise ValueError("allowed=False requires at least one GateReasonCode")
+
+    @property
+    def state(self) -> DeploymentGateState:
+        return (
+            DeploymentGateState.ALLOWED if self.allowed else DeploymentGateState.REFUSED
+        )
+
     def document(self) -> dict[str, Any]:
         return {
             "schema": DEPLOYMENT_GATE_SCHEMA,
@@ -84,7 +147,7 @@ def check_deployment_gate(
     manifest_path: Path | str | None = None,
     *,
     policy: QualificationPolicy | None = None,
-    min_claim_level: ClaimLevel = ClaimLevel.DEVELOPMENT_VERIFIED,
+    min_claim_level: ClaimLevel | StrEnum = ClaimLevel.DEVELOPMENT_VERIFIED,
 ) -> DeploymentGateResult:
     """Evaluate deployment eligibility fail-closed; never raises on policy refusal."""
     from piginot.bundle import BundleIntegrityError, load_bundle
@@ -213,7 +276,7 @@ def enforce_deployment_gate(
     manifest_path: Path | str | None = None,
     *,
     policy: QualificationPolicy | None = None,
-    min_claim_level: ClaimLevel = ClaimLevel.DEVELOPMENT_VERIFIED,
+    min_claim_level: ClaimLevel | StrEnum = ClaimLevel.DEVELOPMENT_VERIFIED,
 ) -> DeploymentGateResult:
     """Enforce deployment qualification; raise :class:`DeploymentGateError` if refused."""
     result = check_deployment_gate(

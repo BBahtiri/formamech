@@ -476,8 +476,11 @@ def prepare_and_plan_workspace(
 
     settings_doc = build_settings_document(draft)
     workspace.reset_prepared_inputs()
-    workspace.physics_path.write_text(
-        json.dumps(settings_doc, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    from piginot.ui.workbench.state import _atomic_write_text, _file_sha256
+
+    _atomic_write_text(
+        workspace.physics_path,
+        json.dumps(settings_doc, indent=2, sort_keys=True) + "\n",
     )
     prep_record = prepare_campaign(
         workspace.geometry_dir,
@@ -502,6 +505,8 @@ def prepare_and_plan_workspace(
     state["project_name"] = draft.project_name
     state["material_model"] = draft.material_model
     state["boundaries"] = [b.document() for b in draft.boundaries]
+    state["physics_sha256"] = _file_sha256(workspace.physics_path)
+    state["geometry_sha256"] = _file_sha256(workspace.geometry_dir / "geometry.json")
     workspace.save_state(state)
 
     return {

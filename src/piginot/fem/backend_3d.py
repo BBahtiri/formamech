@@ -205,6 +205,17 @@ class FemResult3D:
 
     @property
     def result_hash(self) -> str:
+        safe_energy = (
+            round(self.total_strain_energy_n_mm, 10)
+            if math.isfinite(self.total_strain_energy_n_mm)
+            else None
+        )
+        safe_det = round(self.min_det_f, 10) if math.isfinite(self.min_det_f) else None
+        safe_vm = (
+            round(self.peak_von_mises_mpa, 10)
+            if math.isfinite(self.peak_von_mises_mpa)
+            else None
+        )
         return _sha256_doc(
             {
                 "schema": FEM_RESULT_3D_SCHEMA,
@@ -215,9 +226,9 @@ class FemResult3D:
                 "reactions_n": {
                     k: list(v) for k, v in sorted(self.reactions_n.items())
                 },
-                "total_strain_energy_n_mm": round(self.total_strain_energy_n_mm, 10),
-                "min_det_f": round(self.min_det_f, 10),
-                "peak_von_mises_mpa": round(self.peak_von_mises_mpa, 10),
+                "total_strain_energy_n_mm": safe_energy,
+                "min_det_f": safe_det,
+                "peak_von_mises_mpa": safe_vm,
             }
         )
 
@@ -229,12 +240,32 @@ class FemResult3D:
             "mesh_id": self.mesh_id,
             "converged": self.converged,
             "reactions_n": {k: list(v) for k, v in sorted(self.reactions_n.items())},
-            "total_strain_energy_n_mm": self.total_strain_energy_n_mm,
-            "external_work_n_mm": self.external_work_n_mm,
-            "min_det_f": self.min_det_f,
-            "max_displacement_mm": self.max_displacement_mm,
-            "peak_von_mises_mpa": self.peak_von_mises_mpa,
-            "final_residual_norm": self.final_residual_norm,
+            "total_strain_energy_n_mm": (
+                self.total_strain_energy_n_mm
+                if math.isfinite(self.total_strain_energy_n_mm)
+                else None
+            ),
+            "external_work_n_mm": (
+                self.external_work_n_mm
+                if math.isfinite(self.external_work_n_mm)
+                else None
+            ),
+            "min_det_f": self.min_det_f if math.isfinite(self.min_det_f) else None,
+            "max_displacement_mm": (
+                self.max_displacement_mm
+                if math.isfinite(self.max_displacement_mm)
+                else None
+            ),
+            "peak_von_mises_mpa": (
+                self.peak_von_mises_mpa
+                if math.isfinite(self.peak_von_mises_mpa)
+                else None
+            ),
+            "final_residual_norm": (
+                self.final_residual_norm
+                if math.isfinite(self.final_residual_norm)
+                else None
+            ),
             "total_newton_iterations": self.total_newton_iterations,
             "wall_time_s": self.wall_time_s,
             "reason": self.reason,
@@ -1072,6 +1103,25 @@ class ScikitFemBackend3D:
                     spsolve(k_mat[free_dofs][:, free_dofs].tocsc(), -res_free),
                     dtype=np.float64,
                 )
+                if not np.all(np.isfinite(du_free)):
+                    return FemResult3D(
+                        request_id=request.request_id,
+                        backend_name=self.backend_name,
+                        mesh_id=mesh.mesh_id,
+                        converged=False,
+                        nodal_displacement=np.zeros((n_nodes, 3), dtype=np.float64),
+                        nodal_von_mises_mpa=np.zeros(n_nodes, dtype=np.float64),
+                        reactions_n={},
+                        total_strain_energy_n_mm=0.0,
+                        external_work_n_mm=0.0,
+                        min_det_f=last_min_det,
+                        max_displacement_mm=0.0,
+                        peak_von_mises_mpa=0.0,
+                        final_residual_norm=last_res,
+                        total_newton_iterations=total_iters,
+                        wall_time_s=time.perf_counter() - t0,
+                        reason="non-finite 3D Newton linear solve increment",
+                    )
                 alpha = 1.0
                 accepted = False
                 for _ in range(10):
@@ -1102,7 +1152,24 @@ class ScikitFemBackend3D:
                             break
                     alpha *= 0.5
                 if not accepted:
-                    u[free_dofs] += alpha * du_free
+                    return FemResult3D(
+                        request_id=request.request_id,
+                        backend_name=self.backend_name,
+                        mesh_id=mesh.mesh_id,
+                        converged=False,
+                        nodal_displacement=np.zeros((n_nodes, 3), dtype=np.float64),
+                        nodal_von_mises_mpa=np.zeros(n_nodes, dtype=np.float64),
+                        reactions_n={},
+                        total_strain_energy_n_mm=0.0,
+                        external_work_n_mm=0.0,
+                        min_det_f=last_min_det,
+                        max_displacement_mm=0.0,
+                        peak_von_mises_mpa=0.0,
+                        final_residual_norm=last_res,
+                        total_newton_iterations=total_iters,
+                        wall_time_s=time.perf_counter() - t0,
+                        reason="skfem 3D line search failed to preserve det(F) > 0",
+                    )
 
             if not step_converged:
                 return FemResult3D(

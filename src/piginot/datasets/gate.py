@@ -4,18 +4,10 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from enum import StrEnum
+
+from piginot.contracts.state_machine import GateStatus as GateStatus
 
 _MINIMUM_CODE_COVERAGE_PERCENT = 85.0
-
-
-class GateStatus(StrEnum):
-    """Status vocabulary required by the project gate schema."""
-
-    PASS = "PASS"
-    FAIL = "FAIL"
-    ERROR = "ERROR"
-    NOT_RUN = "NOT_RUN"
 
 
 def _non_negative_integer(value: object, label: str) -> int:

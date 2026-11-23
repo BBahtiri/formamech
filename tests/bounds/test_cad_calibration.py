@@ -128,3 +128,75 @@ def test_functional_band_and_cad_calibration_roundtrip_and_guards(
             alpha=1.5,
             qoi_calibrations={},
         )
+
+    # Wave 2: CAD_CALIBRATION_MACHINE, stripped calibration_sha256 refusal,
+    # empty/invalid parameter_bounds refusal, and FunctionalBand/ScalarQoi post-init guards
+    from piginot.bounds import (
+        CAD_CALIBRATION_MACHINE,
+        CadCalibrationGateState,
+        FunctionalBandCalibration,
+        ScalarQoiCalibration,
+    )
+
+    assert CAD_CALIBRATION_MACHINE.can_transition(
+        CadCalibrationGateState.UNCHECKED,
+        CadCalibrationGateState.BOUND_VERIFIED,
+        trigger="verify_digest_and_bundle_binding",
+    )
+    assert CAD_CALIBRATION_MACHINE.is_terminal(
+        CadCalibrationGateState.REFUSED_OUT_OF_ENVELOPE
+    )
+
+    # Stripping calibration_sha256 from sidecar JSON must fail closed
+    stripped = json.loads(out_file.read_text("utf-8"))
+    stripped.pop("calibration_sha256", None)
+    stripped_file = tmp_path / "stripped.json"
+    stripped_file.write_text(json.dumps(stripped), "utf-8")
+    with pytest.raises(ValueError, match="SHA-256 digest mismatch"):
+        CadCalibrationRecord.load(stripped_file)
+
+    # Empty parameter_bounds fails closed on in_envelope(), evaluate(), and statistical_record()
+    empty_env_rec = CadCalibrationRecord(
+        bundle_name="ok",
+        bundle_manifest_sha256=manifest_sha,
+        problem_hash=None,
+        exchangeability_scope="scope",
+        alpha=0.05,
+        qoi_calibrations=rec.qoi_calibrations,
+        parameter_bounds={},
+    )
+    assert empty_env_rec.in_envelope({"strain": 0.10}) is False
+    ev_empty = empty_env_rec.evaluate({"strain": 0.10})
+    assert ev_empty["refused"] is True and "undeclared" in ev_empty["refusal_reason"]
+    st_empty = empty_env_rec.statistical_record("reaction", in_envelope=True)
+    assert st_empty is not None and st_empty.refused is True
+
+    with pytest.raises(ValueError, match="lower <= upper"):
+        CadCalibrationRecord(
+            bundle_name="ok",
+            bundle_manifest_sha256=manifest_sha,
+            problem_hash=None,
+            exchangeability_scope="scope",
+            alpha=0.05,
+            qoi_calibrations={},
+            parameter_bounds={"strain": (0.5, 0.1)},
+        )
+
+    with pytest.raises(ValueError, match="rank_k"):
+        FunctionalBandCalibration(
+            field_name="u",
+            unit="mm",
+            alpha=0.05,
+            sample_count=10,
+            rank_k=11,
+            supremum_quantile=0.1,
+        )
+    with pytest.raises(ValueError, match="quantile"):
+        ScalarQoiCalibration(
+            qoi_name="rx",
+            unit="N",
+            alpha=0.05,
+            sample_count=20,
+            rank_k=19,
+            quantile=-0.1,
+        )

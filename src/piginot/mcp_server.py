@@ -2,24 +2,102 @@
 
 Exposes FormaMech's envelope-bounded inference, CAD inspection, guarded design
 optimization, and RFC 8785 Trust Receipt verification as structured JSON-RPC
-2.0 / MCP tools with strict workspace path sandboxing and DOF ceiling guards.
+2.0 / MCP tools with strict workspace path sandboxing, DOF ceiling guards,
+an explicit session finite state machine, and runtime JSON Schema validation.
 """
 
 from __future__ import annotations
 
 import json
+import math
 import sys
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
+from enum import StrEnum
 from pathlib import Path
 from typing import Any, Final, TextIO, cast
 
 from piginot import __version__
 from piginot.certify import verify_receipt_document
+from piginot.contracts.state_machine import (
+    InvalidTransitionError,
+    StateMachineSpec,
+    StateSnapshot,
+    TransitionRecord,
+    TransitionSpec,
+    register_state_machine,
+)
 
 MCP_PROTOCOL_VERSION: Final = "2024-11-05"
 SERVER_NAME: Final = "formamech-mcp"
 DEFAULT_MAX_DOF_LIMIT: Final = 100_000
+
+
+class McpSessionState(StrEnum):
+    """Explicit JSON-RPC 2.0 / MCP protocol handshake lifecycle states."""
+
+    UNINITIALIZED = "UNINITIALIZED"
+    INITIALIZING = "INITIALIZING"
+    READY = "READY"
+    CLOSED = "CLOSED"
+
+
+MCP_SESSION_MACHINE: Final[StateMachineSpec[McpSessionState]] = register_state_machine(
+    StateMachineSpec(
+        machine_id="formamech.mcp.session",
+        description=(
+            "MCP JSON-RPC 2.0 protocol lifecycle from UNINITIALIZED through "
+            "initialize handshake to READY and terminal CLOSED."
+        ),
+        states=tuple(McpSessionState),
+        initial_states=(McpSessionState.UNINITIALIZED,),
+        terminal_states=(McpSessionState.CLOSED,),
+        transitions=(
+            TransitionSpec(
+                McpSessionState.UNINITIALIZED,
+                McpSessionState.INITIALIZING,
+                "initialize",
+                "Client sent JSON-RPC initialize request.",
+            ),
+            TransitionSpec(
+                McpSessionState.INITIALIZING,
+                McpSessionState.INITIALIZING,
+                "initialize",
+                "Idempotent re-initialization before notifications/initialized.",
+            ),
+            TransitionSpec(
+                McpSessionState.INITIALIZING,
+                McpSessionState.READY,
+                "notifications/initialized",
+                "Client confirmed initialization complete; tools ready.",
+            ),
+            TransitionSpec(
+                McpSessionState.READY,
+                McpSessionState.READY,
+                "serve_request",
+                "Process ping, tools/list, or tools/call while session is READY.",
+            ),
+            TransitionSpec(
+                McpSessionState.UNINITIALIZED,
+                McpSessionState.CLOSED,
+                "close",
+                "Close session prior to initialization.",
+            ),
+            TransitionSpec(
+                McpSessionState.INITIALIZING,
+                McpSessionState.CLOSED,
+                "close",
+                "Close session during initialization.",
+            ),
+            TransitionSpec(
+                McpSessionState.READY,
+                McpSessionState.CLOSED,
+                "close",
+                "Gracefully terminate active MCP session.",
+            ),
+        ),
+    )
+)
 
 
 class SandboxViolationError(PermissionError):
@@ -28,6 +106,94 @@ class SandboxViolationError(PermissionError):
 
 class ResourceLimitError(ValueError):
     """Raised when an MCP tool request exceeds the configured DOF or budget ceiling."""
+
+
+def _validate_tool_arguments(
+    tool_name: str, schema: Mapping[str, Any], args: Mapping[str, Any]
+) -> None:
+    """Validate ``args`` against a tool's declarative JSON Schema."""
+    props: Mapping[str, Any] = schema.get("properties", {})
+    required: Sequence[str] = schema.get("required", ())
+    for key in required:
+        if key not in args or args[key] is None:
+            raise ValueError(
+                f"tool {tool_name!r} missing required argument {key!r} "
+                f"(required: {list(required)})"
+            )
+    if schema.get("additionalProperties") is False:
+        unknown = sorted(set(args) - set(props))
+        if unknown:
+            raise ValueError(
+                f"tool {tool_name!r} received unexpected argument(s) {unknown}; "
+                f"allowed arguments: {sorted(props)}"
+            )
+    for key, value in args.items():
+        if value is None or key not in props:
+            continue
+        prop_schema = props[key]
+        expected_type = prop_schema.get("type")
+        if expected_type == "string":
+            if not isinstance(value, str):
+                raise TypeError(f"argument {key!r} must be a string")
+        elif expected_type == "object":
+            if not isinstance(value, Mapping):
+                raise TypeError(f"argument {key!r} must be a JSON object")
+        elif expected_type == "boolean":
+            if not isinstance(value, bool):
+                raise TypeError(f"argument {key!r} must be a boolean")
+        elif expected_type == "integer":
+            if isinstance(value, bool) or not isinstance(value, int):
+                raise TypeError(f"argument {key!r} must be an integer")
+        elif expected_type == "number":
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise TypeError(f"argument {key!r} must be a finite number")
+            if not math.isfinite(float(value)):
+                raise ValueError(f"argument {key!r} must be finite")
+        enum_vals = prop_schema.get("enum")
+        if enum_vals is not None and value not in enum_vals:
+            raise ValueError(
+                f"argument {key!r} must be one of {list(enum_vals)}, got {value!r}"
+            )
+        if "minimum" in prop_schema and float(value) < float(prop_schema["minimum"]):
+            raise ValueError(
+                f"argument {key!r} must be >= {prop_schema['minimum']}, got {value!r}"
+            )
+        if "maximum" in prop_schema and float(value) > float(prop_schema["maximum"]):
+            raise ValueError(
+                f"argument {key!r} must be <= {prop_schema['maximum']}, got {value!r}"
+            )
+
+
+def _error_category_and_hint(exc: Exception) -> tuple[str, str]:
+    if isinstance(exc, SandboxViolationError):
+        return (
+            "sandbox_violation",
+            "Use paths located inside the configured workspace root.",
+        )
+    if isinstance(exc, ResourceLimitError):
+        return (
+            "resource_limit",
+            "Reduce mesh DOF count or start the MCP server with a higher max_dof_limit.",
+        )
+    if isinstance(exc, InvalidTransitionError):
+        return (
+            "invalid_state_transition",
+            "Inspect allowed_targets and satisfy protocol preconditions before retrying.",
+        )
+    if type(exc).__name__ == "DeploymentGateError":
+        return (
+            "deployment_gate_refused",
+            "Provide a passing qualification_manifest_path or run verify_qualification first.",
+        )
+    if isinstance(exc, (TypeError, ValueError)):
+        return (
+            "invalid_arguments",
+            "Check tool inputSchema from tools/list and verify all argument names and bounds.",
+        )
+    return (
+        "execution_error",
+        "Inspect the error message and underlying bundle/project inputs.",
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -56,6 +222,7 @@ class FormaMechMcpServer:
         *,
         max_dof_limit: int = DEFAULT_MAX_DOF_LIMIT,
         require_qualified: bool = False,
+        strict_lifecycle: bool = False,
     ) -> None:
         root = Path(workspace_root).resolve()
         if not root.exists() or not root.is_dir():
@@ -64,12 +231,65 @@ class FormaMechMcpServer:
             raise ValueError("max_dof_limit must be an integer >= 2")
         if not isinstance(require_qualified, bool):
             raise TypeError("require_qualified must be boolean")
+        if not isinstance(strict_lifecycle, bool):
+            raise TypeError("strict_lifecycle must be boolean")
         self.workspace_root = root
         self.max_dof_limit = max_dof_limit
         self.require_qualified = require_qualified
+        self.strict_lifecycle = strict_lifecycle
+        self._session_state: McpSessionState = McpSessionState.UNINITIALIZED
+        self._transition_history: list[TransitionRecord[McpSessionState]] = []
         self._tools: dict[str, McpToolSpec] = {
             spec.name: spec for spec in self._build_tools()
         }
+
+    @property
+    def session_state(self) -> McpSessionState:
+        """Current explicit MCP protocol session state."""
+        return self._session_state
+
+    @property
+    def transition_history(self) -> tuple[TransitionRecord[McpSessionState], ...]:
+        """Audit trail of session state transitions."""
+        return tuple(self._transition_history)
+
+    def _transition(
+        self,
+        target: McpSessionState,
+        *,
+        trigger: str,
+        reason: str = "",
+    ) -> TransitionRecord[McpSessionState]:
+        record = MCP_SESSION_MACHINE.require_transition(
+            self._session_state, target, trigger=trigger, reason=reason
+        )
+        self._session_state = target
+        self._transition_history.append(record)
+        return record
+
+    def close(self) -> TransitionRecord[McpSessionState]:
+        """Transition the MCP session to terminal ``CLOSED`` state."""
+        return self._transition(McpSessionState.CLOSED, trigger="close")
+
+    def session_snapshot(self) -> StateSnapshot[McpSessionState]:
+        """Return a self-describing session state snapshot for agents and diagnostics."""
+        hints = {
+            McpSessionState.UNINITIALIZED: "Send JSON-RPC 'initialize' to begin the MCP handshake.",
+            McpSessionState.INITIALIZING: "Send 'notifications/initialized' to enter READY state.",
+            McpSessionState.READY: "Session is ready for 'tools/list', 'tools/call', and 'ping'.",
+            McpSessionState.CLOSED: "Session is closed; create a new server instance to reconnect.",
+        }
+        return MCP_SESSION_MACHINE.snapshot(
+            self._session_state,
+            recommended_hint=hints[self._session_state],
+            metadata={
+                "server_name": SERVER_NAME,
+                "protocol_version": MCP_PROTOCOL_VERSION,
+                "strict_lifecycle": self.strict_lifecycle,
+                "require_qualified": self.require_qualified,
+                "tool_count": len(self._tools),
+            },
+        )
 
     def resolve_path(self, raw_path: str | Path) -> Path:
         """Resolve a user-supplied path strictly within ``workspace_root``."""
@@ -101,21 +321,53 @@ class FormaMechMcpServer:
         args = {} if arguments is None else arguments
         if not isinstance(args, Mapping):
             raise TypeError("tool arguments must be a JSON object")
+        _validate_tool_arguments(spec.name, spec.input_schema, args)
         return spec.handler(args)
 
     def handle_message(self, message: Mapping[str, Any]) -> dict[str, Any] | None:
         """Handle one JSON-RPC 2.0 MCP message and return the response (or None for notifications)."""
+        has_id = "id" in message
         req_id = message.get("id")
         method = message.get("method")
         params = message.get("params") or {}
         if not isinstance(method, str):
+            if not has_id:
+                return None
             return self._error(req_id, -32600, "invalid request: missing method")
 
+        if self._session_state is McpSessionState.CLOSED:
+            if not has_id:
+                return None
+            return self._error(
+                req_id, -32000, "MCP session is CLOSED and cannot process requests"
+            )
+
         if method == "notifications/initialized":
+            if self._session_state is McpSessionState.INITIALIZING:
+                self._transition(
+                    McpSessionState.READY, trigger="notifications/initialized"
+                )
             return None
+
+        # JSON-RPC 2.0: never reply to notifications (messages without an 'id').
+        if not has_id and method.startswith("notifications/"):
+            return None
+
         if method == "ping":
             return self._result(req_id, {})
+
         if method == "initialize":
+            if self._session_state in (
+                McpSessionState.UNINITIALIZED,
+                McpSessionState.INITIALIZING,
+            ):
+                self._transition(McpSessionState.INITIALIZING, trigger="initialize")
+            elif self.strict_lifecycle:
+                return self._error(
+                    req_id,
+                    -32600,
+                    f"initialize not allowed in session state {self._session_state.value}",
+                )
             return self._result(
                 req_id,
                 {
@@ -127,8 +379,24 @@ class FormaMechMcpServer:
                     },
                 },
             )
+
+        if method in ("tools/list", "tools/call"):
+            if (
+                self.strict_lifecycle
+                and self._session_state is not McpSessionState.READY
+            ):
+                return self._error(
+                    req_id,
+                    -32002,
+                    "MCP session is not READY; send 'initialize' then "
+                    "'notifications/initialized' first",
+                )
+            if self._session_state is McpSessionState.READY:
+                self._transition(McpSessionState.READY, trigger="serve_request")
+
         if method == "tools/list":
             return self._result(req_id, {"tools": self.list_tools()})
+
         if method == "tools/call":
             if not isinstance(params, Mapping):
                 return self._error(req_id, -32602, "params must be an object")
@@ -140,39 +408,26 @@ class FormaMechMcpServer:
                 payload = self.call_tool(tool_name, tool_args)
             except KeyError as exc:
                 return self._error(req_id, -32601, str(exc))
-            except (SandboxViolationError, ResourceLimitError) as exc:
-                return self._result(
-                    req_id,
-                    {
-                        "isError": True,
-                        "content": [
-                            {
-                                "type": "text",
-                                "text": json.dumps(
-                                    {
-                                        "error": type(exc).__name__,
-                                        "message": str(exc),
-                                    },
-                                    sort_keys=True,
-                                ),
-                            }
-                        ],
-                    },
-                )
             except Exception as exc:
+                category, hint = _error_category_and_hint(exc)
+                err_payload: dict[str, Any] = {
+                    "error": type(exc).__name__,
+                    "category": category,
+                    "message": str(exc),
+                    "hint": hint,
+                }
+                if isinstance(exc, InvalidTransitionError):
+                    err_payload["transition"] = exc.document()
                 return self._result(
                     req_id,
                     {
                         "isError": True,
+                        "structuredContent": err_payload,
                         "content": [
                             {
                                 "type": "text",
                                 "text": json.dumps(
-                                    {
-                                        "error": type(exc).__name__,
-                                        "message": str(exc),
-                                    },
-                                    sort_keys=True,
+                                    err_payload, sort_keys=True, allow_nan=False
                                 ),
                             }
                         ],
@@ -186,11 +441,15 @@ class FormaMechMcpServer:
                     "content": [
                         {
                             "type": "text",
-                            "text": json.dumps(payload, sort_keys=True),
+                            "text": json.dumps(
+                                payload, sort_keys=True, allow_nan=False
+                            ),
                         }
                     ],
                 },
             )
+        if not has_id:
+            return None
         return self._error(req_id, -32601, f"unsupported method {method!r}")
 
     def serve_stdio(
@@ -219,7 +478,9 @@ class FormaMechMcpServer:
                     else self._error(None, -32600, "JSON-RPC message must be an object")
                 )
             if resp is not None:
-                out_stream.write(json.dumps(resp, sort_keys=True) + "\n")
+                out_stream.write(
+                    json.dumps(resp, sort_keys=True, allow_nan=False) + "\n"
+                )
                 out_stream.flush()
 
     @staticmethod
@@ -323,6 +584,7 @@ class FormaMechMcpServer:
                         "bundle_path": {"type": "string"},
                         "problem_path": {"type": "string"},
                         "recipe_path": {"type": "string"},
+                        "qualification_manifest_path": {"type": "string"},
                         "refuse_unsupported": {"type": "boolean", "default": False},
                     },
                     "additionalProperties": False,
@@ -420,6 +682,22 @@ class FormaMechMcpServer:
             raise TypeError("'inputs' must be a JSON object")
         parsed_inputs, parsed_queries = parse_request({"inputs": dict(raw_inputs)})
         mode = ServingMode(str(args.get("mode", "certified")))
+        escalate = bool(args.get("escalate", False))
+        tolerance = None if args.get("tolerance") is None else float(args["tolerance"])
+        tta_steps = int(args.get("tta_steps", 0) or 0)
+
+        if tolerance is not None and (not math.isfinite(tolerance) or tolerance <= 0.0):
+            raise ValueError("tolerance must be a finite positive number")
+        if mode is ServingMode.FAST:
+            if escalate:
+                raise ValueError("escalate=True is not supported when mode='fast'")
+            if tolerance is not None:
+                raise ValueError("tolerance is not supported when mode='fast'")
+            if tta_steps > 0:
+                raise ValueError("tta_steps > 0 is not supported when mode='fast'")
+        elif mode is ServingMode.EXACT and tolerance is not None:
+            raise ValueError("tolerance is not supported when mode='exact'")
+
         is_portable = isinstance(
             getattr(bundle.model, "problem", None), PortableProblem
         )
@@ -437,7 +715,6 @@ class FormaMechMcpServer:
                 self.resolve_path(str(args["cad_calibration_path"])),
                 expected_manifest_sha256=bundle.manifest.manifest_sha256,
             )
-        tta_steps = int(args.get("tta_steps", 0) or 0)
         tta_cfg = TestTimeLoraConfig(steps=tta_steps) if tta_steps > 0 else None
         served = serve(
             bundle,
@@ -446,10 +723,8 @@ class FormaMechMcpServer:
             mode=mode,
             recipe=recipe,
             corrected=mode is not ServingMode.FAST,
-            escalate=bool(args.get("escalate", False)),
-            tolerance=(
-                None if args.get("tolerance") is None else float(args["tolerance"])
-            ),
+            escalate=escalate,
+            tolerance=tolerance,
             backend=args.get("backend"),
             cad_calibration=cad_cal,
             trust_report=bool(args.get("trust_report", False)),
@@ -482,6 +757,15 @@ class FormaMechMcpServer:
         from piginot.serving import load_recipe
 
         bpath = self.resolve_path(str(args["bundle_path"]))
+        if self.require_qualified or args.get("qualification_manifest_path"):
+            from piginot.qualify import enforce_deployment_gate
+
+            mpath = (
+                self.resolve_path(str(args["qualification_manifest_path"]))
+                if args.get("qualification_manifest_path")
+                else None
+            )
+            enforce_deployment_gate(bpath, mpath)
         ppath = self.resolve_path(str(args["problem_path"]))
         bundle = load_bundle(bpath)
         dof_estimate = len(bundle.reference_mesh.nodes) * 2
@@ -511,6 +795,10 @@ class FormaMechMcpServer:
             raise ValueError(
                 "verify_receipt requires either 'receipt' or 'receipt_path'"
             )
+        if receipt_obj is not None and receipt_path is not None:
+            raise ValueError(
+                "verify_receipt accepts either 'receipt' or 'receipt_path', not both"
+            )
         if receipt_obj is None:
             rpath = self.resolve_path(str(receipt_path))
             receipt_obj = json.loads(rpath.read_text(encoding="utf-8"))
@@ -525,8 +813,8 @@ class FormaMechMcpServer:
         }
 
     def _tool_verify_qualification(self, args: Mapping[str, Any]) -> dict[str, Any]:
+        from piginot.contracts.state_machine import ClaimLevel
         from piginot.qualify import QualificationPolicy, check_deployment_gate
-        from piginot.verification.status import ClaimLevel
 
         bpath = self.resolve_path(str(args["bundle_path"]))
         mpath = (
@@ -554,8 +842,10 @@ class FormaMechMcpServer:
 __all__ = (
     "DEFAULT_MAX_DOF_LIMIT",
     "MCP_PROTOCOL_VERSION",
+    "MCP_SESSION_MACHINE",
     "SERVER_NAME",
     "FormaMechMcpServer",
+    "McpSessionState",
     "McpToolSpec",
     "ResourceLimitError",
     "SandboxViolationError",

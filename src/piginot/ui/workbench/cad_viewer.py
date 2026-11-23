@@ -22,6 +22,16 @@ ROLE_COLORS: Final[Mapping[str, str]] = {
 }
 
 
+def _is_zero_expression(expr: str) -> bool:
+    text = expr.strip()
+    if not text:
+        return False
+    try:
+        return float(text) == 0.0
+    except ValueError:
+        return False
+
+
 def _classify_assignment(assignment: BoundaryAssignment | None) -> tuple[str, str]:
     if assignment is None:
         return "unassigned", "Unassigned"
@@ -30,9 +40,9 @@ def _classify_assignment(assignment: BoundaryAssignment | None) -> tuple[str, st
     if assignment.kind == "symmetry":
         comps = ",".join(assignment.components)
         return "symmetry", f"{assignment.name} (symmetry {comps})"
-    is_zero = all(
-        expr.strip() in ("0", "0.0", "-0", "-0.0") for expr, _ in assignment.values
-    )
+    if not assignment.components or not assignment.values:
+        return "unassigned", f"{assignment.name} (incomplete dirichlet)"
+    is_zero = all(_is_zero_expression(expr) for expr, _ in assignment.values)
     comps_vals = ", ".join(
         f"u_{c}={e}"
         for c, (e, _) in zip(assignment.components, assignment.values, strict=False)

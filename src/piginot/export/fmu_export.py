@@ -14,19 +14,89 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import re
 import uuid
 import xml.etree.ElementTree as ET
 import zipfile
 from collections.abc import Mapping
 from dataclasses import dataclass
+from enum import StrEnum
 from pathlib import Path
 from typing import Any, Final
 
 from piginot.contracts import canonical_json_bytes
+from piginot.contracts.state_machine import (
+    StateMachineSpec,
+    TransitionSpec,
+    register_state_machine,
+)
 
 FMU_MANIFEST_SCHEMA: Final = "formamech.fmi3-fmu-manifest-v1"
 FMI_VERSION: Final = "3.0"
+
+
+class FmuLifecycleState(StrEnum):
+    """Standards-aligned FMI 3.0 Co-Simulation instance lifecycle states."""
+
+    INSTANTIATED = "INSTANTIATED"
+    INITIALIZATION_MODE = "INITIALIZATION_MODE"
+    STEP_MODE = "STEP_MODE"
+    TERMINATED = "TERMINATED"
+
+
+FMU_LIFECYCLE_MACHINE: Final[StateMachineSpec[FmuLifecycleState]] = (
+    register_state_machine(
+        StateMachineSpec(
+            machine_id="formamech.export.fmu",
+            description=(
+                "FMI 3.0 Co-Simulation instance lifecycle enforcing ordered "
+                "initialization, positive-step co-simulation, and terminal shutdown."
+            ),
+            states=tuple(FmuLifecycleState),
+            initial_states=(FmuLifecycleState.INSTANTIATED,),
+            terminal_states=(FmuLifecycleState.TERMINATED,),
+            transitions=(
+                TransitionSpec(
+                    FmuLifecycleState.INSTANTIATED,
+                    FmuLifecycleState.INITIALIZATION_MODE,
+                    "enter_initialization_mode",
+                    "Enter FMI 3.0 initialization mode to configure start values.",
+                ),
+                TransitionSpec(
+                    FmuLifecycleState.INSTANTIATED,
+                    FmuLifecycleState.TERMINATED,
+                    "terminate",
+                    "Terminate instance before initialization.",
+                ),
+                TransitionSpec(
+                    FmuLifecycleState.INITIALIZATION_MODE,
+                    FmuLifecycleState.STEP_MODE,
+                    "exit_initialization_mode",
+                    "Verify bundle digest, cache operator, and enter step mode.",
+                ),
+                TransitionSpec(
+                    FmuLifecycleState.INITIALIZATION_MODE,
+                    FmuLifecycleState.TERMINATED,
+                    "terminate",
+                    "Terminate instance during initialization.",
+                ),
+                TransitionSpec(
+                    FmuLifecycleState.STEP_MODE,
+                    FmuLifecycleState.STEP_MODE,
+                    "do_step",
+                    "Advance co-simulation by a positive finite step size.",
+                ),
+                TransitionSpec(
+                    FmuLifecycleState.STEP_MODE,
+                    FmuLifecycleState.TERMINATED,
+                    "terminate",
+                    "Terminate co-simulation and release cached model state.",
+                ),
+            ),
+        )
+    )
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -249,12 +319,23 @@ _RUNNER_SOURCE = '''"""Self-contained FMI 3.0 Co-Simulation Python runner for a 
 from __future__ import annotations
 
 import json
+import math
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
 
+class FmuState(StrEnum):
+    """Explicit FMI 3.0 Co-Simulation lifecycle states."""
+
+    INSTANTIATED = "INSTANTIATED"
+    INITIALIZATION_MODE = "INITIALIZATION_MODE"
+    STEP_MODE = "STEP_MODE"
+    TERMINATED = "TERMINATED"
+
+
 class FormaMechFmuInstance:
-    """Minimal FMI 3.0 Co-Simulation lifecycle adapter backed by FormaMech."""
+    """FMI 3.0 Co-Simulation lifecycle adapter backed by a verified FormaMech bundle."""
 
     def __init__(self, bundle_path: str | Path, manifest_path: str | Path) -> None:
         self.bundle_path = Path(bundle_path)
@@ -264,23 +345,71 @@ class FormaMechFmuInstance:
             for k, v in self.manifest["envelope_bounds"].items()
         }
         self._outputs: dict[str, Any] = {}
-        self._initialized = False
+        self._state: FmuState = FmuState.INSTANTIATED
+        self._bundle: Any | None = None
+        self._last_time: float | None = None
+
+    @property
+    def state(self) -> FmuState:
+        return self._state
 
     def enter_initialization_mode(self) -> None:
-        self._initialized = False
+        if self._state is not FmuState.INSTANTIATED:
+            raise ValueError(
+                f"enter_initialization_mode requires INSTANTIATED, got {self._state.value}"
+            )
+        self._state = FmuState.INITIALIZATION_MODE
 
     def exit_initialization_mode(self) -> None:
-        self._initialized = True
+        if self._state is not FmuState.INITIALIZATION_MODE:
+            raise ValueError(
+                f"exit_initialization_mode requires INITIALIZATION_MODE, got {self._state.value}"
+            )
+        from piginot.bundle import load_bundle
+
+        bundle = load_bundle(self.bundle_path)
+        expected_sha = str(self.manifest["bundle_manifest_sha256"])
+        if bundle.manifest.manifest_sha256 != expected_sha:
+            raise ValueError(
+                "FMU manifest bundle_manifest_sha256 does not match loaded bundle"
+            )
+        self._bundle = bundle
+        self._state = FmuState.STEP_MODE
 
     def set_float64(self, name: str, value: float) -> None:
-        self._inputs[name] = float(value)
+        if self._state is FmuState.TERMINATED:
+            raise ValueError("cannot set_float64 after FMU instance is TERMINATED")
+        if name not in self._inputs:
+            raise KeyError(
+                f"unknown FMU input variable {name!r}; expected one of {sorted(self._inputs)}"
+            )
+        num = float(value)
+        if not math.isfinite(num):
+            raise ValueError(f"input {name!r} must be finite, got {value!r}")
+        self._inputs[name] = num
 
     def do_step(self, current_time: float, step_size: float) -> dict[str, Any]:
-        from piginot.bundle import load_bundle
+        if self._state is not FmuState.STEP_MODE:
+            raise ValueError(
+                f"do_step requires STEP_MODE (call enter_initialization_mode and "
+                f"exit_initialization_mode first), got {self._state.value}"
+            )
+        cur_t = float(current_time)
+        dt = float(step_size)
+        if not math.isfinite(cur_t) or not math.isfinite(dt) or dt <= 0.0:
+            raise ValueError("current_time must be finite and step_size must be > 0")
+        if self._last_time is not None and cur_t < self._last_time - 1.0e-12:
+            raise ValueError(
+                f"non-monotonic co-simulation time {cur_t} < previous {self._last_time}"
+            )
+
         from piginot.cli import parse_request
         from piginot.serving import ServingMode, serve
 
-        bundle = load_bundle(self.bundle_path)
+        bundle = self._bundle
+        if bundle is None:
+            raise RuntimeError("bundle not loaded; exit_initialization_mode was bypassed")
+
         req_inputs = {
             k: {
                 "value": self._inputs[k],
@@ -301,15 +430,16 @@ class FormaMechFmuInstance:
         tier0 = served.tier0_admissibility or {}
         admissible = bool(in_env and tier0.get("passed") is True)
         raw_min_det = tier0.get("min_det_f_2d")
-    min_det = float(raw_min_det) if (in_env and raw_min_det is not None) else 0.0
+        min_det = float(raw_min_det) if (in_env and raw_min_det is not None) else 0.0
         max_u = 0.0
         if pred.vertices is not None:
             max_u = float(pred.vertices.u.norm(dim=-1).max().item())
         qois = {q.name: float(q.value) for q in pred.qois}
         rc = served.trust_receipt or {}
+        self._last_time = cur_t + dt
         self._outputs = {
-            "current_time": float(current_time),
-            "step_size": float(step_size),
+            "current_time": cur_t,
+            "step_size": dt,
             "in_envelope": in_env,
             "admissible": admissible,
             "min_det_f_2d": min_det,
@@ -322,10 +452,15 @@ class FormaMechFmuInstance:
         return dict(self._outputs)
 
     def get_outputs(self) -> dict[str, Any]:
+        if self._state is FmuState.INSTANTIATED:
+            raise ValueError("get_outputs is not valid before initialization")
         return dict(self._outputs)
 
     def terminate(self) -> None:
-        self._initialized = False
+        if self._state is FmuState.TERMINATED:
+            raise ValueError("FMU instance is already TERMINATED")
+        self._bundle = None
+        self._state = FmuState.TERMINATED
 '''
 
 
@@ -434,6 +569,11 @@ def evaluate_fmu_step(
     from piginot.cli import parse_request
     from piginot.serving import ServingMode, serve
 
+    cur_t = float(current_time)
+    dt = float(step_size)
+    if not math.isfinite(cur_t) or not math.isfinite(dt) or dt <= 0.0:
+        raise ValueError("current_time must be finite and step_size must be > 0")
+
     fpath = Path(fmu_path)
     with zipfile.ZipFile(fpath, "r") as zf:
         xml_root = ET.fromstring(zf.read("modelDescription.xml"))
@@ -442,6 +582,11 @@ def evaluate_fmu_step(
                 f"expected FMI {FMI_VERSION}, got {xml_root.attrib.get('fmiVersion')!r}"
             )
         manifest = json.loads(zf.read("resources/fmu_manifest.json").decode("utf-8"))
+        xml_token = xml_root.attrib.get("instantiationToken")
+        if xml_token != manifest.get("instantiation_token"):
+            raise ValueError(
+                "modelDescription.xml instantiationToken does not match fmu_manifest.json"
+            )
 
     bundle = load_bundle(Path(bundle_path))
     if bundle.manifest.manifest_sha256 != manifest["bundle_manifest_sha256"]:

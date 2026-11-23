@@ -313,3 +313,98 @@ def test_energy_adaptation_refuses_unsupported_topology() -> None:
     assert adapted is None
     assert result.status is AdaptationStatus.REFUSED_UNSUPPORTED_TOPOLOGY
     assert result.steps_executed == 0
+    assert result.adapter_digest is None
+
+
+def test_lora_adaptation_machine_invariants_and_save_refusal(tmp_path) -> None:
+    from piginot.operators import (
+        LORA_ADAPTATION_MACHINE,
+        AdaptationPhase,
+        AdaptationResult,
+        save_geometry_adapter,
+    )
+
+    assert LORA_ADAPTATION_MACHINE.can_transition(
+        AdaptationPhase.PLANNED,
+        AdaptationPhase.RUNNING,
+        trigger="start_energy_adaptation",
+    )
+    assert LORA_ADAPTATION_MACHINE.is_terminal(AdaptationPhase.FAILED_INADMISSIBLE)
+
+    # COMPLETED requires adapter_digest and minimum_determinant > 0
+    with pytest.raises(ValueError, match="adapter_digest"):
+        AdaptationResult(
+            plan_hash="a" * 64,
+            status=AdaptationStatus.COMPLETED,
+            claim_level="NOT_VERIFIED",
+            steps_executed=5,
+            step_budget_ratio=0.05,
+            adapter_parameter_count=10,
+            base_parameter_count=100,
+            initial_energy=1.0,
+            final_energy=0.5,
+            minimum_determinant=0.9,
+            energy_history=(1.0, 0.5),
+            adapter_digest=None,
+            reason="missing digest",
+        )
+    with pytest.raises(ValueError, match="minimum_determinant > 0"):
+        AdaptationResult(
+            plan_hash="a" * 64,
+            status=AdaptationStatus.COMPLETED,
+            claim_level="NOT_VERIFIED",
+            steps_executed=5,
+            step_budget_ratio=0.05,
+            adapter_parameter_count=10,
+            base_parameter_count=100,
+            initial_energy=1.0,
+            final_energy=0.5,
+            minimum_determinant=-0.1,
+            energy_history=(1.0, 0.5),
+            adapter_digest="d" * 64,
+            reason="inverted",
+        )
+    # Non-COMPLETED forbids non-None adapter_digest
+    with pytest.raises(ValueError, match="adapter_digest=None"):
+        AdaptationResult(
+            plan_hash="a" * 64,
+            status=AdaptationStatus.FAILED_INADMISSIBLE,
+            claim_level="NOT_VERIFIED",
+            steps_executed=2,
+            step_budget_ratio=0.02,
+            adapter_parameter_count=10,
+            base_parameter_count=100,
+            initial_energy=1.0,
+            final_energy=1.0,
+            minimum_determinant=-0.2,
+            energy_history=(1.0,),
+            adapter_digest="d" * 64,
+            reason="should not carry digest",
+        )
+
+    base = _base_operator()
+    cfg = LowRankAdapterConfig(
+        rank=4, alpha=4.0, max_steps=5, from_scratch_reference_steps=100
+    )
+    adapted = AdaptedBoundaryEnergyOperator(base, cfg)
+    failed_res = AdaptationResult(
+        plan_hash="a" * 64,
+        status=AdaptationStatus.FAILED_INADMISSIBLE,
+        claim_level="NOT_VERIFIED",
+        steps_executed=2,
+        step_budget_ratio=0.02,
+        adapter_parameter_count=adapted.adapter_parameter_count(),
+        base_parameter_count=adapted.base_parameter_count(),
+        initial_energy=1.0,
+        final_energy=1.0,
+        minimum_determinant=-0.2,
+        energy_history=(1.0,),
+        adapter_digest=None,
+        reason="failed",
+    )
+    with pytest.raises(ValueError, match="non-COMPLETED"):
+        save_geometry_adapter(
+            tmp_path / "bad-adapter",
+            adapted_operator=adapted,
+            result=failed_res,
+        )

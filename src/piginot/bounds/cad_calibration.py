@@ -22,6 +22,7 @@ import json
 import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from enum import StrEnum
 from pathlib import Path
 from typing import Any, Final
 
@@ -30,8 +31,70 @@ import numpy as np
 from piginot.bounds.conformal import split_conformal_bound
 from piginot.certify.trust_report import StatisticalCalibrationRecord
 from piginot.contracts.canonical import canonical_json_bytes
+from piginot.contracts.state_machine import (
+    StateMachineSpec,
+    TransitionSpec,
+    register_state_machine,
+)
 
 CAD_CALIBRATION_SCHEMA: Final = "formamech.cad-conformal-calibration-v1"
+
+
+class CadCalibrationGateState(StrEnum):
+    """Explicit lifecycle states of a bundle-bound CAD conformal calibration sidecar."""
+
+    UNCHECKED = "UNCHECKED"
+    BOUND_VERIFIED = "BOUND_VERIFIED"
+    IN_ENVELOPE_SERVED = "IN_ENVELOPE_SERVED"
+    REFUSED_OUT_OF_ENVELOPE = "REFUSED_OUT_OF_ENVELOPE"
+    REFUSED_INTEGRITY_OR_MISMATCH = "REFUSED_INTEGRITY_OR_MISMATCH"
+
+
+CAD_CALIBRATION_MACHINE: Final[StateMachineSpec[CadCalibrationGateState]] = (
+    register_state_machine(
+        StateMachineSpec(
+            machine_id="formamech.bounds.cad_calibration_gate",
+            description=(
+                "Per-CAD split-conformal and functional-band calibration gate: "
+                "manifest SHA-256 + calibration_sha256 verification -> "
+                "non-empty parameter envelope gate -> finite conformal bounds or refusal."
+            ),
+            states=tuple(CadCalibrationGateState),
+            initial_states=(CadCalibrationGateState.UNCHECKED,),
+            terminal_states=(
+                CadCalibrationGateState.IN_ENVELOPE_SERVED,
+                CadCalibrationGateState.REFUSED_OUT_OF_ENVELOPE,
+                CadCalibrationGateState.REFUSED_INTEGRITY_OR_MISMATCH,
+            ),
+            transitions=(
+                TransitionSpec(
+                    CadCalibrationGateState.UNCHECKED,
+                    CadCalibrationGateState.REFUSED_INTEGRITY_OR_MISMATCH,
+                    "refuse_tamper_or_bundle_mismatch",
+                    "Missing/mismatched calibration_sha256 or bundle_manifest_sha256.",
+                ),
+                TransitionSpec(
+                    CadCalibrationGateState.UNCHECKED,
+                    CadCalibrationGateState.BOUND_VERIFIED,
+                    "verify_digest_and_bundle_binding",
+                    "RFC 8785 calibration_sha256 and bundle_manifest_sha256 verified.",
+                ),
+                TransitionSpec(
+                    CadCalibrationGateState.BOUND_VERIFIED,
+                    CadCalibrationGateState.IN_ENVELOPE_SERVED,
+                    "pass_parameter_envelope",
+                    "Non-empty parameter_bounds contain the query parameters.",
+                ),
+                TransitionSpec(
+                    CadCalibrationGateState.BOUND_VERIFIED,
+                    CadCalibrationGateState.REFUSED_OUT_OF_ENVELOPE,
+                    "refuse_parameter_envelope",
+                    "parameter_bounds are empty or query lies outside calibrated box.",
+                ),
+            ),
+        )
+    )
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -45,6 +108,27 @@ class FunctionalBandCalibration:
     rank_k: int
     supremum_quantile: float
     scale_floor: float = 1.0e-12
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.field_name, str) or not self.field_name.strip():
+            raise ValueError("field_name must be non-empty text")
+        if not (0.0 < float(self.alpha) < 1.0):
+            raise ValueError("alpha must lie strictly in (0, 1)")
+        if type(self.sample_count) is not int or self.sample_count < 1:
+            raise ValueError("sample_count must be an integer >= 1")
+        if (
+            type(self.rank_k) is not int
+            or self.rank_k < 1
+            or self.rank_k > self.sample_count
+        ):
+            raise ValueError("rank_k must satisfy 1 <= rank_k <= sample_count")
+        if (
+            not math.isfinite(float(self.supremum_quantile))
+            or float(self.supremum_quantile) < 0.0
+        ):
+            raise ValueError("supremum_quantile must be finite and non-negative")
+        if not math.isfinite(float(self.scale_floor)) or float(self.scale_floor) <= 0.0:
+            raise ValueError("scale_floor must be finite and positive")
 
     @property
     def nominal_coverage(self) -> float:
@@ -124,6 +208,22 @@ class ScalarQoiCalibration:
     rank_k: int
     quantile: float
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.qoi_name, str) or not self.qoi_name.strip():
+            raise ValueError("qoi_name must be non-empty text")
+        if not (0.0 < float(self.alpha) < 1.0):
+            raise ValueError("alpha must lie strictly in (0, 1)")
+        if type(self.sample_count) is not int or self.sample_count < 1:
+            raise ValueError("sample_count must be an integer >= 1")
+        if (
+            type(self.rank_k) is not int
+            or self.rank_k < 1
+            or self.rank_k > self.sample_count
+        ):
+            raise ValueError("rank_k must satisfy 1 <= rank_k <= sample_count")
+        if not math.isfinite(float(self.quantile)) or float(self.quantile) < 0.0:
+            raise ValueError("quantile must be finite and non-negative")
+
     @property
     def nominal_coverage(self) -> float:
         return 1.0 - self.alpha
@@ -172,17 +272,20 @@ class CadCalibrationRecord:
             else {}
         )
         object.__setattr__(self, "functional_bands", fb)
-        pb = (
-            {
-                k: (float(v[0]), float(v[1]))
-                for k, v in sorted(self.parameter_bounds.items())
-            }
-            if isinstance(self.parameter_bounds, Mapping)
-            else {}
-        )
+        pb: dict[str, tuple[float, float]] = {}
+        if isinstance(self.parameter_bounds, Mapping):
+            for k, v in sorted(self.parameter_bounds.items()):
+                lo, hi = float(v[0]), float(v[1])
+                if not (math.isfinite(lo) and math.isfinite(hi)) or lo > hi:
+                    raise ValueError(
+                        f"parameter_bounds[{k!r}] must satisfy finite lower <= upper"
+                    )
+                pb[str(k)] = (lo, hi)
         object.__setattr__(self, "parameter_bounds", pb)
 
     def in_envelope(self, inputs: Mapping[str, Any]) -> bool:
+        if not self.parameter_bounds:
+            return False
         for name, (lo, hi) in self.parameter_bounds.items():
             if name not in inputs:
                 return False
@@ -198,7 +301,7 @@ class CadCalibrationRecord:
         cal = self.qoi_calibrations.get(qoi_name)
         if cal is None:
             return None
-        if not in_envelope:
+        if not in_envelope or not self.parameter_bounds:
             return StatisticalCalibrationRecord(
                 nominal_coverage=cal.nominal_coverage,
                 calibration_sample_count=cal.sample_count,
@@ -207,7 +310,11 @@ class CadCalibrationRecord:
                 exchangeability_scope=self.exchangeability_scope,
                 in_calibration_envelope=False,
                 refused=True,
-                refusal_reason="query lies outside calibration parameter envelope",
+                refusal_reason=(
+                    "calibration parameter envelope is undeclared (empty parameter_bounds)"
+                    if not self.parameter_bounds
+                    else "query lies outside calibration parameter envelope"
+                ),
             )
         return StatisticalCalibrationRecord(
             nominal_coverage=cal.nominal_coverage,
@@ -229,7 +336,11 @@ class CadCalibrationRecord:
                 "nominal_coverage": 1.0 - self.alpha,
                 "in_calibration_envelope": False,
                 "refused": True,
-                "refusal_reason": "query lies outside calibration parameter envelope",
+                "refusal_reason": (
+                    "calibration parameter envelope is undeclared (empty parameter_bounds)"
+                    if not self.parameter_bounds
+                    else "query lies outside calibration parameter envelope"
+                ),
                 "qoi_bounds": {},
                 "functional_bands": {},
             }
@@ -327,7 +438,10 @@ class CadCalibrationRecord:
             parameter_bounds=pbounds,
         )
         recorded_sha = raw.get("calibration_sha256")
-        if recorded_sha is not None and recorded_sha != record.calibration_sha256:
+        if (
+            not isinstance(recorded_sha, str)
+            or recorded_sha != record.calibration_sha256
+        ):
             raise ValueError("CAD calibration sidecar SHA-256 digest mismatch")
         return record
 
@@ -378,7 +492,9 @@ def build_cad_calibration(
 
 
 __all__ = (
+    "CAD_CALIBRATION_MACHINE",
     "CAD_CALIBRATION_SCHEMA",
+    "CadCalibrationGateState",
     "CadCalibrationRecord",
     "FunctionalBandCalibration",
     "ScalarQoiCalibration",

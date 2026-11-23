@@ -5,9 +5,9 @@ from __future__ import annotations
 import math
 from collections.abc import Mapping
 from dataclasses import dataclass
-from enum import StrEnum
 
 from piginot.contracts.specs import FrozenMap
+from piginot.contracts.state_machine import GateStatus as GateStatus
 from piginot.fem.manufactured import MANUFACTURED_CASE_NAMES
 from piginot.fem.mms_convergence import run_all_mms_convergence_studies
 from piginot.fem.mms_estimators import (
@@ -39,14 +39,6 @@ _RECOVERY_CALIBRATION_POPULATION = 24
 _RECOVERY_SAFETY_FACTOR = 2.61
 _SEEDED_DEFECT_COUNT = 6
 _FEM_COVERAGE_MINIMUM = 85.0
-
-
-class GateStatus(StrEnum):
-    """Allowed status values in the step-gate evidence schema."""
-
-    PASS = "PASS"
-    FAIL = "FAIL"
-    NOT_RUN = "NOT_RUN"
 
 
 @dataclass(frozen=True, slots=True)

@@ -103,3 +103,48 @@ def test_permanent_to_permanent_is_an_idempotent_explicit_transition(
     updated = store.set_retention(digest, RetentionTier.PERMANENT)
 
     assert updated.retention is RetentionTier.PERMANENT
+
+
+def test_store_lifecycle_state_queries_and_paradoxical_guards(tmp_path: Path) -> None:
+    from piginot.store import (
+        ContentInfo,
+        ContentLifecycleState,
+        DivergentRecipeError,
+        RecipeState,
+        StoreFormatError,
+    )
+
+    store = ObjectStore.create(tmp_path / "store")
+    missing = "0" * 64
+    assert store.content_state(missing) is ContentLifecycleState.UNCOMMITTED
+    assert store.recipe_state(missing) is RecipeState.UNRECORDED
+
+    d_perm = store.put(b"perm", tier=RetentionTier.PERMANENT)
+    d_ret = store.put(b"ret", tier=RetentionTier.RETAINED)
+    d_prun = store.put(b"prun", tier=RetentionTier.PRUNABLE)
+    assert store.content_state(d_perm) is ContentLifecycleState.PERMANENT_MATERIALIZED
+    assert store.content_state(d_ret) is ContentLifecycleState.RETAINED_MATERIALIZED
+    assert store.content_state(d_prun) is ContentLifecycleState.PRUNABLE_MATERIALIZED
+
+    store.prune()
+    assert store.content_state(d_prun) is ContentLifecycleState.PRUNABLE_PRUNED
+    with pytest.raises(RetentionPolicyError, match="rehydration"):
+        store.set_retention(d_prun, RetentionTier.PERMANENT)
+    with pytest.raises(ValueError, match="unmaterialized"):
+        ContentInfo(d_prun, 4, RetentionTier.RETAINED, materialized=False)
+
+    r_hash = "1" * 64
+    store.record_recipe_result(r_hash, d_perm)
+    assert store.recipe_state(r_hash) is RecipeState.RESOLVED
+    with pytest.raises(DivergentRecipeError):
+        store.record_recipe_result(r_hash, d_ret)
+    assert store.recipe_state(r_hash) is RecipeState.DIVERGENT
+
+    # Corrupt paradoxical metadata rejected on read
+    meta_path = store._content_metadata_path(d_prun)
+    meta_path.write_text(
+        meta_path.read_text(encoding="utf-8").replace('"PRUNABLE"', '"PERMANENT"'),
+        encoding="utf-8",
+    )
+    with pytest.raises(StoreFormatError, match="inconsistent"):
+        store.info(d_prun)

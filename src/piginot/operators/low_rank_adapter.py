@@ -24,6 +24,12 @@ import torch
 from torch import nn
 
 from piginot.contracts import MaterialSpec, canonical_json_bytes
+from piginot.contracts.state_machine import (
+    ClaimLevel,
+    StateMachineSpec,
+    TransitionSpec,
+    register_state_machine,
+)
 from piginot.lifting.base import DirichletLifting
 from piginot.operators.architecture import OperatorOutput
 from piginot.operators.boundary_energy_operator import (
@@ -360,6 +366,63 @@ class AdaptationStatus(enum.StrEnum):
     FAILED_INADMISSIBLE = "FAILED_INADMISSIBLE"
 
 
+class AdaptationPhase(enum.StrEnum):
+    """Explicit stages of low-rank per-geometry physics-energy adaptation."""
+
+    PLANNED = "PLANNED"
+    RUNNING = "RUNNING"
+    COMPLETED = "COMPLETED"
+    REFUSED_UNSUPPORTED_TOPOLOGY = "REFUSED_UNSUPPORTED_TOPOLOGY"
+    FAILED_INADMISSIBLE = "FAILED_INADMISSIBLE"
+
+
+LORA_ADAPTATION_MACHINE: Final[StateMachineSpec[AdaptationPhase]] = (
+    register_state_machine(
+        StateMachineSpec(
+            machine_id="formamech.operators.lora_adaptation",
+            description=(
+                "Low-rank per-geometry physics-energy adaptation lifecycle: "
+                "topology OOD precheck -> bounded energy optimization with det(F) > 0 "
+                "admissibility guard -> completed adapter delta or fail-closed refusal."
+            ),
+            states=tuple(AdaptationPhase),
+            initial_states=(AdaptationPhase.PLANNED,),
+            terminal_states=(
+                AdaptationPhase.COMPLETED,
+                AdaptationPhase.REFUSED_UNSUPPORTED_TOPOLOGY,
+                AdaptationPhase.FAILED_INADMISSIBLE,
+            ),
+            transitions=(
+                TransitionSpec(
+                    AdaptationPhase.PLANNED,
+                    AdaptationPhase.REFUSED_UNSUPPORTED_TOPOLOGY,
+                    "refuse_unsupported_topology",
+                    "GeometryOODDetector reported UNSUPPORTED_TOPOLOGY before stepping.",
+                ),
+                TransitionSpec(
+                    AdaptationPhase.PLANNED,
+                    AdaptationPhase.RUNNING,
+                    "start_energy_adaptation",
+                    "Freeze base operator, encode boundary once, and begin Adam steps.",
+                ),
+                TransitionSpec(
+                    AdaptationPhase.RUNNING,
+                    AdaptationPhase.FAILED_INADMISSIBLE,
+                    "fail_inadmissible_or_nonfinite",
+                    "Non-finite energy or non-positive Jacobian determinant det(F) <= 0.",
+                ),
+                TransitionSpec(
+                    AdaptationPhase.RUNNING,
+                    AdaptationPhase.COMPLETED,
+                    "complete_within_budget",
+                    "All steps completed with finite energy and strictly positive det(F) > 0.",
+                ),
+            ),
+        )
+    )
+)
+
+
 @dataclass(frozen=True, slots=True)
 class AdaptationPlan:
     """Declarative, content-hashed adaptation plan for one unseen geometry."""
@@ -407,6 +470,26 @@ class AdaptationResult:
     energy_history: tuple[float, ...]
     adapter_digest: str | None
     reason: str
+
+    def __post_init__(self) -> None:
+        claim = ClaimLevel(str(self.claim_level)).value
+        object.__setattr__(self, "claim_level", claim)
+        if self.status is AdaptationStatus.COMPLETED:
+            if self.adapter_digest is None:
+                raise ValueError("COMPLETED AdaptationResult requires adapter_digest")
+            if self.minimum_determinant is None or self.minimum_determinant <= 0.0:
+                raise ValueError(
+                    "COMPLETED AdaptationResult requires minimum_determinant > 0"
+                )
+            if self.initial_energy is None or self.final_energy is None:
+                raise ValueError(
+                    "COMPLETED AdaptationResult requires initial_energy and final_energy"
+                )
+        else:
+            if self.adapter_digest is not None:
+                raise ValueError(
+                    f"{self.status.value} AdaptationResult must have adapter_digest=None"
+                )
 
     def document(self) -> dict[str, Any]:
         return {
@@ -505,6 +588,7 @@ def adapt_boundary_operator_energy(
 
     history: list[float] = []
     min_det = float("inf")
+    inadmissible_seen = False
     for step in range(plan.adapter_config.max_steps):
         pts, wts = stratified_triangle_quadrature(
             domain, plan.energy_config.points_per_cell, generator=quad_gen
@@ -526,7 +610,7 @@ def adapt_boundary_operator_energy(
         )
         val = float(terms.total.detach().item())
         if not math.isfinite(val):
-            return adapted, AdaptationResult(
+            return None, AdaptationResult(
                 plan_hash=plan.plan_hash,
                 status=AdaptationStatus.FAILED_INADMISSIBLE,
                 claim_level="NOT_VERIFIED",
@@ -539,11 +623,13 @@ def adapt_boundary_operator_energy(
                 final_energy=history[-1] if history else None,
                 minimum_determinant=min_det if math.isfinite(min_det) else None,
                 energy_history=tuple(history),
-                adapter_digest=adapted.adapter_digest(),
+                adapter_digest=None,
                 reason="non-finite potential energy encountered during adaptation",
             )
         history.append(val)
         min_det = min(min_det, terms.minimum_determinant)
+        if terms.inadmissible_points > 0 or terms.minimum_determinant <= 0.0:
+            inadmissible_seen = True
         terms.total.backward()  # type: ignore[no-untyped-call]
         torch.nn.utils.clip_grad_norm_(
             adapted.adapter_parameters(), max_norm=plan.adapter_config.grad_clip_norm
@@ -551,6 +637,23 @@ def adapt_boundary_operator_energy(
         optimizer.step()
         if scheduler is not None:
             scheduler.step()
+
+    if inadmissible_seen or not math.isfinite(min_det) or min_det <= 0.0:
+        return None, AdaptationResult(
+            plan_hash=plan.plan_hash,
+            status=AdaptationStatus.FAILED_INADMISSIBLE,
+            claim_level="NOT_VERIFIED",
+            steps_executed=plan.adapter_config.max_steps,
+            step_budget_ratio=plan.adapter_config.step_budget_ratio,
+            adapter_parameter_count=adapted.adapter_parameter_count(),
+            base_parameter_count=adapted.base_parameter_count(),
+            initial_energy=history[0] if history else None,
+            final_energy=history[-1] if history else None,
+            minimum_determinant=min_det if math.isfinite(min_det) else None,
+            energy_history=tuple(history),
+            adapter_digest=None,
+            reason=f"inadmissible deformation encountered during adaptation (min_det_f={min_det:.4g})",
+        )
 
     return adapted, AdaptationResult(
         plan_hash=plan.plan_hash,
@@ -573,6 +676,8 @@ __all__ = (
     "ADAPTATION_PLAN_SCHEMA",
     "ADAPTER_SCHEMA",
     "DEFAULT_TARGET_MODULES",
+    "LORA_ADAPTATION_MACHINE",
+    "AdaptationPhase",
     "AdaptationPlan",
     "AdaptationResult",
     "AdaptationStatus",

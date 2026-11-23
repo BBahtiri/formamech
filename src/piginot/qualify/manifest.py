@@ -17,6 +17,7 @@ from typing import Any, Final
 
 from piginot.bundle.limitations import REQUIRED_LIMITATION_PARAGRAPH
 from piginot.contracts.canonical import canonical_json_bytes
+from piginot.contracts.state_machine import claim_level_rank
 from piginot.verification.status import CheckStatus, ClaimLevel
 
 QUALIFICATION_MANIFEST_SCHEMA: Final = "formamech.qualification-manifest-v1"
@@ -27,11 +28,6 @@ EPISTEMIC_SCOPE_STATEMENT: Final = (
     "validation, physical specimen certification, or regulatory approval "
     "(ASME V&V 10)."
 )
-_CLAIM_RANK: Final[Mapping[ClaimLevel, int]] = {
-    ClaimLevel.NOT_VERIFIED: 0,
-    ClaimLevel.DEVELOPMENT_VERIFIED: 1,
-    ClaimLevel.HOLDOUT_VERIFIED: 2,
-}
 
 
 class QualificationVerdict(StrEnum):
@@ -47,7 +43,7 @@ class QualificationIntegrityError(ValueError):
 
 def claim_rank(level: ClaimLevel) -> int:
     """Monotonic integer rank for comparing :class:`ClaimLevel` values."""
-    return _CLAIM_RANK[level]
+    return claim_level_rank(level)
 
 
 @dataclass(frozen=True, slots=True)

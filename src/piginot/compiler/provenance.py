@@ -7,6 +7,7 @@ Numerical execution requires a clean identity; planning may report it as pending
 from __future__ import annotations
 
 import hashlib
+import os
 import re
 import subprocess
 import tomllib
@@ -124,6 +125,7 @@ def _git(root: Path, *arguments: str) -> subprocess.CompletedProcess[str]:
         text=True,
         check=False,
         timeout=10,
+        env=os.environ.copy(),
     )
 
 

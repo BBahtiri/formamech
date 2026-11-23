@@ -646,3 +646,133 @@ def test_parametric_guards_metrics_and_bridge_edge_cases(tmp_path: Path) -> None
     f_ok = bridge.fem_evaluator(spec.nominal_parameters())
     assert f_ok.succeeded is True and f_ok.objective is not None
     assert f_ok.constraints["min_j"] > 0.5
+
+    # Wave 2: PARAMETRIC_PREDICT_MACHINE, ParametricPredictionReport invariants,
+    # full load_parametric_bundle digest verification, and CLI --require-qualified gate
+    from formamech.cad import (
+        PARAMETRIC_PREDICT_MACHINE,
+        ParametricPredictionReport,
+        ParametricPredictionStatus,
+        ParametricPredictPhase,
+    )
+
+    assert PARAMETRIC_PREDICT_MACHINE.can_transition(
+        ParametricPredictPhase.RECEIVED,
+        ParametricPredictPhase.TOPOLOGY_VERIFIED,
+        trigger="verify_topology",
+    )
+    assert PARAMETRIC_PREDICT_MACHINE.is_terminal(ParametricPredictPhase.SERVED_FAST)
+
+    with pytest.raises(ValueError, match="REFUSED_TOPOLOGY"):
+        ParametricPredictionReport(
+            status=ParametricPredictionStatus.REFUSED_TOPOLOGY,
+            mode="fast",
+            bundle_hash="a" * 64,
+            parameters=None,
+            mesh_id=None,
+            ood_report=bundle.ood_detector.score(doe.instances[0].mesh, spec.role_map),
+            surrogate_metrics=None,
+            fem_metrics=None,
+            displacement_rel_l2_error=None,
+            reaction_rel_error=None,
+            peak_von_mises_rel_error=None,
+            claim_level="NOT_VERIFIED",
+            reason="invalid payload for topology refusal",
+        )
+    with pytest.raises(ValueError, match="SERVED_FAST"):
+        ParametricPredictionReport(
+            status=ParametricPredictionStatus.SERVED_FAST,
+            mode="certified",
+            bundle_hash="a" * 64,
+            parameters=None,
+            mesh_id="m" * 64,
+            ood_report=None,
+            surrogate_metrics=None,
+            fem_metrics=None,
+            displacement_rel_l2_error=None,
+            reaction_rel_error=None,
+            peak_von_mises_rel_error=None,
+            claim_level="NOT_VERIFIED",
+            reason="wrong mode",
+        )
+
+    # Full bundle.json tamper checks (spec_hash, operator_weights_sha256, operator_base_digest,
+    # ood_detector_sha256, bundle_hash, claim_level)
+    b_dir = tmp_path / "tamper-bundle"
+    orig_manifest = save_parametric_bundle(bundle, b_dir)
+    for field, bad_val, err_pat in (
+        ("spec_hash", "0" * 64, "spec_hash mismatch"),
+        ("operator_weights_sha256", "0" * 64, "operator_weights_sha256 mismatch"),
+        ("operator_base_digest", "0" * 64, "operator_base_digest mismatch"),
+        ("ood_detector_sha256", "0" * 64, "ood_detector_sha256 mismatch"),
+        ("bundle_hash", "0" * 64, "bundle_hash mismatch"),
+        ("claim_level", "BOGUS_CLAIM", "unsupported claim_level"),
+    ):
+        (b_dir / "bundle.json").write_text(
+            json.dumps({**orig_manifest, field: bad_val}), encoding="utf-8"
+        )
+        with pytest.raises(ValueError, match=err_pat):
+            load_parametric_bundle(b_dir)
+    (b_dir / "bundle.json").write_text(json.dumps(orig_manifest), encoding="utf-8")
+
+    # CLI option conflict and --require-qualified on parametric bundle
+    p_file = tmp_path / "nom_params.json"
+    p_file.write_text(json.dumps(spec.nominal_parameters()), encoding="utf-8")
+    assert (
+        cli_main(
+            [
+                "predict",
+                str(b_dir),
+                "--cad-params",
+                str(p_file),
+                "--mode",
+                "fast",
+                "--escalate",
+            ]
+        )
+        == 1
+    )
+    # Unqualified bundle (NOT_VERIFIED) must be refused (exit 2) when --require-qualified is set
+    assert (
+        cli_main(
+            [
+                "predict",
+                str(b_dir),
+                "--cad-params",
+                str(p_file),
+                "--mode",
+                "fast",
+                "--require-qualified",
+            ]
+        )
+        == 2
+    )
+    # Valid qualification manifest allows --require-qualified
+    q_file = tmp_path / "param-qual-ok.json"
+    q_file.write_text(
+        json.dumps(
+            {
+                "schema": "formamech.parametric-qualification-v1",
+                "bundle_hash": bundle.bundle_hash,
+                "passed": True,
+                "claim_level": "HOLDOUT_VERIFIED",
+            }
+        ),
+        encoding="utf-8",
+    )
+    assert (
+        cli_main(
+            [
+                "predict",
+                str(b_dir),
+                "--cad-params",
+                str(p_file),
+                "--mode",
+                "fast",
+                "--require-qualified",
+                "--qualification-manifest",
+                str(q_file),
+            ]
+        )
+        == 0
+    )

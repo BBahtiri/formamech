@@ -25,7 +25,8 @@ from __future__ import annotations
 import math
 import time
 from dataclasses import dataclass
-from typing import Any
+from enum import StrEnum
+from typing import Any, Final
 
 import numpy as np
 from numpy.typing import NDArray
@@ -33,10 +34,80 @@ from scipy.sparse import eye as sparse_eye  # type: ignore[import-untyped]
 from scipy.sparse.linalg import spsolve  # type: ignore[import-untyped]
 
 from piginot.certify.guards import coercive_inertia
+from piginot.contracts.state_machine import (
+    StateMachineSpec,
+    TransitionSpec,
+    register_state_machine,
+)
 from piginot.fem.models import FemSolveFailure
 from piginot.fem.protocol import DiscreteLinearization
 
 FloatArray = NDArray[np.float64]
+
+
+class SpectralRepairStatus(StrEnum):
+    """Explicit outcome states of Tier 2 spectrally safe warm-start repair."""
+
+    CHECKING = "CHECKING"
+    ALREADY_SAFE = "ALREADY_SAFE"
+    REPAIRED_HOMOTOPY = "REPAIRED_HOMOTOPY"
+    REPAIRED_LM = "REPAIRED_LM"
+    FAILED_ADMISSIBILITY = "FAILED_ADMISSIBILITY"
+    FAILED_LM_BUDGET = "FAILED_LM_BUDGET"
+
+
+SPECTRAL_REPAIR_MACHINE: Final[StateMachineSpec[SpectralRepairStatus]] = (
+    register_state_machine(
+        StateMachineSpec(
+            machine_id="formamech.serving.spectral_repair",
+            description=(
+                "Tier 2 warm-start spectral repair: admissibility homotopy followed "
+                "by shifted Levenberg-Marquardt SPD basin restoration."
+            ),
+            states=tuple(SpectralRepairStatus),
+            initial_states=(SpectralRepairStatus.CHECKING,),
+            terminal_states=(
+                SpectralRepairStatus.ALREADY_SAFE,
+                SpectralRepairStatus.REPAIRED_HOMOTOPY,
+                SpectralRepairStatus.REPAIRED_LM,
+                SpectralRepairStatus.FAILED_ADMISSIBILITY,
+                SpectralRepairStatus.FAILED_LM_BUDGET,
+            ),
+            transitions=(
+                TransitionSpec(
+                    SpectralRepairStatus.CHECKING,
+                    SpectralRepairStatus.ALREADY_SAFE,
+                    "initial_spd_ok",
+                    "Initial guess is already admissible with SPD symmetric tangent.",
+                ),
+                TransitionSpec(
+                    SpectralRepairStatus.CHECKING,
+                    SpectralRepairStatus.REPAIRED_HOMOTOPY,
+                    "homotopy_restored_spd",
+                    "Stage 1 admissibility homotopy restored det(F) and SPD tangent.",
+                ),
+                TransitionSpec(
+                    SpectralRepairStatus.CHECKING,
+                    SpectralRepairStatus.REPAIRED_LM,
+                    "lm_restored_spd",
+                    "Stage 2 shifted Levenberg-Marquardt descent restored SPD tangent.",
+                ),
+                TransitionSpec(
+                    SpectralRepairStatus.CHECKING,
+                    SpectralRepairStatus.FAILED_ADMISSIBILITY,
+                    "admissibility_unrecoverable",
+                    "Stage 1 homotopy could not reach det(F) >= min_det_f.",
+                ),
+                TransitionSpec(
+                    SpectralRepairStatus.CHECKING,
+                    SpectralRepairStatus.FAILED_LM_BUDGET,
+                    "lm_budget_exhausted",
+                    "Stage 2 LM could not restore SPD tangent within max_steps.",
+                ),
+            ),
+        )
+    )
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -77,6 +148,29 @@ class SpectralRepairReport:
     final_residual_norm: float | None
     wall_seconds: float
     reason: str
+
+    def __post_init__(self) -> None:
+        if self.steps_taken < 0:
+            raise ValueError("steps_taken must be non-negative")
+        if not self.needed_repair and not self.succeeded:
+            raise ValueError("needed_repair=False requires succeeded=True")
+        if self.succeeded and self.final_positive_definite is False:
+            raise ValueError(
+                "succeeded=True conflicts with final_positive_definite=False"
+            )
+
+    @property
+    def status(self) -> SpectralRepairStatus:
+        """Explicit finite-state outcome derived from repair diagnostics."""
+        if not self.needed_repair:
+            return SpectralRepairStatus.ALREADY_SAFE
+        if self.succeeded:
+            if not self.initial_admissible and self.steps_taken == 0:
+                return SpectralRepairStatus.REPAIRED_HOMOTOPY
+            return SpectralRepairStatus.REPAIRED_LM
+        if self.final_positive_definite is None:
+            return SpectralRepairStatus.FAILED_ADMISSIBILITY
+        return SpectralRepairStatus.FAILED_LM_BUDGET
 
     def document(self) -> dict[str, Any]:
         return {

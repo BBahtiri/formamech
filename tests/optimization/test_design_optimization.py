@@ -236,3 +236,67 @@ def test_trust_gate_failure_escalates_to_fem_and_refusal_paths() -> None:
     )
     assert fail_rep.status is DesignOptimizationStatus.FAILED_NO_FEASIBLE_FEM_DESIGN
     assert fail_rep.best_design is None
+
+    # Wave 2: DESIGN_OPTIMIZATION_MACHINE, DesignOptimizationReport invariants,
+    # and prevention of false stationary CONVERGED_FEM_VERIFIED after inadmissible surrogate step
+    from formamech.optimization import (
+        DESIGN_OPTIMIZATION_MACHINE,
+        DesignOptimizationPhase,
+        DesignOptimizationReport,
+    )
+
+    assert DESIGN_OPTIMIZATION_MACHINE.can_transition(
+        DesignOptimizationPhase.INITIALIZED,
+        DesignOptimizationPhase.EXPLORING_TRUST_REGION,
+        trigger="start_trust_region_loop",
+    )
+    assert DESIGN_OPTIMIZATION_MACHINE.is_terminal(
+        DesignOptimizationPhase.CONVERGED_FEM_VERIFIED
+    )
+
+    with pytest.raises(ValueError, match="fem_feasible best_design"):
+        DesignOptimizationReport(
+            problem_hash="a" * 64,
+            status=DesignOptimizationStatus.CONVERGED_FEM_VERIFIED,
+            best_design=None,
+            surrogate_evaluations=1,
+            fem_evaluations=1,
+            failed_designs=0,
+            iterations=(),
+            gradient_checks=(),
+            reason="invalid converged report without best_design",
+        )
+
+    # When an inadmissible trial surrogate step (zero gradient) is accepted via FEM escalation,
+    # the next iteration must NOT mistake the zero gradient for stationary convergence.
+    call_idx = 0
+
+    def surr_inadmissible_on_step(p: Mapping[str, float]) -> SurrogateDesignEvaluation:
+        nonlocal call_idx
+        call_idx += 1
+        area, stress = _true_physics(p)
+        if call_idx == 1:
+            return SurrogateDesignEvaluation(
+                objective=area,
+                gradient={"radius": -1.5, "height": 4.0},
+                constraints={"avg_stress": stress},
+                in_envelope=True,
+                admissible=True,
+                eta_indicator=0.01,
+            )
+        return SurrogateDesignEvaluation(
+            objective=float("inf"),
+            gradient={"radius": 0.0, "height": 0.0},
+            constraints={"avg_stress": stress},
+            in_envelope=False,
+            admissible=False,
+            eta_indicator=1.0,
+        )
+
+    inadm_rep = run_fem_guarded_design_optimization(
+        prob,
+        surrogate_evaluator=surr_inadmissible_on_step,
+        fem_evaluator=fem_ok,
+    )
+    assert inadm_rep.best_design is not None and inadm_rep.best_design.fem_feasible
+    assert len(inadm_rep.iterations) >= 2

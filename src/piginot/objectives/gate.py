@@ -5,9 +5,9 @@ from __future__ import annotations
 import math
 from collections.abc import Mapping
 from dataclasses import dataclass
-from enum import StrEnum
 from types import MappingProxyType
 
+from piginot.contracts.state_machine import GateStatus as GateStatus
 from piginot.objectives.verification import (
     PHYSICS_TERM_IDS,
     VERIFIED_GRADIENT_TERM_IDS,
@@ -20,13 +20,6 @@ _ANISOTROPY_LIMIT = 1.0e-12
 _NONTRIVIAL_LIMIT = 1.0e-8
 _MINIMUM_COVERAGE_PERCENT = 85.0
 _WEAK_STRONG_FEM_REQUEST_ID = "s8-pure_dirichlet-structured-l2-p2"
-
-
-class GateStatus(StrEnum):
-    PASS = "PASS"
-    FAIL = "FAIL"
-    ERROR = "ERROR"
-    NOT_RUN = "NOT_RUN"
 
 
 @dataclass(frozen=True, slots=True)

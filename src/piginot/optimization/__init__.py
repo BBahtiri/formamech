@@ -13,7 +13,9 @@ from piginot.optimization.problem import (
     DesignProblem,
 )
 from piginot.optimization.trust_region import (
+    DESIGN_OPTIMIZATION_MACHINE,
     DesignIterationRecord,
+    DesignOptimizationPhase,
     DesignOptimizationReport,
     DesignOptimizationStatus,
     FemDesignEvaluation,
@@ -70,12 +72,14 @@ def __getattr__(name: str) -> Any:
 
 __all__ = (
     "CONSTRAINT_KINDS",
+    "DESIGN_OPTIMIZATION_MACHINE",
     "DESIGN_PROBLEM_SCHEMA",
     "DESIGN_REPORT_SCHEMA",
     "BundleDesignBridge",
     "BundleDesignSpec",
     "DesignConstraint",
     "DesignIterationRecord",
+    "DesignOptimizationPhase",
     "DesignOptimizationReport",
     "DesignOptimizationStatus",
     "DesignParameter",

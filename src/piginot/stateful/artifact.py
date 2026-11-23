@@ -22,6 +22,7 @@ from piginot.contracts import (
     canonical_json_bytes,
     strict_json_loads,
 )
+from piginot.contracts.state_machine import ClaimLevel
 from piginot.contracts.stateful import (
     BoundTrajectoryState,
     LoadSegment,
@@ -37,6 +38,7 @@ from piginot.stateful.stepper import (
     STEP_CONTROLLER_VERSION,
     CandidateStepOutput,
     GuardedStatefulStepper,
+    StepPredictor,
     hash_state_tensors,
     load_trajectory_checkpoint,
     save_trajectory_checkpoint,
@@ -107,10 +109,11 @@ def save_viscoelastic_artifact(
 
     cfg = operator.config
     mat_cfg = material.config
+    validated_claim = ClaimLevel(str(claim_level)).value
     body: dict[str, Any] = {
         "schema": VISCOELASTIC_ARTIFACT_SCHEMA,
         "problem_spec_hash": problem_spec_hash,
-        "claim_level": claim_level,
+        "claim_level": validated_claim,
         "mesh_id": mesh.mesh_id,
         "mesh_sha256": _sha256_bytes(mesh_bytes + b"\n"),
         "weights_file": "weights.safetensors",
@@ -161,6 +164,7 @@ def load_viscoelastic_artifact(directory: Path) -> LoadedViscoelasticArtifact:
     body: dict[str, Any] = {k: v for k, v in raw.items() if k != "manifest_sha256"}
     if _sha256_bytes(canonical_json_bytes(body)) != expected_sha:
         raise ValueError("viscoelastic artifact manifest SHA-256 mismatch")
+    ClaimLevel(str(body.get("claim_level", "NOT_VERIFIED")))
 
     raw_weights = (directory / str(body["weights_file"])).read_bytes()
     if _sha256_bytes(raw_weights) != body["weights_sha256"]:
@@ -231,11 +235,18 @@ def run_viscoelastic_rollout(
     load_key: str = "ux",
     residual_tolerance: float = 5.0,
     allow_fem_fallback: bool = False,
+    fem_fallback: StepPredictor | None = None,
+    max_substep_halvings: int = 0,
     resume_checkpoint: Path | None = None,
     save_checkpoint_to: Path | None = None,
 ) -> dict[str, Any]:
     """Execute a guarded stateful viscoelastic rollout with optional checkpointing."""
     import numpy as np
+
+    if allow_fem_fallback and fem_fallback is None:
+        raise ValueError(
+            "allow_fem_fallback=True requires an explicit fem_fallback callback"
+        )
 
     mesh = artifact.mesh
     visco = artifact.material
@@ -252,6 +263,7 @@ def run_viscoelastic_rollout(
         canonical_json_bytes([s.document() for s in segments])
     ).hexdigest()
     problem_hash = str(artifact.manifest.get("problem_spec_hash", "0" * 64))
+    times = time_grid.fixed_times()
 
     def _lift(eps: float) -> Callable[[torch.Tensor], AffineDirichletLifting]:
         def fn(q: torch.Tensor) -> AffineDirichletLifting:
@@ -270,6 +282,16 @@ def run_viscoelastic_rollout(
 
     if resume_checkpoint is not None:
         bound, u_cur, state_cur = load_trajectory_checkpoint(resume_checkpoint)
+        if bound.time_index < 0 or bound.time_index >= len(times):
+            raise ValueError(
+                f"resume_checkpoint time_index {bound.time_index} lies outside "
+                f"time_grid index range [0, {len(times) - 1}]"
+            )
+        if abs(bound.time_value - times[bound.time_index]) > 1.0e-9:
+            raise ValueError(
+                f"resume_checkpoint time_value {bound.time_value} does not match "
+                f"time_grid[{bound.time_index}]={times[bound.time_index]}"
+            )
         state_cur = dict(state_cur)
     else:
         state_cur = visco.initial_state((n_cells,), dtype=torch.float64)
@@ -345,8 +367,10 @@ def run_viscoelastic_rollout(
             min_det_f=min_det,
             min_dissipation=min_diss,
             total_dissipation=tot_diss,
-            residual_norm=0.0,
-            admissible=min_det > 0.0 and min_diss >= -1e-12,
+            residual_norm=float(ps.closure_residual_max),
+            admissible=bool(ps.closure_converged)
+            and min_det > 0.0
+            and min_diss >= -1e-12,
             reason=f"rxn_est={rxn_est:.6f}",
         )
 
@@ -356,13 +380,12 @@ def run_viscoelastic_rollout(
         material_schema_hash=visco.state_schema.schema_hash,
         load_path_hash=load_path_hash,
         predictor=_predictor,
-        fem_fallback=None,
+        fem_fallback=fem_fallback,
         verification=StatefulVerificationPolicy(allow_fem_fallback=allow_fem_fallback),
         residual_tolerance=residual_tolerance,
-        max_substep_halvings=0,
+        max_substep_halvings=max_substep_halvings,
     )
 
-    times = time_grid.fixed_times()
     step_records: list[dict[str, Any]] = []
     for idx in range(bound.time_index + 1, len(times)):
         dt_s = times[idx] - times[idx - 1]

@@ -19,9 +19,15 @@ import hashlib
 import math
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Final
 
 from piginot.contracts import canonical_json_bytes
+from piginot.contracts.state_machine import (
+    ClaimLevel,
+    StateMachineSpec,
+    TransitionSpec,
+    register_state_machine,
+)
 from piginot.optimization.problem import DESIGN_REPORT_SCHEMA, DesignProblem
 
 
@@ -34,6 +40,78 @@ class DesignOptimizationStatus(enum.StrEnum):
     BUDGET_EXHAUSTED_FEM_VERIFIED = "BUDGET_EXHAUSTED_FEM_VERIFIED"
     REFUSED_UNSUPPORTED_GEOMETRY = "REFUSED_UNSUPPORTED_GEOMETRY"
     FAILED_NO_FEASIBLE_FEM_DESIGN = "FAILED_NO_FEASIBLE_FEM_DESIGN"
+
+
+class DesignOptimizationPhase(enum.StrEnum):
+    """Explicit stages of the FEM-guarded trust-region design optimization loop."""
+
+    INITIALIZED = "INITIALIZED"
+    EXPLORING_TRUST_REGION = "EXPLORING_TRUST_REGION"
+    FINAL_FEM_VERIFICATION = "FINAL_FEM_VERIFICATION"
+    CONVERGED_FEM_VERIFIED = "CONVERGED_FEM_VERIFIED"
+    BUDGET_EXHAUSTED_FEM_VERIFIED = "BUDGET_EXHAUSTED_FEM_VERIFIED"
+    REFUSED_UNSUPPORTED_GEOMETRY = "REFUSED_UNSUPPORTED_GEOMETRY"
+    FAILED_NO_FEASIBLE_FEM_DESIGN = "FAILED_NO_FEASIBLE_FEM_DESIGN"
+
+
+DESIGN_OPTIMIZATION_MACHINE: Final[StateMachineSpec[DesignOptimizationPhase]] = (
+    register_state_machine(
+        StateMachineSpec(
+            machine_id="formamech.optimization.trust_region",
+            description=(
+                "FEM-guarded trust-region design optimization: geometry support check -> "
+                "differentiable surrogate exploration with periodic FEM gradient checks "
+                "and FEM escalation -> mandatory final FEM verification."
+            ),
+            states=tuple(DesignOptimizationPhase),
+            initial_states=(DesignOptimizationPhase.INITIALIZED,),
+            terminal_states=(
+                DesignOptimizationPhase.CONVERGED_FEM_VERIFIED,
+                DesignOptimizationPhase.BUDGET_EXHAUSTED_FEM_VERIFIED,
+                DesignOptimizationPhase.REFUSED_UNSUPPORTED_GEOMETRY,
+                DesignOptimizationPhase.FAILED_NO_FEASIBLE_FEM_DESIGN,
+            ),
+            transitions=(
+                TransitionSpec(
+                    DesignOptimizationPhase.INITIALIZED,
+                    DesignOptimizationPhase.REFUSED_UNSUPPORTED_GEOMETRY,
+                    "refuse_unsupported_geometry",
+                    "Geometry or topology is unsupported for optimization.",
+                ),
+                TransitionSpec(
+                    DesignOptimizationPhase.INITIALIZED,
+                    DesignOptimizationPhase.EXPLORING_TRUST_REGION,
+                    "start_trust_region_loop",
+                    "Initial surrogate and optional FEM baseline evaluated.",
+                ),
+                TransitionSpec(
+                    DesignOptimizationPhase.EXPLORING_TRUST_REGION,
+                    DesignOptimizationPhase.FINAL_FEM_VERIFICATION,
+                    "finish_iterations_or_converge",
+                    "Trust radius / gradient converged or iteration budget reached.",
+                ),
+                TransitionSpec(
+                    DesignOptimizationPhase.FINAL_FEM_VERIFICATION,
+                    DesignOptimizationPhase.CONVERGED_FEM_VERIFIED,
+                    "verify_converged_design_with_fem",
+                    "Converged candidate verified feasible by converged FEM.",
+                ),
+                TransitionSpec(
+                    DesignOptimizationPhase.FINAL_FEM_VERIFICATION,
+                    DesignOptimizationPhase.BUDGET_EXHAUSTED_FEM_VERIFIED,
+                    "verify_budget_best_design_with_fem",
+                    "Iteration budget reached with at least one FEM-verified feasible design.",
+                ),
+                TransitionSpec(
+                    DesignOptimizationPhase.FINAL_FEM_VERIFICATION,
+                    DesignOptimizationPhase.FAILED_NO_FEASIBLE_FEM_DESIGN,
+                    "no_feasible_fem_design",
+                    "No candidate satisfied all constraints under authoritative FEM.",
+                ),
+            ),
+        )
+    )
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -150,6 +228,27 @@ class DesignOptimizationReport:
     gradient_checks: tuple[GradientConsistencyCheck, ...]
     reason: str
     claim_level: str = "NOT_VERIFIED"
+
+    def __post_init__(self) -> None:
+        claim = ClaimLevel(str(self.claim_level)).value
+        object.__setattr__(self, "claim_level", claim)
+        if self.status in (
+            DesignOptimizationStatus.CONVERGED_FEM_VERIFIED,
+            DesignOptimizationStatus.BUDGET_EXHAUSTED_FEM_VERIFIED,
+        ):
+            if self.best_design is None or not self.best_design.fem_feasible:
+                raise ValueError(
+                    f"{self.status.value} requires a non-None fem_feasible best_design"
+                )
+            if self.fem_evaluations < 1:
+                raise ValueError(
+                    f"{self.status.value} requires at least 1 FEM evaluation"
+                )
+        elif self.status is DesignOptimizationStatus.REFUSED_UNSUPPORTED_GEOMETRY:
+            if self.best_design is not None or self.fem_evaluations != 0:
+                raise ValueError(
+                    "REFUSED_UNSUPPORTED_GEOMETRY must have best_design=None and fem_evaluations=0"
+                )
 
     def document(self) -> dict[str, Any]:
         return {
@@ -312,7 +411,8 @@ def run_fem_guarded_design_optimization(
 
         grad_norm = math.sqrt(sum(v * v for v in grad_vec))
         if grad_norm <= 1e-12:
-            converged = True
+            if curr_surr.admissible and curr_surr.in_envelope:
+                converged = True
             break
 
         # Periodic FEM finite-difference gradient consistency check (reserve 1 FEM call for final check).
@@ -423,8 +523,11 @@ def run_fem_guarded_design_optimization(
                     f_merit = _merit(problem, f_res.objective, f_res.constraints)
                     if fem_feas and f_merit < curr_merit:
                         curr_p = trial_p
-                        curr_surr = trial_surr
-                        curr_merit = f_merit
+                        if trial_surr.admissible:
+                            curr_surr = trial_surr
+                            curr_merit = min(trial_merit, f_merit)
+                        else:
+                            curr_merit = f_merit
                         radius = max(problem.min_trust_radius, 0.75 * radius)
                         iterations.append(
                             DesignIterationRecord(
@@ -534,7 +637,9 @@ def run_fem_guarded_design_optimization(
 
 
 __all__ = (
+    "DESIGN_OPTIMIZATION_MACHINE",
     "DesignIterationRecord",
+    "DesignOptimizationPhase",
     "DesignOptimizationReport",
     "DesignOptimizationStatus",
     "FemDesignEvaluation",

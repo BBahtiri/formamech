@@ -398,3 +398,282 @@ def test_serve_triggers_tier15_tta_when_certified_tolerance_tight() -> None:
     )
     assert out.document()["test_time_adaptation"] is not None
     assert out.document()["trust_receipt"] is not None
+
+
+def test_serving_fsm_invariants_statuses_and_repaired_ladder() -> None:
+    from piginot.certify import VerificationTier
+    from piginot.serving import (
+        ServingMode,
+        ServingPath,
+        SpectralRepairReport,
+        SpectralRepairStatus,
+        TestTimeLoraReport,
+        TestTimeLoraStatus,
+        VerifiedPrediction,
+        solve_ladder,
+    )
+    from piginot.serving.hybrid import _build_trust_receipt
+
+    # 1) VerifiedPrediction invariants
+    with pytest.raises(ValueError, match="FAST mode"):
+        VerifiedPrediction(ServingMode.FAST, ServingPath.COLD_FEM, prediction={})
+    with pytest.raises(ValueError, match="converged exact FemResult"):
+        VerifiedPrediction(ServingMode.EXACT, ServingPath.WARM_NEWTON, prediction={})
+    with pytest.raises(ValueError, match="SOLVE_FAILED"):
+        VerifiedPrediction(
+            ServingMode.EXACT,
+            ServingPath.SOLVE_FAILED,
+            prediction={},
+            exact=object(),  # type: ignore[arg-type]
+        )
+
+    # 2) SpectralRepairReport invariants & all 5 status classifications
+    base_kwargs: dict[str, object] = {
+        "steps_taken": 0,
+        "initial_admissible": True,
+        "initial_positive_definite": True,
+        "final_positive_definite": True,
+        "initial_min_det_f": 1.0,
+        "final_min_det_f": 1.0,
+        "initial_residual_norm": 0.0,
+        "final_residual_norm": 0.0,
+        "wall_seconds": 0.0,
+        "reason": "ok",
+    }
+    assert (
+        SpectralRepairReport(
+            needed_repair=False,
+            succeeded=True,
+            **base_kwargs,  # type: ignore[arg-type]
+        ).status
+        is SpectralRepairStatus.ALREADY_SAFE
+    )
+    assert (
+        SpectralRepairReport(
+            needed_repair=True,
+            succeeded=True,
+            **{**base_kwargs, "initial_admissible": False, "steps_taken": 0},  # type: ignore[arg-type]
+        ).status
+        is SpectralRepairStatus.REPAIRED_HOMOTOPY
+    )
+    assert (
+        SpectralRepairReport(
+            needed_repair=True,
+            succeeded=True,
+            **{**base_kwargs, "steps_taken": 3},  # type: ignore[arg-type]
+        ).status
+        is SpectralRepairStatus.REPAIRED_LM
+    )
+    assert (
+        SpectralRepairReport(
+            needed_repair=True,
+            succeeded=False,
+            **{**base_kwargs, "final_positive_definite": None},  # type: ignore[arg-type]
+        ).status
+        is SpectralRepairStatus.FAILED_ADMISSIBILITY
+    )
+    assert (
+        SpectralRepairReport(
+            needed_repair=True,
+            succeeded=False,
+            **{**base_kwargs, "final_positive_definite": False},  # type: ignore[arg-type]
+        ).status
+        is SpectralRepairStatus.FAILED_LM_BUDGET
+    )
+    with pytest.raises(ValueError, match="non-negative"):
+        SpectralRepairReport(
+            needed_repair=False,
+            succeeded=True,
+            **{**base_kwargs, "steps_taken": -1},  # type: ignore[arg-type]
+        )
+    with pytest.raises(ValueError, match="needed_repair=False"):
+        SpectralRepairReport(
+            needed_repair=False,
+            succeeded=False,
+            **base_kwargs,  # type: ignore[arg-type]
+        )
+    with pytest.raises(ValueError, match="final_positive_definite=False"):
+        SpectralRepairReport(
+            needed_repair=True,
+            succeeded=True,
+            **{**base_kwargs, "final_positive_definite": False},  # type: ignore[arg-type]
+        )
+
+    # 3) TestTimeLoraReport status & opposite-bool guard
+    tta_base: dict[str, object] = {
+        "steps_taken": 2,
+        "adapted_layers": ("l1",),
+        "adapter_parameter_count": 4,
+        "initial_energy": 1.0,
+        "final_energy": 0.9,
+        "energy_drop": 0.1,
+        "final_min_det_f": 0.9,
+        "adapter_digest": "blake2b256:" + "0" * 64,
+        "wall_seconds": 0.01,
+    }
+    assert (
+        TestTimeLoraReport(
+            improved=True,
+            rolled_back=False,
+            **tta_base,  # type: ignore[arg-type]
+        ).status
+        is TestTimeLoraStatus.APPLIED
+    )
+    assert (
+        TestTimeLoraReport(
+            improved=False,
+            rolled_back=True,
+            **tta_base,  # type: ignore[arg-type]
+        ).status
+        is TestTimeLoraStatus.ROLLED_BACK
+    )
+    with pytest.raises(ValueError, match="strictly opposite"):
+        TestTimeLoraReport(
+            improved=True,
+            rolled_back=True,
+            **tta_base,  # type: ignore[arg-type]
+        )
+
+    # 4) Trust Receipt tier precedence for REFUSED, SOLVE_FAILED, SURROGATE_ADMISSIBLE
+    class _StubBundle:
+        claim_level = "NOT_VERIFIED"
+        manifest = type("M", (), {"manifest_sha256": "a" * 64})()
+        identities = {"weights_sha256": "b" * 64}
+        reference_mesh = type("Mesh", (), {"mesh_id": "m1"})()
+        model = type("Model", (), {"problem": None})()
+
+    rc_ref, _ = _build_trust_receipt(
+        bundle=_StubBundle(),
+        mode=ServingMode.FAST,
+        path=ServingPath.REFUSED,
+        request=None,
+        solver=None,
+        tier0=None,
+        conformal_doc=None,
+        certificate_doc=None,
+        trust_report_doc=None,
+        attempts=(),
+        exact_converged=False,
+        spectral_repair_doc=None,
+        tta_doc=None,
+        reason="out of envelope",
+    )
+    assert rc_ref["verification_tier"] == VerificationTier.REFUSED.value
+
+    rc_fail, _ = _build_trust_receipt(
+        bundle=_StubBundle(),
+        mode=ServingMode.EXACT,
+        path=ServingPath.SOLVE_FAILED,
+        request=None,
+        solver=None,
+        tier0={"passed": True},
+        conformal_doc=None,
+        certificate_doc={"verdict": "OK"},
+        trust_report_doc=None,
+        attempts=(),
+        exact_converged=False,
+        spectral_repair_doc=None,
+        tta_doc=None,
+        reason="ladder failed",
+    )
+    assert rc_fail["verification_tier"] == VerificationTier.SURROGATE_UNCHECKED.value
+
+    rc_t0, _ = _build_trust_receipt(
+        bundle=_StubBundle(),
+        mode=ServingMode.FAST,
+        path=ServingPath.OPERATOR,
+        request=None,
+        solver=None,
+        tier0={"passed": True},
+        conformal_doc=None,
+        certificate_doc=None,
+        trust_report_doc=None,
+        attempts=(),
+        exact_converged=False,
+        spectral_repair_doc=None,
+        tta_doc=None,
+        reason="",
+    )
+    assert rc_t0["verification_tier"] == VerificationTier.SURROGATE_ADMISSIBLE.value
+
+    # 5) solve_ladder with inline spectral_repair records REPAIRED_WARM_NEWTON
+    mat = _neo_hookean()
+    mesh = rectangular_strip_mesh(length_mm=10.0, height_mm=4.0, nx=4, ny=2)
+    req = FemRequest(
+        request_id="ladder-repair",
+        mesh=mesh,
+        material=mat,
+        boundary_conditions=(
+            BoundaryConditionSpec(
+                name="left_fix",
+                boundary_tag="left",
+                kind="dirichlet",
+                components=("x", "y"),
+                values=(
+                    Quantity(0.0, Unit.MM).to_canonical(),
+                    Quantity(0.0, Unit.MM).to_canonical(),
+                ),
+            ),
+            BoundaryConditionSpec(
+                name="right_pull",
+                boundary_tag="right",
+                kind="dirichlet",
+                components=("x",),
+                values=(Quantity(0.8, Unit.MM).to_canonical(),),
+            ),
+        ),
+        loads=(),
+        qois=(),
+        config=FemSolverConfig(element_order=1, solver_tolerance=1.0e-10),
+        execution_profile=ExecutionProfile(
+            python_version="3.13",
+            library_versions={"numpy": np.__version__},
+            blas_threads=1,
+            device="cpu",
+            dtype="float64",
+            rng_algorithm="none",
+            seed=0,
+        ),
+    )
+    sk = ScikitFemBackend()
+    lin = FemLinearization(req)
+    u_folded = np.zeros(lin.dof_count, dtype=np.float64)
+    u_folded[lin.constraints.free] = 15.0
+    u_folded = lin.with_exact_dirichlet(u_folded)
+    att_r, attempts_r = solve_ladder(
+        sk, req, u_folded, linearization=lin, spectral_repair=True
+    )
+    assert att_r is not None
+    assert attempts_r[0].path is ServingPath.REPAIRED_WARM_NEWTON
+
+    # 6) Trigger improved TTA inside serve() so post-TTA Tier 0 evaluation runs
+    import json
+    from pathlib import Path
+
+    from piginot.bundle import load_bundle
+    from piginot.cli import parse_request
+    from piginot.serving import load_recipe, serve
+
+    root = Path(__file__).resolve().parents[2]
+    bundle_dir = root / "bundles" / "notched-v1-cp-freeze"
+    bundle = load_bundle(bundle_dir)
+    recipe = load_recipe(bundle, bundle_dir)
+    raw_req = json.loads(
+        (root / "bundles" / "requests" / "notched-in-domain.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    inputs, queries = parse_request(raw_req)
+    out_tta = serve(
+        bundle,
+        inputs,
+        queries,
+        mode=ServingMode.CERTIFIED,
+        recipe=recipe,
+        tolerance=1.0e-9,
+        tta_config=TestTimeLoraConfig(steps=10, rank=4, learning_rate=2.0e-3, seed=0),
+        tier0_check=True,
+        emit_receipt=True,
+    )
+    assert out_tta.test_time_adaptation is not None
+    assert out_tta.tier0_admissibility is not None
