@@ -168,6 +168,92 @@ def test_j2_cyclic_inverse_calibration_and_leakage_refusal() -> None:
         refused.experimental_validation_tier is ExperimentalValidationTier.UNVALIDATED
     )
 
+    # Renamed-duplicate leakage: identical measurements under a different specimen_id
+    renamed_leak = ExperimentalCouponDataset(
+        specimen_id="j2-val-renamed-copy",
+        role=CouponRole.VALIDATION_HOLDOUT,
+        test_mode=cal.test_mode,
+        stretches_or_strains=cal.stretches_or_strains,
+        measured_stress_mpa=cal.measured_stress_mpa,
+        measurement_std_mpa=cal.measurement_std_mpa,
+    )
+    refused_renamed = calibrate_material_from_experiments(
+        [cal, renamed_leak],
+        config=InverseCalibrationConfig(model_family="j2_voce_1d"),
+    )
+    assert refused_renamed.passed is False
+    assert refused_renamed.state is ValidationLifecycleState.REJECTED
+    assert (
+        refused_renamed.experimental_validation_tier
+        is ExperimentalValidationTier.UNVALIDATED
+    )
+    assert len(refused_renamed.dossier_hash) == 64
+
+
+def test_yeoh_negative_c20_rubber_inverse_recovery() -> None:
+    """Standard S-curve Yeoh rubber has C10 > 0, C20 < 0, C30 > 0."""
+    rng = np.random.default_rng(19)
+    c10_t, c20_t, c30_t = 0.40, -0.05, 0.015
+    lam_u = np.linspace(1.02, 2.20, 25)
+    lam_e = np.linspace(1.02, 1.65, 20)
+    lam_v = np.linspace(1.05, 2.10, 18)
+
+    def _yeoh_uni(lam: np.ndarray) -> np.ndarray:
+        i1 = lam**2 + 2.0 / lam
+        dw = c10_t + 2.0 * c20_t * (i1 - 3.0) + 3.0 * c30_t * (i1 - 3.0) ** 2
+        return 2.0 * dw * (lam - lam**-2)
+
+    def _yeoh_eq(lam: np.ndarray) -> np.ndarray:
+        i1 = 2.0 * lam**2 + lam**-4
+        dw = c10_t + 2.0 * c20_t * (i1 - 3.0) + 3.0 * c30_t * (i1 - 3.0) ** 2
+        return 2.0 * dw * (lam - lam**-5)
+
+    u_exp = 0.04
+    coupons = [
+        ExperimentalCouponDataset(
+            specimen_id="yeoh-cal-u",
+            role=CouponRole.CALIBRATION,
+            test_mode=ExperimentalTestMode.UNIAXIAL_TENSION,
+            stretches_or_strains=tuple(lam_u.tolist()),
+            measured_stress_mpa=tuple(
+                (_yeoh_uni(lam_u) + rng.normal(0.0, 0.01, len(lam_u))).tolist()
+            ),
+            measurement_std_mpa=u_exp,
+        ),
+        ExperimentalCouponDataset(
+            specimen_id="yeoh-cal-e",
+            role=CouponRole.CALIBRATION,
+            test_mode=ExperimentalTestMode.EQUIBIAXIAL_TENSION,
+            stretches_or_strains=tuple(lam_e.tolist()),
+            measured_stress_mpa=tuple(
+                (_yeoh_eq(lam_e) + rng.normal(0.0, 0.01, len(lam_e))).tolist()
+            ),
+            measurement_std_mpa=u_exp,
+        ),
+        ExperimentalCouponDataset(
+            specimen_id="yeoh-val-u",
+            role=CouponRole.VALIDATION_HOLDOUT,
+            test_mode=ExperimentalTestMode.UNIAXIAL_TENSION,
+            stretches_or_strains=tuple(lam_v.tolist()),
+            measured_stress_mpa=tuple(
+                (_yeoh_uni(lam_v) + rng.normal(0.0, 0.01, len(lam_v))).tolist()
+            ),
+            measurement_std_mpa=u_exp,
+        ),
+    ]
+    dossier = calibrate_material_from_experiments(
+        coupons,
+        config=InverseCalibrationConfig(
+            model_family="incompressible_yeoh", adam_steps=300, lbfgs_steps=50
+        ),
+    )
+    assert dossier.passed is True
+    est = {p.name: p for p in dossier.calibrated_parameters}
+    assert abs(est["c10"].value - c10_t) / c10_t < 0.05
+    assert est["c20"].value < 0.0
+    assert abs(est["c20"].value - c20_t) / abs(c20_t) < 0.12
+    assert abs(est["c30"].value - c30_t) / c30_t < 0.15
+
 
 def test_byte_frozen_s14_status_module_is_unmodified() -> None:
     """Guardrail: experimental validation never modifies byte-frozen S14 status.py."""

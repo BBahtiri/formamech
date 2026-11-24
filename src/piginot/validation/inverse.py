@@ -105,9 +105,11 @@ def predict_coupon_stress_torch(
         return stress, (("c10", c10, "MPa"), ("c01", c01, "MPa"))
 
     if model_family == "incompressible_yeoh":
+        # Standard Yeoh rubber: C10 > 0, C30 > 0 for large-strain stability;
+        # C20 is unconstrained so S-curve mid-strain softening (C20 < 0) is representable.
         c10 = sp(raw_params[0]) + 1.0e-6
-        c20 = sp(raw_params[1])
-        c30 = sp(raw_params[2])
+        c20 = raw_params[1]
+        c30 = sp(raw_params[2]) + 1.0e-8
         lam = inputs
         if test_mode is ExperimentalTestMode.UNIAXIAL_TENSION:
             i1 = lam.square() + 2.0 / lam
@@ -178,7 +180,7 @@ def _initial_raw_params(
         return torch.tensor(
             [
                 _inv_sp(g.get("c10", 1.0)),
-                _inv_sp(g.get("c20", 0.1)),
+                float(g.get("c20", 0.0)),
                 _inv_sp(g.get("c30", 0.02)),
             ],
             dtype=torch.float64,
@@ -208,12 +210,19 @@ def calibrate_material_from_experiments(
     cal_coupons = [c for c in coupons if c.role is CouponRole.CALIBRATION]
     val_coupons = [c for c in coupons if c.role is CouponRole.VALIDATION_HOLDOUT]
 
-    # Strict anti-leakage check: zero specimen ID or dataset hash overlap
+    # Strict anti-leakage check: zero specimen ID, dataset hash, or measurement-content overlap
     cal_ids = {c.specimen_id for c in cal_coupons}
     val_ids = {c.specimen_id for c in val_coupons}
     cal_hashes = {c.dataset_hash for c in cal_coupons}
     val_hashes = {c.dataset_hash for c in val_coupons}
-    if not cal_coupons or (cal_ids & val_ids) or (cal_hashes & val_hashes):
+    cal_meas_hashes = {c.measurement_hash for c in cal_coupons}
+    val_meas_hashes = {c.measurement_hash for c in val_coupons}
+    if (
+        not cal_coupons
+        or (cal_ids & val_ids)
+        or (cal_hashes & val_hashes)
+        or (cal_meas_hashes & val_meas_hashes)
+    ):
         state = VALIDATION_LIFECYCLE_MACHINE.require_transition(
             state,
             ValidationLifecycleState.REJECTED,

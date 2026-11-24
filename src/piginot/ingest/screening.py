@@ -136,8 +136,10 @@ def screen_cae_archive(
         else:
             seen_hashes[sample.source_sha256] = sample.sample_id
 
-        all_finite = bool(np.all(np.isfinite(sample.nodes))) and all(
-            bool(np.all(np.isfinite(v))) for v in sample.point_fields.values()
+        all_finite = (
+            bool(np.all(np.isfinite(sample.nodes)))
+            and all(bool(np.all(np.isfinite(v))) for v in sample.point_fields.values())
+            and all(bool(np.all(np.isfinite(v))) for v in sample.cell_fields.values())
         )
         if not all_finite:
             quarantined_ids.add(sample.sample_id)
@@ -145,10 +147,10 @@ def screen_cae_archive(
                 OutlierFlag(
                     sample_id=sample.sample_id,
                     reason_code=OutlierReasonCode.NONFINITE_FIELD,
-                    metric_name="point_fields",
+                    metric_name="fields",
                     value=float("nan"),
                     threshold=None,
-                    detail="non-finite node coordinates or point field values",
+                    detail="non-finite node coordinates, point fields, or cell fields",
                 )
             )
 

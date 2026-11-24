@@ -224,3 +224,85 @@ def test_cae_outlier_screening_quarantines_folded_duplicate_and_zscore_outliers(
     assert reasons["bad-zscore"] is OutlierReasonCode.STATISTICAL_ZSCORE
     assert (tmp_path / "screened" / "archive-manifest.json").is_file()
     assert (tmp_path / "screened" / "outlier-screen.json").is_file()
+
+
+def test_multiline_c3d10_ctetra_calculix_nan_and_cell_field_screening(
+    tmp_path: Path,
+) -> None:
+    # 1. Multi-line wrapped Abaqus C3D10 + Nastran CTETRA continuation
+    inp_10 = tmp_path / "c3d10.inp"
+    inp_10.write_text(
+        "*NODE\n"
+        "1, 0.0, 0.0, 0.0\n2, 1.0, 0.0, 0.0\n3, 0.0, 1.0, 0.0\n4, 0.0, 0.0, 1.0\n"
+        "5, 0.5, 0.0, 0.0\n6, 0.5, 0.5, 0.0\n7, 0.0, 0.5, 0.0\n"
+        "8, 0.0, 0.0, 0.5\n9, 0.5, 0.0, 0.5\n10, 0.0, 0.5, 0.5\n"
+        "*ELEMENT, TYPE=C3D10\n"
+        "1, 1, 2, 3, 4, 5, 6, 7,\n"
+        "8, 9, 10\n",
+        encoding="utf-8",
+    )
+    csv_10 = tmp_path / "f10.csv"
+    csv_10.write_text(
+        "node_id,ux,uy,uz\n"
+        + "\n".join(f"{i},0.0,0.0,0.0" for i in range(1, 11))
+        + "\n",
+        encoding="utf-8",
+    )
+    abq10 = read_abaqus_inp_and_fields(inp_10, csv_10)
+    assert abq10.cell_type == "tet10"
+    assert abq10.cells.shape == (1, 10)
+
+    bdf_10 = tmp_path / "c10.bdf"
+    bdf_10.write_text(
+        "\n".join(
+            [
+                "GRID,1,,0.0,0.0,0.0",
+                "GRID,2,,1.0,0.0,0.0",
+                "GRID,3,,0.0,1.0,0.0",
+                "GRID,4,,0.0,0.0,1.0",
+                "GRID,5,,0.5,0.0,0.0",
+                "GRID,6,,0.5,0.5,0.0",
+                "GRID,7,,0.0,0.5,0.0",
+                "GRID,8,,0.0,0.0,0.5",
+                "GRID,9,,0.5,0.0,0.5",
+                "GRID,10,,0.0,0.5,0.5",
+                "CTETRA,1,1,1,2,3,4,5,6,+C1",
+                "+C1,7,8,9,10",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    nas10 = read_nastran_bdf_and_fields(bdf_10, csv_10)
+    assert nas10.cell_type == "tet10"
+    assert nas10.cells.shape == (1, 10)
+
+    # 2. Diverged CalculiX .frd NaN propagates into NONFINITE_FIELD quarantine
+    frd_nan = tmp_path / "diverged.frd"
+    frd_nan.write_text(
+        " -4  DISP        4    1\n"
+        " -1         1 0.00000E+00 0.00000E+00 0.00000E+00\n"
+        " -1         2         NaN 0.00000E+00 0.00000E+00\n"
+        " -3\n",
+        encoding="utf-8",
+    )
+    ccx_nan = read_calculix_inp_frd(inp_10, frd_nan, sample_id="ccx-diverged")
+    assert not np.all(np.isfinite(ccx_nan.point_fields["displacement"]))
+
+    # 3. Non-finite cell_fields are quarantined as NONFINITE_FIELD
+    cell_nan = ParsedCaeSample(
+        sample_id="bad-cell-nan",
+        source_format=CaeSourceFormat.VTU,
+        source_sha256="cell-nan-h",
+        nodes=np.array([[0.0, 0.0], [1.0, 0.0], [0.0, 1.0]]),
+        cells=np.array([[0, 1, 2]]),
+        cell_type="triangle",
+        point_fields={"displacement": np.zeros((3, 2))},
+        cell_fields={"von_mises_cell": np.array([float("nan")])},
+        parameters={},
+        metadata={},
+    )
+    rep = screen_cae_archive([ccx_nan, cell_nan])
+    assert rep.state is IngestPipelineState.QUARANTINED
+    assert rep.quarantined_count == 2
+    assert all(f.reason_code is OutlierReasonCode.NONFINITE_FIELD for f in rep.flags)

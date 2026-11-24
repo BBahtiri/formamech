@@ -160,6 +160,17 @@ class ExperimentalCouponDataset:
     def dataset_hash(self) -> str:
         return hashlib.sha256(canonical_json_bytes(self.document())).hexdigest()
 
+    @property
+    def measurement_hash(self) -> str:
+        """Role- and specimen-ID-agnostic hash of physical coupon measurements."""
+        payload = {
+            "test_mode": self.test_mode.value,
+            "stretches_or_strains": [float(v) for v in self.stretches_or_strains],
+            "measured_stress_mpa": [float(v) for v in self.measured_stress_mpa],
+            "measurement_std_mpa": float(self.measurement_std_mpa),
+        }
+        return hashlib.sha256(canonical_json_bytes(payload)).hexdigest()
+
     def document(self) -> dict[str, Any]:
         return {
             "schema": EXPERIMENTAL_DATASET_SCHEMA,
@@ -234,7 +245,11 @@ class ExperimentalValidationDossier:
             "experimental_validation_tier": self.experimental_validation_tier.value,
             "state": self.state.value,
             "calibrated_parameters": [p.document() for p in self.calibrated_parameters],
-            "calibration_rmse_mpa": float(self.calibration_rmse_mpa),
+            "calibration_rmse_mpa": (
+                None
+                if not math.isfinite(self.calibration_rmse_mpa)
+                else float(self.calibration_rmse_mpa)
+            ),
             "holdout_comparison_error_e_mpa": (
                 None
                 if self.holdout_comparison_error_e_mpa is None

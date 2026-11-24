@@ -120,11 +120,16 @@ def _parse_abaqus_like_inp(
     raw_elems: list[list[int]] = []
     elem_type_raw = ""
     section = ""
+    pending_elem_tokens: list[str] = []
     for raw_line in inp_path.read_text(encoding="utf-8").splitlines():
         line = raw_line.strip()
         if not line or line.startswith("**"):
             continue
         if line.startswith("*"):
+            if pending_elem_tokens:
+                if len(pending_elem_tokens) >= 4:
+                    raw_elems.append([int(v) for v in pending_elem_tokens[1:]])
+                pending_elem_tokens = []
             upper = line.upper()
             if upper.startswith("*NODE"):
                 section = "NODE"
@@ -140,8 +145,15 @@ def _parse_abaqus_like_inp(
         if section == "NODE" and len(parts) >= 3:
             node_ids.append(int(parts[0]))
             coords.append([float(v) for v in parts[1:4]])
-        elif section == "ELEMENT" and len(parts) >= 4:
-            raw_elems.append([int(v) for v in parts[1:]])
+        elif section == "ELEMENT" and parts:
+            pending_elem_tokens.extend(parts)
+            # Standard Abaqus/CalculiX 80-col continuation ends with trailing comma
+            if not line.endswith(","):
+                if len(pending_elem_tokens) >= 4:
+                    raw_elems.append([int(v) for v in pending_elem_tokens[1:]])
+                pending_elem_tokens = []
+    if pending_elem_tokens and len(pending_elem_tokens) >= 4:
+        raw_elems.append([int(v) for v in pending_elem_tokens[1:]])
 
     if not coords or not raw_elems:
         raise ValueError(f"incomplete *NODE / *ELEMENT blocks in {inp_path.name}")
@@ -261,9 +273,12 @@ def read_calculix_inp_frd(
         elif line.startswith(" -3"):
             block_kind = ""
         elif line.startswith(" -1") and block_kind:
-            # Handle both whitespace-separated and Fortran fixed-width glued negatives (e.g. 0.0E+00-3.0E-02)
+            # Handle whitespace-separated, Fortran glued negatives (0.0E+00-3.0E-02),
+            # and non-finite NaN/Inf tokens from diverged CalculiX runs.
             tokens = re.findall(
-                r"[+-]?(?:\d+\.\d*|\.\d+|\d+)(?:[Ee][+-]?\d+)?", line[3:]
+                r"[+-]?(?:nan|inf(?:inity)?|(?:\d+\.\d*|\.\d+|\d+)(?:[Ee][+-]?\d+)?)",
+                line[3:],
+                flags=re.IGNORECASE,
             )
             if not tokens:
                 continue
@@ -326,6 +341,7 @@ def read_nastran_bdf_and_fields(
     coords: list[list[float]] = []
     elems: list[list[int]] = []
     ctype = "tet4"
+    in_ctetra_cont = False
     for raw in bdf.read_text(encoding="utf-8").splitlines():
         line = raw.strip()
         if not line or line.startswith("$"):
@@ -333,14 +349,37 @@ def read_nastran_bdf_and_fields(
         parts = [p.strip() for p in line.split(",")]
         card = parts[0].upper()
         if card == "GRID" and len(parts) >= 6:
+            in_ctetra_cont = False
             node_ids.append(int(parts[1]))
             coords.append([float(parts[3]), float(parts[4]), float(parts[5])])
         elif card == "CTETRA" and len(parts) >= 7:
-            elems.append([int(v) for v in parts[3:] if v])
+            node_tokens = [
+                int(v)
+                for v in parts[3:]
+                if v and not v.startswith("+") and not v.startswith("*")
+            ]
+            elems.append(node_tokens)
+            in_ctetra_cont = len(node_tokens) < 10 and (
+                line.endswith(",") or any(p.startswith("+") for p in parts[3:])
+            )
             ctype = "tet10" if len(elems[-1]) == 10 else "tet4"
+        elif in_ctetra_cont and (card == "" or card.startswith("+")):
+            extra = [
+                int(v)
+                for v in parts[1:]
+                if v and not v.startswith("+") and not v.startswith("*")
+            ]
+            if elems and extra:
+                elems[-1].extend(extra)
+                if len(elems[-1]) == 10:
+                    ctype = "tet10"
+                    in_ctetra_cont = False
         elif card == "CTRIA3" and len(parts) >= 6:
+            in_ctetra_cont = False
             elems.append([int(v) for v in parts[3:6]])
             ctype = "triangle"
+        else:
+            in_ctetra_cont = False
     if not coords or not elems:
         raise ValueError(f"incomplete GRID / element cards in {bdf.name}")
     id_map = {nid: idx for idx, nid in enumerate(node_ids)}
