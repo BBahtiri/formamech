@@ -374,7 +374,11 @@ class _Run:
                 "",
             ]
         )
-        atomic_write(self.plan.output_path / "report.md", "\n".join(lines).encode())
+        from piginot._job_evidence import archive_report
+
+        report = "\n".join(lines).encode()
+        atomic_write(self.plan.output_path / "report.md", report)
+        archive_report(self.plan.output_path, report)
         return code
 
 

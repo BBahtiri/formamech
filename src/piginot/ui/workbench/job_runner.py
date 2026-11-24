@@ -8,6 +8,7 @@ reruns never interrupt long-running training or FEM solves.
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 import os
 import signal
@@ -21,14 +22,18 @@ from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, Final, Literal
+from typing import TYPE_CHECKING, Any, Final, Literal
 
+from piginot._job_evidence import EVIDENCE_ENV, OUTPUT_ENV, OWNER_ENV
 from piginot.contracts.state_machine import (
     StateMachineSpec,
     StateSnapshot,
     TransitionSpec,
     register_state_machine,
 )
+
+if TYPE_CHECKING:
+    from piginot.ui.workbench.state import WorkbenchWorkspace
 
 JOB_STATUS_SCHEMA: Final = "formamech.workbench-job-v1"
 JobKind = Literal["compile", "qualify"]
@@ -169,6 +174,7 @@ class JobRecord:
     log_path: str
     output_dir: str
     latest_checkpoint_step: int | None = None
+    evidence_id: str | None = None
 
     def __post_init__(self) -> None:
         lifecycle = JobLifecycleState(str(self.state))
@@ -222,6 +228,7 @@ class JobRecord:
             "log_path": self.log_path,
             "output_dir": self.output_dir,
             "latest_checkpoint_step": self.latest_checkpoint_step,
+            "evidence_id": self.evidence_id,
         }
 
     @classmethod
@@ -255,6 +262,7 @@ class JobRecord:
             log_path=str(doc["log_path"]),
             output_dir=str(doc["output_dir"]),
             latest_checkpoint_step=None if raw_step is None else int(raw_step),
+            evidence_id=doc.get("evidence_id"),
         )
 
 
@@ -380,6 +388,89 @@ class WorkbenchJobRunner:
         raw = json.loads(path.read_text(encoding="utf-8"))
         return JobRecord.from_document(raw)
 
+    def _evidence_dir(self, record: JobRecord) -> Path | None:
+        token = record.evidence_id
+        if (
+            not isinstance(token, str)
+            or len(token) != 32
+            or any(c not in "0123456789abcdef" for c in token)
+        ):
+            return None
+        directory = self.jobs_dir / "evidence" / token
+        try:
+            owner = json.loads((directory / "owner.json").read_bytes())
+        except (OSError, ValueError):
+            return None
+        expected = {
+            "job_id": record.job_id,
+            "kind": record.kind,
+            "output_dir": record.output_dir,
+        }
+        return directory if owner == expected else None
+
+    def report_for(self, record: JobRecord) -> bytes | None:
+        """Return only the copy published by the child for this job."""
+        directory = self._evidence_dir(record)
+        if not record.is_terminal or directory is None:
+            return None
+        try:
+            report = (directory / "report.md").read_bytes()
+            digest = (directory / "report.sha256").read_text(encoding="ascii")
+            return report if hashlib.sha256(report).hexdigest() == digest else None
+        except (OSError, ValueError):
+            return None
+
+    def _checkpoint_evidence(self, record: JobRecord) -> tuple[int, str] | None:
+        directory = self._evidence_dir(record)
+        if directory is None:
+            return None
+        try:
+            evidence = json.loads((directory / "checkpoint.json").read_bytes())
+            step, digest = evidence["step"], evidence["sha256"]
+        except (OSError, ValueError, KeyError, TypeError):
+            return None
+        if type(step) is int and step > 0 and isinstance(digest, str):
+            return step, digest
+        return None
+
+    def job_checkpoint(self, record: JobRecord) -> int | None:
+        if record.evidence_id is None:
+            return record.latest_checkpoint_step
+        evidence = self._checkpoint_evidence(record)
+        return None if evidence is None else evidence[0]
+
+    def can_resume(self, record: JobRecord, workspace: WorkbenchWorkspace) -> bool:
+        from piginot.ui.workbench.study_plan import (
+            has_compatible_checkpoint,
+            plan_blocker,
+        )
+
+        if record.kind != "compile" or record.state not in ("FAILED", "CANCELLED"):
+            return False
+        output = Path(record.output_dir).resolve()
+        evidence = self._checkpoint_evidence(record)
+        if output != workspace.run_dir or evidence is None or plan_blocker(workspace):
+            return False
+        step, digest = evidence
+        try:
+            checkpoint = output / "checkpoints" / f"step-{step:09d}" / "checkpoint.json"
+            if step != _latest_checkpoint_step(output):
+                return False
+            if hashlib.sha256(checkpoint.read_bytes()).hexdigest() != digest:
+                return False
+        except OSError:
+            return False
+        return has_compatible_checkpoint(workspace, output)
+
+    def _recorded_exit(self, record: JobRecord) -> int | None:
+        directory = self._evidence_dir(record)
+        if directory is None:
+            return None
+        try:
+            return int((directory / "exit.txt").read_text(encoding="ascii"))
+        except (OSError, ValueError):
+            return None
+
     def list_jobs(self) -> tuple[JobRecord, ...]:
         records: list[JobRecord] = []
         for path in sorted(self.jobs_dir.glob("*.json")):
@@ -417,7 +508,21 @@ class WorkbenchJobRunner:
         cmd = (sys.executable, "-m", "formamech", *(str(a) for a in cli_args))
         out_path = Path(output_dir).resolve()
 
+        token = uuid.uuid4().hex
+        directory = self.jobs_dir / "evidence" / token
+        directory.mkdir(parents=True)
+        _atomic_write_json(
+            directory / "owner.json",
+            {
+                "job_id": jid,
+                "kind": kind,
+                "output_dir": str(out_path),
+            },
+        )
         env = dict(os.environ)
+        env.pop(OWNER_ENV, None)
+        env[EVIDENCE_ENV] = str(directory)
+        env[OUTPUT_ENV] = str(out_path)
         env.setdefault("OMP_NUM_THREADS", "1")
         env.setdefault("OPENBLAS_NUM_THREADS", "1")
         env.setdefault("MKL_NUM_THREADS", "1")
@@ -452,6 +557,7 @@ class WorkbenchJobRunner:
             log_path=str(log_file),
             output_dir=str(out_path),
             latest_checkpoint_step=_latest_checkpoint_step(out_path),
+            evidence_id=token,
         )
         self._save(record)
         return record
@@ -463,7 +569,10 @@ class WorkbenchJobRunner:
         config_path: Path | str,
         output_dir: Path | str,
         resume: bool = False,
+        resume_job_id: str | None = None,
     ) -> JobRecord:
+        if resume_job_id is not None and not resume:
+            raise ValueError("Select Resume to dispatch from a historical checkpoint.")
         args = [
             "compile",
             "--spec",
@@ -479,8 +588,9 @@ class WorkbenchJobRunner:
         output = Path(output_dir).resolve()
         inputs = (Path(spec_path).resolve(), Path(config_path).resolve())
         expected = (root / "inputs" / "problem.json", root / "inputs" / "config.json")
-        if self.jobs_dir.name == "jobs" and (
-            output == root / "run" or inputs == expected
+        if resume_job_id is not None or (
+            self.jobs_dir.name == "jobs"
+            and (output == root / "run" or inputs == expected)
         ):
             from piginot.ui.workbench.state import WorkbenchWorkspace
             from piginot.ui.workbench.study_plan import (
@@ -498,7 +608,15 @@ class WorkbenchJobRunner:
                     raise ValueError(blocker)
                 if self.active_jobs(kind="compile"):
                     raise ValueError("A compile job is already active for this study.")
-                if resume and not has_compatible_checkpoint(workspace, output):
+                if resume_job_id is not None:
+                    selected = self.load(resume_job_id)
+                    if Path(
+                        selected.output_dir
+                    ).resolve() != output or not self.can_resume(selected, workspace):
+                        raise ValueError(
+                            "This job has no compatible checkpoint for the current plan."
+                        )
+                elif resume and not has_compatible_checkpoint(workspace, output):
                     raise ValueError(
                         "Resume requires a compatible checkpoint from this plan."
                     )
@@ -595,8 +713,9 @@ class WorkbenchJobRunner:
             self._save(finished)
             return finished
 
-        # Process started in a prior server session: probe OS PID
-        if record.pid is not None and _pid_alive(record.pid):
+        # A job-scoped exit record also disambiguates an OS PID reused after restart.
+        persisted_exit = self._recorded_exit(record)
+        if persisted_exit is None and record.pid is not None and _pid_alive(record.pid):
             JOB_LIFECYCLE_MACHINE.require_transition(
                 current, JobLifecycleState.RUNNING, trigger="poll_alive"
             )
@@ -604,8 +723,27 @@ class WorkbenchJobRunner:
             self._save(updated)
             return updated
 
-        # Infer terminal state accurately from persisted report/manifest artifacts
-        inferred_state, inferred_code = _infer_external_terminal(record.kind, out_path)
+        shared_output = record.evidence_id is None and any(
+            other.job_id != job_id and other.output_dir == record.output_dir
+            for other in self.list_jobs()
+        )
+        inferred_code: int | None
+        if record.evidence_id is None and not shared_output:
+            inferred_state, inferred_code = _infer_external_terminal(
+                record.kind, out_path
+            )
+        else:
+            # The child may publish its exit record while the PID probe is in progress.
+            inferred_code = (
+                persisted_exit
+                if persisted_exit is not None
+                else self._recorded_exit(record)
+            )
+            inferred_state = (
+                JobLifecycleState.FAILED
+                if inferred_code is None
+                else JobLifecycleState(_state_from_exit_code(inferred_code))
+            )
         JOB_LIFECYCLE_MACHINE.require_transition(current, inferred_state)
         finished = replace(
             record,

@@ -12,6 +12,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import os
 import time
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -1141,7 +1142,11 @@ def qualify_bundle(
         manifest_file_path = out_path / "qualification-manifest.json"
         manifest.save(manifest_file_path)
         report_file_path = out_path / "qualification-report.md"
-        report_file_path.write_text(report_md, encoding="utf-8")
+        from piginot._job_evidence import archive_report
+
+        report_bytes = report_md.replace("\n", os.linesep).encode("utf-8")
+        report_file_path.write_bytes(report_bytes)
+        archive_report(out_path, report_bytes)
 
     promoted_path: Path | None = None
     if emit_qualified_bundle is not None:

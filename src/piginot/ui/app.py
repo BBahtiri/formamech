@@ -11,17 +11,22 @@ import argparse
 import importlib
 import json
 import sys
+import tempfile
 import uuid
 from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
 from piginot.contracts import Unit
+from piginot.contracts.canonical import strict_json_loads
+from piginot.qualify.gate import GateReasonCode, check_deployment_gate
+from piginot.qualify.manifest import QualificationManifest
+from piginot.ui.field_probes import render_field_maps
 from piginot.ui.inspector import (
     build_inspector_snapshot,
-    build_plotly_figures,
     render_trust_dossier_markdown,
 )
+from piginot.ui.job_history import render_job_completion, render_job_monitor
 from piginot.ui.workbench import (
     MATERIAL_PRESETS,
     BoundaryAssignment,
@@ -32,10 +37,22 @@ from piginot.ui.workbench import (
     prepare_and_plan_workspace,
     validate_boundaries_against_preview,
 )
+from piginot.ui.workbench.navigation import (
+    BOUNDARIES,
+    IMPORT,
+    INSPECT,
+    PLAN,
+    TRAIN,
+    focus_destination,
+    render_navigation,
+    render_progress,
+    stage_panel,
+)
 from piginot.ui.workbench.physics_forms import (
     load_applied_settings,
     load_physics_draft,
 )
+from piginot.ui.workbench.plan_review import plan_review_rows, prepared_physics
 from piginot.ui.workbench.state import _file_sha256
 from piginot.ui.workbench.study_plan import has_compatible_checkpoint, plan_blocker
 
@@ -51,7 +68,7 @@ def _load_or_init_boundaries(
 
 
 def _render_stage_1_import(st: Any, workspace: WorkbenchWorkspace) -> None:
-    st.subheader("Step 1 — Import 2D CAD Geometry & Mesh")
+    st.subheader(IMPORT.name, anchor=IMPORT.anchor)
     st.caption(
         "Upload a planar STEP/STP/DXF profile or generate a built-in OpenCASCADE "
         "sample bracket to inspect its mesh and semantic boundary groups."
@@ -204,9 +221,9 @@ def _render_stage_1_import(st: Any, workspace: WorkbenchWorkspace) -> None:
 
 
 def _render_stage_2_boundaries(st: Any, workspace: WorkbenchWorkspace) -> None:
-    st.subheader("Step 2 — Visual Boundary Condition Picker")
+    st.subheader(BOUNDARIES.name, anchor=BOUNDARIES.anchor)
     if not (workspace.geometry_dir / "preview.json").is_file():
-        st.info("Import a 2D CAD profile in Step 1 first.")
+        st.info("Import a 2D profile in Import CAD.")
         return
 
     from piginot.ui.workbench.picker_component import render_boundary_picker
@@ -214,18 +231,20 @@ def _render_stage_2_boundaries(st: Any, workspace: WorkbenchWorkspace) -> None:
     render_boundary_picker(st, workspace)
 
 
-def _render_stage_3_physics_plan(st: Any, workspace: WorkbenchWorkspace) -> None:
-    st.subheader("Step 3 — Material Model, Load Ranges & Plan Preview")
+def _render_stage_3_physics_plan(st: Any, workspace: WorkbenchWorkspace) -> bool:
+    st.subheader(PLAN.name, anchor=PLAN.anchor)
     preview = workspace.load_preview()
     if preview is None:
-        st.info("Import a 2D CAD profile in Step 1 first.")
-        return
+        st.info("Import a 2D profile in Import CAD.")
+        return False
 
     saved = load_physics_draft(workspace, preview)
     assignments = saved.boundaries
     ok_bc, err_bc = validate_boundaries_against_preview(preview, assignments)
     if not ok_bc:
-        st.warning("Fix boundary assignments in Step 2 before preparing inputs:")
+        st.warning(
+            "Fix the boundary assignments in Boundary Picker before preparing inputs."
+        )
         for err in err_bc:
             st.error(err)
 
@@ -423,9 +442,10 @@ def _render_stage_3_physics_plan(st: Any, workspace: WorkbenchWorkspace) -> None
             format="%.3f",
             key=f"peak_tol::{scope}",
         )
+        prepared_profile = bool(saved_state.get("execution_profile", True))
         exec_profile = st.checkbox(
             "Capture installed execution profile (ready for `formamech compile`)",
-            value=saved_state.get("execution_profile", True),
+            value=prepared_profile,
             key=f"profile::{scope}",
         )
 
@@ -445,35 +465,50 @@ def _render_stage_3_physics_plan(st: Any, workspace: WorkbenchWorkspace) -> None
             p_tol=float(p_tol),
             peak_tol=float(peak_tol),
         )
-        if draft != saved:
-            st.caption("Unprepared changes")
-        if st.button(
+    with st.container(key="wb-plan-review"):
+        try:
+            prepared = prepared_physics(workspace)
+            st.subheader(
+                "Initial plan summary"
+                if prepared is None
+                else "Changes since last prepared plan"
+            )
+            rows = plan_review_rows(prepared, draft)
+            if prepared is None or exec_profile != prepared_profile:
+                row = {"Area": "Preparation", "Setting": "Capture execution profile"}
+                if prepared is not None:
+                    row["Prepared"] = "Yes" if prepared_profile else "No"
+                rows.append({**row, "Proposed": "Yes" if exec_profile else "No"})
+            if rows:
+                st.table(rows)
+            else:
+                st.write("No settings changes.")
+        except (OSError, ValueError) as exc:
+            st.warning(f"Plan comparison unavailable: {exc}")
+    with st.container(key="wb-prepare-control"):
+        prepare_clicked = st.button(
             "Update plan"
-            if blocker
+            if plan is not None
             else "Prepare Inputs & Preview Plan (No Training Yet)",
             type="primary",
             disabled=not ok_bc,
             width="stretch",
             key=f"prepare::{scope}",
-        ):
-            try:
-                prepare_and_plan_workspace(
-                    workspace, draft, execution_profile=exec_profile
-                )
-                st.success(
-                    "Prepared canonical `physics.json`, `inputs/`, and `preview/plan.json`."
-                )
-                st.rerun()
-            except Exception as exc:
-                st.error(f"Preparation failed: {exc}")
-                blocker = plan_blocker(workspace)
+        )
+    if prepare_clicked:
+        try:
+            prepare_and_plan_workspace(workspace, draft, execution_profile=exec_profile)
+            st.rerun()
+        except Exception as exc:
+            st.error(f"Preparation failed: {exc}")
+            blocker = plan_blocker(workspace)
 
     if plan is not None:
         st.divider()
         if not blocker:
             st.success(
                 f"Campaign plan verified (`plan_sha256`: `{str(plan.get('plan_sha256', ''))[:16]}...`). "
-                "Proceed to Step 4 to train or qualify."
+                "Open Train & Qualify to continue."
             )
         c_a, c_b = st.columns(2)
         with c_a.expander("Generated Canonical `physics.json` (read-only)"):
@@ -481,12 +516,13 @@ def _render_stage_3_physics_plan(st: Any, workspace: WorkbenchWorkspace) -> None
                 st.json(json.loads(workspace.physics_path.read_text(encoding="utf-8")))
         with c_b.expander("Compiler `--plan-only` Artifact (`preview/plan.json`)"):
             st.json(plan)
+    return draft != saved or exec_profile != prepared_profile
 
 
 def _render_stage_4_train_qualify(
-    st: Any, workspace: WorkbenchWorkspace, default_bundle: str
+    st: Any, workspace: WorkbenchWorkspace, default_bundle: str, pending_edits: bool
 ) -> None:
-    st.subheader("Step 4 — Background Compile & Continuous Model Qualification")
+    st.subheader(TRAIN.name, anchor=TRAIN.anchor)
     runner = WorkbenchJobRunner(workspace.jobs_dir, cwd=workspace.root)
     prog = workspace.stage_progress()
     active_compile = runner.active_jobs(kind="compile")
@@ -496,11 +532,18 @@ def _render_stage_4_train_qualify(
     with col_train:
         st.markdown("### A. Campaign Compiler (`formamech compile`)")
         if not prog.inputs_prepared:
-            st.info("Prepare inputs in Step 3 before launching compilation.")
+            st.info("Prepare inputs in Material & Plan before launching compilation.")
         else:
             blocker = plan_blocker(workspace)
             if blocker:
                 st.warning(blocker)
+            prepared_plan = workspace.load_plan() or {}
+            if revision := prepared_plan.get("plan_sha256"):
+                st.markdown(f"**Prepared revision** `{revision}`")
+                if pending_edits and not blocker:
+                    st.info(
+                        "Material & Plan has pending edits. Start and Resume use the prepared revision."
+                    )
             if active_compile:
                 st.info(
                     f"Compile job `{active_compile[0].job_id}` is currently RUNNING."
@@ -508,7 +551,11 @@ def _render_stage_4_train_qualify(
             b1, b2 = st.columns(2)
             disabled = bool(active_compile or blocker)
             start = b1.button(
-                "Start Compile Job", type="primary", disabled=disabled, width="stretch"
+                "Start Compile Job",
+                type="primary",
+                disabled=disabled,
+                width="stretch",
+                key="wb-start-compile",
             )
             resume = b2.button(
                 "Resume Compile (`--resume`)",
@@ -531,7 +578,7 @@ def _render_stage_4_train_qualify(
                     st.error(str(exc))
 
     with col_qual:
-        st.markdown("### B. Numerical Qualification (`formamech qualify`)")
+        st.subheader("Numerical qualification", anchor="numerical-qualification")
         candidate_default = (
             str(workspace.candidate_bundle_path)
             if workspace.candidate_bundle_path is not None
@@ -596,103 +643,148 @@ def _render_stage_4_train_qualify(
             except (OSError, ValueError) as exc:
                 st.error(str(exc))
 
-    _render_job_monitor(st, runner)
+    _render_workspace_qualification(st, workspace)
+    render_job_monitor(st, runner, workspace)
 
-    # Qualification Manifest Display
+
+def _render_workspace_qualification(st: Any, workspace: WorkbenchWorkspace) -> None:
     mpath = workspace.qualification_manifest_path
-    if mpath is not None:
-        st.divider()
-        raw_manifest = json.loads(mpath.read_text(encoding="utf-8"))
-        verdict = str(raw_manifest.get("verdict", "NOT_QUALIFIED"))
-        granted = str(raw_manifest.get("granted_claim_level", "NOT_VERIFIED"))
-        k1, k2, k3 = st.columns(3)
-        k1.metric("Qualification Verdict", verdict)
-        k2.metric("Granted Claim Level", granted)
-        k3.metric("Policy", str(raw_manifest.get("policy_id", "")))
-        st.table(list(raw_manifest.get("families", ())))
-        dl1, dl2 = st.columns(2)
-        dl1.download_button(
-            "Download Qualification Manifest (JSON)",
-            data=mpath.read_bytes(),
-            file_name="qualification-manifest.json",
-            mime="application/json",
+    if mpath is None:
+        return
+    st.subheader("Workspace qualification evidence")
+    try:
+        manifest_bytes = mpath.read_bytes()
+        raw = strict_json_loads(manifest_bytes)
+        if not isinstance(raw, dict) or "qualification_manifest_sha256" not in raw:
+            raise ValueError("Qualification manifest integrity evidence is missing.")
+        manifest = QualificationManifest.from_document(raw)
+    except (OSError, ValueError):
+        st.warning(
+            "Qualification evidence unreadable. Rerun qualification to replace it."
+        )
+        return
+    st.write(f"**Evidence bundle** {manifest.bundle_name}")
+    st.write(f"**Verdict** {manifest.verdict.value}")
+    st.write(f"**Granted claim** {manifest.granted_claim_level.value}")
+    st.write(f"**Policy** {manifest.policy_id}")
+    if manifest.families:
+        st.table(list(manifest.families))
+    dl1, dl2 = st.columns(2)
+    dl1.download_button(
+        "Download Qualification Manifest (JSON)",
+        data=manifest_bytes,
+        file_name="qualification-manifest.json",
+        mime="application/json",
+        width="stretch",
+    )
+    rpath = workspace.qualification_dir / "qualification-report.md"
+    if rpath.is_file():
+        dl2.download_button(
+            "Download Qualification Dossier (Markdown)",
+            data=rpath.read_bytes(),
+            file_name="qualification-report.md",
+            mime="text/markdown",
             width="stretch",
         )
-        rpath = workspace.qualification_dir / "qualification-report.md"
-        if rpath.is_file():
-            dl2.download_button(
-                "Download Qualification Dossier (Markdown)",
-                data=rpath.read_bytes(),
-                file_name="qualification-report.md",
-                mime="text/markdown",
-                width="stretch",
-            )
 
 
-def _render_job_monitor(st: Any, runner: WorkbenchJobRunner) -> None:
-    from streamlit import fragment
+def _render_bundle_export(
+    st: Any,
+    workspace: WorkbenchWorkspace,
+    bundle_path: Path,
+    manifest_path: Path | None,
+) -> None:
+    from piginot.export import export_bundle_to_fmu
 
-    jobs = runner.list_jobs()
-    if not jobs:
-        return
-    watched = {job.job_id for job in jobs if not job.is_terminal}
+    gate = check_deployment_gate(bundle_path, manifest_path)
+    reasons = gate.reason_codes
+    missing = GateReasonCode.MANIFEST_MISSING in reasons
+    mismatch = GateReasonCode.BUNDLE_MISMATCH in reasons
+    unchecked = manifest_path is None and missing
+    if gate.allowed:
+        status, action = "Qualified for this policy", "Export qualified FMU"
+    elif unchecked:
+        status, action = "Qualification evidence missing", "Export unchecked FMU"
+    else:
+        action = "Export FMU"
+        if mismatch:
+            status = "Evidence belongs to another bundle"
+        elif missing:
+            status = "Qualification evidence missing"
+        elif GateReasonCode.MANIFEST_INVALID in reasons:
+            status = "Qualification evidence unreadable"
+        else:
+            status = "Qualification refused"
 
-    @fragment(run_every=1.0 if watched else None)
-    def monitor() -> None:
-        st.divider()
-        title, refresh = st.columns([3, 1])
-        title.markdown("### Background Jobs")
-        refresh_clicked = refresh.button("Refresh Job Status", width="stretch")
-        current = runner.list_jobs() if watched or refresh_clicked else jobs
-        refreshed = [
-            runner.poll(job.job_id) if not job.is_terminal else job for job in current
-        ]
-        running = [job for job in refreshed if not job.is_terminal]
-        if watched != {job.job_id for job in running}:
-            # The full rerun updates the workflow and registers the next polling interval.
-            st.rerun()
-        st.table(
-            [
-                {
-                    "Job ID": job.job_id,
-                    "Kind": job.kind,
-                    "State": job.state,
-                    "Exit": job.exit_code if job.exit_code is not None else "—",
-                    "Checkpoint": job.latest_checkpoint_step
-                    if job.latest_checkpoint_step is not None
-                    else "—",
-                    "Started (UTC)": job.started_utc,
-                }
-                for job in refreshed[:6]
-            ]
+    with st.container(key="wb-deployment-evidence"):
+        st.subheader("Deployment evidence")
+        st.markdown(f"**{status}**")
+        st.markdown(f"**Selected bundle** {gate.bundle_name}")
+        if gate.bundle_manifest_sha256 is not None:
+            st.markdown(f"Bundle manifest SHA-256 `{gate.bundle_manifest_sha256}`")
+        st.markdown(f"**Evaluation policy**  \n{gate.policy_id or 'Unavailable'}")
+        st.markdown(f"Required claim `{gate.min_claim_level.value}`")
+        grant = (
+            "Not granted for this bundle"
+            if mismatch
+            else gate.granted_claim_level.value
         )
-        for job in running:
-            if st.button(
-                f"Cancel `{job.job_id}` ({job.kind})", key=f"cancel_job::{job.job_id}"
-            ):
-                try:
-                    runner.cancel(job.job_id)
-                except (OSError, RuntimeError, ValueError) as exc:
-                    st.error(str(exc))
-                else:
-                    st.rerun()
-        if refreshed:
-            latest = refreshed[0]
-            if log_tail := runner.read_log_tail(latest.job_id, max_lines=40):
-                with st.expander(f"Log tail — `{latest.job_id}`"):
-                    st.code(log_tail, language="text")
-
-    monitor()
+        st.markdown(f"**Granted claim**  \n{grant}")
+        if not gate.allowed:
+            st.caption(gate.detail)
+        permitted = gate.allowed or unchecked
+        if not permitted:
+            st.markdown(
+                "FMU export blocked. Choose applicable evidence or rerun qualification."
+            )
+        clicked = st.button(
+            action,
+            key=f"wb_export_fmu::{gate.bundle_manifest_sha256}::{action}",
+            disabled=not permitted,
+        )
+        if clicked and permitted:
+            try:
+                current = check_deployment_gate(bundle_path, manifest_path)
+                if current != gate:
+                    st.warning(
+                        "Qualification evidence changed. Review the decision before exporting."
+                    )
+                    return
+                name = current.bundle_name
+                if Path(name).name != name or name in (".", ".."):
+                    raise ValueError(
+                        "The selected bundle name cannot be used as an FMU filename."
+                    )
+                fmu_dest = workspace.root / f"{name}.fmu"
+                with tempfile.TemporaryDirectory(
+                    prefix=".fmu-", dir=workspace.root
+                ) as staging:
+                    result = export_bundle_to_fmu(
+                        bundle_path, Path(staging) / fmu_dest.name
+                    )
+                    if (
+                        result.bundle_manifest_sha256 != current.bundle_manifest_sha256
+                        or check_deployment_gate(bundle_path, manifest_path) != current
+                    ):
+                        st.warning(
+                            "Bundle or evidence changed during packaging. Review the decision before exporting."
+                        )
+                        return
+                    result.fmu_path.replace(fmu_dest)
+                st.success(f"Exported FMI 3.0 FMU to `{fmu_dest}`.")
+            except Exception as exc:
+                st.error(f"FMU export failed: {exc}")
 
 
 def _render_stage_5_inspector(
-    st: Any, workspace: WorkbenchWorkspace, default_bundle: str
+    st: Any, workspace: WorkbenchWorkspace, default_bundle: str, *, active: bool
 ) -> None:
     from piginot.bundle import load_bundle
-    from piginot.export import export_bundle_to_fmu
-    from piginot.qualify import check_deployment_gate
 
-    st.subheader("Step 5 — Verification & Trust Inspector")
+    st.subheader(INSPECT.name, anchor=INSPECT.anchor)
+    seen_key = f"wb_inspector_seen::{workspace.root}"
+    seen = st.session_state.get(seen_key, False)
+    st.session_state[seen_key] = True
     active_default = (
         str(workspace.candidate_bundle_path)
         if workspace.candidate_bundle_path is not None
@@ -712,11 +804,12 @@ def _render_stage_5_inspector(
         help="Path to a FormaMech verified or compiled candidate bundle directory.",
         key=insp_bundle_key,
     )
+    mode_key = f"wb_insp_mode::{workspace.root}"
     mode = c_mode.selectbox(
         "Verification Mode",
         options=["fast", "certified", "exact"],
         index=1,
-        key=f"wb_insp_mode::{workspace.root}",
+        key=mode_key,
     )
     is_fast_mode = mode == "fast"
     backend = c_back.selectbox(
@@ -773,7 +866,7 @@ def _render_stage_5_inspector(
     if not bundle_str.strip():
         st.info(
             "Enter a bundle directory (for example `bundles/notched-v1-cp-freeze`) "
-            "or train a candidate in Step 4 to inspect predictions and trust receipts."
+            "or train a candidate in Train & Qualify to inspect predictions and trust receipts."
         )
         return
 
@@ -787,17 +880,6 @@ def _render_stage_5_inspector(
     except Exception as exc:
         st.error(f"Failed to load bundle `{bundle_path}`: {exc}")
         return
-
-    gate_badge = "UNCHECKED"
-    gate_refused = False
-    if qual_manifest_str.strip():
-        gate_res = check_deployment_gate(bundle_path, Path(qual_manifest_str.strip()))
-        gate_refused = not gate_res.allowed
-        gate_badge = (
-            f"QUALIFIED ({gate_res.granted_claim_level.value})"
-            if gate_res.allowed
-            else f"REFUSED ({', '.join(c.value for c in gate_res.reason_codes)})"
-        )
 
     st.markdown("**Envelope Parameter Controls**")
     slider_cols = st.columns(max(1, min(len(bundle.envelope.primitive_bounds), 4)))
@@ -824,26 +906,18 @@ def _render_stage_5_inspector(
             )
         inputs[bound.name] = {"value": val, "unit": bound.lower_bound.unit.value}
 
-    act1, act2 = st.columns([1.2, 1.2])
-    one_click_exact = act1.button("Run Warm-Start FEM & Compare", type="primary")
-    export_fmu_clicked = act2.button(
-        "Export FMI 3.0 Co-Simulation FMU",
-        disabled=gate_refused,
+    def show_exact() -> None:
+        st.session_state[mode_key] = "exact"
+
+    one_click_exact = st.button(
+        "Run Warm-Start FEM & Compare", type="primary", on_click=show_exact
     )
-    effective_mode = "exact" if one_click_exact else mode
-    if gate_refused:
-        st.warning(
-            f"Deployment gate {gate_badge}: FMU export is blocked until qualification passes."
-        )
-
-    if export_fmu_clicked and not gate_refused:
-        try:
-            fmu_dest = workspace.root / f"{bundle.manifest.name}.fmu"
-            fmu_res = export_bundle_to_fmu(bundle_path, fmu_dest)
-            st.success(f"Exported FMI 3.0 FMU to `{fmu_res.fmu_path}`.")
-        except Exception as exc:
-            st.error(f"FMU export failed: {exc}")
-
+    _render_bundle_export(
+        st,
+        workspace,
+        bundle_path,
+        Path(qual_manifest_str.strip()) if qual_manifest_str.strip() else None,
+    )
     cal_default = workspace.qualification_dir / "cad-calibration.json"
     cad_cal_path: Path | None = None
     if cal_default.is_file():
@@ -860,19 +934,16 @@ def _render_stage_5_inspector(
                 "Workspace CAD calibration belongs to a different bundle; "
                 "serving without workspace conformal bounds."
             )
-    use_repair = spectral_repair and effective_mode != "fast"
-    repair_steps = tta_steps if effective_mode != "fast" else 0
-    use_escalation = escalate and effective_mode == "certified"
     try:
         request = (
             bundle_path.resolve(),
             bundle.manifest.manifest_sha256,
             inputs,
-            effective_mode,
+            mode,
             backend,
-            use_repair,
-            repair_steps,
-            use_escalation,
+            spectral_repair,
+            tta_steps,
+            escalate,
             cad_cal_path,
             _file_sha256(cad_cal_path) if cad_cal_path is not None else None,
         )
@@ -880,38 +951,45 @@ def _render_stage_5_inspector(
         if cached is not None and cached[0] == request and not one_click_exact:
             snapshot = cached[1]
         else:
+            deferred_key = f"wb_inspector_deferred::{workspace.root}"
+            if (seen and not active) or st.session_state.get(deferred_key) == request:
+                st.session_state[deferred_key] = request
+                if not one_click_exact and not st.button(
+                    "Evaluate selected bundle", disabled=not active
+                ):
+                    st.info(
+                        "Evaluate the selected bundle to refresh the Inspector fields."
+                    )
+                    return
+            st.session_state.pop(deferred_key, None)
             snapshot = build_inspector_snapshot(
                 bundle_path,
                 inputs,
-                mode=effective_mode,
+                mode=mode,
                 cad_calibration_path=cad_cal_path,
                 backend=backend,
-                spectral_repair=use_repair,
-                tta_steps=repair_steps,
-                escalate=use_escalation,
+                spectral_repair=spectral_repair,
+                tta_steps=tta_steps,
+                escalate=escalate,
             )
             st.session_state["wb_inspector_snapshot"] = (request, snapshot)
     except Exception as exc:
         st.error(f"Inspector evaluation failed: {exc}")
+        with st.container(key="wb-receipt-integrity"):
+            st.markdown("**Receipt integrity**")
+            st.write("Unavailable")
         return
-    summary = snapshot.summary()
+    with st.container(key="wb-receipt-integrity"):
+        st.markdown("**Receipt integrity**")
+        st.write(snapshot.receipt_integrity)
+        if snapshot.receipt_integrity == "Invalid":
+            st.caption(". ".join(snapshot.receipt_errors))
 
-    r1c1, r1c2, r1c3 = st.columns(3)
+    r1c1, r1c2 = st.columns(2)
     r1c1.metric("Verification Tier", snapshot.verification_tier)
     r1c2.metric("Serving Path", snapshot.serving_path)
-    r1c3.metric("Qualification Gate", gate_badge)
 
-    r2c1, r2c2, r2c3 = st.columns(3)
-    r2c1.metric(
-        "Min det(F_2D)",
-        f"{summary['min_det_f_2d']:.4f}"
-        if summary["min_det_f_2d"] is not None
-        else "N/A",
-    )
-    r2c2.metric(
-        "Receipt Integrity", "VERIFIED" if snapshot.receipt_verified else "FAILED"
-    )
-    r2c3.metric("Claim Level", snapshot.claim_level)
+    st.markdown(f"**Evaluation claim** {snapshot.claim_level}")
 
     sub_fields, sub_verify, sub_receipt = st.tabs(
         [
@@ -920,15 +998,10 @@ def _render_stage_5_inspector(
             "Trust Receipt & Dossier",
         ]
     )
-    figs = build_plotly_figures(snapshot)
     with sub_fields:
-        col_a, col_b = st.columns(2)
-        if "displacement_mm" in figs:
-            col_a.plotly_chart(figs["displacement_mm"], width="stretch")
-        if "von_mises_mpa" in figs:
-            col_b.plotly_chart(figs["von_mises_mpa"], width="stretch")
-        if "det_f_2d" in figs:
-            st.plotly_chart(figs["det_f_2d"], width="stretch")
+        figs = render_field_maps(
+            st, snapshot, f"{workspace.root}::{bundle.manifest.manifest_sha256}"
+        )
 
     with sub_verify:
         if "fem_diff_mm" in figs:
@@ -977,48 +1050,24 @@ def run_streamlit_app(
         page_title="FormaMech — Interactive Engineering Workbench",
         layout="wide",
     )
-    st.title("FormaMech — Interactive Engineering Workbench")
-    st.markdown(
-        "Physics-informed simulation intelligence with FEM-backed trust: "
-        "CAD import, visual boundary picking, campaign planning, numerical "
-        "qualification, and RFC 8785 Trust Receipts."
-    )
-
     with st.sidebar:
-        st.header("Workbench Session")
         if opened := st.session_state.pop("wb_open_workspace", None):
             st.session_state["wb_workspace_path"] = opened
         if "wb_workspace_path" not in st.session_state:
             st.session_state["wb_workspace_path"] = default_workspace
-        ws_str = st.text_input(
-            "Workspace Directory",
-            key="wb_workspace_path",
-            help="Canonical project directory storing geometry/, physics.json, inputs/, run/, qualification/.",
-        )
-        workspace = WorkbenchWorkspace(Path(ws_str.strip() or default_workspace))
-        progress = workspace.stage_progress()
-        wf_snapshot = workspace.workflow_snapshot()
-
-        st.subheader("Guided Workflow Progress")
-        st.caption(f"Current stage: `{wf_snapshot.state.value}`")
-        steps = [
-            ("1. CAD & Mesh Imported", progress.cad_imported),
-            ("2. Physics & Boundaries Saved", progress.physics_saved),
-            ("3. Campaign Inputs Prepared", progress.inputs_prepared),
-            ("4. Plan Previewed", progress.plan_previewed),
-            ("5. Candidate Bundle Trained", progress.bundle_trained),
-            ("6. Model Qualified", progress.bundle_qualified),
-        ]
-        for label, done in steps:
-            st.markdown(f"{'[x]' if done else '[ ]'} **{label}**")
-        if wf_snapshot.stale_items:
+        with st.expander("Workspace details"):
+            ws_str = st.text_input(
+                "Workspace Directory",
+                key="wb_workspace_path",
+                help="Canonical project directory storing geometry/, physics.json, inputs/, run/, qualification/.",
+            )
+            workspace = WorkbenchWorkspace(Path(ws_str.strip() or default_workspace))
+            wf_snapshot = workspace.workflow_snapshot()
             for item in wf_snapshot.stale_items:
                 st.warning(f"Stale: {item}")
-        if wf_snapshot.blockers:
             for blocker in wf_snapshot.blockers:
                 st.error(f"Blocker: {blocker}")
-        if wf_snapshot.recommended_hint:
-            st.info(f"Next: {wf_snapshot.recommended_hint}")
+        render_progress(st, wf_snapshot)
 
         st.divider()
         st.caption(
@@ -1026,24 +1075,21 @@ def run_streamlit_app(
             "the declared discrete FEM model only; never experimental validation."
         )
 
-    default_tab_names = [
-        "1. Import CAD",
-        "2. Boundary Picker",
-        "3. Material & Plan",
-        "4. Train & Qualify",
-        "5. Trust Inspector",
-    ]
-    tabs = st.tabs(default_tab_names)
-    with tabs[0]:
+    active_stage = render_navigation(st, workspace, wf_snapshot)
+    render_job_completion(st, workspace)
+    with stage_panel(st, IMPORT):
         _render_stage_1_import(st, workspace)
-    with tabs[1]:
+    with stage_panel(st, BOUNDARIES):
         _render_stage_2_boundaries(st, workspace)
-    with tabs[2]:
-        _render_stage_3_physics_plan(st, workspace)
-    with tabs[3]:
-        _render_stage_4_train_qualify(st, workspace, default_bundle)
-    with tabs[4]:
-        _render_stage_5_inspector(st, workspace, default_bundle)
+    with stage_panel(st, PLAN):
+        pending_edits = _render_stage_3_physics_plan(st, workspace)
+    with stage_panel(st, TRAIN):
+        _render_stage_4_train_qualify(st, workspace, default_bundle, pending_edits)
+    with stage_panel(st, INSPECT):
+        _render_stage_5_inspector(
+            st, workspace, default_bundle, active=active_stage == INSPECT
+        )
+    focus_destination(st)
 
 
 def _parse_cli_args(argv: list[str]) -> tuple[str, str]:

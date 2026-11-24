@@ -7,12 +7,12 @@ bindings (bundle manifest, approved envelope, optional policy), passing
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 from typing import Any, Final
 
+from piginot.contracts.canonical import strict_json_loads
 from piginot.contracts.state_machine import (
     StateMachineSpec,
     TransitionSpec,
@@ -101,6 +101,7 @@ class DeploymentGateResult:
     min_claim_level: ClaimLevel
     reason_codes: tuple[GateReasonCode, ...]
     detail: str
+    policy_id: str | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.granted_claim_level, ClaimLevel):
@@ -193,8 +194,10 @@ def check_deployment_gate(
         )
 
     try:
-        raw_doc = json.loads(mpath.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+        raw_doc = strict_json_loads(mpath.read_bytes())
+        if not isinstance(raw_doc, dict):
+            raise ValueError("qualification manifest must be a JSON object")
+    except (OSError, ValueError) as exc:
         return DeploymentGateResult(
             allowed=False,
             bundle_name=bundle.manifest.name,
@@ -254,6 +257,7 @@ def check_deployment_gate(
             min_claim_level=min_level,
             reason_codes=tuple(reasons),
             detail="; ".join(messages),
+            policy_id=manifest.policy_id,
         )
 
     return DeploymentGateResult(
@@ -264,6 +268,7 @@ def check_deployment_gate(
         granted_claim_level=manifest.granted_claim_level,
         min_claim_level=min_level,
         reason_codes=(),
+        policy_id=manifest.policy_id,
         detail=(
             f"bundle {bundle.manifest.name!r} qualified at "
             f"{manifest.granted_claim_level.value} under policy {manifest.policy_id!r}"

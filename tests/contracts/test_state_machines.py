@@ -314,7 +314,7 @@ def test_workbench_workspace_staleness_qualification_verdict_and_reimport(
     snap_stale = ws.workflow_snapshot()
     assert any("stale" in item for item in snap_stale.stale_items)
 
-    # Simulate trained bundle + failed NOT_QUALIFIED manifest -> NOT marked qualified
+    # Manifest-shaped legacy files without integrity evidence cannot qualify a bundle.
     (ws.run_dir / "candidate-bundle").mkdir(parents=True, exist_ok=True)
     (ws.run_dir / "candidate-bundle" / "bundle.json").write_text("{}", encoding="utf-8")
     ws.qualification_dir.mkdir(parents=True, exist_ok=True)
@@ -325,14 +325,14 @@ def test_workbench_workspace_staleness_qualification_verdict_and_reimport(
     assert ws.stage_progress().bundle_qualified is False
     snap_nq = ws.workflow_snapshot()
     assert snap_nq.state is WorkbenchStage.BUNDLE_TRAINED
-    assert any("NOT_QUALIFIED" in b for b in snap_nq.blockers)
+    assert snap_nq.blockers
 
-    # Passing QUALIFIED manifest promotes stage to BUNDLE_QUALIFIED
+    # Even a passing verdict cannot replace integrity and bundle binding.
     (ws.qualification_dir / "qualification-manifest.json").write_text(
         json.dumps({"verdict": "QUALIFIED"}), encoding="utf-8"
     )
-    assert ws.stage_progress().bundle_qualified is True
-    assert ws.workflow_snapshot().state is WorkbenchStage.BUNDLE_QUALIFIED
+    assert ws.stage_progress().bundle_qualified is False
+    assert ws.workflow_snapshot().state is WorkbenchStage.BUNDLE_TRAINED
 
     # Failed CAD re-import must NOT destroy existing valid geometry/
     with pytest.raises((ValueError, RuntimeError)):

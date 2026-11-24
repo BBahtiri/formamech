@@ -12,7 +12,7 @@ from piginot.compiler.execution_records import digest, load_bound
 from piginot.compiler.planning import build_plan
 from piginot.ui.workbench.state import WorkbenchWorkspace, _file_sha256
 
-_UPDATE = "Update plan in Step 3 before training."
+_UPDATE = "Update plan in Material & Plan before training."
 
 
 def _bound_inputs(
@@ -55,7 +55,9 @@ def plan_blocker(workspace: WorkbenchWorkspace) -> str | None:
     try:
         plan = workspace.load_plan()
         if not plan:
-            return "Prepare inputs and preview a plan in Step 3 before training."
+            return (
+                "Prepare inputs and preview a plan in Material & Plan before training."
+            )
         state = workspace.load_state()
         raw = workspace.physics_path.read_bytes()
         settings = load_settings(raw)

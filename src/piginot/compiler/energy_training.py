@@ -368,6 +368,8 @@ class EnergyTraining:
         ) + (training.optimizer_steps,)
 
     def train(self, *, resume: bool) -> Document:
+        from piginot._job_evidence import archive_checkpoint
+
         if self.prepared is None:
             raise ValueError("TRAIN preparation must precede training")
         completed, previous = self._checkpoints(resume)
@@ -400,6 +402,7 @@ class EnergyTraining:
                 self.plan.output_path / "training-progress.json",
                 canonical_json_bytes(progress),
             )
+            archive_checkpoint(self.plan.output_path, previous, completed)
         assert previous is not None
         with torch.random.fork_rng(devices=[]):
             loaded = self._load(previous, self.model)

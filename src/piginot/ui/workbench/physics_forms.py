@@ -518,7 +518,10 @@ def load_applied_settings(
 def load_physics_draft(
     workspace: WorkbenchWorkspace, preview: Mapping[str, Any]
 ) -> WorkbenchPhysicsDraft:
-    settings = load_applied_settings(workspace, preview)
+    return physics_draft_from_settings(load_applied_settings(workspace, preview))
+
+
+def physics_draft_from_settings(settings: Mapping[str, Any]) -> WorkbenchPhysicsDraft:
     verification = settings["verification"]
     return WorkbenchPhysicsDraft(
         project_name=settings["name"],

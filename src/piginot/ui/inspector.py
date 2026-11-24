@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import importlib
 import json
+import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -17,8 +18,10 @@ from typing import Any, Final, cast
 import numpy as np
 
 from piginot.certify import verify_receipt_document
+from piginot.certify.admissibility import AdmissibilityThresholds
 
 INSPECTOR_SCHEMA: Final = "formamech.trust-inspector-snapshot-v1"
+INSPECTOR_THRESHOLDS: Final = AdmissibilityThresholds()
 
 
 @dataclass(frozen=True, slots=True)
@@ -52,6 +55,13 @@ class InspectorSnapshot:
     receipt_errors: tuple[str, ...]
     limitation_paragraph: str
     reason: str = ""
+    determinant_floor: float = INSPECTOR_THRESHOLDS.min_det_f_2d
+
+    @property
+    def receipt_integrity(self) -> str:
+        if self.trust_receipt is None:
+            return "Absent"
+        return "Verified" if self.receipt_verified else "Invalid"
 
     def summary(self) -> dict[str, Any]:
         """Compact JSON-safe summary suitable for APIs, UI headers, and dossiers."""
@@ -67,6 +77,7 @@ class InspectorSnapshot:
             "cell_count": len(self.cells),
             "max_u_mm": max(self.u_magnitude_mm) if self.u_magnitude_mm else None,
             "min_det_f_2d": min(self.det_f_2d) if self.det_f_2d else None,
+            "determinant_floor": self.determinant_floor,
             "max_von_mises_mpa": (
                 max(self.von_mises_mpa) if self.von_mises_mpa else None
             ),
@@ -163,6 +174,7 @@ def build_inspector_snapshot(
         cad_calibration=cad_cal,
         trust_report=serving_mode is not ServingMode.FAST,
         tier0_check=True,
+        tier0_thresholds=INSPECTOR_THRESHOLDS,
         spectral_repair=spectral_repair,
         tta_config=tta_cfg,
         emit_receipt=True,
@@ -292,7 +304,7 @@ def render_trust_dossier_markdown(snapshot: InspectorSnapshot) -> str:
         f"| Max von Mises (MPa) | `{summary['max_von_mises_mpa']}` |",
         f"| Tier 0 Passed | `{summary['tier0_passed']}` |",
         f"| Receipt SHA-256 | `{snapshot.trust_receipt_sha256}` |",
-        f"| Receipt Integrity | `{'VERIFIED' if snapshot.receipt_verified else 'FAILED'}` |",
+        f"| Receipt Integrity | `{snapshot.receipt_integrity}` |",
         "",
     ]
     if snapshot.qois:
@@ -335,7 +347,113 @@ def render_trust_dossier_markdown(snapshot: InspectorSnapshot) -> str:
     return "\n".join(lines)
 
 
-def build_plotly_figures(snapshot: InspectorSnapshot) -> dict[str, Any]:
+def finite_vertex_values(
+    values: Sequence[float], vertex_count: int
+) -> list[tuple[int, float]]:
+    return [
+        (i, value)
+        for i, value in enumerate(values[:vertex_count])
+        if math.isfinite(value)
+    ]
+
+
+def flagged_vertices(snapshot: InspectorSnapshot) -> list[int]:
+    return [
+        i
+        for i, value in finite_vertex_values(snapshot.det_f_2d, len(snapshot.nodes))
+        if value <= snapshot.determinant_floor
+    ]
+
+
+def _determinant_map(go: Any, snapshot: InspectorSnapshot, probe: int | None) -> Any:
+    xs, ys = zip(*snapshot.nodes, strict=True)
+    mesh_x: list[float | None] = []
+    mesh_y: list[float | None] = []
+    for i, j, k in snapshot.cells:
+        mesh_x.extend((xs[i], xs[j], xs[k], xs[i], None))
+        mesh_y.extend((ys[i], ys[j], ys[k], ys[i], None))
+    figure = go.Figure(
+        go.Scatter(
+            x=mesh_x,
+            y=mesh_y,
+            mode="lines",
+            line={"color": "rgba(132,146,164,0.33)", "width": 1},
+            hoverinfo="skip",
+            name="Mesh",
+        )
+    )
+    finite = finite_vertex_values(snapshot.det_f_2d, len(snapshot.nodes))
+
+    def add_vertices(ids: Sequence[int], name: str, marker: dict[str, Any]) -> None:
+        if ids:
+            figure.add_scatter(
+                x=[xs[i] for i in ids],
+                y=[ys[i] for i in ids],
+                customdata=list(ids),
+                name=name,
+                mode="markers",
+                marker=marker,
+                hovertemplate="Vertex %{customdata}<br>(%{x:.6g}, %{y:.6g}) mm<extra>%{fullData.name}</extra>",
+            )
+
+    add_vertices(
+        [i for i, _ in finite],
+        "Determinant",
+        {
+            "color": [v for _, v in finite],
+            "colorscale": "Viridis",
+            "size": 7,
+            "showscale": True,
+            "colorbar": {"title": "det(F₂D)", "thickness": 12},
+        },
+    )
+    measured = {i for i, _ in finite}
+    add_vertices(
+        [i for i in range(len(xs)) if i not in measured],
+        "Missing or non-finite",
+        {
+            "symbol": "diamond-open",
+            "color": "#64748b",
+            "size": 8,
+        },
+    )
+    add_vertices(
+        flagged_vertices(snapshot),
+        "At or below floor",
+        {
+            "symbol": "x",
+            "color": "#b91c1c",
+            "size": 11,
+        },
+    )
+    if probe is not None:
+        add_vertices(
+            [probe],
+            "Probe",
+            {
+                "symbol": "circle-open",
+                "color": "#1d4ed8",
+                "size": 17,
+                "line": {"width": 3},
+            },
+        )
+    figure.update_layout(
+        title="Surrogate determinant map",
+        xaxis_title="x (mm)",
+        yaxis_title="y (mm)",
+        yaxis={"scaleanchor": "x", "scaleratio": 1},
+        clickmode="event+select",
+        dragmode="pan",
+        showlegend=False,
+        height=380,
+        margin={"l": 36, "r": 16, "t": 48, "b": 36},
+    )
+    return figure
+
+
+def build_plotly_figures(
+    snapshot: InspectorSnapshot, *, probe_vertex: int | None = None
+) -> dict[str, Any]:
     """Build interactive Plotly field, admissibility, and FEM-diff figures."""
     try:
         go = importlib.import_module("plotly.graph_objects")
@@ -389,17 +507,15 @@ def build_plotly_figures(snapshot: InspectorSnapshot) -> dict[str, Any]:
         )
         return fig
 
-    figs: dict[str, Any] = {
-        "displacement_mm": _mesh_fig(
+    figs: dict[str, Any] = {"det_f_2d": _determinant_map(go, snapshot, probe_vertex)}
+    if finite_vertex_values(snapshot.u_magnitude_mm, len(snapshot.nodes)):
+        figs["displacement_mm"] = _mesh_fig(
             snapshot.u_magnitude_mm, "Displacement Magnitude ||u|| (mm)", "Viridis"
-        ),
-        "von_mises_mpa": _mesh_fig(
+        )
+    if finite_vertex_values(snapshot.von_mises_mpa, len(snapshot.nodes)):
+        figs["von_mises_mpa"] = _mesh_fig(
             snapshot.von_mises_mpa, "Cauchy von Mises Stress (MPa)", "Plasma"
-        ),
-        "det_f_2d": _mesh_fig(
-            snapshot.det_f_2d, "Admissibility Map: det(F_2D)", "RdYlGn"
-        ),
-    }
+        )
     if snapshot.fem_diff_mm is not None:
         figs["fem_diff_mm"] = _mesh_fig(
             snapshot.fem_diff_mm,

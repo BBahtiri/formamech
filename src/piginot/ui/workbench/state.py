@@ -32,6 +32,11 @@ from piginot.contracts.state_machine import (
     TransitionSpec,
     register_state_machine,
 )
+from piginot.qualify.gate import (
+    DeploymentGateResult,
+    GateReasonCode,
+    check_deployment_gate,
+)
 
 WORKBENCH_STATE_SCHEMA: Final = "formamech.workbench-state-v1"
 SUPPORTED_CAD_EXTENSIONS: Final = (".step", ".stp", ".dxf")
@@ -343,27 +348,18 @@ class WorkbenchWorkspace:
             return manifest
         return None
 
-    def _qualification_verdict(self) -> str | None:
-        manifest = self.qualification_manifest_path
-        if manifest is None:
+    def candidate_qualification(self) -> DeploymentGateResult | None:
+        candidate = self.candidate_bundle_path
+        if candidate is None:
             return None
-        try:
-            raw = json.loads(manifest.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            return "INVALID"
-        if not isinstance(raw, dict):
-            return "INVALID"
-        verdict = raw.get("verdict")
-        return None if verdict is None else str(verdict)
+        return check_deployment_gate(
+            candidate, self.qualification_dir / "qualification-manifest.json"
+        )
 
     def stage_progress(self) -> StageProgress:
-        verdict = self._qualification_verdict()
-        # Only a genuinely QUALIFIED manifest (or legacy manifest lacking a verdict key)
-        # counts as qualified; an explicit NOT_QUALIFIED or corrupt manifest does not.
-        is_qualified = self.qualification_manifest_path is not None and verdict in (
-            "QUALIFIED",
-            None,
-        )
+        return self._stage_progress(self.candidate_qualification())
+
+    def _stage_progress(self, gate: DeploymentGateResult | None) -> StageProgress:
         return StageProgress(
             cad_imported=(self.geometry_dir / "preview.json").is_file(),
             physics_saved=self.physics_path.is_file()
@@ -373,13 +369,22 @@ class WorkbenchWorkspace:
                 and (self.inputs_dir / "config.json").is_file()
             ),
             plan_previewed=(self.preview_dir / "plan.json").is_file(),
-            bundle_trained=self.candidate_bundle_path is not None,
-            bundle_qualified=is_qualified,
+            bundle_trained=gate is not None,
+            bundle_qualified=gate is not None and gate.allowed,
         )
 
     def workflow_snapshot(self) -> StateSnapshot[WorkbenchStage]:
         """Return a self-describing FSM snapshot with staleness and next-action hints."""
-        progress = self.stage_progress()
+        gate = self.candidate_qualification()
+        progress = self._stage_progress(gate)
+        reasons = () if gate is None else gate.reason_codes
+        verdict = None
+        if progress.bundle_qualified:
+            verdict = "QUALIFIED"
+        elif GateReasonCode.NOT_QUALIFIED in reasons:
+            verdict = "NOT_QUALIFIED"
+        elif GateReasonCode.MANIFEST_INVALID in reasons:
+            verdict = "INVALID"
         state_doc = self.load_state()
         stale: list[str] = []
         blockers: list[str] = []
@@ -394,7 +399,7 @@ class WorkbenchWorkspace:
             if progress.bundle_trained:
                 stale.append("run/candidate-bundle exists without imported geometry")
             rec_trigger: str | None = "import_cad"
-            rec_hint = "Import a 2D STEP or DXF profile in Step 1."
+            rec_hint = "Import a 2D STEP or DXF profile in Import CAD."
         elif not progress.physics_saved:
             stage = WorkbenchStage.CAD_IMPORTED
             if progress.inputs_prepared:
@@ -402,9 +407,7 @@ class WorkbenchWorkspace:
             if progress.bundle_trained:
                 stale.append("run/candidate-bundle is stale relative to new geometry")
             rec_trigger = "prepare_and_plan"
-            rec_hint = (
-                "Assign boundaries in Step 2, then prepare inputs & plan in Step 3."
-            )
+            rec_hint = "Assign conditions in Boundary Picker, then prepare inputs in Material & Plan."
         elif not progress.inputs_prepared:
             stage = WorkbenchStage.PHYSICS_SAVED
             if progress.plan_previewed:
@@ -412,34 +415,31 @@ class WorkbenchWorkspace:
             if progress.bundle_trained:
                 stale.append("run/candidate-bundle predates updated physics.json")
             rec_trigger = "prepare_and_plan"
-            rec_hint = (
-                "Prepare canonical campaign inputs and preview the plan in Step 3."
-            )
+            rec_hint = "Prepare canonical campaign inputs and preview the plan in Material & Plan."
         elif not progress.plan_previewed:
             stage = WorkbenchStage.INPUTS_PREPARED
             rec_trigger = "preview_plan"
-            rec_hint = "Generate preview/plan.json in Step 3 before training."
+            rec_hint = "Generate preview/plan.json in Material & Plan before training."
         elif not progress.bundle_trained:
             stage = WorkbenchStage.PLAN_PREVIEWED
             rec_trigger = "compile_bundle"
-            rec_hint = "Launch training via formamech compile in Step 4."
+            rec_hint = "Launch training in Train & Qualify."
         elif not progress.bundle_qualified:
             stage = WorkbenchStage.BUNDLE_TRAINED
-            verdict = self._qualification_verdict()
-            if verdict == "NOT_QUALIFIED":
+            if GateReasonCode.BUNDLE_MISMATCH in reasons:
+                blockers.append("Qualification evidence belongs to another bundle")
+            elif verdict == "NOT_QUALIFIED":
                 blockers.append("latest qualification manifest returned NOT_QUALIFIED")
             elif verdict == "INVALID":
                 blockers.append("qualification-manifest.json is malformed")
+            elif gate is not None and GateReasonCode.MANIFEST_MISSING not in reasons:
+                blockers.append(gate.detail)
             rec_trigger = "qualify_bundle"
-            rec_hint = (
-                "Run numerical qualification in Step 4 to obtain a QUALIFIED manifest."
-            )
+            rec_hint = "Run numerical qualification in Train & Qualify to obtain a QUALIFIED manifest."
         else:
             stage = WorkbenchStage.BUNDLE_QUALIFIED
             rec_trigger = "qualify_bundle"
-            rec_hint = (
-                "Inspect verified fields, Trust Receipts, or export FMU in Step 5."
-            )
+            rec_hint = "Review verified fields, Trust Receipts, and FMU export in Trust Inspector."
 
         # Detect artifact drift relative to recorded geometry / physics digests.
         current_geom_sha = _file_sha256(self.geometry_dir / "geometry.json")
@@ -471,7 +471,7 @@ class WorkbenchWorkspace:
             if message := plan_blocker(self):
                 stale.append(message)
                 rec_trigger = "prepare_and_plan"
-                rec_hint = "Update the plan in Step 3 before training."
+                rec_hint = "Update the plan in Material & Plan before training."
 
         return WORKBENCH_STAGE_MACHINE.snapshot(
             stage,
@@ -481,7 +481,7 @@ class WorkbenchWorkspace:
             recommended_hint=rec_hint,
             metadata={
                 "progress": progress.document(),
-                "qualification_verdict": self._qualification_verdict(),
+                "qualification_verdict": verdict,
                 "workspace_root": str(self.root),
             },
         )

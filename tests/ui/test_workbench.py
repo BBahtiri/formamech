@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import time
 from pathlib import Path
 
@@ -27,6 +28,7 @@ from formamech.ui import (
 from piginot.contracts import Unit
 from piginot.ui.workbench.job_runner import JobRecord
 from piginot.ui.workbench.state import canonical_settings_bytes
+from tests.ui._evidence import save_qualification
 
 ROOT = Path(__file__).resolve().parents[2]
 NOTCHED_BUNDLE = ROOT / "bundles" / "notched-v1-cp-freeze"
@@ -282,10 +284,9 @@ def test_job_runner_lifecycle_poll_logs_and_cancel(tmp_path: Path) -> None:
     assert runner.read_log_tail("ext-1") == ""
 
 
-def test_streamlit_apptest_workbench_renders_cleanly(tmp_path: Path) -> None:
-    pytest.importorskip("streamlit")
-    from streamlit.testing.v1 import AppTest
-
+def test_streamlit_apptest_workbench_renders_cleanly(
+    tmp_path: Path, workbench_apptest
+) -> None:
     ws = WorkbenchWorkspace(tmp_path / "apptest-ws")
     step_path = generate_sample_bracket_step(tmp_path / "sample.step")
     preview = ws.import_cad_path(step_path, unit=Unit.MM, mesh_size_mm=5.0)
@@ -297,11 +298,20 @@ def test_streamlit_apptest_workbench_renders_cleanly(tmp_path: Path) -> None:
         f"run_streamlit_app(default_bundle={str(NOTCHED_BUNDLE)!r}, "
         f"default_workspace={str(ws.root)!r})\n"
     )
-    at = AppTest.from_string(script, default_timeout=60)
+    at = workbench_apptest.from_string(script, default_timeout=60)
     at.run()
     assert not at.exception, [e.value for e in at.exception]
-    assert any("Interactive Engineering Workbench" in t.value for t in at.title)
-    assert len(at.tabs) >= 5
+    assert [title.value for title in at.title] == ["apptest-model"]
+    stages = next(
+        widget for widget in at.selectbox if widget.label == "Workbench stage"
+    )
+    assert stages.options == [
+        "Import CAD",
+        "Boundary Picker",
+        "Material & Plan",
+        "Train & Qualify",
+        "Trust Inspector",
+    ]
     # Verify canonical workspace files exist and match CLI contract
     assert (ws.inputs_dir / "problem.json").is_file()
     assert (ws.preview_dir / "plan.json").is_file()
@@ -405,20 +415,28 @@ def test_workbench_state_machines_staleness_and_job_invariants(tmp_path: Path) -
     assert any("without a trained" in s for s in ws.workflow_snapshot().stale_items)
 
     # Trained bundle + NOT_QUALIFIED / invalid manifest -> BUNDLE_TRAINED with blocker
-    (ws.run_dir / "candidate-bundle").mkdir(parents=True, exist_ok=True)
-    (ws.run_dir / "candidate-bundle" / "bundle.json").write_text("{}", encoding="utf-8")
+    candidate = ws.run_dir / "candidate-bundle"
+    shutil.copytree(NOTCHED_BUNDLE, candidate, dirs_exist_ok=True)
     qfile.write_text("{bad-json", encoding="utf-8")
     assert any("malformed" in b for b in ws.workflow_snapshot().blockers)
     qfile.write_text("[]", encoding="utf-8")
     assert any("malformed" in b for b in ws.workflow_snapshot().blockers)
-    qfile.write_text(json.dumps({"verdict": "NOT_QUALIFIED"}), encoding="utf-8")
+    save_qualification(candidate, qfile, qualified=False)
     snap_nq = ws.workflow_snapshot()
     assert snap_nq.state is WorkbenchStage.BUNDLE_TRAINED
     assert any("NOT_QUALIFIED" in b for b in snap_nq.blockers)
 
     # Passing QUALIFIED manifest -> BUNDLE_QUALIFIED
-    qfile.write_text(json.dumps({"verdict": "QUALIFIED"}), encoding="utf-8")
+    save_qualification(candidate, qfile)
     assert ws.workflow_snapshot().state is WorkbenchStage.BUNDLE_QUALIFIED
+
+    # A valid manifest from another bundle, or one without a verdict, cannot qualify this one.
+    dogbone = NOTCHED_BUNDLE.with_name("dogbone-v1-s13c-cp-freeze")
+    save_qualification(dogbone, qfile)
+    assert not ws.stage_progress().bundle_qualified
+    assert any("another bundle" in b for b in ws.workflow_snapshot().blockers)
+    qfile.write_text("{}", encoding="utf-8")
+    assert not ws.stage_progress().bundle_qualified
 
     # 3) Job runner FSM, snapshots, active_jobs, external inference, and terminal immutability
     runner = WorkbenchJobRunner(tmp_path / "jobs-fsm", cwd=ROOT)
