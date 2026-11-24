@@ -42,6 +42,7 @@ plot = ["matplotlib>=3.9,<4", "numpy>=1.26,<2.3"]
 ui = ["streamlit>=1.51,<2", "plotly>=5.24,<7"]
 mcp = ["mcp>=1.6,<2"]
 export = ["onnx>=1.17,<2", "onnxruntime>=1.20,<2"]
+scale = ["pyamg>=5.2,<6"]
 verify = [
   "numpy>=1.26,<2.3",
   "threadpoolctl>=3.1,<4",
@@ -88,12 +89,18 @@ path = "hatch_build.py"
 packages = ["src/formamech", "src/piginot", "piginot_campaigns"]
 
 [tool.hatch.build.targets.sdist]
-exclude = ["/frontend/boundary-picker/node_modules", "/frontend/boundary-picker/coverage"]
+exclude = [
+  "/frontend/boundary-picker/node_modules",
+  "/frontend/boundary-picker/coverage",
+  "/frontend/viewer-3d/node_modules",
+  "/frontend/viewer-3d/coverage",
+]
 only-include = [
   "/src/formamech",
   "/src/piginot",
   "/piginot_campaigns",
   "/frontend/boundary-picker",
+  "/frontend/viewer-3d",
   "/LICENSE",
   "/README.md",
   "/CITATION.cff",

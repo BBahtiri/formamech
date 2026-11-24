@@ -100,13 +100,20 @@ class PhysicsSliceAttention(nn.Module):
         self,
         tokens: torch.Tensor,
         measure_weights: torch.Tensor | None = None,
+        token_mask: torch.Tensor | None = None,
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """Project ``(B, N, D)`` onto ``S`` slices, attend in ``O(S^2)``, and deslice.
+
+        Supports optional ``token_mask`` of shape ``(B, N)`` (1.0 valid, 0.0 padded)
+        for batching heterogeneous 3D meshes with zero padding contamination.
 
         Returns ``(updated_tokens (B, N, D), slice_tokens (B, S, D))``.
         """
         logits = self.slice_weights(tokens)
         pi = torch.softmax(logits, dim=-1)
+        if token_mask is not None:
+            mask_f = token_mask.to(dtype=tokens.dtype).unsqueeze(-1)
+            pi = pi * mask_f
         weighted_pi = (
             pi * measure_weights.unsqueeze(-1) if measure_weights is not None else pi
         )
@@ -118,7 +125,10 @@ class PhysicsSliceAttention(nn.Module):
         slices = self.norm1(slices + attn_out)
         slices = self.norm2(slices + self.ffn(slices))
         desliced = torch.einsum("bns,bsd->bnd", pi, slices)
-        return tokens + desliced, slices
+        out_tokens = tokens + desliced
+        if token_mask is not None:
+            out_tokens = out_tokens * token_mask.to(dtype=tokens.dtype).unsqueeze(-1)
+        return out_tokens, slices
 
 
 def _fourier_encode_3d(coords: torch.Tensor, frequencies: int) -> torch.Tensor:
@@ -182,16 +192,45 @@ class Surface3DEnergyOperator(nn.Module):
         normals: torch.Tensor,
         area_weights: torch.Tensor,
         features: torch.Tensor,
+        surface_mask: torch.Tensor | None = None,
     ) -> Surface3DEncoding:
-        """Encode 3D surface triangles ``(B, M, ...)`` into ``S`` physics slices."""
-        origin = centroids.amin(dim=1)
-        extent = (centroids.amax(dim=1) - origin).clamp_min(1.0e-6)
-        norm_c = (centroids - origin.unsqueeze(1)) / extent.unsqueeze(1)
-        x = torch.cat((norm_c, normals, features), dim=-1)
+        """Encode 3D surface triangles ``(B, M, ...)`` into ``S`` physics slices.
+
+        When ``surface_mask`` (shape ``(B, M)``, 1 valid / 0 padded) is provided,
+        bounding-box normalization and slice aggregation strictly ignore padded
+        entries so heterogeneous 3D meshes batch with zero cross-contamination.
+        """
+        if surface_mask is not None:
+            valid = surface_mask.to(dtype=torch.bool).unsqueeze(-1)
+            inf_pos = torch.full_like(centroids, float("inf"))
+            inf_neg = torch.full_like(centroids, float("-inf"))
+            origin = torch.where(valid, centroids, inf_pos).amin(dim=1)
+            upper = torch.where(valid, centroids, inf_neg).amax(dim=1)
+            extent = (upper - origin).clamp_min(1.0e-6)
+            norm_c = (centroids - origin.unsqueeze(1)) / extent.unsqueeze(1)
+            mask_f = surface_mask.to(dtype=centroids.dtype).unsqueeze(-1)
+            norm_c = norm_c * mask_f
+            normals_eff = normals * mask_f
+            features_eff = features * mask_f
+            weights_eff = area_weights * surface_mask.to(dtype=area_weights.dtype)
+        else:
+            origin = centroids.amin(dim=1)
+            extent = (centroids.amax(dim=1) - origin).clamp_min(1.0e-6)
+            norm_c = (centroids - origin.unsqueeze(1)) / extent.unsqueeze(1)
+            normals_eff = normals
+            features_eff = features
+            weights_eff = area_weights
+        x = torch.cat((norm_c, normals_eff, features_eff), dim=-1)
         h = self.surface_in(x)
+        if surface_mask is not None:
+            h = h * surface_mask.to(dtype=h.dtype).unsqueeze(-1)
         slices = h[:, : self.config.slice_count, :]
         for block in self.encoder_blocks:
-            h, slices = block(h, measure_weights=area_weights)
+            h, slices = block(
+                h,
+                measure_weights=weights_eff,
+                token_mask=surface_mask,
+            )
         return Surface3DEncoding(slice_tokens=slices, origin=origin, extent=extent)
 
     def displacement(

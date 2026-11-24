@@ -262,10 +262,16 @@ def _model_export_bytes(
 def _validate_binding(binding: TrainingRunBinding) -> None:
     if type(binding) is not TrainingRunBinding:
         raise TypeError("binding must be an exact TrainingRunBinding")
-    if binding.execution_profile.device != "cpu":
-        raise ContractValidationError(
-            "S13 exact checkpoints currently require a CPU execution profile"
-        )
+    prof = binding.execution_profile
+    if prof.device != "cpu":
+        if not (
+            prof.device.startswith("cuda")
+            and prof.replay_tier == "gpu-accelerated-tolerance"
+        ):
+            raise ContractValidationError(
+                "S13 exact checkpoints currently require a CPU execution profile "
+                "(or CUDA with replay_tier='gpu-accelerated-tolerance')"
+            )
 
 
 def export_model_safetensors(

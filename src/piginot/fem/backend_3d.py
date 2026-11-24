@@ -30,7 +30,6 @@ import numpy as np
 import torch
 from numpy.typing import NDArray
 from scipy.sparse import coo_matrix, csr_matrix  # type: ignore[import-untyped]
-from scipy.sparse.linalg import spsolve  # type: ignore[import-untyped]
 from skfem import (  # type: ignore[import-untyped]
     BilinearForm,
     CellBasis,
@@ -44,6 +43,12 @@ from skfem import (  # type: ignore[import-untyped]
 from skfem.helpers import grad  # type: ignore[import-untyped]
 
 from piginot.contracts import MaterialSpec, canonical_json_bytes
+from piginot.fem.linear_solvers import (
+    LinearSolverConfig,
+    LinearSolveReport,
+    NeuralCoarsePreconditioner,
+    solve_linear_system,
+)
 from piginot.fem.protocol import BackendCapabilities
 from piginot.geometry.mesh3d import (
     CanonicalMesh3D,
@@ -131,6 +136,7 @@ class FemRequest3D:
     load_steps: int = 4
     solver_tolerance: float = 1.0e-9
     max_newton_iterations: int = 25
+    linear_solver: LinearSolverConfig | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.request_id, str) or not self.request_id.strip():
@@ -202,6 +208,7 @@ class FemResult3D:
     total_newton_iterations: int
     wall_time_s: float
     reason: str = "converged"
+    linear_solver_stats: Mapping[str, Any] | None = None
 
     @property
     def result_hash(self) -> str:
@@ -557,6 +564,7 @@ class TorchFemBackend3D:
         request: FemRequest3D,
         *,
         initial_displacement: FloatArray | None = None,
+        neural_preconditioner: NeuralCoarsePreconditioner | None = None,
     ) -> FemResult3D:
         """Solve a 3D finite-strain request with load stepping and damped Newton."""
         t0 = time.perf_counter()
@@ -564,6 +572,12 @@ class TorchFemBackend3D:
         n_nodes = len(mesh.nodes)
         n_dofs = 3 * n_nodes
         comp_idx = {"x": 0, "y": 1, "z": 2}
+        lin_cfg = (
+            LinearSolverConfig()
+            if request.linear_solver is None
+            else request.linear_solver
+        )
+        lin_reports: list[LinearSolveReport] = []
 
         cells, d_phys, w_vol, cell_vols, rows, cols = self._precompute_geometry(mesh)
         f_ext_full = assemble_surface_tractions_3d(mesh, request.traction_bcs).reshape(
@@ -632,11 +646,15 @@ class TorchFemBackend3D:
                 )
                 if min_det0 > 1.0e-6:
                     rhs0 = -(f_int0 - f_ext + k0 @ du_d)[free_dofs]
-                    du_pred = np.asarray(
-                        spsolve(k0[free_dofs][:, free_dofs].tocsc(), rhs0),
-                        dtype=np.float64,
+                    du_pred, pred_rep = solve_linear_system(
+                        k0[free_dofs][:, free_dofs],
+                        rhs0,
+                        config=lin_cfg,
+                        is_symmetric=True,
+                        neural_preconditioner=neural_preconditioner,
                     )
-                    if np.all(np.isfinite(du_pred)):
+                    lin_reports.append(pred_rep)
+                    if pred_rep.converged and np.all(np.isfinite(du_pred)):
                         u_try = u.copy()
                         u_try[free_dofs] += du_pred
                         for dof, val in step_target.items():
@@ -684,14 +702,18 @@ class TorchFemBackend3D:
                     step_converged = True
                     break
 
-                du_free = np.asarray(
-                    spsolve(k_mat[free_dofs][:, free_dofs].tocsc(), -res_free),
-                    dtype=np.float64,
+                du_free, lin_rep = solve_linear_system(
+                    k_mat[free_dofs][:, free_dofs],
+                    -res_free,
+                    config=lin_cfg,
+                    is_symmetric=True,
+                    neural_preconditioner=neural_preconditioner,
                 )
-                if not np.all(np.isfinite(du_free)):
+                lin_reports.append(lin_rep)
+                if not lin_rep.converged or not np.all(np.isfinite(du_free)):
                     return self._failed_result(
                         request,
-                        "non-finite 3D Newton linear solve increment",
+                        f"3D Newton linear solve failed ({lin_rep.reason})",
                         total_iters,
                         time.perf_counter() - t0,
                     )
@@ -756,6 +778,18 @@ class TorchFemBackend3D:
 
         u_nodal = u.reshape(n_nodes, 3)
         ext_work = float(np.dot(f_ext_full, u))
+        lin_stats: dict[str, Any] | None = None
+        if lin_reports:
+            lin_stats = {
+                "total_linear_solves": len(lin_reports),
+                "total_krylov_iterations": sum(r.iterations for r in lin_reports),
+                "methods_used": sorted({r.method_used.value for r in lin_reports}),
+                "fallback_count": sum(1 for r in lin_reports if r.used_fallback),
+                "used_neural_deflation": any(
+                    r.used_neural_deflation for r in lin_reports
+                ),
+                "max_relative_residual": max(r.relative_residual for r in lin_reports),
+            }
         return FemResult3D(
             request_id=request.request_id,
             backend_name=self.backend_name,
@@ -773,6 +807,31 @@ class TorchFemBackend3D:
             total_newton_iterations=total_iters,
             wall_time_s=time.perf_counter() - t0,
             reason="converged",
+            linear_solver_stats=lin_stats,
+        )
+
+    def solve_many(
+        self,
+        requests: Sequence[FemRequest3D],
+        *,
+        initial_displacements: Sequence[FloatArray | None] | None = None,
+        neural_preconditioner: NeuralCoarsePreconditioner | None = None,
+    ) -> tuple[FemResult3D, ...]:
+        """Solve a sequence of 3D FEM requests deterministically in input order."""
+        inits: Sequence[FloatArray | None] = (
+            tuple(None for _ in requests)
+            if initial_displacements is None
+            else initial_displacements
+        )
+        if len(inits) != len(requests):
+            raise ValueError("initial_displacements length must match requests length")
+        return tuple(
+            self.solve(
+                req,
+                initial_displacement=init_u,
+                neural_preconditioner=neural_preconditioner,
+            )
+            for req, init_u in zip(requests, inits, strict=True)
         )
 
     def _failed_result(
@@ -937,6 +996,7 @@ class ScikitFemBackend3D:
         request: FemRequest3D,
         *,
         initial_displacement: FloatArray | None = None,
+        neural_preconditioner: NeuralCoarsePreconditioner | None = None,
     ) -> FemResult3D:
         """Solve a 3D finite-strain request via ``skfem.MeshTet`` assembly."""
         t0 = time.perf_counter()
@@ -945,6 +1005,12 @@ class ScikitFemBackend3D:
         basis, canon_to_vec, _ = self._build_skfem_basis_and_node_map(mesh)
         n_dofs = int(basis.N)
         comp_idx = {"x": 0, "y": 1, "z": 2}
+        lin_cfg = (
+            LinearSolverConfig()
+            if request.linear_solver is None
+            else request.linear_solver
+        )
+        lin_reports: list[LinearSolveReport] = []
         dx_w = np.asarray(basis.dx, dtype=np.float64)  # (E, Q)
         cell_vols = np.sum(dx_w, axis=1)
 
@@ -1043,11 +1109,15 @@ class ScikitFemBackend3D:
                 f_int0, k0, _, _, _, min_det0 = _eval_state(u)
                 if min_det0 > 1.0e-6:
                     rhs0 = -(f_int0 - f_ext + k0 @ du_d)[free_dofs]
-                    du_pred = np.asarray(
-                        spsolve(k0[free_dofs][:, free_dofs].tocsc(), rhs0),
-                        dtype=np.float64,
+                    du_pred, pred_rep = solve_linear_system(
+                        k0[free_dofs][:, free_dofs],
+                        rhs0,
+                        config=lin_cfg,
+                        is_symmetric=True,
+                        neural_preconditioner=neural_preconditioner,
                     )
-                    if np.all(np.isfinite(du_pred)):
+                    lin_reports.append(pred_rep)
+                    if pred_rep.converged and np.all(np.isfinite(du_pred)):
                         u_try = u.copy()
                         u_try[free_dofs] += du_pred
                         for dof, val in step_target.items():
@@ -1099,11 +1169,15 @@ class ScikitFemBackend3D:
                     step_converged = True
                     break
 
-                du_free = np.asarray(
-                    spsolve(k_mat[free_dofs][:, free_dofs].tocsc(), -res_free),
-                    dtype=np.float64,
+                du_free, lin_rep = solve_linear_system(
+                    k_mat[free_dofs][:, free_dofs],
+                    -res_free,
+                    config=lin_cfg,
+                    is_symmetric=True,
+                    neural_preconditioner=neural_preconditioner,
                 )
-                if not np.all(np.isfinite(du_free)):
+                lin_reports.append(lin_rep)
+                if not lin_rep.converged or not np.all(np.isfinite(du_free)):
                     return FemResult3D(
                         request_id=request.request_id,
                         backend_name=self.backend_name,
@@ -1210,6 +1284,18 @@ class ScikitFemBackend3D:
                 float(np.sum(r_vec[dz_l])) if dz_l else 0.0,
             )
 
+        lin_stats: dict[str, Any] | None = None
+        if lin_reports:
+            lin_stats = {
+                "total_linear_solves": len(lin_reports),
+                "total_krylov_iterations": sum(r.iterations for r in lin_reports),
+                "methods_used": sorted({r.method_used.value for r in lin_reports}),
+                "fallback_count": sum(1 for r in lin_reports if r.used_fallback),
+                "used_neural_deflation": any(
+                    r.used_neural_deflation for r in lin_reports
+                ),
+                "max_relative_residual": max(r.relative_residual for r in lin_reports),
+            }
         return FemResult3D(
             request_id=request.request_id,
             backend_name=self.backend_name,
@@ -1227,6 +1313,7 @@ class ScikitFemBackend3D:
             total_newton_iterations=total_iters,
             wall_time_s=time.perf_counter() - t0,
             reason="converged",
+            linear_solver_stats=lin_stats,
         )
 
 

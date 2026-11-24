@@ -1037,11 +1037,117 @@ def _render_stage_5_inspector(
             st.json(snapshot.trust_receipt)
 
 
+WORKFLOW_MODES: tuple[str, ...] = (
+    "2D Fixed CAD",
+    "3D Solid / Assembly",
+    "Parametric Explore & Optimize",
+    "Stateful Cyclic",
+    "CAE Ingest & V&V 10",
+)
+
+
+def _render_3d_solid_mode(st: Any, workspace_root: Path) -> None:
+    import numpy as np
+
+    from piginot.ui.workbench_3d import Workbench3DWorkspace, render_viewer_3d
+
+    st.title("3D Solid / Assembly Interactive Workbench")
+    ws3 = Workbench3DWorkspace(workspace_root)
+    c1, c2 = st.columns([1.0, 2.0], gap="large")
+    with c1:
+        mesh_size = float(
+            st.number_input(
+                "3D Mesh Size (mm)",
+                min_value=1.0,
+                max_value=50.0,
+                value=6.0,
+                step=1.0,
+                key="wb3d_mesh_size",
+            )
+        )
+        uploaded = st.file_uploader(
+            "Upload 3D STEP solid / assembly",
+            type=["step", "stp"],
+            key="wb3d_step_uploader",
+        )
+        if (
+            st.button("Import Uploaded 3D STEP", type="primary")
+            and uploaded is not None
+        ):
+            tmp_step = ws3.root / "geometry_3d" / uploaded.name
+            tmp_step.parent.mkdir(parents=True, exist_ok=True)
+            tmp_step.write_bytes(uploaded.getvalue())
+            ws3.import_step_path(tmp_step, mesh_size_mm=mesh_size)
+            st.rerun()
+        if st.button("Generate Sample 3D Box"):
+            ws3.import_sample_box(mesh_size_mm=mesh_size)
+            st.rerun()
+
+        e_mpa = float(
+            st.number_input(
+                "Young's Modulus E (MPa)",
+                min_value=1.0,
+                max_value=10_000.0,
+                value=100.0,
+                key="wb3d_e_mpa",
+            )
+        )
+        nu = float(
+            st.number_input(
+                "Poisson Ratio nu",
+                min_value=0.0,
+                max_value=0.49,
+                value=0.30,
+                key="wb3d_nu",
+            )
+        )
+        if ws3.load_preview() is not None and st.button(
+            "Solve 3D Finite-Strain FEM", type="primary"
+        ):
+            res = ws3.solve_preview_fem(youngs_modulus_mpa=e_mpa, poisson_ratio=nu)
+            st.session_state["wb3d_last_fem"] = res
+            st.success(
+                f"Converged={res.converged} · max |u|={res.max_displacement_mm:.4f} mm · "
+                f"peak von Mises={res.peak_von_mises_mpa:.2f} MPa"
+            )
+
+    with c2:
+        if ws3.load_preview() is None:
+            st.info(
+                "Upload a 3D STEP part or click **Generate Sample 3D Box** to open the "
+                "interactive WebGL 3D face picker and field explorer."
+            )
+        else:
+            last_fem = st.session_state.get("wb3d_last_fem")
+            disps = None
+            fields = None
+            if last_fem is not None and last_fem.converged:
+                u_arr = np.asarray(last_fem.nodal_displacement, dtype=np.float64)
+                disps = u_arr.tolist()
+                u_mag = np.linalg.norm(u_arr, axis=1)
+                fields = {
+                    "von_mises_mpa": {
+                        "name": "von_mises_mpa",
+                        "label": "von Mises Stress",
+                        "unit": "MPa",
+                        "values": [float(v) for v in last_fem.nodal_von_mises_mpa],
+                    },
+                    "displacement_mag_mm": {
+                        "name": "displacement_mag_mm",
+                        "label": "Displacement |u|",
+                        "unit": "mm",
+                        "values": [float(v) for v in u_mag],
+                    },
+                }
+            render_viewer_3d(st, ws3, displacements_mm=disps, fields=fields)
+
+
 def run_streamlit_app(
     default_bundle: str = "",
     default_workspace: str = ".formamech-runs/workbench/demo-project",
+    default_mode: str = "2D Fixed CAD",
 ) -> None:
-    """Render the Interactive 2D Engineering Workbench & Trust Inspector."""
+    """Render the Interactive Engineering Workbench & Trust Inspector."""
     st: Any = importlib.import_module("streamlit")
     # Plotly's optional probe can see an incomplete pandas import from another session.
     importlib.import_module("pandas")
@@ -1055,6 +1161,10 @@ def run_streamlit_app(
             st.session_state["wb_workspace_path"] = opened
         if "wb_workspace_path" not in st.session_state:
             st.session_state["wb_workspace_path"] = default_workspace
+        if "wb_workflow_mode" not in st.session_state:
+            st.session_state["wb_workflow_mode"] = (
+                default_mode if default_mode in WORKFLOW_MODES else WORKFLOW_MODES[0]
+            )
         with st.expander("Workspace details"):
             ws_str = st.text_input(
                 "Workspace Directory",
@@ -1067,13 +1177,39 @@ def run_streamlit_app(
                 st.warning(f"Stale: {item}")
             for blocker in wf_snapshot.blockers:
                 st.error(f"Blocker: {blocker}")
-        render_progress(st, wf_snapshot)
+        workflow_mode = st.selectbox(
+            "Workflow mode",
+            options=list(WORKFLOW_MODES),
+            key="wb_workflow_mode",
+        )
+        if workflow_mode == "2D Fixed CAD":
+            render_progress(st, wf_snapshot)
 
         st.divider()
         st.caption(
             "Epistemic scope (ASME V&V 10): Numerical verification against "
-            "the declared discrete FEM model only; never experimental validation."
+            "the declared discrete FEM model only unless an experimental "
+            "V&V 10 dossier is attached."
         )
+
+    if workflow_mode == "3D Solid / Assembly":
+        _render_3d_solid_mode(st, workspace.root)
+        return
+    if workflow_mode == "Parametric Explore & Optimize":
+        from piginot.ui.workbench_3d import render_parametric_explorer_mode
+
+        render_parametric_explorer_mode(st, workspace.root)
+        return
+    if workflow_mode == "Stateful Cyclic":
+        from piginot.ui.workbench_3d import render_stateful_cyclic_mode
+
+        render_stateful_cyclic_mode(st, workspace.root)
+        return
+    if workflow_mode == "CAE Ingest & V&V 10":
+        from piginot.ui.workbench_3d import render_cae_vv10_mode
+
+        render_cae_vv10_mode(st, workspace.root)
+        return
 
     active_stage = render_navigation(st, workspace, wf_snapshot)
     render_job_completion(st, workspace)

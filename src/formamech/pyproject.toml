@@ -4,3 +4,7 @@ name = "formamech"
 [[tool.streamlit.component.components]]
 name = "boundary_picker"
 asset_dir = "_boundary_picker_assets"
+
+[[tool.streamlit.component.components]]
+name = "viewer_3d"
+asset_dir = "_viewer_3d_assets"

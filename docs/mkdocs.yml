@@ -7,6 +7,7 @@ strict: true
 exclude_docs: |
   adr/*.md
   !adr/upstream-sources.md
+  design/
   fork/
   specs/
   campaigns/*.md
@@ -32,6 +33,7 @@ nav:
       - J2 elastoplasticity: plasticity.md
       - Parametric CAD exploration: parametric_cad.md
       - 3D CAD and nonlinear FEM: workflow_3d.md
+      - Industrial 3D scaling & copilot (v0.3): v3-capabilities.md
   - Train with your own inputs:
       - Own 2D CAD: campaigns/own-cad-workflow.md
       - Meshing and FEM convergence: campaigns/own-cad-meshing.md

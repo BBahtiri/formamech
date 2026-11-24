@@ -263,7 +263,19 @@ def _profile_metadata(profile: ExecutionProfile) -> None:
             "execution requires every numerical library version: "
             + ", ".join(sorted(NUMERICAL_LIBRARIES)),
         )
-    if profile.device != "cpu" or profile.blas_threads != 1:
+    if profile.device == "cpu":
+        if profile.blas_threads != 1:
+            raise CompilerConfigError(
+                "unsupported", "execution requires CPU and one BLAS thread"
+            )
+    elif profile.device.startswith("cuda"):
+        if profile.replay_tier != "gpu-accelerated-tolerance":
+            raise CompilerConfigError(
+                "unsupported",
+                "execution requires CPU and one BLAS thread "
+                "(or CUDA with replay_tier='gpu-accelerated-tolerance')",
+            )
+    else:
         raise CompilerConfigError(
             "unsupported", "execution requires CPU and one BLAS thread"
         )

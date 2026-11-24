@@ -27,6 +27,12 @@ from piginot.contracts.state_machine import (
     TransitionSpec,
     register_state_machine,
 )
+from piginot.mcp_agent_workflows import (
+    AGENT_WORKFLOW_MACHINE,
+    AgentBudgetSpec,
+    AgentWorkflowState,
+    AgentWorkflowTracker,
+)
 
 MCP_PROTOCOL_VERSION: Final = "2024-11-05"
 SERVER_NAME: Final = "formamech-mcp"
@@ -221,6 +227,7 @@ class FormaMechMcpServer:
         workspace_root: Path | str,
         *,
         max_dof_limit: int = DEFAULT_MAX_DOF_LIMIT,
+        max_fem_solves: int = 16,
         require_qualified: bool = False,
         strict_lifecycle: bool = False,
     ) -> None:
@@ -229,19 +236,38 @@ class FormaMechMcpServer:
             raise ValueError(f"workspace_root must be an existing directory: {root}")
         if type(max_dof_limit) is not int or max_dof_limit < 2:
             raise ValueError("max_dof_limit must be an integer >= 2")
+        if type(max_fem_solves) is not int or max_fem_solves < 1:
+            raise ValueError("max_fem_solves must be an integer >= 1")
         if not isinstance(require_qualified, bool):
             raise TypeError("require_qualified must be boolean")
         if not isinstance(strict_lifecycle, bool):
             raise TypeError("strict_lifecycle must be boolean")
         self.workspace_root = root
         self.max_dof_limit = max_dof_limit
+        self.max_fem_solves = max_fem_solves
         self.require_qualified = require_qualified
         self.strict_lifecycle = strict_lifecycle
         self._session_state: McpSessionState = McpSessionState.UNINITIALIZED
         self._transition_history: list[TransitionRecord[McpSessionState]] = []
+        self._workflow = AgentWorkflowTracker(
+            AgentBudgetSpec(
+                max_fem_solves=max_fem_solves,
+                max_dofs=max_dof_limit,
+                require_qualified_for_export=True,
+            )
+        )
         self._tools: dict[str, McpToolSpec] = {
             spec.name: spec for spec in self._build_tools()
         }
+
+    @property
+    def workflow_state(self) -> AgentWorkflowState:
+        """Current guarded engineering copilot workflow FSM state."""
+        return self._workflow.state
+
+    def workflow_snapshot(self) -> StateSnapshot[AgentWorkflowState]:
+        """Return the current agent workflow StateSnapshot."""
+        return self._workflow.snapshot()
 
     @property
     def session_state(self) -> McpSessionState:
@@ -636,6 +662,135 @@ class FormaMechMcpServer:
                 },
                 handler=self._tool_verify_qualification,
             ),
+            McpToolSpec(
+                name="import_cad_part",
+                description=(
+                    "Import and mesh a 3D STEP part (or generate a sample 3D solid) "
+                    "inside a sandboxed workspace directory, advancing the copilot FSM to CAD_IMPORTED."
+                ),
+                input_schema={
+                    "type": "object",
+                    "required": ["workspace_dir"],
+                    "properties": {
+                        "workspace_dir": {"type": "string"},
+                        "step_path": {"type": "string"},
+                        "sample_3d_box": {"type": "boolean", "default": False},
+                        "mesh_size_mm": {"type": "number"},
+                    },
+                    "additionalProperties": False,
+                },
+                handler=self._tool_import_cad_part,
+            ),
+            McpToolSpec(
+                name="propose_physics_setup",
+                description=(
+                    "Validate and persist 3D boundary conditions and material settings "
+                    "on an imported CAD workspace, advancing the copilot FSM to SETUP_PROPOSED."
+                ),
+                input_schema={
+                    "type": "object",
+                    "required": ["workspace_dir"],
+                    "properties": {
+                        "workspace_dir": {"type": "string"},
+                        "youngs_modulus_mpa": {"type": "number"},
+                        "poisson_ratio": {"type": "number"},
+                        "load_ux_mm": {"type": "number"},
+                    },
+                    "additionalProperties": False,
+                },
+                handler=self._tool_propose_physics_setup,
+            ),
+            McpToolSpec(
+                name="compile_and_qualify",
+                description=(
+                    "Run a budgeted 3D FEM verification & qualification check on the "
+                    "proposed setup, advancing SETUP_PROPOSED -> COMPILED -> QUALIFIED."
+                ),
+                input_schema={
+                    "type": "object",
+                    "required": ["workspace_dir"],
+                    "properties": {
+                        "workspace_dir": {"type": "string"},
+                        "load_steps": {"type": "integer", "minimum": 1, "maximum": 10},
+                    },
+                    "additionalProperties": False,
+                },
+                handler=self._tool_compile_and_qualify,
+            ),
+            McpToolSpec(
+                name="run_active_fem_round",
+                description=(
+                    "Run a budgeted active 3D FEM evaluation round at specified moduli/loads "
+                    "enforcing hard FEM solve and DOF ceilings."
+                ),
+                input_schema={
+                    "type": "object",
+                    "required": ["workspace_dir", "n_samples"],
+                    "properties": {
+                        "workspace_dir": {"type": "string"},
+                        "n_samples": {"type": "integer", "minimum": 1, "maximum": 64},
+                        "youngs_modulus_mpa": {"type": "number"},
+                        "poisson_ratio": {"type": "number"},
+                    },
+                    "additionalProperties": False,
+                },
+                handler=self._tool_run_active_fem_round,
+            ),
+            McpToolSpec(
+                name="ingest_cae_archive",
+                description=(
+                    "Screen a directory of solver-agnostic CAE archives (.vtu/.xdmf/.inp/.frd/.bdf) "
+                    "with deduplication, admissibility checks, MAD outlier screening, and leak-free splits."
+                ),
+                input_schema={
+                    "type": "object",
+                    "required": ["archive_dir"],
+                    "properties": {
+                        "archive_dir": {"type": "string"},
+                    },
+                    "additionalProperties": False,
+                },
+                handler=self._tool_ingest_cae_archive,
+            ),
+            McpToolSpec(
+                name="run_experimental_validation",
+                description=(
+                    "Calibrate constitutive parameters from experimental coupon data and compute "
+                    "an ASME V&V 10 validation budget and orthogonal ExperimentalValidationTier."
+                ),
+                input_schema={
+                    "type": "object",
+                    "required": ["dataset_path"],
+                    "properties": {
+                        "dataset_path": {"type": "string"},
+                        "u_num_rel": {"type": "number"},
+                    },
+                    "additionalProperties": False,
+                },
+                handler=self._tool_run_experimental_validation,
+            ),
+            McpToolSpec(
+                name="export_verified_artifact",
+                description=(
+                    "Export a verified ParaView VTU or glTF GLB artifact strictly after the "
+                    "engineering workflow reaches QUALIFIED state."
+                ),
+                input_schema={
+                    "type": "object",
+                    "required": ["workspace_dir", "output_path"],
+                    "properties": {
+                        "workspace_dir": {"type": "string"},
+                        "output_path": {"type": "string"},
+                        "format": {
+                            "type": "string",
+                            "enum": ["vtu", "glb"],
+                            "default": "vtu",
+                        },
+                    },
+                    "additionalProperties": False,
+                },
+                handler=self._tool_export_verified_artifact,
+            ),
         )
 
     def _tool_inspect_bundle(self, args: Mapping[str, Any]) -> dict[str, Any]:
@@ -838,12 +993,329 @@ class FormaMechMcpServer:
         )
         return result.document()
 
+    def _tool_import_cad_part(self, args: Mapping[str, Any]) -> dict[str, Any]:
+        from piginot.geometry.mesh3d import CellType3D
+        from piginot.ui.workbench_3d.state_3d import Workbench3DWorkspace
+
+        ws_path = self.resolve_path(str(args["workspace_dir"]))
+        ws = Workbench3DWorkspace(ws_path)
+        mesh_size = float(args.get("mesh_size_mm", 6.0))
+        if bool(args.get("sample_3d_box", False)):
+            preview = ws.import_sample_box(
+                mesh_size_mm=mesh_size, element_type=CellType3D.TET10
+            )
+        else:
+            raw_step = args.get("step_path")
+            if not raw_step:
+                raise ValueError(
+                    "import_cad_part requires 'step_path' or sample_3d_box=True"
+                )
+            step_path = self.resolve_path(str(raw_step))
+            preview = ws.import_step_path(
+                step_path, mesh_size_mm=mesh_size, element_type=CellType3D.TET10
+            )
+
+        n_dofs = int(preview["node_count"]) * 3
+        self._workflow.check_dofs(n_dofs)
+        self._workflow.transition(
+            AgentWorkflowState.CAD_IMPORTED,
+            trigger="import_cad_part",
+            reason=f"Imported 3D mesh with {n_dofs} DOFs.",
+        )
+        self._workflow.active_workspace_rel = str(
+            ws_path.relative_to(self.workspace_root).as_posix()
+        )
+        return {
+            "geometry_id": preview["geometry_id"],
+            "node_count": preview["node_count"],
+            "cell_count": preview["cell_count"],
+            "dof_count": n_dofs,
+            "face_tags": [fg["face_tag"] for fg in preview["face_groups"]],
+            "workflow_state": self._workflow.snapshot().document(),
+        }
+
+    def _tool_propose_physics_setup(self, args: Mapping[str, Any]) -> dict[str, Any]:
+        from piginot.contracts import canonical_json_bytes
+        from piginot.ui.workbench_3d.state_3d import (
+            FaceAssignment3D,
+            Workbench3DWorkspace,
+            validate_face_assignments_3d,
+        )
+
+        # Enforce FSM precondition before mutating files
+        AGENT_WORKFLOW_MACHINE.require_transition(
+            self._workflow.state,
+            AgentWorkflowState.SETUP_PROPOSED,
+            trigger="propose_physics_setup",
+        )
+        ws_path = self.resolve_path(str(args["workspace_dir"]))
+        ws = Workbench3DWorkspace(ws_path)
+        preview = ws.load_preview()
+        state = ws.load_state()
+        if preview is None or state is None:
+            raise ValueError("workspace has no imported 3D CAD geometry")
+
+        e_mpa = float(args.get("youngs_modulus_mpa", 100.0))
+        nu = float(args.get("poisson_ratio", 0.30))
+        load_ux = float(args.get("load_ux_mm", 0.25))
+        if not (1.0 <= e_mpa <= 10_000.0):
+            raise ValueError("youngs_modulus_mpa must lie in [1.0, 10000.0]")
+        if not (0.0 <= nu <= 0.49):
+            raise ValueError("poisson_ratio must lie in [0.0, 0.49]")
+
+        # Update loaded face displacement if specified
+        assignments = [FaceAssignment3D.from_document(a) for a in state["assignments"]]
+        updated = []
+        for a in assignments:
+            if a.kind == "dirichlet":
+                updated.append(
+                    FaceAssignment3D(
+                        face_tag=a.face_tag,
+                        name=a.name,
+                        kind="dirichlet",
+                        components=("x",),
+                        values_mm=(load_ux,),
+                    )
+                )
+            else:
+                updated.append(a)
+        ok, errs = validate_face_assignments_3d(
+            [fg["face_tag"] for fg in preview["face_groups"]], updated
+        )
+        if not ok:
+            raise ValueError("invalid 3D physics setup: " + "; ".join(errs))
+
+        setup_doc = {
+            "geometry_id": preview["geometry_id"],
+            "youngs_modulus_mpa": e_mpa,
+            "poisson_ratio": nu,
+            "load_ux_mm": load_ux,
+            "assignments": [a.document() for a in updated],
+        }
+        (ws_path / "physics_3d_setup.json").write_bytes(canonical_json_bytes(setup_doc))
+        ws._save_state(
+            geometry_id=str(preview["geometry_id"]),
+            assignments=updated,
+            last_event_id="mcp-propose",
+            last_result={"event_id": "mcp-propose", "status": "accepted"},
+        )
+        self._workflow.transition(
+            AgentWorkflowState.SETUP_PROPOSED,
+            trigger="propose_physics_setup",
+            reason="Validated 3D BCs and material bounds.",
+        )
+        return {
+            "setup": setup_doc,
+            "workflow_state": self._workflow.snapshot().document(),
+        }
+
+    def _tool_compile_and_qualify(self, args: Mapping[str, Any]) -> dict[str, Any]:
+        import hashlib
+
+        from piginot.contracts import canonical_json_bytes
+        from piginot.ui.workbench_3d.state_3d import Workbench3DWorkspace
+
+        AGENT_WORKFLOW_MACHINE.require_transition(
+            self._workflow.state,
+            AgentWorkflowState.COMPILED,
+            trigger="compile_and_qualify",
+        )
+        ws_path = self.resolve_path(str(args["workspace_dir"]))
+        ws = Workbench3DWorkspace(ws_path)
+        mesh = ws.load_mesh()
+        if mesh is None:
+            raise ValueError("workspace has no imported 3D mesh")
+        self._workflow.check_dofs(len(mesh.nodes) * 3)
+        self._workflow.reserve_fem_solves(1)
+
+        setup_path = ws_path / "physics_3d_setup.json"
+        setup = (
+            json.loads(setup_path.read_text(encoding="utf-8"))
+            if setup_path.is_file()
+            else {"youngs_modulus_mpa": 100.0, "poisson_ratio": 0.30}
+        )
+        res = ws.solve_preview_fem(
+            youngs_modulus_mpa=float(setup["youngs_modulus_mpa"]),
+            poisson_ratio=float(setup["poisson_ratio"]),
+            load_steps=int(args.get("load_steps", 2)),
+        )
+        self._workflow.transition(
+            AgentWorkflowState.COMPILED,
+            trigger="compile_and_qualify",
+            reason="Executed authoritative 3D FEM verification solve.",
+        )
+        if not res.converged or res.min_det_f <= 0.0:
+            self._workflow.transition(
+                AgentWorkflowState.REFUSED,
+                trigger="refuse",
+                reason=f"3D FEM solve failed admissibility: {res.reason}",
+            )
+            return {
+                "qualified": False,
+                "reason": res.reason,
+                "workflow_state": self._workflow.snapshot().document(),
+            }
+
+        qual_doc = {
+            "schema": "formamech.mcp-3d-qualification-v1",
+            "mesh_id": mesh.mesh_id,
+            "result_hash": res.result_hash,
+            "converged": res.converged,
+            "min_det_f": float(res.min_det_f),
+            "max_displacement_mm": float(res.max_displacement_mm),
+            "peak_von_mises_mpa": float(res.peak_von_mises_mpa),
+        }
+        qual_bytes = canonical_json_bytes(qual_doc)
+        qual_sha = hashlib.sha256(qual_bytes).hexdigest()
+        (ws_path / "results_3d").mkdir(parents=True, exist_ok=True)
+        (ws_path / "results_3d" / "qualification_3d.json").write_bytes(qual_bytes)
+
+        self._workflow.last_fem_result = res
+        self._workflow.last_qualification_sha256 = qual_sha
+        self._workflow.last_receipt_sha256 = res.result_hash
+        self._workflow.transition(
+            AgentWorkflowState.QUALIFIED,
+            trigger="qualify_complete",
+            reason="3D FEM equilibrium and det(F) > 0 admissibility verified.",
+        )
+        return {
+            "qualified": True,
+            "qualification_sha256": qual_sha,
+            "result_hash": res.result_hash,
+            "max_displacement_mm": float(res.max_displacement_mm),
+            "peak_von_mises_mpa": float(res.peak_von_mises_mpa),
+            "min_det_f": float(res.min_det_f),
+            "workflow_state": self._workflow.snapshot().document(),
+        }
+
+    def _tool_run_active_fem_round(self, args: Mapping[str, Any]) -> dict[str, Any]:
+        from piginot.ui.workbench_3d.state_3d import Workbench3DWorkspace
+
+        AGENT_WORKFLOW_MACHINE.require_transition(
+            self._workflow.state,
+            self._workflow.state,
+            trigger="run_active_fem_round",
+        )
+        n_samples = int(args["n_samples"])
+        ws_path = self.resolve_path(str(args["workspace_dir"]))
+        ws = Workbench3DWorkspace(ws_path)
+        mesh = ws.load_mesh()
+        if mesh is None:
+            raise ValueError("workspace has no imported 3D mesh")
+        self._workflow.check_dofs(len(mesh.nodes) * 3)
+        self._workflow.reserve_fem_solves(n_samples)
+
+        base_e = float(args.get("youngs_modulus_mpa", 100.0))
+        nu = float(args.get("poisson_ratio", 0.30))
+        summaries: list[dict[str, Any]] = []
+        for idx in range(n_samples):
+            e_val = min(10_000.0, max(1.0, base_e * (1.0 + 0.05 * idx)))
+            res = ws.solve_preview_fem(
+                youngs_modulus_mpa=e_val, poisson_ratio=nu, load_steps=1
+            )
+            summaries.append(
+                {
+                    "sample_index": idx,
+                    "youngs_modulus_mpa": e_val,
+                    "converged": res.converged,
+                    "peak_von_mises_mpa": float(res.peak_von_mises_mpa),
+                    "result_hash": res.result_hash,
+                }
+            )
+        self._workflow.transition(
+            self._workflow.state,
+            trigger="run_active_fem_round",
+            reason=f"Completed {n_samples} budgeted FEM solves.",
+        )
+        return {
+            "samples": summaries,
+            "workflow_state": self._workflow.snapshot().document(),
+        }
+
+    def _tool_ingest_cae_archive(self, args: Mapping[str, Any]) -> dict[str, Any]:
+        from piginot.ui.workbench_3d.vv10_panel import run_cae_ingest_summary
+
+        arch_dir = self.resolve_path(str(args["archive_dir"]))
+        return {
+            "screening_report": run_cae_ingest_summary(arch_dir),
+            "workflow_state": self._workflow.snapshot().document(),
+        }
+
+    def _tool_run_experimental_validation(
+        self, args: Mapping[str, Any]
+    ) -> dict[str, Any]:
+        from piginot.ui.workbench_3d.vv10_panel import run_vv10_calibration_summary
+
+        ds_path = self.resolve_path(str(args["dataset_path"]))
+        u_num = float(args.get("u_num_rel", 0.05))
+        return {
+            "validation_dossier": run_vv10_calibration_summary(
+                ds_path, u_num_mpa=u_num
+            ),
+            "workflow_state": self._workflow.snapshot().document(),
+        }
+
+    def _tool_export_verified_artifact(self, args: Mapping[str, Any]) -> dict[str, Any]:
+        import hashlib
+
+        from piginot.export.vtu_export import export_deformed_glb, export_fields_to_vtu
+        from piginot.ui.workbench_3d.state_3d import Workbench3DWorkspace
+
+        # Fail-closed FSM enforcement: ONLY allowed from QUALIFIED (or repeat from EXPORTED)
+        AGENT_WORKFLOW_MACHINE.require_transition(
+            self._workflow.state,
+            AgentWorkflowState.EXPORTED,
+            trigger="export_verified_artifact",
+        )
+        ws_path = self.resolve_path(str(args["workspace_dir"]))
+        out_path = self.resolve_path(str(args["output_path"]))
+        fmt = str(args.get("format", "vtu"))
+        ws = Workbench3DWorkspace(ws_path)
+        mesh = ws.load_mesh()
+        res = self._workflow.last_fem_result
+        if mesh is None or res is None:
+            raise ValueError("no qualified 3D FEM solution is cached for export")
+
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        if fmt == "glb":
+            export_deformed_glb(
+                mesh,
+                out_path,
+                displacement=res.nodal_displacement,
+                scalar_field=res.nodal_von_mises_mpa,
+            )
+        else:
+            export_fields_to_vtu(
+                mesh,
+                out_path,
+                point_fields={
+                    "displacement_mm": res.nodal_displacement,
+                    "von_mises_mpa": res.nodal_von_mises_mpa,
+                },
+            )
+        digest = hashlib.sha256(out_path.read_bytes()).hexdigest()
+        self._workflow.transition(
+            AgentWorkflowState.EXPORTED,
+            trigger="export_verified_artifact",
+            reason=f"Exported verified {fmt.upper()} artifact.",
+        )
+        return {
+            "format": fmt,
+            "output_path": str(out_path.relative_to(self.workspace_root).as_posix()),
+            "artifact_sha256": digest,
+            "workflow_state": self._workflow.snapshot().document(),
+        }
+
 
 __all__ = (
+    "AGENT_WORKFLOW_MACHINE",
     "DEFAULT_MAX_DOF_LIMIT",
     "MCP_PROTOCOL_VERSION",
     "MCP_SESSION_MACHINE",
     "SERVER_NAME",
+    "AgentBudgetSpec",
+    "AgentWorkflowState",
+    "AgentWorkflowTracker",
     "FormaMechMcpServer",
     "McpSessionState",
     "McpToolSpec",

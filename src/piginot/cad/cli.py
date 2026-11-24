@@ -243,6 +243,89 @@ def _run_cad_parametric(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     raise ValueError(f"unknown parametric CAD command: {action}")
 
 
+def _run_cad_parametric_3d(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
+    """Handle ``formamech cad parametric-3d sample|train|predict|qualify`` (V3-2)."""
+    from piginot.cad.parametric_3d import (
+        default_holed_block_3d_spec,
+        default_l_bracket_3d_spec,
+        default_mounting_lug_3d_spec,
+        sample_parametric_cad_3d_doe,
+    )
+    from piginot.contracts import canonical_json_bytes
+    from piginot.training.parametric_3d_engine import (
+        Parametric3DPhysicsConfig,
+        Parametric3DTrainingConfig,
+        load_parametric_3d_bundle,
+        predict_parametric_3d,
+        qualify_parametric_3d_bundle,
+        save_parametric_3d_bundle,
+        train_parametric_3d_operator,
+    )
+
+    action = str(args.parametric_3d_command)
+
+    def _spec_for_template(tmpl: str, mesh_size: float) -> Any:
+        if tmpl == "l-bracket":
+            return default_l_bracket_3d_spec(mesh_size_mm=mesh_size)
+        if tmpl == "mounting-lug":
+            return default_mounting_lug_3d_spec(mesh_size_mm=mesh_size)
+        return default_holed_block_3d_spec(mesh_size_mm=mesh_size)
+
+    if action == "sample":
+        spec = _spec_for_template(str(args.template), float(args.mesh_size_mm))
+        out_dir = Path(args.output)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        doe = sample_parametric_cad_3d_doe(
+            spec, count=int(args.count), seed_offset=int(args.seed_offset)
+        )
+        doc = {**doe.document(), "report_hash": doe.report_hash}
+        (out_dir / "doe-3d-manifest.json").write_bytes(
+            canonical_json_bytes(doc) + b"\n"
+        )
+        return doc, 0
+
+    if action == "train":
+        spec = _spec_for_template(str(args.template), float(args.mesh_size_mm))
+        doe = sample_parametric_cad_3d_doe(spec, count=int(args.count), seed_offset=1)
+        bundle = train_parametric_3d_operator(
+            spec,
+            Parametric3DPhysicsConfig(),
+            doe.instances,
+            training_config=Parametric3DTrainingConfig(
+                epochs=int(args.epochs),
+                use_fem_supervision=bool(args.supervise),
+            ),
+        )
+        manifest = save_parametric_3d_bundle(bundle, Path(args.output))
+        return manifest, 0
+
+    if action == "predict":
+        bundle = load_parametric_3d_bundle(Path(args.bundle))
+        raw = json.loads(Path(args.cad_params).read_text(encoding="utf-8"))
+        params = {str(k): float(v) for k, v in raw.items()}
+        rep = predict_parametric_3d(bundle, params, mode=args.mode)
+        doc = {**rep.document(), "report_hash": rep.report_hash}
+        if args.output is not None:
+            Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.output).write_bytes(canonical_json_bytes(doc) + b"\n")
+        return doc, (0 if rep.accepted else 2)
+
+    if action == "qualify":
+        bundle = load_parametric_3d_bundle(Path(args.bundle))
+        q_rep = qualify_parametric_3d_bundle(
+            bundle,
+            holdout_count=int(args.count),
+            max_mean_displacement_rel_l2=float(args.max_disp_error),
+        )
+        doc = {**q_rep.document(), "manifest_hash": q_rep.manifest_hash}
+        if args.output is not None:
+            Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.output).write_bytes(canonical_json_bytes(doc) + b"\n")
+        return doc, (0 if q_rep.passed else 2)
+
+    raise ValueError(f"unknown parametric-3d command: {action}")
+
+
 def run(args: argparse.Namespace) -> int:
     try:
         if args.cad_command == "import":
@@ -296,6 +379,10 @@ def run(args: argparse.Namespace) -> int:
             return code
         elif args.cad_command == "parametric":
             result, code = _run_cad_parametric(args)
+            print(json.dumps(result, indent=2, sort_keys=True, allow_nan=False))
+            return code
+        elif args.cad_command == "parametric-3d":
+            result, code = _run_cad_parametric_3d(args)
             print(json.dumps(result, indent=2, sort_keys=True, allow_nan=False))
             return code
         elif args.cad_command == "import-3d":

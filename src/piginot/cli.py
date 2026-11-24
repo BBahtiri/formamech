@@ -1146,6 +1146,87 @@ def _export(args: argparse.Namespace) -> int:
         return EXIT_ERROR
 
 
+def _ingest_cae(args: argparse.Namespace) -> int:
+    """Ingest external VTU/XDMF/CalculiX/Abaqus/Nastran CAE files & run outlier screening."""
+    from piginot.ingest import (
+        read_abaqus_inp_and_fields,
+        read_calculix_inp_frd,
+        read_nastran_bdf_and_fields,
+        read_vtu_or_xdmf,
+        screen_cae_archive,
+    )
+
+    try:
+        samples = []
+        src = Path(args.source)
+        fmt = str(args.format)
+        if src.is_dir():
+            files = sorted(src.glob("*.vtu")) + sorted(src.glob("*.xdmf"))
+            for fp in files:
+                samples.append(read_vtu_or_xdmf(fp))
+        elif fmt == "calculix-frd":
+            samples.append(read_calculix_inp_frd(src, args.fields))
+        elif fmt == "abaqus-inp":
+            samples.append(read_abaqus_inp_and_fields(src, args.fields))
+        elif fmt == "nastran-bdf":
+            samples.append(read_nastran_bdf_and_fields(src, args.fields))
+        else:
+            samples.append(read_vtu_or_xdmf(src))
+        report = screen_cae_archive(
+            samples,
+            zscore_threshold=float(args.zscore_threshold),
+            output_dir=args.output,
+        )
+        _emit({**report.document(), "report_hash": report.report_hash}, None)
+        return EXIT_OK if report.accepted_count > 0 else EXIT_REFUSED
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        print(f"{_program(args)} ingest: {exc}", file=sys.stderr)
+        return EXIT_ERROR
+
+
+def _validate_experiment(args: argparse.Namespace) -> int:
+    """Calibrate constitutive parameters & run ASME V&V 10 coupon holdout validation."""
+    from piginot.validation import (
+        CouponRole,
+        ExperimentalCouponDataset,
+        ExperimentalTestMode,
+        InverseCalibrationConfig,
+        calibrate_material_from_experiments,
+    )
+
+    try:
+        raw = json.loads(Path(args.coupons).read_text(encoding="utf-8"))
+        coupons = [
+            ExperimentalCouponDataset(
+                specimen_id=str(item["specimen_id"]),
+                role=CouponRole(str(item["role"])),
+                test_mode=ExperimentalTestMode(str(item["test_mode"])),
+                stretches_or_strains=tuple(
+                    float(v) for v in item["stretches_or_strains"]
+                ),
+                measured_stress_mpa=tuple(
+                    float(v) for v in item["measured_stress_mpa"]
+                ),
+                measurement_std_mpa=float(item["measurement_std_mpa"]),
+            )
+            for item in raw["coupons"]
+        ]
+        cfg = InverseCalibrationConfig(
+            model_family=args.model_family,
+            u_num_mpa=float(args.u_num_mpa),
+        )
+        dossier = calibrate_material_from_experiments(coupons, config=cfg)
+        doc = {**dossier.document(), "dossier_hash": dossier.dossier_hash}
+        if args.output is not None:
+            Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.output).write_bytes(canonical_json_bytes(doc) + b"\n")
+        _emit(doc, None)
+        return EXIT_OK if dossier.passed else EXIT_SCIENTIFIC_REFUSED
+    except (OSError, json.JSONDecodeError, KeyError, ValueError, TypeError) as exc:
+        print(f"{_program(args)} validate: {exc}", file=sys.stderr)
+        return EXIT_ERROR
+
+
 def _campaign(command: str, args: argparse.Namespace) -> int:
     try:
         table = resolve_campaign(args.campaign, args.campaign_path)
@@ -1361,6 +1442,60 @@ def build_parser(*, prog: str = "piginot") -> argparse.ArgumentParser:
     )
     cad_samp3d.add_argument("--output", type=Path, required=True)
     cad_samp3d.set_defaults(handler=_cad)
+
+    cad_p3d = cad_commands.add_parser(
+        "parametric-3d",
+        help="3D parametric CAD DOE sampling, GALE training, serving, and qualification (V3-2)",
+    )
+    p3d_cmds = cad_p3d.add_subparsers(dest="parametric_3d_command", required=True)
+    p3d_sample = p3d_cmds.add_parser(
+        "sample", help="sample topology-verified 3D CAD DOE"
+    )
+    p3d_sample.add_argument(
+        "--template",
+        choices=("holed-block", "l-bracket", "mounting-lug"),
+        default="holed-block",
+    )
+    p3d_sample.add_argument("--mesh-size-mm", type=float, default=6.0)
+    p3d_sample.add_argument("--count", type=int, default=4)
+    p3d_sample.add_argument("--seed-offset", type=int, default=1)
+    p3d_sample.add_argument("--output", type=Path, required=True)
+    p3d_sample.set_defaults(handler=_cad)
+
+    p3d_train = p3d_cmds.add_parser(
+        "train", help="train a multi-CAD 3D GALE surrogate bundle"
+    )
+    p3d_train.add_argument(
+        "--template",
+        choices=("holed-block", "l-bracket", "mounting-lug"),
+        default="holed-block",
+    )
+    p3d_train.add_argument("--mesh-size-mm", type=float, default=6.0)
+    p3d_train.add_argument("--count", type=int, default=4)
+    p3d_train.add_argument("--epochs", type=int, default=30)
+    p3d_train.add_argument("--supervise", action="store_true")
+    p3d_train.add_argument("--output", type=Path, required=True)
+    p3d_train.set_defaults(handler=_cad)
+
+    p3d_pred = p3d_cmds.add_parser(
+        "predict", help="predict & OOD-gate one 3D CAD variant"
+    )
+    p3d_pred.add_argument("bundle", type=Path)
+    p3d_pred.add_argument("--cad-params", type=Path, required=True)
+    p3d_pred.add_argument(
+        "--mode", choices=("fast", "certified", "exact"), default="fast"
+    )
+    p3d_pred.add_argument("--output", type=Path, default=None)
+    p3d_pred.set_defaults(handler=_cad)
+
+    p3d_qual = p3d_cmds.add_parser(
+        "qualify", help="qualify a 3D parametric bundle on holdouts + OOD"
+    )
+    p3d_qual.add_argument("bundle", type=Path)
+    p3d_qual.add_argument("--count", type=int, default=3)
+    p3d_qual.add_argument("--max-disp-error", type=float, default=0.35)
+    p3d_qual.add_argument("--output", type=Path, default=None)
+    p3d_qual.set_defaults(handler=_cad)
 
     active = subparsers.add_parser(
         "active", help="certificate-driven TRAIN-only active FEM acquisition (P3)"
@@ -1696,6 +1831,40 @@ def build_parser(*, prog: str = "piginot") -> argparse.ArgumentParser:
         default="DEVELOPMENT_VERIFIED",
     )
     exp_fmu.set_defaults(handler=_export)
+
+    ingest = subparsers.add_parser(
+        "ingest",
+        help="ingest external CAE archives (VTU/XDMF/CalculiX/Abaqus/Nastran) with outlier screening (V3-3)",
+    )
+    ingest.add_argument("source", type=Path)
+    ingest.add_argument(
+        "--format",
+        choices=("auto", "vtu", "xdmf", "calculix-frd", "abaqus-inp", "nastran-bdf"),
+        default="auto",
+    )
+    ingest.add_argument("--fields", type=Path, default=None)
+    ingest.add_argument("--zscore-threshold", type=float, default=3.0)
+    ingest.add_argument("--output", type=Path, default=None)
+    ingest.set_defaults(handler=_ingest_cae)
+
+    validate = subparsers.add_parser(
+        "validate",
+        help="differentiable inverse material calibration & ASME V&V 10 coupon validation (V3-3)",
+    )
+    validate.add_argument("coupons", type=Path)
+    validate.add_argument(
+        "--model-family",
+        choices=(
+            "incompressible_neo_hookean",
+            "incompressible_mooney_rivlin",
+            "incompressible_yeoh",
+            "j2_voce_1d",
+        ),
+        default="incompressible_mooney_rivlin",
+    )
+    validate.add_argument("--u-num-mpa", type=float, default=0.01)
+    validate.add_argument("--output", type=Path, default=None)
+    validate.set_defaults(handler=_validate_experiment)
 
     inspect = subparsers.add_parser("inspect", help="describe a bundle")
     inspect.add_argument("bundle", type=Path)

@@ -56,6 +56,13 @@ from piginot.operators.surface_operator_3d import (
     Surface3DEnergyOperator,
 )
 from piginot.physics import energy_density, first_piola, reference_modulus
+from piginot.training.compute import (
+    ComputeRuntimeConfig,
+    ComputeRuntimeSession,
+    autocast_context,
+    chunked_quadrature_slices,
+    validate_loss_finite,
+)
 
 FloatArray = NDArray[np.float64]
 SURFACE_3D_BUNDLE_SCHEMA: Final = "formamech.surface-3d-bundle-v1"
@@ -326,6 +333,8 @@ class Surface3DTrainingConfig:
     barrier_threshold: float = 0.2
     supervision_weight: float = 25.0
     quadrature_subsample: int | None = None
+    quadrature_chunk_size: int | None = None
+    compute_config: ComputeRuntimeConfig | None = None
     seed: int = 0
 
     def __post_init__(self) -> None:
@@ -337,6 +346,11 @@ class Surface3DTrainingConfig:
             raise ValueError("barrier_weight must be positive")
         if not math.isfinite(self.supervision_weight) or self.supervision_weight < 0.0:
             raise ValueError("supervision_weight must be nonnegative")
+        if self.quadrature_chunk_size is not None and (
+            type(self.quadrature_chunk_size) is not int
+            or self.quadrature_chunk_size < 1
+        ):
+            raise ValueError("quadrature_chunk_size must be a positive integer or None")
 
 
 @dataclass(frozen=True, slots=True)
@@ -420,6 +434,19 @@ def train_surface_3d_operator(
         mesh.validate_incompressibility_locking(float(nu_prop.value))
 
     t_cfg = Surface3DTrainingConfig() if training_config is None else training_config
+    c_cfg = (
+        ComputeRuntimeConfig(quadrature_chunk_size=t_cfg.quadrature_chunk_size)
+        if t_cfg.compute_config is None
+        else t_cfg.compute_config
+    )
+    chunk_size = (
+        t_cfg.quadrature_chunk_size
+        if t_cfg.quadrature_chunk_size is not None
+        else c_cfg.quadrature_chunk_size
+    )
+    session = ComputeRuntimeSession(c_cfg)
+    device = session.device
+    session.activate()
     torch.manual_seed(t_cfg.seed)
 
     p_dim = len(train_cases[0].parameter_vector)
@@ -429,11 +456,12 @@ def train_surface_3d_operator(
         else operator_config
     )
     if op_cfg.parameter_dim != p_dim:
+        session.abort()
         raise ValueError(
             f"operator_config.parameter_dim={op_cfg.parameter_dim} != case dim {p_dim}"
         )
 
-    operator = Surface3DEnergyOperator(op_cfg).to(dtype=dtype)
+    operator = Surface3DEnergyOperator(op_cfg).to(dtype=dtype, device=device)
     n_model_params = sum(p.numel() for p in operator.parameters())
 
     s_cent, s_norm, s_area, s_feat = build_surface_3d_tensors(
@@ -441,9 +469,14 @@ def train_surface_3d_operator(
         clamped_face_tags=clamped_face_tags,
         loaded_face_tags=loaded_face_tags,
         dtype=dtype,
+        device=device,
     )
-    q_pts_all, q_wts_all, total_vol = _volumetric_quadrature_3d(mesh, dtype=dtype)
-    nodes_t = torch.tensor(mesh.nodes, dtype=dtype).unsqueeze(0)  # (1, N, 3)
+    q_pts_all, q_wts_all, total_vol = _volumetric_quadrature_3d(
+        mesh, dtype=dtype, device=device
+    )
+    nodes_t = torch.tensor(mesh.nodes, dtype=dtype, device=device).unsqueeze(
+        0
+    )  # (1, N, 3)
     node_scale, node_offset = lifting.scale_and_offset(nodes_t)
     e_ref = reference_modulus(material)
     energy_scale = max(e_ref * total_vol, 1.0e-12)
@@ -452,12 +485,14 @@ def train_surface_3d_operator(
     any_supervised = any(c.fem_result is not None for c in train_cases)
     n_b = len(train_cases)
     p_batch = torch.tensor(
-        [list(c.parameter_vector) for c in train_cases], dtype=dtype
+        [list(c.parameter_vector) for c in train_cases], dtype=dtype, device=device
     )  # (B, P)
     f_ext_batch = torch.stack(
         [
             torch.tensor(
-                assemble_surface_tractions_3d(mesh, c.traction_bcs), dtype=dtype
+                assemble_surface_tractions_3d(mesh, c.traction_bcs),
+                dtype=dtype,
+                device=device,
             )
             for c in train_cases
         ],
@@ -471,6 +506,7 @@ def train_surface_3d_operator(
             torch.tensor(
                 train_cases[i].fem_result.nodal_displacement,  # type: ignore[union-attr]
                 dtype=dtype,
+                device=device,
             )
             for i in sup_indices
         ]
@@ -487,7 +523,7 @@ def train_surface_3d_operator(
     gen.manual_seed(t_cfg.seed)
 
     n_q_tot = q_pts_all.shape[0]
-    eye3 = torch.eye(3, dtype=dtype)
+    eye3 = torch.eye(3, dtype=dtype, device=device)
     nodes_batch = nodes_t.expand(n_b, -1, -1)
     node_scale_batch = node_scale.expand(n_b, -1, -1)
     node_offset_batch = node_offset.expand(n_b, -1, -1)
@@ -501,7 +537,9 @@ def train_surface_3d_operator(
             t_cfg.quadrature_subsample is not None
             and t_cfg.quadrature_subsample < n_q_tot
         ):
-            idx = torch.randperm(n_q_tot, generator=gen)[: t_cfg.quadrature_subsample]
+            idx = torch.randperm(n_q_tot, generator=gen)[
+                : t_cfg.quadrature_subsample
+            ].to(device=device)
             q_pts_1 = q_pts_all[idx].unsqueeze(0)
             q_wts = q_wts_all[idx] * (
                 float(n_q_tot) / float(t_cfg.quadrature_subsample)
@@ -510,57 +548,144 @@ def train_surface_3d_operator(
             q_pts_1 = q_pts_all.unsqueeze(0)
             q_wts = q_wts_all
 
-        # Encode surface ONCE per epoch and broadcast physics slices across all B cases
-        enc_1 = operator.encode_surface(s_cent, s_norm, s_area, s_feat)
-        enc_b = Surface3DEncoding(
-            slice_tokens=enc_1.slice_tokens.expand(n_b, -1, -1),
-            origin=enc_1.origin.expand(n_b, -1),
-            extent=enc_1.extent.expand(n_b, -1),
-        )
-        q_pts_b = q_pts_1.expand(n_b, -1, -1)
-        _, grad_u = lifted_displacement_and_gradient(
-            operator,
-            encoding=enc_b,
-            query_xyz=q_pts_b,
-            parameters=p_batch,
-            lifting=lifting,
-            create_graph=True,
-        )  # (B, Q, 3, 3)
-        f_def = eye3 + grad_u
-        det_f = torch.linalg.det(f_def)  # (B, Q)
-        min_det_seen = min(min_det_seen, float(det_f.detach().min().item()))
-        admissible = det_f > 1.0e-5
-        safe_f = torch.where(admissible[..., None, None], f_def, eye3.expand_as(f_def))
-        w_dens = energy_density(safe_f, material)  # (B, Q)
-        w_dens = torch.where(admissible, w_dens, torch.zeros_like(w_dens))
-        strain_e = torch.sum(w_dens * q_wts.unsqueeze(0), dim=-1)  # (B,)
+        n_q_active = int(q_pts_1.shape[1])
+        slices = chunked_quadrature_slices(n_q_active, chunk_size)
 
-        u_nodes = operator.displacement(
-            encoding=enc_b,
-            query_xyz=nodes_batch,
-            parameters=p_batch,
-            lifting_offset=node_offset_batch,
-            lifting_scale=node_scale_batch,
-        )  # (B, N, 3)
-        ext_work = torch.sum(f_ext_batch * u_nodes, dim=(-2, -1))  # (B,)
-        pi_norm = torch.mean((strain_e - ext_work) / energy_scale)
-        barrier = torch.mean(torch.relu(t_cfg.barrier_threshold - det_f).square())
-        loss = pi_norm + t_cfg.barrier_weight * barrier
-
-        if u_sup_batch is not None and u_scale_batch is not None:
-            u_pred_sup = u_nodes[sup_indices]
-            diff_norms = torch.linalg.vector_norm(
-                (u_pred_sup - u_sup_batch).reshape(len(sup_indices), -1), dim=-1
+        if len(slices) == 1:
+            # Single-pass fast path (bit-identical to prior CPU path)
+            with autocast_context(c_cfg):
+                enc_1 = operator.encode_surface(s_cent, s_norm, s_area, s_feat)
+                enc_b = Surface3DEncoding(
+                    slice_tokens=enc_1.slice_tokens.expand(n_b, -1, -1),
+                    origin=enc_1.origin.expand(n_b, -1),
+                    extent=enc_1.extent.expand(n_b, -1),
+                )
+                q_pts_b = q_pts_1.expand(n_b, -1, -1)
+                _, grad_u = lifted_displacement_and_gradient(
+                    operator,
+                    encoding=enc_b,
+                    query_xyz=q_pts_b,
+                    parameters=p_batch,
+                    lifting=lifting,
+                    create_graph=True,
+                )  # (B, Q, 3, 3)
+                u_nodes = operator.displacement(
+                    encoding=enc_b,
+                    query_xyz=nodes_batch,
+                    parameters=p_batch,
+                    lifting_offset=node_offset_batch,
+                    lifting_scale=node_scale_batch,
+                )  # (B, N, 3)
+            # Always evaluate nonlinear constitutive energy in full target precision
+            grad_u_eval = grad_u.to(dtype=dtype)
+            f_def = eye3 + grad_u_eval
+            det_f = torch.linalg.det(f_def)  # (B, Q)
+            min_det_seen = min(min_det_seen, float(det_f.detach().min().item()))
+            admissible = det_f > 1.0e-5
+            safe_f = torch.where(
+                admissible[..., None, None], f_def, eye3.expand_as(f_def)
             )
-            rel_l2 = torch.sqrt((diff_norms / u_scale_batch) ** 2 + 1.0e-8)
-            sup_loss = torch.mean(rel_l2 + 0.5 * rel_l2.square())
-            loss = loss + t_cfg.supervision_weight * sup_loss
+            w_dens = energy_density(safe_f, material)  # (B, Q)
+            w_dens = torch.where(admissible, w_dens, torch.zeros_like(w_dens))
+            strain_e = torch.sum(w_dens * q_wts.unsqueeze(0), dim=-1)  # (B,)
+            ext_work = torch.sum(
+                f_ext_batch * u_nodes.to(dtype=dtype), dim=(-2, -1)
+            )  # (B,)
+            pi_norm = torch.mean((strain_e - ext_work) / energy_scale)
+            barrier = torch.mean(torch.relu(t_cfg.barrier_threshold - det_f).square())
+            loss = pi_norm + t_cfg.barrier_weight * barrier
 
-        loss.backward()  # type: ignore[no-untyped-call]
+            if u_sup_batch is not None and u_scale_batch is not None:
+                u_pred_sup = u_nodes.to(dtype=dtype)[sup_indices]
+                diff_norms = torch.linalg.vector_norm(
+                    (u_pred_sup - u_sup_batch).reshape(len(sup_indices), -1), dim=-1
+                )
+                rel_l2 = torch.sqrt((diff_norms / u_scale_batch) ** 2 + 1.0e-8)
+                sup_loss = torch.mean(rel_l2 + 0.5 * rel_l2.square())
+                loss = loss + t_cfg.supervision_weight * sup_loss
+
+            loss_val = validate_loss_finite(float(loss.detach().item()))
+            loss.backward()  # type: ignore[no-untyped-call]
+        else:
+            # Memory-bounded exact additive chunked volumetric quadrature
+            total_loss_val = 0.0
+            for sl in slices:
+                q_c = sl.stop - sl.start
+                q_pts_c = q_pts_1[:, sl, :].expand(n_b, -1, -1)
+                q_wts_c = q_wts[sl]
+                with autocast_context(c_cfg):
+                    enc_1 = operator.encode_surface(s_cent, s_norm, s_area, s_feat)
+                    enc_b = Surface3DEncoding(
+                        slice_tokens=enc_1.slice_tokens.expand(n_b, -1, -1),
+                        origin=enc_1.origin.expand(n_b, -1),
+                        extent=enc_1.extent.expand(n_b, -1),
+                    )
+                    _, grad_u_c = lifted_displacement_and_gradient(
+                        operator,
+                        encoding=enc_b,
+                        query_xyz=q_pts_c,
+                        parameters=p_batch,
+                        lifting=lifting,
+                        create_graph=True,
+                    )
+                f_def_c = eye3 + grad_u_c.to(dtype=dtype)
+                det_f_c = torch.linalg.det(f_def_c)
+                min_det_seen = min(min_det_seen, float(det_f_c.detach().min().item()))
+                admissible_c = det_f_c > 1.0e-5
+                safe_f_c = torch.where(
+                    admissible_c[..., None, None], f_def_c, eye3.expand_as(f_def_c)
+                )
+                w_dens_c = energy_density(safe_f_c, material)
+                w_dens_c = torch.where(
+                    admissible_c, w_dens_c, torch.zeros_like(w_dens_c)
+                )
+                strain_c = torch.sum(w_dens_c * q_wts_c.unsqueeze(0), dim=-1)
+                pi_strain_c = torch.mean(strain_c / energy_scale)
+                barrier_c = (float(q_c) / float(n_q_active)) * torch.mean(
+                    torch.relu(t_cfg.barrier_threshold - det_f_c).square()
+                )
+                chunk_loss = pi_strain_c + t_cfg.barrier_weight * barrier_c
+                total_loss_val += float(chunk_loss.detach().item())
+                chunk_loss.backward()  # type: ignore[no-untyped-call]
+
+            # Final lightweight nodal pass (external work + optional supervision)
+            with autocast_context(c_cfg):
+                enc_1 = operator.encode_surface(s_cent, s_norm, s_area, s_feat)
+                enc_b = Surface3DEncoding(
+                    slice_tokens=enc_1.slice_tokens.expand(n_b, -1, -1),
+                    origin=enc_1.origin.expand(n_b, -1),
+                    extent=enc_1.extent.expand(n_b, -1),
+                )
+                u_nodes = operator.displacement(
+                    encoding=enc_b,
+                    query_xyz=nodes_batch,
+                    parameters=p_batch,
+                    lifting_offset=node_offset_batch,
+                    lifting_scale=node_scale_batch,
+                )
+            u_nodes_eval = u_nodes.to(dtype=dtype)
+            ext_work = torch.sum(f_ext_batch * u_nodes_eval, dim=(-2, -1))
+            nodal_loss = -torch.mean(ext_work / energy_scale)
+            if u_sup_batch is not None and u_scale_batch is not None:
+                u_pred_sup = u_nodes_eval[sup_indices]
+                diff_norms = torch.linalg.vector_norm(
+                    (u_pred_sup - u_sup_batch).reshape(len(sup_indices), -1), dim=-1
+                )
+                rel_l2 = torch.sqrt((diff_norms / u_scale_batch) ** 2 + 1.0e-8)
+                sup_loss = torch.mean(rel_l2 + 0.5 * rel_l2.square())
+                nodal_loss = nodal_loss + t_cfg.supervision_weight * sup_loss
+            total_loss_val += float(nodal_loss.detach().item())
+            loss_val = validate_loss_finite(total_loss_val)
+            nodal_loss.backward()  # type: ignore[no-untyped-call]
+
         torch.nn.utils.clip_grad_norm_(operator.parameters(), max_norm=5.0)
         optimizer.step()
         scheduler.step()
-        loss_history.append(float(loss.detach().item()))
+        loss_history.append(loss_val)
+
+    session.complete()
+    # Keep portable bundle weights materialized on CPU for cross-platform safetensors
+    operator = operator.to(device="cpu")
 
     mode_str = (
         "multi-fidelity-label-efficient"
