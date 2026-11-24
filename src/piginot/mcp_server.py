@@ -763,7 +763,14 @@ class FormaMechMcpServer:
                     "required": ["dataset_path"],
                     "properties": {
                         "dataset_path": {"type": "string"},
-                        "u_num_rel": {"type": "number"},
+                        "u_num_mpa": {
+                            "type": "number",
+                            "description": "Numerical uncertainty u_num in MPa (default 0.05).",
+                        },
+                        "u_num_rel": {
+                            "type": "number",
+                            "description": "Deprecated alias for u_num_mpa (in MPa).",
+                        },
                     },
                     "additionalProperties": False,
                 },
@@ -993,13 +1000,37 @@ class FormaMechMcpServer:
         )
         return result.document()
 
+    def _require_active_workspace(self, ws_path: Path, *, tool_name: str) -> str:
+        ws_rel = str(ws_path.relative_to(self.workspace_root).as_posix())
+        active = self._workflow.active_workspace_rel
+        if active is not None and ws_rel != active:
+            raise ValueError(
+                f"{tool_name} workspace {ws_rel!r} does not match active workflow "
+                f"workspace {active!r}; call import_cad_part to start a new study"
+            )
+        return ws_rel
+
+    def _clear_cached_qualification(self) -> None:
+        self._workflow.last_fem_result = None
+        self._workflow.last_qualification_sha256 = None
+        self._workflow.last_receipt_sha256 = None
+
     def _tool_import_cad_part(self, args: Mapping[str, Any]) -> dict[str, Any]:
         from piginot.geometry.mesh3d import CellType3D
         from piginot.ui.workbench_3d.state_3d import Workbench3DWorkspace
 
+        # Enforce FSM precondition BEFORE mutating any workspace files on disk
+        AGENT_WORKFLOW_MACHINE.require_transition(
+            self._workflow.state,
+            AgentWorkflowState.CAD_IMPORTED,
+            trigger="import_cad_part",
+        )
+        mesh_size = float(args.get("mesh_size_mm", 6.0))
+        if not math.isfinite(mesh_size) or mesh_size <= 0.0:
+            raise ValueError("mesh_size_mm must be finite and positive")
+
         ws_path = self.resolve_path(str(args["workspace_dir"]))
         ws = Workbench3DWorkspace(ws_path)
-        mesh_size = float(args.get("mesh_size_mm", 6.0))
         if bool(args.get("sample_3d_box", False)):
             preview = ws.import_sample_box(
                 mesh_size_mm=mesh_size, element_type=CellType3D.TET10
@@ -1017,6 +1048,7 @@ class FormaMechMcpServer:
 
         n_dofs = int(preview["node_count"]) * 3
         self._workflow.check_dofs(n_dofs)
+        self._clear_cached_qualification()
         self._workflow.transition(
             AgentWorkflowState.CAD_IMPORTED,
             trigger="import_cad_part",
@@ -1049,6 +1081,7 @@ class FormaMechMcpServer:
             trigger="propose_physics_setup",
         )
         ws_path = self.resolve_path(str(args["workspace_dir"]))
+        self._require_active_workspace(ws_path, tool_name="propose_physics_setup")
         ws = Workbench3DWorkspace(ws_path)
         preview = ws.load_preview()
         state = ws.load_state()
@@ -1058,10 +1091,12 @@ class FormaMechMcpServer:
         e_mpa = float(args.get("youngs_modulus_mpa", 100.0))
         nu = float(args.get("poisson_ratio", 0.30))
         load_ux = float(args.get("load_ux_mm", 0.25))
-        if not (1.0 <= e_mpa <= 10_000.0):
+        if not math.isfinite(e_mpa) or not (1.0 <= e_mpa <= 10_000.0):
             raise ValueError("youngs_modulus_mpa must lie in [1.0, 10000.0]")
-        if not (0.0 <= nu <= 0.49):
+        if not math.isfinite(nu) or not (0.0 <= nu <= 0.49):
             raise ValueError("poisson_ratio must lie in [0.0, 0.49]")
+        if not math.isfinite(load_ux):
+            raise ValueError("load_ux_mm must be finite")
 
         # Update loaded face displacement if specified
         assignments = [FaceAssignment3D.from_document(a) for a in state["assignments"]]
@@ -1099,6 +1134,7 @@ class FormaMechMcpServer:
             last_event_id="mcp-propose",
             last_result={"event_id": "mcp-propose", "status": "accepted"},
         )
+        self._clear_cached_qualification()
         self._workflow.transition(
             AgentWorkflowState.SETUP_PROPOSED,
             trigger="propose_physics_setup",
@@ -1121,12 +1157,12 @@ class FormaMechMcpServer:
             trigger="compile_and_qualify",
         )
         ws_path = self.resolve_path(str(args["workspace_dir"]))
+        self._require_active_workspace(ws_path, tool_name="compile_and_qualify")
         ws = Workbench3DWorkspace(ws_path)
         mesh = ws.load_mesh()
         if mesh is None:
             raise ValueError("workspace has no imported 3D mesh")
         self._workflow.check_dofs(len(mesh.nodes) * 3)
-        self._workflow.reserve_fem_solves(1)
 
         setup_path = ws_path / "physics_3d_setup.json"
         setup = (
@@ -1134,9 +1170,17 @@ class FormaMechMcpServer:
             if setup_path.is_file()
             else {"youngs_modulus_mpa": 100.0, "poisson_ratio": 0.30}
         )
+        e_mpa = float(setup["youngs_modulus_mpa"])
+        nu = float(setup["poisson_ratio"])
+        if not math.isfinite(e_mpa) or not (1.0 <= e_mpa <= 10_000.0):
+            raise ValueError("youngs_modulus_mpa must lie in [1.0, 10000.0]")
+        if not math.isfinite(nu) or not (0.0 <= nu <= 0.49):
+            raise ValueError("poisson_ratio must lie in [0.0, 0.49]")
+
+        self._workflow.reserve_fem_solves(1)
         res = ws.solve_preview_fem(
-            youngs_modulus_mpa=float(setup["youngs_modulus_mpa"]),
-            poisson_ratio=float(setup["poisson_ratio"]),
+            youngs_modulus_mpa=e_mpa,
+            poisson_ratio=nu,
             load_steps=int(args.get("load_steps", 2)),
         )
         self._workflow.transition(
@@ -1145,6 +1189,7 @@ class FormaMechMcpServer:
             reason="Executed authoritative 3D FEM verification solve.",
         )
         if not res.converged or res.min_det_f <= 0.0:
+            self._clear_cached_qualification()
             self._workflow.transition(
                 AgentWorkflowState.REFUSED,
                 trigger="refuse",
@@ -1198,6 +1243,14 @@ class FormaMechMcpServer:
         )
         n_samples = int(args["n_samples"])
         ws_path = self.resolve_path(str(args["workspace_dir"]))
+        self._require_active_workspace(ws_path, tool_name="run_active_fem_round")
+        base_e = float(args.get("youngs_modulus_mpa", 100.0))
+        nu = float(args.get("poisson_ratio", 0.30))
+        if not math.isfinite(base_e) or not (1.0 <= base_e <= 10_000.0):
+            raise ValueError("youngs_modulus_mpa must lie in [1.0, 10000.0]")
+        if not math.isfinite(nu) or not (0.0 <= nu <= 0.49):
+            raise ValueError("poisson_ratio must lie in [0.0, 0.49]")
+
         ws = Workbench3DWorkspace(ws_path)
         mesh = ws.load_mesh()
         if mesh is None:
@@ -1205,8 +1258,6 @@ class FormaMechMcpServer:
         self._workflow.check_dofs(len(mesh.nodes) * 3)
         self._workflow.reserve_fem_solves(n_samples)
 
-        base_e = float(args.get("youngs_modulus_mpa", 100.0))
-        nu = float(args.get("poisson_ratio", 0.30))
         summaries: list[dict[str, Any]] = []
         for idx in range(n_samples):
             e_val = min(10_000.0, max(1.0, base_e * (1.0 + 0.05 * idx)))
@@ -1247,7 +1298,14 @@ class FormaMechMcpServer:
         from piginot.ui.workbench_3d.vv10_panel import run_vv10_calibration_summary
 
         ds_path = self.resolve_path(str(args["dataset_path"]))
-        u_num = float(args.get("u_num_rel", 0.05))
+        if "u_num_mpa" in args and "u_num_rel" in args:
+            raise ValueError("pass either 'u_num_mpa' or 'u_num_rel', not both")
+        raw_u_num = (
+            args["u_num_mpa"] if "u_num_mpa" in args else args.get("u_num_rel", 0.05)
+        )
+        u_num = float(raw_u_num)
+        if not math.isfinite(u_num) or u_num < 0.0:
+            raise ValueError("u_num_mpa must be finite and nonnegative")
         return {
             "validation_dossier": run_vv10_calibration_summary(
                 ds_path, u_num_mpa=u_num
@@ -1268,6 +1326,7 @@ class FormaMechMcpServer:
             trigger="export_verified_artifact",
         )
         ws_path = self.resolve_path(str(args["workspace_dir"]))
+        self._require_active_workspace(ws_path, tool_name="export_verified_artifact")
         out_path = self.resolve_path(str(args["output_path"]))
         fmt = str(args.get("format", "vtu"))
         ws = Workbench3DWorkspace(ws_path)
@@ -1275,6 +1334,11 @@ class FormaMechMcpServer:
         res = self._workflow.last_fem_result
         if mesh is None or res is None:
             raise ValueError("no qualified 3D FEM solution is cached for export")
+        if len(mesh.nodes) != len(res.nodal_displacement):
+            raise ValueError(
+                f"workspace mesh ({len(mesh.nodes)} nodes) does not match qualified "
+                f"FEM solution ({len(res.nodal_displacement)} nodes)"
+            )
 
         out_path.parent.mkdir(parents=True, exist_ok=True)
         if fmt == "glb":

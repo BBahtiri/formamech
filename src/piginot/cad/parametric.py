@@ -668,7 +668,7 @@ def _gmsh_occ_template_generator(
         else 0.45 * size_mm
     )
 
-    gmsh.initialize()
+    gmsh.initialize([], readConfigFiles=False, interruptible=False)
     try:
         gmsh.option.setNumber("General.Terminal", 0)
         gmsh.option.setNumber("Mesh.MshFileVersion", 2.2)

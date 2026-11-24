@@ -32,6 +32,7 @@ VIEWER_3D_PREVIEW_SCHEMA: Final = "formamech.cad-preview-3d-v1"
 VALID_FACE_BC_KINDS: Final = frozenset(
     {"fixed", "dirichlet", "traction", "contact", "traction_free"}
 )
+VALID_DIRICHLET_COMPONENTS: Final = frozenset({"x", "y", "z"})
 _NAME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_\-]{0,63}$")
 
 
@@ -59,6 +60,8 @@ class FaceAssignment3D:
     @classmethod
     def from_document(cls, doc: Mapping[str, Any]) -> FaceAssignment3D:
         tr = doc.get("traction_mpa", [0.0, 0.0, 0.0])
+        if not isinstance(tr, Sequence) or isinstance(tr, (str, bytes)) or len(tr) != 3:
+            raise ValueError("traction_mpa must be a 3-element numeric vector")
         tr_t = (float(tr[0]), float(tr[1]), float(tr[2]))
         return cls(
             face_tag=str(doc["face_tag"]),
@@ -137,6 +140,14 @@ def validate_face_assignments_3d(
             if len(a.components) != len(a.values_mm) or not a.components:
                 errors.append(
                     f"dirichlet BC {a.name!r} requires matching components/values"
+                )
+            elif any(c not in VALID_DIRICHLET_COMPONENTS for c in a.components):
+                errors.append(
+                    f"dirichlet BC {a.name!r} has unsupported components {a.components!r}; use 'x', 'y', 'z'"
+                )
+            elif len(set(a.components)) != len(a.components):
+                errors.append(
+                    f"dirichlet BC {a.name!r} has duplicate components {a.components!r}"
                 )
             if any(not math.isfinite(v) for v in a.values_mm):
                 errors.append(f"dirichlet BC {a.name!r} has non-finite values")
@@ -446,6 +457,14 @@ class Workbench3DWorkspace:
                 errors["values_mm"] = (
                     "dirichlet requires matching components and values"
                 )
+            elif any(c not in VALID_DIRICHLET_COMPONENTS for c in proposed.components):
+                errors["components"] = (
+                    "dirichlet components must be chosen from 'x', 'y', 'z'"
+                )
+            elif len(set(proposed.components)) != len(proposed.components):
+                errors["components"] = (
+                    "dirichlet components must not contain duplicates"
+                )
             elif any(not math.isfinite(v) for v in proposed.values_mm):
                 errors["values_mm"] = "dirichlet values must be finite"
         if proposed.kind == "traction" and any(
@@ -466,20 +485,23 @@ class Workbench3DWorkspace:
             cur = FaceAssignment3D.from_document(item)
             updated.append(proposed if cur.face_tag == proposed.face_tag else cur)
 
-        ack_base = {
+        geom_id = str(state["geometry_id"])
+        new_rev = _sha256_hex(
+            canonical_json_bytes(
+                {
+                    "geometry_id": geom_id,
+                    "assignments": [a.document() for a in updated],
+                }
+            )
+        )[:16]
+        ack = {
             "event_id": event_id,
             "face_tag": face_tag,
             "status": "accepted",
+            "draft_revision": new_rev,
         }
-        new_rev = self._save_state(
-            geometry_id=str(state["geometry_id"]),
-            assignments=updated,
-            last_event_id=event_id,
-            last_result=ack_base,
-        )
-        ack = {**ack_base, "draft_revision": new_rev}
         self._save_state(
-            geometry_id=str(state["geometry_id"]),
+            geometry_id=geom_id,
             assignments=updated,
             last_event_id=event_id,
             last_result=ack,
@@ -504,6 +526,14 @@ class Workbench3DWorkspace:
         )
         if not ok:
             raise ValueError("3D boundary setup incomplete: " + "; ".join(errs))
+
+        contact_faces = [a.face_tag for a in assignments if a.kind == "contact"]
+        if contact_faces:
+            raise ValueError(
+                "3D preview FEM does not solve contact constraints "
+                f"(contact faces: {', '.join(contact_faces)}); use ContactSpec3D "
+                "or change those faces to fixed, dirichlet, traction, or traction_free"
+            )
 
         dirichlet_bcs: list[DirichletBC3D] = []
         traction_bcs: list[TractionBC3D] = []

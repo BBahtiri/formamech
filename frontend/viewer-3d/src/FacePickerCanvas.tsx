@@ -77,6 +77,45 @@ export function canCreateWebGLContext(): boolean {
   }
 }
 
+function disposeGroup(group: THREE.Group): void {
+  for (const child of [...group.children]) {
+    if (child instanceof THREE.Mesh) {
+      child.geometry.dispose();
+      if (Array.isArray(child.material)) {
+        for (const m of child.material) m.dispose();
+      } else {
+        child.material.dispose();
+      }
+    }
+    group.remove(child);
+  }
+}
+
+export function faceGroupMeanFieldValue(
+  faceGroup: SurfaceFaceGroup3D,
+  triangles: readonly [number, number, number][],
+  field: ScalarField3D | null,
+  nodeCount: number,
+): number | null {
+  if (!field || field.values.length !== nodeCount || nodeCount === 0) return null;
+  const seen = new Set<number>();
+  let sum = 0;
+  for (const triIdx of faceGroup.triangle_indices) {
+    const tri = triangles[triIdx];
+    if (!tri) continue;
+    for (const nid of tri) {
+      if (nid >= 0 && nid < field.values.length && !seen.has(nid)) {
+        const v = field.values[nid];
+        if (Number.isFinite(v)) {
+          seen.add(nid);
+          sum += v;
+        }
+      }
+    }
+  }
+  return seen.size > 0 ? sum / seen.size : null;
+}
+
 export function FacePickerCanvas(props: FacePickerCanvasProps) {
   const {
     nodesMm,
@@ -99,14 +138,44 @@ export function FacePickerCanvas(props: FacePickerCanvasProps) {
     () => Boolean(rendererFactory) || canCreateWebGLContext(),
   );
   const bbox = useMemo(() => computeBoundingBox(nodesMm), [nodesMm]);
+  const bboxKey = `${bbox.min.join(",")}|${bbox.max.join(",")}`;
   const deformed = useMemo(
     () => buildDeformedNodes(nodesMm, displacementsMm, deformScale),
     [nodesMm, displacementsMm, deformScale],
   );
 
+  // Persistent Three.js handles so face clicks / slider changes never destroy
+  // the WebGL context or reset the user's OrbitControls camera pose.
+  const runtimeRef = useRef<{
+    renderer: RendererLike;
+    scene: THREE.Scene;
+    camera: THREE.PerspectiveCamera;
+    controls: OrbitControls;
+    dirLight: THREE.DirectionalLight;
+    meshGroup: THREE.Group;
+    pickableMeshes: THREE.Mesh[];
+    framedBboxKey: string | null;
+  } | null>(null);
+
+  const interactRef = useRef({
+    onSelectFace,
+    onProbe,
+    activeField,
+    deformed,
+    nodeCount: nodesMm.length,
+  });
+  interactRef.current = {
+    onSelectFace,
+    onProbe,
+    activeField,
+    deformed,
+    nodeCount: nodesMm.length,
+  };
+
+  // Lifecycle effect: initialize WebGLRenderer, Scene, Camera, OrbitControls once
   useEffect(() => {
     const host = containerRef.current;
-    if (!host || !webglReady || nodesMm.length === 0 || triangles.length === 0) {
+    if (!host || !webglReady) {
       return;
     }
 
@@ -130,6 +199,100 @@ export function FacePickerCanvas(props: FacePickerCanvasProps) {
     const scene = new THREE.Scene();
     scene.background = new THREE.Color("#f8fafc");
     const camera = new THREE.PerspectiveCamera(42, width / height, 0.1, 1e5);
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.65));
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.85);
+    scene.add(dirLight);
+
+    const meshGroup = new THREE.Group();
+    scene.add(meshGroup);
+
+    const runtime = {
+      renderer,
+      scene,
+      camera,
+      controls,
+      dirLight,
+      meshGroup,
+      pickableMeshes: [] as THREE.Mesh[],
+      framedBboxKey: null as string | null,
+    };
+    runtimeRef.current = runtime;
+
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    const handlePointerDown = (ev: MouseEvent) => {
+      const rect = renderer.domElement.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return;
+      pointer.x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((ev.clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(pointer, camera);
+      const hits = raycaster.intersectObjects(runtime.pickableMeshes, false);
+      if (hits.length > 0) {
+        const hit = hits[0];
+        const tag = String(hit.object.userData.faceTag ?? "");
+        if (tag) {
+          const cur = interactRef.current;
+          cur.onSelectFace(tag);
+          let val: number | null = null;
+          if (cur.activeField && cur.activeField.values.length === cur.nodeCount) {
+            let bestIdx = 0;
+            let bestD2 = Number.POSITIVE_INFINITY;
+            for (let i = 0; i < cur.deformed.length; i += 1) {
+              const dx = cur.deformed[i][0] - hit.point.x;
+              const dy = cur.deformed[i][1] - hit.point.y;
+              const dz = cur.deformed[i][2] - hit.point.z;
+              const d2 = dx * dx + dy * dy + dz * dz;
+              if (d2 < bestD2) {
+                bestD2 = d2;
+                bestIdx = i;
+              }
+            }
+            val = cur.activeField.values[bestIdx] ?? null;
+          }
+          cur.onProbe({
+            face_tag: tag,
+            point_mm: [hit.point.x, hit.point.y, hit.point.z],
+            field_label: cur.activeField?.label ?? "Boundary Role",
+            field_value: val,
+            field_unit: cur.activeField?.unit ?? "",
+          });
+        }
+      }
+    };
+    renderer.domElement.addEventListener("pointerdown", handlePointerDown);
+
+    let rafId = 0;
+    const renderLoop = () => {
+      controls.update();
+      renderer.render(scene, camera);
+      rafId = window.requestAnimationFrame(renderLoop);
+    };
+    renderLoop();
+
+    return () => {
+      window.cancelAnimationFrame(rafId);
+      renderer.domElement.removeEventListener("pointerdown", handlePointerDown);
+      disposeGroup(meshGroup);
+      controls.dispose();
+      renderer.dispose();
+      runtimeRef.current = null;
+    };
+  }, [webglReady, rendererFactory]);
+
+  // Scene-mesh update effect: rebuilds geometry/materials & disposes old GPU buffers
+  useEffect(() => {
+    const rt = runtimeRef.current;
+    if (!rt || !webglReady) return;
+
+    disposeGroup(rt.meshGroup);
+    rt.pickableMeshes = [];
+    if (nodesMm.length === 0 || triangles.length === 0) {
+      rt.renderer.render(rt.scene, rt.camera);
+      return;
+    }
 
     const cx = 0.5 * (bbox.min[0] + bbox.max[0]);
     const cy = 0.5 * (bbox.min[1] + bbox.max[1]);
@@ -138,17 +301,13 @@ export function FacePickerCanvas(props: FacePickerCanvasProps) {
       1,
       Math.hypot(bbox.max[0] - bbox.min[0], bbox.max[1] - bbox.min[1], bbox.max[2] - bbox.min[2]),
     );
-    camera.position.set(cx + diag * 1.4, cy + diag * 1.1, cz + diag * 1.4);
-    camera.lookAt(cx, cy, cz);
-
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.target.set(cx, cy, cz);
-    controls.enableDamping = true;
-
-    scene.add(new THREE.AmbientLight(0xffffff, 0.65));
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.85);
-    dirLight.position.set(cx + diag * 2, cy + diag * 2, cz + diag * 2);
-    scene.add(dirLight);
+    if (rt.framedBboxKey !== bboxKey) {
+      rt.camera.position.set(cx + diag * 1.4, cy + diag * 1.1, cz + diag * 1.4);
+      rt.camera.lookAt(cx, cy, cz);
+      rt.controls.target.set(cx, cy, cz);
+      rt.dirLight.position.set(cx + diag * 2, cy + diag * 2, cz + diag * 2);
+      rt.framedBboxKey = bboxKey;
+    }
 
     const clipPlanes = [
       new THREE.Plane(
@@ -165,8 +324,9 @@ export function FacePickerCanvas(props: FacePickerCanvasProps) {
       ),
     ];
 
-    const [fLo, fHi] = activeField ? fieldRange(activeField.values) : [0, 1];
-    const pickableMeshes: THREE.Mesh[] = [];
+    const fieldMatchesNodes =
+      activeField !== null && activeField.values.length === nodesMm.length;
+    const [fLo, fHi] = fieldMatchesNodes ? fieldRange(activeField.values) : [0, 1];
 
     for (const fg of faceGroups) {
       const positions: number[] = [];
@@ -181,7 +341,7 @@ export function FacePickerCanvas(props: FacePickerCanvasProps) {
         for (const nid of tri) {
           const p = deformed[nid] ?? [0, 0, 0];
           positions.push(p[0], p[1], p[2]);
-          if (activeField && nid < activeField.values.length) {
+          if (fieldMatchesNodes && activeField) {
             const norm = (activeField.values[nid] - fLo) / (fHi - fLo);
             const [vr, vg, vb] = sampleViridisRgb(norm);
             colors.push(vr, vg, vb);
@@ -206,8 +366,8 @@ export function FacePickerCanvas(props: FacePickerCanvasProps) {
       });
       const mesh = new THREE.Mesh(geom, mat);
       mesh.userData = { faceTag: fg.face_tag };
-      scene.add(mesh);
-      pickableMeshes.push(mesh);
+      rt.meshGroup.add(mesh);
+      rt.pickableMeshes.push(mesh);
     }
 
     if (showWireframeGhost) {
@@ -226,64 +386,10 @@ export function FacePickerCanvas(props: FacePickerCanvasProps) {
         opacity: 0.25,
         clippingPlanes: clipPlanes,
       });
-      scene.add(new THREE.Mesh(gGeom, gMat));
+      rt.meshGroup.add(new THREE.Mesh(gGeom, gMat));
     }
 
-    const raycaster = new THREE.Raycaster();
-    const pointer = new THREE.Vector2();
-    const handlePointerDown = (ev: MouseEvent) => {
-      const rect = renderer.domElement.getBoundingClientRect();
-      pointer.x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
-      pointer.y = -((ev.clientY - rect.top) / rect.height) * 2 + 1;
-      raycaster.setFromCamera(pointer, camera);
-      const hits = raycaster.intersectObjects(pickableMeshes, false);
-      if (hits.length > 0) {
-        const hit = hits[0];
-        const tag = String(hit.object.userData.faceTag ?? "");
-        if (tag) {
-          onSelectFace(tag);
-          let val: number | null = null;
-          if (activeField && activeField.values.length > 0) {
-            let bestIdx = 0;
-            let bestD2 = Number.POSITIVE_INFINITY;
-            for (let i = 0; i < deformed.length; i += 1) {
-              const dx = deformed[i][0] - hit.point.x;
-              const dy = deformed[i][1] - hit.point.y;
-              const dz = deformed[i][2] - hit.point.z;
-              const d2 = dx * dx + dy * dy + dz * dz;
-              if (d2 < bestD2) {
-                bestD2 = d2;
-                bestIdx = i;
-              }
-            }
-            val = activeField.values[bestIdx] ?? null;
-          }
-          onProbe({
-            face_tag: tag,
-            point_mm: [hit.point.x, hit.point.y, hit.point.z],
-            field_label: activeField?.label ?? "Boundary Role",
-            field_value: val,
-            field_unit: activeField?.unit ?? "",
-          });
-        }
-      }
-    };
-    renderer.domElement.addEventListener("pointerdown", handlePointerDown);
-
-    let rafId = 0;
-    const renderLoop = () => {
-      controls.update();
-      renderer.render(scene, camera);
-      rafId = window.requestAnimationFrame(renderLoop);
-    };
-    renderLoop();
-
-    return () => {
-      window.cancelAnimationFrame(rafId);
-      renderer.domElement.removeEventListener("pointerdown", handlePointerDown);
-      controls.dispose();
-      renderer.dispose();
-    };
+    rt.renderer.render(rt.scene, rt.camera);
   }, [
     webglReady,
     nodesMm,
@@ -296,9 +402,7 @@ export function FacePickerCanvas(props: FacePickerCanvasProps) {
     showWireframeGhost,
     clip,
     bbox,
-    onSelectFace,
-    onProbe,
-    rendererFactory,
+    bboxKey,
   ]);
 
   if (!webglReady) {
@@ -323,8 +427,12 @@ export function FacePickerCanvas(props: FacePickerCanvasProps) {
                     face_tag: fg.face_tag,
                     point_mm: fg.centroid_mm,
                     field_label: activeField?.label ?? "Boundary Role",
-                    field_value:
-                      activeField && activeField.values.length > 0 ? activeField.values[0] : null,
+                    field_value: faceGroupMeanFieldValue(
+                      fg,
+                      triangles,
+                      activeField,
+                      nodesMm.length,
+                    ),
                     field_unit: activeField?.unit ?? "",
                   });
                 }}

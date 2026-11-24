@@ -227,3 +227,67 @@ def test_mcp_agentic_security_fsm_and_ingest_vv10_tools(tmp_path: Path) -> None:
         vv["validation_dossier"]["experimental_validation_tier"]
         == "HOLDOUT_EXPERIMENTALLY_VALIDATED"
     )
+
+    # Canonical u_num_mpa parameter works and conflicting/negative inputs fail closed
+    vv2 = server.call_tool(
+        "run_experimental_validation", {"dataset_path": "vv10.json", "u_num_mpa": 0.05}
+    )
+    assert (
+        vv2["validation_dossier"]["experimental_validation_tier"]
+        == "HOLDOUT_EXPERIMENTALLY_VALIDATED"
+    )
+    with pytest.raises(ValueError, match="not both"):
+        server.call_tool(
+            "run_experimental_validation",
+            {"dataset_path": "vv10.json", "u_num_mpa": 0.05, "u_num_rel": 0.05},
+        )
+    with pytest.raises(ValueError, match="nonnegative"):
+        server.call_tool(
+            "run_experimental_validation",
+            {"dataset_path": "vv10.json", "u_num_mpa": -0.1},
+        )
+
+
+def test_mcp_workflow_guards_pre_fsm_disk_isolation_and_budget_preservation(
+    tmp_path: Path,
+) -> None:
+    server = FormaMechMcpServer(tmp_path, max_dof_limit=50_000, max_fem_solves=4)
+    server.call_tool(
+        "import_cad_part",
+        {"workspace_dir": "ws_a", "sample_3d_box": True, "mesh_size_mm": 8.0},
+    )
+    server.call_tool(
+        "propose_physics_setup",
+        {"workspace_dir": "ws_a", "youngs_modulus_mpa": 100.0},
+    )
+
+    # 1) Illegal import_cad_part in SETUP_PROPOSED must fail BEFORE mutating disk
+    state_before = (tmp_path / "ws_a" / "state_3d.json").read_bytes()
+    with pytest.raises(InvalidTransitionError):
+        server.call_tool(
+            "import_cad_part",
+            {"workspace_dir": "ws_a", "sample_3d_box": True, "mesh_size_mm": 6.0},
+        )
+    assert (tmp_path / "ws_a" / "state_3d.json").read_bytes() == state_before
+
+    # 2) Workspace mismatch refused across compile_and_qualify / active FEM / export
+    other = Workbench3DWorkspace(tmp_path / "ws_b")
+    other.import_sample_box(mesh_size_mm=8.0)
+    with pytest.raises(ValueError, match="does not match active workflow workspace"):
+        server.call_tool("compile_and_qualify", {"workspace_dir": "ws_b"})
+
+    server.call_tool("compile_and_qualify", {"workspace_dir": "ws_a", "load_steps": 1})
+    with pytest.raises(ValueError, match="does not match active workflow workspace"):
+        server.call_tool(
+            "export_verified_artifact",
+            {"workspace_dir": "ws_b", "output_path": "bad.vtu", "format": "vtu"},
+        )
+
+    # 3) Invalid material parameters on run_active_fem_round fail BEFORE consuming FEM budget
+    used_before = server.workflow_snapshot().metadata["fem_solves_used"]
+    with pytest.raises(ValueError, match="poisson_ratio"):
+        server.call_tool(
+            "run_active_fem_round",
+            {"workspace_dir": "ws_a", "n_samples": 2, "poisson_ratio": 0.99},
+        )
+    assert server.workflow_snapshot().metadata["fem_solves_used"] == used_before

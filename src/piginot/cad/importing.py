@@ -230,7 +230,7 @@ def import_cad(
         raise CadImportError(
             "session", "CAD import requires its own inactive Gmsh session"
         )
-    gmsh.initialize([], readConfigFiles=False)
+    gmsh.initialize([], readConfigFiles=False, interruptible=False)
     try:
         gmsh.option.setNumber("General.Terminal", 0)
         for option, value in {

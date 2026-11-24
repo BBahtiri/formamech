@@ -1077,11 +1077,19 @@ def _render_3d_solid_mode(st: Any, workspace_root: Path) -> None:
             tmp_step = ws3.root / "geometry_3d" / uploaded.name
             tmp_step.parent.mkdir(parents=True, exist_ok=True)
             tmp_step.write_bytes(uploaded.getvalue())
-            ws3.import_step_path(tmp_step, mesh_size_mm=mesh_size)
-            st.rerun()
+            try:
+                ws3.import_step_path(tmp_step, mesh_size_mm=mesh_size)
+                st.session_state.pop("wb3d_last_fem", None)
+                st.rerun()
+            except Exception as exc:
+                st.error(f"3D STEP import failed: {exc}")
         if st.button("Generate Sample 3D Box"):
-            ws3.import_sample_box(mesh_size_mm=mesh_size)
-            st.rerun()
+            try:
+                ws3.import_sample_box(mesh_size_mm=mesh_size)
+                st.session_state.pop("wb3d_last_fem", None)
+                st.rerun()
+            except Exception as exc:
+                st.error(f"Sample 3D box generation failed: {exc}")
 
         e_mpa = float(
             st.number_input(
@@ -1101,44 +1109,70 @@ def _render_3d_solid_mode(st: Any, workspace_root: Path) -> None:
                 key="wb3d_nu",
             )
         )
-        if ws3.load_preview() is not None and st.button(
+        preview = ws3.load_preview()
+        state = ws3.load_state()
+        if preview is not None and st.button(
             "Solve 3D Finite-Strain FEM", type="primary"
         ):
-            res = ws3.solve_preview_fem(youngs_modulus_mpa=e_mpa, poisson_ratio=nu)
-            st.session_state["wb3d_last_fem"] = res
-            st.success(
-                f"Converged={res.converged} · max |u|={res.max_displacement_mm:.4f} mm · "
-                f"peak von Mises={res.peak_von_mises_mpa:.2f} MPa"
-            )
+            try:
+                res = ws3.solve_preview_fem(youngs_modulus_mpa=e_mpa, poisson_ratio=nu)
+                st.session_state["wb3d_last_fem"] = {
+                    "workspace_id": ws3.workspace_id,
+                    "geometry_id": str(preview["geometry_id"]),
+                    "draft_revision": str(state["draft_revision"])
+                    if state is not None
+                    else "",
+                    "node_count": int(preview["node_count"]),
+                    "result": res,
+                }
+                st.success(
+                    f"Converged={res.converged} · max |u|={res.max_displacement_mm:.4f} mm · "
+                    f"peak von Mises={res.peak_von_mises_mpa:.2f} MPa"
+                )
+            except Exception as exc:
+                st.session_state.pop("wb3d_last_fem", None)
+                st.error(f"3D FEM preview solve failed: {exc}")
 
     with c2:
-        if ws3.load_preview() is None:
+        preview = ws3.load_preview()
+        state = ws3.load_state()
+        if preview is None or state is None:
             st.info(
                 "Upload a 3D STEP part or click **Generate Sample 3D Box** to open the "
                 "interactive WebGL 3D face picker and field explorer."
             )
         else:
-            last_fem = st.session_state.get("wb3d_last_fem")
+            cached_fem = st.session_state.get("wb3d_last_fem")
             disps = None
             fields = None
+            last_fem = None
+            if (
+                isinstance(cached_fem, dict)
+                and cached_fem.get("workspace_id") == ws3.workspace_id
+                and cached_fem.get("geometry_id") == str(preview["geometry_id"])
+                and cached_fem.get("draft_revision") == str(state["draft_revision"])
+                and cached_fem.get("node_count") == int(preview["node_count"])
+            ):
+                last_fem = cached_fem.get("result")
             if last_fem is not None and last_fem.converged:
                 u_arr = np.asarray(last_fem.nodal_displacement, dtype=np.float64)
-                disps = u_arr.tolist()
-                u_mag = np.linalg.norm(u_arr, axis=1)
-                fields = {
-                    "von_mises_mpa": {
-                        "name": "von_mises_mpa",
-                        "label": "von Mises Stress",
-                        "unit": "MPa",
-                        "values": [float(v) for v in last_fem.nodal_von_mises_mpa],
-                    },
-                    "displacement_mag_mm": {
-                        "name": "displacement_mag_mm",
-                        "label": "Displacement |u|",
-                        "unit": "mm",
-                        "values": [float(v) for v in u_mag],
-                    },
-                }
+                if len(u_arr) == int(preview["node_count"]):
+                    disps = u_arr.tolist()
+                    u_mag = np.linalg.norm(u_arr, axis=1)
+                    fields = {
+                        "von_mises_mpa": {
+                            "name": "von_mises_mpa",
+                            "label": "von Mises Stress",
+                            "unit": "MPa",
+                            "values": [float(v) for v in last_fem.nodal_von_mises_mpa],
+                        },
+                        "displacement_mag_mm": {
+                            "name": "displacement_mag_mm",
+                            "label": "Displacement |u|",
+                            "unit": "mm",
+                            "values": [float(v) for v in u_mag],
+                        },
+                    }
             render_viewer_3d(st, ws3, displacements_mm=disps, fields=fields)
 
 

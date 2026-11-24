@@ -227,3 +227,129 @@ def test_streamlit_apptest_workflow_modes_render_cleanly(
         assert not at.exception, (
             f"Mode {mode} raised: {[e.value for e in at.exception]}"
         )
+
+
+def test_workbench_3d_worker_thread_gmsh_validation_contact_and_multi_solver_discovery(
+    tmp_path: Path,
+) -> None:
+    import threading
+
+    from piginot.ui.workbench_3d import FaceAssignment3D, validate_face_assignments_3d
+    from piginot.ui.workbench_3d.vv10_panel import discover_cae_samples
+
+    # 1) Gmsh 3D STEP generation + import works cleanly inside a non-main worker thread (Streamlit)
+    worker_err: list[BaseException] = []
+    worker_nodes: list[int] = []
+
+    def _run_in_worker() -> None:
+        try:
+            ws_t = Workbench3DWorkspace(tmp_path / "ws_thread")
+            prev = ws_t.import_sample_box(mesh_size_mm=8.0)
+            worker_nodes.append(int(prev["node_count"]))
+        except BaseException as exc:  # pragma: no cover - regression guard
+            worker_err.append(exc)
+
+    th = threading.Thread(target=_run_in_worker)
+    th.start()
+    th.join(timeout=30.0)
+    assert not worker_err, f"Worker thread Gmsh import failed: {worker_err[0]}"
+    assert worker_nodes and worker_nodes[0] > 10
+
+    # 2) Invalid/duplicate Dirichlet components and contact fail-closed in preview FEM
+    ok_bad_comp, errs_bad_comp = validate_face_assignments_3d(
+        ["f1", "f2"],
+        [
+            FaceAssignment3D("f1", "fix1", "fixed", ("x", "y", "z"), (0.0, 0.0, 0.0)),
+            FaceAssignment3D("f2", "pull2", "dirichlet", ("w",), (0.2,)),
+        ],
+    )
+    assert not ok_bad_comp
+    assert any("unsupported components" in e for e in errs_bad_comp)
+
+    ok_dup_comp, errs_dup_comp = validate_face_assignments_3d(
+        ["f1", "f2"],
+        [
+            FaceAssignment3D("f1", "fix1", "fixed", ("x", "y", "z"), (0.0, 0.0, 0.0)),
+            FaceAssignment3D("f2", "pull2", "dirichlet", ("x", "x"), (0.2, 0.1)),
+        ],
+    )
+    assert not ok_dup_comp
+    assert any("duplicate components" in e for e in errs_dup_comp)
+
+    ws = Workbench3DWorkspace(tmp_path / "ws_contact")
+    ws.import_sample_box(mesh_size_mm=8.0)
+    payload = ws.viewer_payload()
+    loaded = next(a for a in payload["assignments"] if a["kind"] == "dirichlet")
+    bad_comp_ack = ws.apply_face_event(
+        {
+            "workspace_id": payload["workspace_id"],
+            "geometry_id": payload["geometry_id"],
+            "draft_revision": payload["draft_revision"],
+            "event_id": "ev-bad-comp",
+            "face_tag": loaded["face_tag"],
+            "assignment": {**loaded, "components": ["z", "z"], "values_mm": [0.1, 0.2]},
+        }
+    )
+    assert bad_comp_ack["status"] == "invalid"
+    assert "components" in bad_comp_ack["errors"]
+
+    free_face = next(a for a in payload["assignments"] if a["kind"] == "traction_free")
+    ack_contact = ws.apply_face_event(
+        {
+            "workspace_id": payload["workspace_id"],
+            "geometry_id": payload["geometry_id"],
+            "draft_revision": payload["draft_revision"],
+            "event_id": "ev-contact-1",
+            "face_tag": free_face["face_tag"],
+            "assignment": {
+                **free_face,
+                "kind": "contact",
+                "components": [],
+                "values_mm": [],
+            },
+        }
+    )
+    assert ack_contact["status"] == "accepted"
+    with pytest.raises(ValueError, match="ContactSpec3D"):
+        ws.solve_preview_fem(load_steps=1)
+
+    # 3) Multi-solver CAE archive discovery supports Abaqus .inp+.csv and Nastran .bdf+.csv
+    #    without double-parsing CalculiX .inp+.frd pairs
+    arch = tmp_path / "multi_solver_arch"
+    arch.mkdir()
+    tet_inp = (
+        "*NODE\n"
+        "1, 0.0, 0.0, 0.0\n2, 1.0, 0.0, 0.0\n3, 0.0, 1.0, 0.0\n4, 0.0, 0.0, 1.0\n"
+        "*ELEMENT, TYPE=C3D4\n1, 1, 2, 3, 4\n"
+    )
+    (arch / "abq_run.inp").write_text(tet_inp, encoding="utf-8")
+    (arch / "abq_run.csv").write_text(
+        "node_id,ux,uy,uz\n1,0,0,0\n2,0.01,0,0\n3,0,0,0\n4,0,0,0\n",
+        encoding="utf-8",
+    )
+    (arch / "nas_run.bdf").write_text(
+        "GRID,1,,0.0,0.0,0.0\nGRID,2,,1.0,0.0,0.0\nGRID,3,,0.0,1.0,0.0\nGRID,4,,0.0,0.0,1.0\n"
+        "CTETRA,1,1,1,2,3,4\n",
+        encoding="utf-8",
+    )
+    (arch / "nas_run.csv").write_text(
+        "node_id,ux,uy,uz\n1,0,0,0\n2,0.02,0,0\n3,0,0,0\n4,0,0,0\n",
+        encoding="utf-8",
+    )
+    (arch / "ccx_run.inp").write_text(tet_inp, encoding="utf-8")
+    (arch / "ccx_run.frd").write_text(
+        " -4  DISP        4    1\n"
+        " -1         1 0.00000E+00 0.00000E+00 0.00000E+00\n"
+        " -1         2 1.50000E-02 0.00000E+00 0.00000E+00\n"
+        " -1         3 0.00000E+00 0.00000E+00 0.00000E+00\n"
+        " -1         4 0.00000E+00 0.00000E+00 0.00000E+00\n"
+        " -3\n",
+        encoding="utf-8",
+    )
+    samples = discover_cae_samples(arch)
+    by_id = {s.sample_id: s.source_format.value for s in samples}
+    assert by_id == {
+        "abq_run": "abaqus-inp",
+        "ccx_run": "calculix-frd",
+        "nas_run": "nastran-bdf",
+    }

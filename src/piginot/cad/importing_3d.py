@@ -196,7 +196,7 @@ def import_cad_3d(
     gmsh = _gmsh_module()
     order = 2 if ctype is CellType3D.TET10 else 1
 
-    gmsh.initialize()
+    gmsh.initialize([], readConfigFiles=False, interruptible=False)
     try:
         gmsh.option.setNumber("General.Terminal", 0)
         gmsh.option.setString("Geometry.OCCTargetUnit", "MM")
@@ -463,7 +463,7 @@ def generate_3d_box_step(
     dest = Path(destination).resolve()
     dest.parent.mkdir(parents=True, exist_ok=True)
     gmsh = _gmsh_module()
-    gmsh.initialize()
+    gmsh.initialize([], readConfigFiles=False, interruptible=False)
     try:
         gmsh.option.setNumber("General.Terminal", 0)
         gmsh.model.add("box-3d")
@@ -488,7 +488,7 @@ def generate_3d_l_bracket_step(
     dest = Path(destination).resolve()
     dest.parent.mkdir(parents=True, exist_ok=True)
     gmsh = _gmsh_module()
-    gmsh.initialize()
+    gmsh.initialize([], readConfigFiles=False, interruptible=False)
     try:
         gmsh.option.setNumber("General.Terminal", 0)
         gmsh.model.add("l-bracket-3d")
@@ -528,7 +528,7 @@ def generate_3d_mounting_lug_step(
     dest = Path(destination).resolve()
     dest.parent.mkdir(parents=True, exist_ok=True)
     gmsh = _gmsh_module()
-    gmsh.initialize()
+    gmsh.initialize([], readConfigFiles=False, interruptible=False)
     try:
         gmsh.option.setNumber("General.Terminal", 0)
         gmsh.model.add("mounting-lug-3d")

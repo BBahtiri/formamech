@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { fieldRange } from "./colormap";
 import { FacePickerCanvas, type ClipState } from "./FacePickerCanvas";
 import type {
@@ -22,6 +22,17 @@ const BC_KINDS: { value: FaceBcKind; label: string }[] = [
   { value: "traction_free", label: "Traction Free" },
 ];
 
+function dirichletAxisValue(
+  assign: FaceAssignment3D | undefined,
+  axis: "x" | "y" | "z",
+): number {
+  if (!assign) return 0;
+  const idx = assign.components.indexOf(axis);
+  if (idx < 0 || idx >= assign.values_mm.length) return 0;
+  const val = assign.values_mm[idx];
+  return Number.isFinite(val) ? val : 0;
+}
+
 export function Viewer3D({ data, onApply }: Viewer3DProps) {
   const assignmentsByTag = useMemo(() => {
     const map: Record<string, FaceAssignment3D> = {};
@@ -39,30 +50,58 @@ export function Viewer3D({ data, onApply }: Viewer3DProps) {
   const [clip, setClip] = useState<ClipState>({ xFrac: 1.0, yFrac: 1.0, zFrac: 1.0 });
   const [probe, setProbe] = useState<ProbeReading3D | null>(null);
   const [eventSeq, setEventSeq] = useState<number>(1);
+  const instanceNonceRef = useRef<string>(Math.random().toString(36).slice(2, 8));
 
   const selectedAssign = selectedFaceTag ? assignmentsByTag[selectedFaceTag] : undefined;
   const [draftKind, setDraftKind] = useState<FaceBcKind>(selectedAssign?.kind ?? "traction_free");
   const [draftName, setDraftName] = useState<string>(
     selectedAssign?.name ?? (selectedFaceTag ?? "face_bc"),
   );
-  const [draftUx, setDraftUx] = useState<string>(String(selectedAssign?.values_mm[0] ?? 0));
-  const [draftUy, setDraftUy] = useState<string>(String(selectedAssign?.values_mm[1] ?? 0));
-  const [draftUz, setDraftUz] = useState<string>(String(selectedAssign?.values_mm[2] ?? 0));
+  const [draftUx, setDraftUx] = useState<string>(
+    String(dirichletAxisValue(selectedAssign, "x")),
+  );
+  const [draftUy, setDraftUy] = useState<string>(
+    String(dirichletAxisValue(selectedAssign, "y")),
+  );
+  const [draftUz, setDraftUz] = useState<string>(
+    String(dirichletAxisValue(selectedAssign, "z")),
+  );
   const [draftTx, setDraftTx] = useState<string>(String(selectedAssign?.traction_mpa[0] ?? 0));
   const [draftTy, setDraftTy] = useState<string>(String(selectedAssign?.traction_mpa[1] ?? 0));
   const [draftTz, setDraftTz] = useState<string>(String(selectedAssign?.traction_mpa[2] ?? 0));
 
-  const selectFace = (tag: string) => {
-    setSelectedFaceTag(tag);
-    const cur = assignmentsByTag[tag];
+  const syncDraftFromTag = (tag: string | null) => {
+    const cur = tag ? assignmentsByTag[tag] : undefined;
     setDraftKind(cur?.kind ?? "traction_free");
-    setDraftName(cur?.name ?? tag);
-    setDraftUx(String(cur?.values_mm[0] ?? 0));
-    setDraftUy(String(cur?.values_mm[1] ?? 0));
-    setDraftUz(String(cur?.values_mm[2] ?? 0));
+    setDraftName(cur?.name ?? (tag ?? "face_bc"));
+    setDraftUx(String(dirichletAxisValue(cur, "x")));
+    setDraftUy(String(dirichletAxisValue(cur, "y")));
+    setDraftUz(String(dirichletAxisValue(cur, "z")));
     setDraftTx(String(cur?.traction_mpa[0] ?? 0));
     setDraftTy(String(cur?.traction_mpa[1] ?? 0));
     setDraftTz(String(cur?.traction_mpa[2] ?? 0));
+  };
+
+  // Sync face selection, draft inputs, and active overlay when geometry or fields change
+  useEffect(() => {
+    const hasCurrent =
+      selectedFaceTag !== null &&
+      data.face_groups.some((fg) => fg.face_tag === selectedFaceTag);
+    const nextTag = hasCurrent ? selectedFaceTag : (data.face_groups[0]?.face_tag ?? null);
+    setSelectedFaceTag(nextTag);
+    syncDraftFromTag(nextTag);
+    setProbe(null);
+  }, [data.geometry_id, data.draft_revision]);
+
+  useEffect(() => {
+    if (fieldKey !== "__roles__" && (!data.fields || !data.fields[fieldKey])) {
+      setFieldKey("__roles__");
+    }
+  }, [data.fields, fieldKey]);
+
+  const selectFace = (tag: string) => {
+    setSelectedFaceTag(tag);
+    syncDraftFromTag(tag);
   };
 
   const activeField =
@@ -88,7 +127,7 @@ export function Viewer3D({ data, onApply }: Viewer3DProps) {
       workspace_id: data.workspace_id,
       geometry_id: data.geometry_id,
       draft_revision: data.draft_revision,
-      event_id: `apply-3d-${eventSeq}`,
+      event_id: `apply-3d-${data.draft_revision}-${instanceNonceRef.current}-${eventSeq}`,
       face_tag: selectedFaceTag,
       assignment: {
         face_tag: selectedFaceTag,

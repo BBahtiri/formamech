@@ -7,6 +7,7 @@ import { fieldRange, hexToRgbTuple, roleColorHex, sampleViridisRgb } from "./col
 import {
   buildDeformedNodes,
   computeBoundingBox,
+  faceGroupMeanFieldValue,
   FacePickerCanvas,
   type RendererLike,
 } from "./FacePickerCanvas";
@@ -271,5 +272,116 @@ describe("Viewer3D interactive workbench component", () => {
       />,
     );
     expect(screen.getByRole("button", { name: "Apply 3D Face BC" })).toBeDisabled();
+  });
+
+  it("maps single-axis dirichlet values accurately, resets state on new geometry, and preserves WebGL renderer across updates", async () => {
+    const user = userEvent.setup();
+    const onApply = vi.fn<(ev: ApplyFaceEvent3D) => void>();
+    const d1 = sampleData();
+    d1.assignments[1] = {
+      face_tag: "face_x_max",
+      name: "pull_y",
+      kind: "dirichlet",
+      components: ["y"],
+      values_mm: [0.42],
+      traction_mpa: [0, 0, 0],
+    };
+
+    const { rerender } = render(<Viewer3D data={d1} onApply={onApply} />);
+    await user.selectOptions(screen.getByLabelText("Field Overlay"), "von_mises_mpa");
+    await user.selectOptions(screen.getByLabelText("Selected Face"), "face_x_max");
+    // Single-axis "y" Dirichlet value must populate uy, NOT ux
+    expect(screen.getByLabelText("ux")).toHaveValue(0);
+    expect(screen.getByLabelText("uy")).toHaveValue(0.42);
+    expect(screen.getByLabelText("uz")).toHaveValue(0);
+
+    // Fallback face-group mean probe uses face vertices (nodes 0, 2, 3 -> (10+40+15)/3 = 21.6667)
+    const meanVal = faceGroupMeanFieldValue(
+      d1.face_groups[1],
+      d1.triangles,
+      d1.fields?.von_mises_mpa ?? null,
+      d1.nodes_mm.length,
+    );
+    expect(meanVal).toBeCloseTo((10 + 40 + 15) / 3, 5);
+    expect(faceGroupMeanFieldValue(d1.face_groups[1], d1.triangles, null, 4)).toBeNull();
+
+    // Re-importing a new geometry with new face tags & no fields resets selection & overlay cleanly
+    const d2: Viewer3DData = {
+      workspace_id: "ws-3d-001",
+      geometry_id: "geom-bracket-002",
+      draft_revision: "rev-2",
+      nodes_mm: d1.nodes_mm,
+      triangles: d1.triangles,
+      face_groups: [
+        { face_tag: "face_new_1", triangle_indices: [0, 1], area_mm2: 50.0, centroid_mm: [5, 2.5, 0] },
+      ],
+      assignments: [
+        {
+          face_tag: "face_new_1",
+          name: "new_fix",
+          kind: "fixed",
+          components: ["x", "y", "z"],
+          values_mm: [0, 0, 0],
+          traction_mpa: [0, 0, 0],
+        },
+      ],
+    };
+    rerender(<Viewer3D data={d2} onApply={onApply} />);
+    expect(screen.getByLabelText("Selected Face")).toHaveValue("face_new_1");
+    expect(screen.getByLabelText("Field Overlay")).toHaveValue("__roles__");
+
+    // FacePickerCanvas must keep WebGLRenderer alive across selection/clip changes and dispose GPU geometries
+    const canvas = document.createElement("canvas");
+    canvas.setPointerCapture = vi.fn();
+    canvas.releasePointerCapture = vi.fn();
+    canvas.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, width: 400, height: 300, right: 400, bottom: 300, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect;
+    const fakeRenderer: RendererLike = {
+      domElement: canvas,
+      localClippingEnabled: false,
+      setSize: vi.fn(),
+      render: vi.fn(),
+      dispose: vi.fn(),
+    };
+    const factory = vi.fn(() => fakeRenderer);
+    const geomDisposeSpy = vi.spyOn(THREE.BufferGeometry.prototype, "dispose");
+    const assignmentsByTag = Object.fromEntries(d1.assignments.map((a) => [a.face_tag, a]));
+    const { rerender: rerenderCanvas, unmount } = render(
+      <FacePickerCanvas
+        nodesMm={d1.nodes_mm}
+        triangles={d1.triangles}
+        faceGroups={d1.face_groups}
+        assignmentsByTag={assignmentsByTag}
+        selectedFaceTag="face_x_min"
+        activeField={null}
+        deformScale={1.0}
+        showWireframeGhost={true}
+        clip={{ xFrac: 1, yFrac: 1, zFrac: 1 }}
+        onSelectFace={vi.fn()}
+        onProbe={vi.fn()}
+        rendererFactory={factory}
+      />,
+    );
+    rerenderCanvas(
+      <FacePickerCanvas
+        nodesMm={d1.nodes_mm}
+        triangles={d1.triangles}
+        faceGroups={d1.face_groups}
+        assignmentsByTag={assignmentsByTag}
+        selectedFaceTag="face_x_max"
+        activeField={d1.fields?.von_mises_mpa ?? null}
+        deformScale={2.0}
+        showWireframeGhost={false}
+        clip={{ xFrac: 0.7, yFrac: 1, zFrac: 1 }}
+        onSelectFace={vi.fn()}
+        onProbe={vi.fn()}
+        rendererFactory={factory}
+      />,
+    );
+    expect(factory).toHaveBeenCalledTimes(1);
+    expect(geomDisposeSpy.mock.calls.length).toBeGreaterThanOrEqual(3);
+    unmount();
+    expect(fakeRenderer.dispose).toHaveBeenCalledTimes(1);
+    geomDisposeSpy.mockRestore();
   });
 });

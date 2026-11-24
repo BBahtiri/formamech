@@ -89,7 +89,7 @@ def generate_3d_holed_block_step(
 
     dest = Path(destination).resolve()
     dest.parent.mkdir(parents=True, exist_ok=True)
-    gmsh.initialize()
+    gmsh.initialize([], readConfigFiles=False, interruptible=False)
     try:
         gmsh.option.setNumber("General.Terminal", 0)
         gmsh.model.add("holed-block-3d")

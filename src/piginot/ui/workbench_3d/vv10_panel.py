@@ -8,7 +8,9 @@ from typing import Any, cast
 
 from piginot.ingest.readers import (
     ParsedCaeSample,
+    read_abaqus_inp_and_fields,
     read_calculix_inp_frd,
+    read_nastran_bdf_and_fields,
     read_vtu_or_xdmf,
 )
 from piginot.ingest.screening import screen_cae_archive
@@ -24,15 +26,28 @@ from piginot.validation.inverse import (
 )
 
 
+def _find_nodal_sidecar(path: Path) -> Path | None:
+    for ext in (".csv", ".json"):
+        candidate = path.with_suffix(ext)
+        if candidate.is_file():
+            return candidate
+    return None
+
+
 def discover_cae_samples(archive_dir: Path) -> list[ParsedCaeSample]:
     """Discover and parse supported CAE archive files in ``archive_dir``."""
     root = Path(archive_dir)
     if not root.is_dir():
         raise FileNotFoundError(f"CAE archive directory not found: {root}")
     samples: list[ParsedCaeSample] = []
-    for path in sorted(root.iterdir()):
-        if not path.is_file():
-            continue
+    calculix_paired_inps: set[Path] = set()
+    entries = sorted(p for p in root.iterdir() if p.is_file())
+    for path in entries:
+        if path.suffix.lower() == ".frd":
+            inp = path.with_suffix(".inp")
+            if inp.is_file():
+                calculix_paired_inps.add(inp.resolve())
+    for path in entries:
         suf = path.suffix.lower()
         if suf in {".vtu", ".xdmf"}:
             samples.append(read_vtu_or_xdmf(path))
@@ -40,6 +55,14 @@ def discover_cae_samples(archive_dir: Path) -> list[ParsedCaeSample]:
             inp = path.with_suffix(".inp")
             if inp.is_file():
                 samples.append(read_calculix_inp_frd(inp, path))
+        elif suf == ".inp" and path.resolve() not in calculix_paired_inps:
+            sidecar = _find_nodal_sidecar(path)
+            if sidecar is not None:
+                samples.append(read_abaqus_inp_and_fields(path, sidecar))
+        elif suf == ".bdf":
+            sidecar = _find_nodal_sidecar(path)
+            if sidecar is not None:
+                samples.append(read_nastran_bdf_and_fields(path, sidecar))
     if not samples:
         raise ValueError(f"no supported CAE archive files found in {root}")
     return samples
@@ -105,7 +128,7 @@ def render_cae_vv10_mode(st: Any, workspace_root: Path) -> None:
 
     with tab_ingest:
         arch_str = st.text_input(
-            "CAE Archive Directory (.vtu, .xdmf, .inp/.frd)",
+            "CAE Archive Directory (.vtu, .xdmf, .inp/.frd/.csv/.json, .bdf/.csv/.json)",
             value=str(workspace_root / "cae_archive"),
             key="wb3d_ingest_dir",
         )
@@ -114,12 +137,15 @@ def render_cae_vv10_mode(st: Any, workspace_root: Path) -> None:
             if not arch.is_dir():
                 st.error(f"Directory does not exist: {arch}")
             else:
-                doc = run_cae_ingest_summary(arch)
-                c1, c2, c3 = st.columns(3)
-                c1.metric("Total Samples", doc["total_samples"])
-                c2.metric("Accepted", doc["accepted_count"])
-                c3.metric("Quarantined", doc["quarantined_count"])
-                st.json(doc)
+                try:
+                    doc = run_cae_ingest_summary(arch)
+                    c1, c2, c3 = st.columns(3)
+                    c1.metric("Total Samples", doc["total_samples"])
+                    c2.metric("Accepted", doc["accepted_count"])
+                    c3.metric("Quarantined", doc["quarantined_count"])
+                    st.json(doc)
+                except Exception as exc:
+                    st.error(f"CAE archive screening failed: {exc}")
 
     with tab_vv10:
         ds_str = st.text_input(
@@ -137,18 +163,23 @@ def render_cae_vv10_mode(st: Any, workspace_root: Path) -> None:
             if not ds_path.is_file():
                 st.error(f"Dataset file not found: {ds_path}")
             else:
-                doc = run_vv10_calibration_summary(ds_path, u_num_mpa=u_num)
-                c1, c2, c3 = st.columns(3)
-                c1.metric("Experimental Tier", doc["experimental_validation_tier"])
-                err_e = doc.get("holdout_comparison_error_e_mpa")
-                c2.metric(
-                    "Holdout Error E (MPa)",
-                    f"{err_e:.4f}" if err_e is not None else "n/a",
-                )
-                c3.metric(
-                    "Validation Uncertainty u_val (MPa)", f"{doc['u_val_mpa']:.4f}"
-                )
-                st.json(doc)
+                try:
+                    doc = run_vv10_calibration_summary(ds_path, u_num_mpa=u_num)
+                    c1, c2, c3 = st.columns(3)
+                    c1.metric("Experimental Tier", doc["experimental_validation_tier"])
+                    err_e = doc.get("holdout_comparison_error_e_mpa")
+                    c2.metric(
+                        "Holdout Error E (MPa)",
+                        f"{err_e:.4f}" if err_e is not None else "n/a",
+                    )
+                    u_val = doc.get("u_val_mpa")
+                    c3.metric(
+                        "Validation Uncertainty u_val (MPa)",
+                        f"{u_val:.4f}" if u_val is not None else "n/a",
+                    )
+                    st.json(doc)
+                except Exception as exc:
+                    st.error(f"Experimental V&V 10 calibration failed: {exc}")
 
 
 __all__ = (
