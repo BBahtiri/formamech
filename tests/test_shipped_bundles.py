@@ -9,6 +9,7 @@ import pytest
 
 from piginot.bundle import load_bundle, predict
 from piginot.cli import parse_request
+from piginot.operators.foundation_hub import load_foundation_3d_checkpoint
 
 ROOT = Path(__file__).resolve().parents[1]
 BUNDLES = ROOT / "bundles"
@@ -36,8 +37,26 @@ REQUESTS = (
 
 def test_the_shipped_bundles_are_the_gated_ones() -> None:
     assert sorted(path.name for path in BUNDLES.iterdir() if path.is_dir()) == sorted(
-        [*RECORDED, "requests", "fem-recipes", "calibration", "h1-results"]
+        [
+            *RECORDED,
+            "requests",
+            "fem-recipes",
+            "calibration",
+            "h1-results",
+            "foundation",
+        ]
     )
+    # V4-2 shipped 3D structural foundation checkpoint: explicitly verified for
+    # SHA-256 integrity and honest NOT_VERIFIED pretrain claim level.
+    foundation_dirs = sorted(
+        p.name for p in (BUNDLES / "foundation").iterdir() if p.is_dir()
+    )
+    assert foundation_dirs == ["struct3d-base-v1"]
+    loaded_foundation = load_foundation_3d_checkpoint(
+        BUNDLES / "foundation" / "struct3d-base-v1"
+    )
+    assert loaded_foundation.spec.checkpoint_id == "struct3d-base-v1"
+    assert loaded_foundation.spec.claim_level == "NOT_VERIFIED"
     # S22 FEM recipes, S23 calibrations and their H1 results: one sidecar per
     # gated bundle, bound to its manifest
     for folder in ("fem-recipes", "calibration", "h1-results"):

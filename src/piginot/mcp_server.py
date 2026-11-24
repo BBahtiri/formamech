@@ -256,9 +256,25 @@ class FormaMechMcpServer:
                 require_qualified_for_export=True,
             )
         )
+        self._harness: Any = None
         self._tools: dict[str, McpToolSpec] = {
             spec.name: spec for spec in self._build_tools()
         }
+
+    @property
+    def harness(self) -> Any:
+        """Lazily initialized full-capability :class:`FormaMechAgentHarness`."""
+        if self._harness is None:
+            from piginot.harness import FormaMechAgentHarness, HarnessBudget
+
+            self._harness = FormaMechAgentHarness(
+                self.workspace_root,
+                budget=HarnessBudget(
+                    max_fem_solves=self.max_fem_solves,
+                    max_dofs=self.max_dof_limit,
+                ),
+            )
+        return self._harness
 
     @property
     def workflow_state(self) -> AgentWorkflowState:
@@ -398,7 +414,11 @@ class FormaMechMcpServer:
                 req_id,
                 {
                     "protocolVersion": MCP_PROTOCOL_VERSION,
-                    "capabilities": {"tools": {"listChanged": False}},
+                    "capabilities": {
+                        "tools": {"listChanged": False},
+                        "resources": {"listChanged": False},
+                        "prompts": {"listChanged": False},
+                    },
                     "serverInfo": {
                         "name": SERVER_NAME,
                         "version": __version__,
@@ -406,7 +426,14 @@ class FormaMechMcpServer:
                 },
             )
 
-        if method in ("tools/list", "tools/call"):
+        if method in (
+            "tools/list",
+            "tools/call",
+            "resources/list",
+            "resources/read",
+            "prompts/list",
+            "prompts/get",
+        ):
             if (
                 self.strict_lifecycle
                 and self._session_state is not McpSessionState.READY
@@ -419,6 +446,41 @@ class FormaMechMcpServer:
                 )
             if self._session_state is McpSessionState.READY:
                 self._transition(McpSessionState.READY, trigger="serve_request")
+
+        if method == "resources/list":
+            return self._result(req_id, {"resources": self.list_resources()})
+
+        if method == "resources/read":
+            if not isinstance(params, Mapping) or not isinstance(
+                params.get("uri"), str
+            ):
+                return self._error(
+                    req_id, -32602, "resources/read requires string 'uri'"
+                )
+            try:
+                contents = self.read_resource(str(params["uri"]))
+            except Exception as exc:
+                return self._error(req_id, -32002, str(exc))
+            return self._result(req_id, {"contents": contents})
+
+        if method == "prompts/list":
+            return self._result(req_id, {"prompts": self.list_prompts()})
+
+        if method == "prompts/get":
+            if not isinstance(params, Mapping) or not isinstance(
+                params.get("name"), str
+            ):
+                return self._error(req_id, -32602, "prompts/get requires string 'name'")
+            try:
+                prompt_doc = self.get_prompt(
+                    str(params["name"]),
+                    params.get("arguments")
+                    if isinstance(params.get("arguments"), Mapping)
+                    else {},
+                )
+            except KeyError as exc:
+                return self._error(req_id, -32601, str(exc))
+            return self._result(req_id, prompt_doc)
 
         if method == "tools/list":
             return self._result(req_id, {"tools": self.list_tools()})
@@ -797,6 +859,81 @@ class FormaMechMcpServer:
                     "additionalProperties": False,
                 },
                 handler=self._tool_export_verified_artifact,
+            ),
+            McpToolSpec(
+                name="discover_capabilities",
+                description=(
+                    "Progressively discover all registered FormaMech engineering capabilities "
+                    "across CAD, FEM, multiphysics, surrogates, optimization, ingest/V&V10, export, and governance."
+                ),
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "domain": {"type": "string"},
+                        "cost_class": {"type": "string"},
+                        "search": {"type": "string"},
+                    },
+                    "additionalProperties": False,
+                },
+                handler=self._tool_discover_capabilities,
+            ),
+            McpToolSpec(
+                name="describe_capability",
+                description=(
+                    "Return the complete JSON Schema, cost class, and epistemic scope for one "
+                    "registered FormaMech harness capability."
+                ),
+                input_schema={
+                    "type": "object",
+                    "required": ["name"],
+                    "properties": {"name": {"type": "string"}},
+                    "additionalProperties": False,
+                },
+                handler=self._tool_describe_capability,
+            ),
+            McpToolSpec(
+                name="invoke_capability",
+                description=(
+                    "Invoke (or dry-run) any registered FormaMech capability through the "
+                    "sandboxed, budget-governed, hash-chained Agent Harness."
+                ),
+                input_schema={
+                    "type": "object",
+                    "required": ["capability"],
+                    "properties": {
+                        "capability": {"type": "string"},
+                        "arguments": {"type": "object"},
+                        "dry_run": {"type": "boolean", "default": False},
+                    },
+                    "additionalProperties": False,
+                },
+                handler=self._tool_invoke_capability,
+            ),
+            McpToolSpec(
+                name="session_status",
+                description=(
+                    "Inspect the active FormaMech Agent Harness session state, remaining "
+                    "FEM/epoch budgets, recorded artifacts, and ledger verification status."
+                ),
+                input_schema={
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": False,
+                },
+                handler=self._tool_session_status,
+            ),
+            McpToolSpec(
+                name="describe_state_machines",
+                description=(
+                    "Return all formal FormaMech finite state machine specifications "
+                    "(states, allowed transitions, terminal states)."
+                ),
+                input_schema={
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": False,
+                },
+                handler=self._tool_describe_state_machines,
             ),
         )
 
@@ -1368,6 +1505,218 @@ class FormaMechMcpServer:
             "output_path": str(out_path.relative_to(self.workspace_root).as_posix()),
             "artifact_sha256": digest,
             "workflow_state": self._workflow.snapshot().document(),
+        }
+
+    # ------------------------------------------------- V4-0 universal harness
+
+    def _tool_discover_capabilities(self, args: Mapping[str, Any]) -> dict[str, Any]:
+        from piginot.harness.catalog import build_default_registry
+
+        reg = (
+            self._harness.registry
+            if self._harness is not None
+            else build_default_registry()
+        )
+        items = reg.list_capabilities(
+            domain=args.get("domain"),
+            cost_class=args.get("cost_class"),
+            search=args.get("search"),
+        )
+        return {
+            "count": len(items),
+            "domains": reg.domains_summary(),
+            "capabilities": items,
+        }
+
+    def _tool_describe_capability(self, args: Mapping[str, Any]) -> dict[str, Any]:
+        from piginot.harness.catalog import build_default_registry
+
+        reg = (
+            self._harness.registry
+            if self._harness is not None
+            else build_default_registry()
+        )
+        return reg.describe(str(args["name"]))
+
+    def _tool_invoke_capability(self, args: Mapping[str, Any]) -> dict[str, Any]:
+        cap = str(args["capability"])
+        cap_args = args.get("arguments", {})
+        if not isinstance(cap_args, Mapping):
+            raise TypeError("'arguments' must be a JSON object")
+        dry_run = bool(args.get("dry_run", False))
+        env = self.harness.invoke(cap, cap_args, dry_run=dry_run)
+        return dict(env.document())
+
+    def _tool_session_status(self, _args: Mapping[str, Any]) -> dict[str, Any]:
+        ok, errs = self.harness.verify_ledger()
+        return {
+            "session_id": self.harness.session_id,
+            "snapshot": self.harness.snapshot().document(),
+            "budget": self.harness.budget_status(),
+            "ledger_verified": ok,
+            "ledger_errors": list(errs),
+        }
+
+    def _tool_describe_state_machines(self, _args: Mapping[str, Any]) -> dict[str, Any]:
+        from piginot.contracts.state_machine import registered_state_machines
+
+        machines = [spec.describe() for spec in registered_state_machines().values()]
+        return {"count": len(machines), "machines": machines}
+
+    # ---------------------------------------------- MCP resources & prompts
+
+    def list_resources(self) -> list[dict[str, Any]]:
+        """Declare MCP 2024-11-05 read-only resources for autonomous agents."""
+        return [
+            {
+                "uri": "formamech://capabilities",
+                "name": "FormaMech Capability Catalog",
+                "description": "Compact index of all registered capabilities across 9 domains.",
+                "mimeType": "application/json",
+            },
+            {
+                "uri": "formamech://state-machines",
+                "name": "FormaMech Formal State Machines",
+                "description": "All registered explicit FSM specs and transition tables.",
+                "mimeType": "application/json",
+            },
+            {
+                "uri": "formamech://session/status",
+                "name": "Active Agent Session Status",
+                "description": "Current session state, budget remaining, and ledger verification.",
+                "mimeType": "application/json",
+            },
+            {
+                "uri": "formamech://session/ledger",
+                "name": "Hash-Chained Agent Session Ledger",
+                "description": "Append-only SHA-256 hash-chained log of all tool invocations.",
+                "mimeType": "application/json",
+            },
+            {
+                "uri": "formamech://workspace/tree",
+                "name": "Sandboxed Workspace File Tree",
+                "description": "Relative file listing inside the active workspace_root.",
+                "mimeType": "application/json",
+            },
+        ]
+
+    def read_resource(self, uri: str) -> list[dict[str, Any]]:
+        """Resolve one ``formamech://`` resource URI safely within the workspace."""
+        if uri == "formamech://capabilities":
+            payload: Any = self._tool_discover_capabilities({})
+        elif uri == "formamech://state-machines":
+            payload = self._tool_describe_state_machines({})
+        elif uri == "formamech://session/status":
+            payload = self._tool_session_status({})
+        elif uri == "formamech://session/ledger":
+            payload = {"entries": self.harness.read_ledger()}
+        elif uri == "formamech://workspace/tree":
+            files: list[dict[str, Any]] = []
+            for p in sorted(self.workspace_root.rglob("*")):
+                if len(files) >= 200:
+                    break
+                if ".git" in p.parts or "__pycache__" in p.parts:
+                    continue
+                if p.is_file():
+                    files.append(
+                        {
+                            "path": p.relative_to(self.workspace_root).as_posix(),
+                            "bytes": p.stat().st_size,
+                        }
+                    )
+            payload = {"workspace_root": str(self.workspace_root), "files": files}
+        elif uri.startswith("formamech://artifact/"):
+            rel = uri.removeprefix("formamech://artifact/")
+            target = self.resolve_path(rel)
+            if not target.is_file():
+                raise FileNotFoundError(f"artifact not found: {rel}")
+            text = target.read_text(encoding="utf-8", errors="replace")
+            return [{"uri": uri, "mimeType": "text/plain", "text": text}]
+        else:
+            raise KeyError(f"unknown MCP resource URI {uri!r}")
+        return [
+            {
+                "uri": uri,
+                "mimeType": "application/json",
+                "text": json.dumps(payload, sort_keys=True, allow_nan=False),
+            }
+        ]
+
+    def list_prompts(self) -> list[dict[str, Any]]:
+        """Declare turnkey engineering workflow prompts for MCP clients."""
+        return [
+            {
+                "name": "cad-to-verified-surrogate",
+                "description": "End-to-end 3D CAD import, FEM solve, parametric operator training, qualification, and VTU/GLB export.",
+                "arguments": [
+                    {"name": "workspace_dir", "required": False},
+                    {"name": "template", "required": False},
+                ],
+            },
+            {
+                "name": "multiphysics-3d-audit",
+                "description": "Run coupled 3D thermo-mechanical, modal eigenfrequency, and cyclic J2 plasticity checks with receipts.",
+                "arguments": [{"name": "workspace_dir", "required": False}],
+            },
+            {
+                "name": "experimental-vv10-calibration",
+                "description": "Calibrate constitutive parameters from coupon data and emit an orthogonal ASME V&V 10 dossier.",
+                "arguments": [{"name": "dataset_path", "required": True}],
+            },
+            {
+                "name": "generative-lightweighting",
+                "description": "Explore 3D parametric or generative topology/shape lightweighting certified by exact 3D FEM.",
+                "arguments": [{"name": "target_volume_fraction", "required": False}],
+            },
+            {
+                "name": "diagnose-refusal-or-ood",
+                "description": "Audit a failed envelope, OOD refusal, or invalid FSM transition and propose safe recovery steps.",
+                "arguments": [{"name": "error_code", "required": False}],
+            },
+        ]
+
+    def get_prompt(
+        self, name: str, arguments: Mapping[str, Any] | None = None
+    ) -> dict[str, Any]:
+        args = {} if arguments is None else dict(arguments)
+        ws = str(args.get("workspace_dir", "study_3d"))
+        templates: dict[str, tuple[str, str]] = {
+            "cad-to-verified-surrogate": (
+                "Guide a verified 3D CAD-to-surrogate workflow.",
+                f"Use FormaMech harness tools in workspace '{ws}': "
+                "1) call discover_capabilities, 2) invoke cad.generate_sample_3d or cad.import_3d, "
+                "3) solve reference FEM via fem.solve_3d_solid, 4) export VTU/GLB via export.vtu_or_glb_3d, "
+                "5) verify session ledger via governance.verify_session_ledger.",
+            ),
+            "multiphysics-3d-audit": (
+                "Run a 3D multiphysics verification audit.",
+                f"In workspace '{ws}', run multiphysics.solve_thermo_mechanical_3d, "
+                "multiphysics.solve_modal_3d, and multiphysics.solve_stateful_j2_3d, "
+                "reporting min_det_f, dissipation non-negativity, and natural frequencies.",
+            ),
+            "experimental-vv10-calibration": (
+                "Execute ASME V&V 10 physical coupon calibration.",
+                f"Invoke validate.experimental_vv10 on '{args.get('dataset_path', 'coupons.json')}' "
+                "and report orthogonal ExperimentalValidationTier, |E|, and u_val without conflating with numerical ClaimLevel.",
+            ),
+            "generative-lightweighting": (
+                "Perform FEM-certified lightweighting.",
+                f"Target volume fraction {args.get('target_volume_fraction', '0.50')}: "
+                "discover optimize capabilities, verify every design candidate with authoritative 3D FEM, "
+                "and attach RFC 8785 receipts.",
+            ),
+            "diagnose-refusal-or-ood": (
+                "Diagnose fail-closed refusal or OOD event.",
+                f"Inspect error_code={args.get('error_code', 'UNKNOWN')}, read formamech://session/status "
+                "and formamech://state-machines, then follow allowed_next_actions.",
+            ),
+        }
+        if name not in templates:
+            raise KeyError(f"unknown MCP prompt {name!r}")
+        desc, body = templates[name]
+        return {
+            "description": desc,
+            "messages": [{"role": "user", "content": {"type": "text", "text": body}}],
         }
 
 

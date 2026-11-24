@@ -1219,6 +1219,23 @@ def run_streamlit_app(
         if workflow_mode == "2D Fixed CAD":
             render_progress(st, wf_snapshot)
 
+        with st.expander("Continual Qualification & Audit Ledger"):
+            ledger_file = workspace.root / "audit-ledger.jsonl"
+            if ledger_file.is_file():
+                from piginot.serving.audit_ledger import SignedAuditLedger
+
+                _led = SignedAuditLedger(ledger_file)
+                _valid, _errs = _led.verify_chain()
+                st.caption(
+                    f"Ledger chain: {'VALID' if _valid else 'TAMPERED'} "
+                    f"({len(_led.read_entries())} entries, {len(_led.query_fallbacks())} fallbacks)"
+                )
+            else:
+                st.caption(
+                    "No active serving audit ledger in this workspace yet. "
+                    "Start `formamech serve-api` or run `formamech continual status`."
+                )
+
         st.divider()
         st.caption(
             "Epistemic scope (ASME V&V 10): Numerical verification against "

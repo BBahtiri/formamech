@@ -93,16 +93,21 @@ def test_mcp_server_jsonrpc_tools_sandbox_and_dof_limits(tmp_path: Path) -> None
     tool_names = {t["name"] for t in responses[2]["result"]["tools"]}
     assert tool_names == {
         "compile_and_qualify",
+        "describe_capability",
+        "describe_state_machines",
+        "discover_capabilities",
         "export_verified_artifact",
         "import_cad_part",
         "ingest_cae_archive",
         "inspect_bundle",
         "inspect_cad_project",
+        "invoke_capability",
         "predict_verified",
         "propose_physics_setup",
         "run_active_fem_round",
         "run_design_optimization",
         "run_experimental_validation",
+        "session_status",
         "verify_qualification",
         "verify_receipt",
     }
@@ -184,7 +189,7 @@ def test_mcp_server_jsonrpc_tools_sandbox_and_dof_limits(tmp_path: Path) -> None
     )
     assert rc == 0
     listed = json.loads(tools_out.read_text(encoding="utf-8"))
-    assert len(listed["tools"]) == 13
+    assert len(listed["tools"]) == 18
 
 
 def test_onnx_export_module_parity_and_fmi3_fmu_export_and_step(tmp_path: Path) -> None:

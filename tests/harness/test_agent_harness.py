@@ -1,0 +1,231 @@
+"""Verification tests for Phase 0 (V4-0) AI-Ready Universal Agent Harness."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+from piginot.cli import main as cli_main
+from piginot.harness import (
+    FormaMechAgentHarness,
+    HarnessBudget,
+    HarnessSessionState,
+    build_agent_system_prompt,
+    build_default_registry,
+    dispatch_tool_call,
+    export_tool_schemas,
+)
+from piginot.mcp_server import FormaMechMcpServer
+
+
+def test_harness_discovery_dry_run_execution_resume_and_ledger_tamper(
+    tmp_path: Path,
+) -> None:
+    ws = tmp_path / "agent_ws"
+    harness = FormaMechAgentHarness(
+        ws,
+        budget=HarnessBudget(max_fem_solves=3, max_dofs=50_000, max_training_epochs=20),
+    )
+    assert harness.state is HarnessSessionState.INITIALIZED
+
+    # 1) Progressive discovery & schema inspection
+    disc = harness.invoke("discover.capabilities", {"domain": "cad"})
+    assert disc.ok is True
+    assert disc.result is not None
+    assert disc.result["count"] >= 4
+    assert harness.state is HarnessSessionState.ACTIVE
+
+    desc = harness.invoke("discover.describe", {"name": "fem.solve_3d_solid"})
+    assert desc.ok is True
+    assert desc.result is not None
+    assert desc.result["cost_class"] == "SOLVER_ORACLE"
+
+    # 2) Dry-run validates args & does not consume FEM budget
+    dry = harness.invoke(
+        "fem.solve_3d_solid", {"youngs_modulus_mpa": 120.0}, dry_run=True
+    )
+    assert dry.ok is True
+    assert dry.dry_run is True
+    assert harness.fem_solves_used == 0
+
+    # 3) Real CAD generation -> 3D FEM solve -> VTU + GLB export
+    cad = harness.invoke(
+        "cad.generate_sample_3d",
+        {"workspace_dir": "box_study", "template": "box", "mesh_size_mm": 8.0},
+    )
+    assert cad.ok is True
+    assert cad.artifact_paths
+
+    fem = harness.invoke(
+        "fem.solve_3d_solid",
+        {"workspace_dir": "box_study", "youngs_modulus_mpa": 100.0, "load_steps": 2},
+    )
+    assert fem.ok is True
+    assert fem.receipt_sha256 is not None
+    assert harness.fem_solves_used == 1
+
+    exp_vtu = harness.invoke(
+        "export.vtu_or_glb_3d",
+        {"workspace_dir": "box_study", "output_path": "out/part.vtu", "format": "vtu"},
+    )
+    assert exp_vtu.ok is True
+    assert (ws / "out" / "part.vtu").is_file()
+
+    # 4) Fail-closed sandbox refusal & recovery guidance
+    bad_path = harness.invoke("cad.import_3d", {"step_path": "../../outside.step"})
+    assert bad_path.ok is False
+    assert bad_path.error_code == "SANDBOX_VIOLATION"
+    assert bad_path.recovery_hint
+
+    # 5) Suspend & cross-process resume preserves budget + ledger integrity
+    harness.suspend()
+    assert harness.state is HarnessSessionState.SUSPENDED
+    resumed = FormaMechAgentHarness.resume(ws)
+    assert resumed.state is HarnessSessionState.ACTIVE
+    assert resumed.fem_solves_used == 1
+    assert resumed.session_id == harness.session_id
+    ok_led, errs_led = resumed.verify_ledger()
+    assert ok_led is True and errs_led == ()
+
+    # 6) Deterministic replay into fresh workspace reproduces artifacts
+    replay_ws = tmp_path / "replay_ws"
+    replayed = resumed.replay_into(replay_ws)
+    assert all(e.ok for e in replayed)
+    assert (replay_ws / "out" / "part.vtu").is_file()
+
+    # 7) Tampering with a single byte of ledger.jsonl is detected
+    raw_lines = resumed.ledger_file.read_text(encoding="utf-8").splitlines()
+    mutated = raw_lines[0].replace("discover.capabilities", "discover.tampered")
+    resumed.ledger_file.write_text(
+        "\n".join([mutated, *raw_lines[1:]]) + "\n", encoding="utf-8"
+    )
+    ok_bad, errs_bad = resumed.verify_ledger()
+    assert ok_bad is False
+    assert errs_bad
+
+
+def test_harness_budget_exhaustion_provider_exporters_mcp_and_cli(
+    tmp_path: Path,
+) -> None:
+    ws = tmp_path / "budget_ws"
+    harness = FormaMechAgentHarness(
+        ws, budget=HarnessBudget(max_fem_solves=1, max_dofs=50_000)
+    )
+    assert harness.invoke(
+        "cad.generate_sample_3d",
+        {"workspace_dir": "s1", "template": "box", "mesh_size_mm": 9.0},
+    ).ok
+    assert harness.invoke(
+        "fem.solve_3d_solid", {"workspace_dir": "s1", "load_steps": 1}
+    ).ok
+    # Second FEM solve exceeds max_fem_solves=1 -> BUDGET_EXHAUSTED
+    over = harness.invoke(
+        "fem.solve_3d_solid", {"workspace_dir": "s1", "load_steps": 1}
+    )
+    assert over.ok is False
+    assert over.error_code == "BUDGET_OR_RESOURCE_LIMIT"
+    assert harness.state is HarnessSessionState.BUDGET_EXHAUSTED
+    # ZERO_SOLVE governance/discovery calls remain allowed after budget exhaustion
+    chk = harness.invoke("governance.verify_session_ledger", {})
+    assert chk.ok is True
+
+    # Multi-provider schema exports + dispatcher + system prompt
+    reg = build_default_registry()
+    for provider in ("openai", "anthropic", "gemini", "mcp"):
+        prog = export_tool_schemas(reg, provider=provider, mode="progressive")
+        full = export_tool_schemas(reg, provider=provider, mode="full")
+        assert len(prog) == 5
+        assert len(full) == len(reg)
+
+    dispatched = dispatch_tool_call(
+        harness, "formamech_discover_capabilities", '{"domain": "governance"}'
+    )
+    assert dispatched["ok"] is True
+    prompt = build_agent_system_prompt(harness)
+    assert "ASME V&V 10" in prompt
+
+    # MCP 2024-11-05 tools + resources + prompts round-trip
+    mcp_ws = tmp_path / "mcp_ws"
+    mcp_ws.mkdir(exist_ok=True)
+    mcp = FormaMechMcpServer(mcp_ws)
+    init = mcp.handle_message(
+        {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}}
+    )
+    assert init is not None
+    assert "resources" in init["result"]["capabilities"]
+    assert "prompts" in init["result"]["capabilities"]
+    mcp.handle_message({"jsonrpc": "2.0", "method": "notifications/initialized"})
+
+    res_list = mcp.handle_message(
+        {"jsonrpc": "2.0", "id": 2, "method": "resources/list"}
+    )
+    assert res_list is not None
+    uris = {r["uri"] for r in res_list["result"]["resources"]}
+    assert {"formamech://capabilities", "formamech://state-machines"}.issubset(uris)
+
+    res_read = mcp.handle_message(
+        {
+            "jsonrpc": "2.0",
+            "id": 3,
+            "method": "resources/read",
+            "params": {"uri": "formamech://capabilities"},
+        }
+    )
+    assert res_read is not None
+    cap_doc = json.loads(res_read["result"]["contents"][0]["text"])
+    assert cap_doc["count"] >= 15
+
+    pr_list = mcp.handle_message({"jsonrpc": "2.0", "id": 4, "method": "prompts/list"})
+    assert pr_list is not None
+    assert len(pr_list["result"]["prompts"]) == 5
+
+    pr_get = mcp.handle_message(
+        {
+            "jsonrpc": "2.0",
+            "id": 5,
+            "method": "prompts/get",
+            "params": {"name": "cad-to-verified-surrogate"},
+        }
+    )
+    assert pr_get is not None
+    assert pr_get["result"]["messages"]
+
+    # CLI `formamech agent` commands
+    caps_out = tmp_path / "caps.json"
+    assert cli_main(["agent", "capabilities", "--output", str(caps_out)]) == 0
+    assert json.loads(caps_out.read_text(encoding="utf-8"))["count"] >= 15
+
+    tools_out = tmp_path / "openai_tools.json"
+    assert (
+        cli_main(
+            [
+                "agent",
+                "export-tools",
+                "--provider",
+                "openai",
+                "--output",
+                str(tools_out),
+            ]
+        )
+        == 0
+    )
+    assert json.loads(tools_out.read_text(encoding="utf-8"))["count"] == 5
+
+    cli_ws = tmp_path / "cli_agent_ws"
+    inv_out = tmp_path / "inv.json"
+    assert (
+        cli_main(
+            [
+                "agent",
+                "invoke",
+                "discover.backends",
+                "--workspace",
+                str(cli_ws),
+                "--output",
+                str(inv_out),
+            ]
+        )
+        == 0
+    )
+    assert json.loads(inv_out.read_text(encoding="utf-8"))["ok"] is True
+    assert cli_main(["agent", "verify-ledger", "--workspace", str(cli_ws)]) == 0

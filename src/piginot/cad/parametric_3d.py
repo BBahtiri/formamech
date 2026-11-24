@@ -652,7 +652,7 @@ def default_mounting_lug_3d_spec(
             min_volume_mm3=2_000.0,
         ),
         clamped_bbox_face="z_min",
-        loaded_bbox_face="z_max",
+        loaded_bbox_face="cylindrical",
         mesh_size_mm=mesh_size_mm,
         element_type=element_type,
         fixed_constants={

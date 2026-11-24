@@ -1146,6 +1146,165 @@ def _export(args: argparse.Namespace) -> int:
         return EXIT_ERROR
 
 
+def _bench(args: argparse.Namespace) -> int:
+    """Run reproducible 3D scaling, foundation transfer, OOD & parity benchmarks (V4-2)."""
+    from piginot.benchmarks import run_benchmark_suite_3d
+
+    try:
+        rep = run_benchmark_suite_3d(
+            args.workdir,
+            profile=args.profile,
+            foundation_dir=args.foundation_dir,
+        )
+        doc = {**rep.document(), "report_hash": rep.report_hash}
+        _emit(doc, args.output)
+        if args.markdown is not None:
+            Path(args.markdown).write_text(rep.to_markdown(), encoding="utf-8")
+        return EXIT_OK
+    except Exception as exc:
+        print(f"{_program(args)} bench: {exc}", file=sys.stderr)
+        return EXIT_ERROR
+
+
+def _serve_api(args: argparse.Namespace) -> int:
+    """Launch the production verified HTTP/JSON + Prometheus serving API (V4-1)."""
+    from piginot.harness import HarnessBudget
+    from piginot.serving.api_server import FormaMechApiApplication, FormaMechHttpServer
+
+    try:
+        app = FormaMechApiApplication(
+            workspace_root=args.workspace,
+            bundle_path=args.bundle,
+            ledger_path=args.ledger,
+            budget=HarnessBudget(
+                max_fem_solves=int(args.max_fem_solves),
+                max_dofs=int(args.max_dofs),
+            ),
+        )
+        srv = FormaMechHttpServer(app, host=str(args.host), port=int(args.port))
+        print(
+            json.dumps(
+                {
+                    "status": "listening",
+                    "url": srv.base_url,
+                    "workspace": str(app.workspace_root),
+                    "ledger": str(app.ledger.path),
+                },
+                sort_keys=True,
+            ),
+            flush=True,
+        )
+        srv.serve_forever()
+        return EXIT_OK
+    except KeyboardInterrupt:
+        return EXIT_OK
+    except Exception as exc:
+        print(f"{_program(args)} serve-api: {exc}", file=sys.stderr)
+        return EXIT_ERROR
+
+
+def _agent(args: argparse.Namespace) -> int:
+    """AI-ready Universal Agent Harness CLI commands (V4-0)."""
+    from piginot.harness import (
+        FormaMechAgentHarness,
+        HarnessBudget,
+        build_default_registry,
+        export_tool_schemas,
+    )
+
+    cmd = str(args.agent_command)
+    try:
+        if cmd == "capabilities":
+            reg = build_default_registry()
+            items = reg.list_capabilities(
+                domain=args.domain,
+                cost_class=args.cost_class,
+                search=args.search,
+            )
+            _emit(
+                {
+                    "count": len(items),
+                    "domains": reg.domains_summary(),
+                    "capabilities": items,
+                },
+                args.output,
+            )
+            return EXIT_OK
+        if cmd == "describe":
+            reg = build_default_registry()
+            _emit(reg.describe(str(args.capability)), args.output)
+            return EXIT_OK
+        if cmd == "export-tools":
+            reg = build_default_registry()
+            tools = export_tool_schemas(
+                reg,
+                provider=args.provider,
+                mode=args.mode,
+                domain=args.domain,
+            )
+            _emit(
+                {
+                    "provider": args.provider,
+                    "mode": args.mode,
+                    "count": len(tools),
+                    "tools": tools,
+                },
+                args.output,
+            )
+            return EXIT_OK
+
+        ws = Path(args.workspace)
+        if cmd == "invoke":
+            raw_args = json.loads(args.args_json) if args.args_json else {}
+            sfile = ws / ".formamech-agent" / "session.json"
+            if sfile.is_file():
+                harness = FormaMechAgentHarness.resume(ws)
+            else:
+                harness = FormaMechAgentHarness(
+                    ws,
+                    budget=HarnessBudget(
+                        max_fem_solves=int(args.max_fem_solves),
+                        max_dofs=int(args.max_dofs),
+                    ),
+                )
+            env = harness.invoke(
+                str(args.capability), raw_args, dry_run=bool(args.dry_run)
+            )
+            _emit(env.document(), args.output)
+            return EXIT_OK if env.ok else EXIT_REFUSED
+        if cmd == "session-status":
+            harness = FormaMechAgentHarness.resume(ws)
+            ok, errs = harness.verify_ledger()
+            _emit(
+                {
+                    "session_id": harness.session_id,
+                    "snapshot": harness.snapshot().document(),
+                    "budget": harness.budget_status(),
+                    "ledger_verified": ok,
+                    "ledger_errors": list(errs),
+                },
+                args.output,
+            )
+            return EXIT_OK if ok else EXIT_REFUSED
+        if cmd == "verify-ledger":
+            harness = FormaMechAgentHarness.resume(ws)
+            ok, errs = harness.verify_ledger()
+            _emit(
+                {
+                    "session_id": harness.session_id,
+                    "verified": ok,
+                    "entry_count": len(harness.read_ledger()),
+                    "errors": list(errs),
+                },
+                args.output,
+            )
+            return EXIT_OK if ok else EXIT_REFUSED
+        return EXIT_ERROR
+    except Exception as exc:
+        print(f"{_program(args)} agent {cmd}: {exc}", file=sys.stderr)
+        return EXIT_ERROR
+
+
 def _ingest_cae(args: argparse.Namespace) -> int:
     """Ingest external VTU/XDMF/CalculiX/Abaqus/Nastran CAE files & run outlier screening."""
     from piginot.ingest import (
@@ -1224,6 +1383,68 @@ def _validate_experiment(args: argparse.Namespace) -> int:
         return EXIT_OK if dossier.passed else EXIT_SCIENTIFIC_REFUSED
     except (OSError, json.JSONDecodeError, KeyError, ValueError, TypeError) as exc:
         print(f"{_program(args)} validate: {exc}", file=sys.stderr)
+        return EXIT_ERROR
+
+
+def _fleet(args: argparse.Namespace) -> int:
+    """Dispatch or generate distributed 3D FEM fleet worker batches (V4-5)."""
+    from piginot.training.fleet import (
+        FleetTaskSpec,
+        KubernetesJobFleet,
+        LocalMultiprocessFleet,
+        SlurmScriptFleet,
+        WorkerBackend,
+    )
+
+    cmd = str(args.fleet_command)
+    try:
+        raw = (
+            json.loads(args.tasks_json)
+            if getattr(args, "tasks_json", None)
+            else [{"lx_mm": 18.0}, {"lx_mm": 22.0}]
+        )
+        tasks = [
+            FleetTaskSpec(task_id=f"task-{i:03d}", payload=dict(item))
+            for i, item in enumerate(raw)
+        ]
+        backend: WorkerBackend
+        if cmd == "generate-slurm":
+            backend = SlurmScriptFleet(partition=str(args.partition))
+        elif cmd == "generate-k8s":
+            backend = KubernetesJobFleet(image=str(args.image))
+        else:
+            backend = LocalMultiprocessFleet(
+                max_workers=int(args.max_workers),
+                use_threads=bool(args.use_threads),
+            )
+        rep = backend.submit_batch(str(args.job_id), tasks, workdir=args.workdir)
+        _emit(rep.document(), args.output)
+        return EXIT_OK if rep.failed_count == 0 else EXIT_REFUSED
+    except (OSError, json.JSONDecodeError, ValueError, TypeError) as exc:
+        print(f"{_program(args)} fleet {cmd}: {exc}", file=sys.stderr)
+        return EXIT_ERROR
+
+
+def _continual(args: argparse.Namespace) -> int:
+    """Inspect Continual Qualification Loop & SignedAuditLedger status (V4-5)."""
+    from piginot.serving.audit_ledger import SignedAuditLedger
+    from piginot.store.dataset_3d import ShardedMeshDataset3D
+
+    try:
+        ledger = SignedAuditLedger(args.ledger)
+        chain_valid, chain_errors = ledger.verify_chain()
+        ds = ShardedMeshDataset3D(args.dataset)
+        doc = {
+            "ledger_valid": chain_valid,
+            "ledger_errors": list(chain_errors),
+            "ledger_entry_count": len(ledger.read_entries()),
+            "fallback_count": len(ledger.query_fallbacks()),
+            "dataset": ds.summary(),
+        }
+        _emit(doc, args.output)
+        return EXIT_OK if chain_valid else EXIT_REFUSED
+    except (OSError, ValueError) as exc:
+        print(f"{_program(args)} continual: {exc}", file=sys.stderr)
         return EXIT_ERROR
 
 
@@ -1794,6 +2015,145 @@ def build_parser(*, prog: str = "piginot") -> argparse.ArgumentParser:
     mcp_list.add_argument("--max-dofs", type=int, default=100_000)
     mcp_list.add_argument("--output", type=Path, default=None)
     mcp_list.set_defaults(handler=_mcp)
+
+    agent = subparsers.add_parser(
+        "agent",
+        help="AI-ready Universal Agent Harness (capabilities, schema export, sandboxed invocation, ledger audit)",
+    )
+    agent_commands = agent.add_subparsers(dest="agent_command", required=True)
+    ag_caps = agent_commands.add_parser(
+        "capabilities", help="list registered FormaMech agent capabilities"
+    )
+    ag_caps.add_argument("--domain", type=str, default=None)
+    ag_caps.add_argument("--cost-class", type=str, default=None)
+    ag_caps.add_argument("--search", type=str, default=None)
+    ag_caps.add_argument("--output", type=Path, default=None)
+    ag_caps.set_defaults(handler=_agent)
+
+    ag_desc = agent_commands.add_parser(
+        "describe", help="print full JSON Schema descriptor for one capability"
+    )
+    ag_desc.add_argument("capability", type=str)
+    ag_desc.add_argument("--output", type=Path, default=None)
+    ag_desc.set_defaults(handler=_agent)
+
+    ag_inv = agent_commands.add_parser(
+        "invoke",
+        help="invoke (or dry-run) any registered capability in a workspace session",
+    )
+    ag_inv.add_argument("capability", type=str)
+    ag_inv.add_argument("--workspace", type=Path, required=True)
+    ag_inv.add_argument("--args-json", type=str, default="{}")
+    ag_inv.add_argument("--dry-run", action="store_true")
+    ag_inv.add_argument("--max-fem-solves", type=int, default=32)
+    ag_inv.add_argument("--max-dofs", type=int, default=150_000)
+    ag_inv.add_argument("--output", type=Path, default=None)
+    ag_inv.set_defaults(handler=_agent)
+
+    ag_stat = agent_commands.add_parser(
+        "session-status", help="inspect persisted agent session state and budget"
+    )
+    ag_stat.add_argument("--workspace", type=Path, required=True)
+    ag_stat.add_argument("--output", type=Path, default=None)
+    ag_stat.set_defaults(handler=_agent)
+
+    ag_led = agent_commands.add_parser(
+        "verify-ledger", help="verify SHA-256 hash chain of session ledger.jsonl"
+    )
+    ag_led.add_argument("--workspace", type=Path, required=True)
+    ag_led.add_argument("--output", type=Path, default=None)
+    ag_led.set_defaults(handler=_agent)
+
+    ag_exp = agent_commands.add_parser(
+        "export-tools",
+        help="export native LLM tool schemas (openai, anthropic, gemini, mcp)",
+    )
+    ag_exp.add_argument(
+        "--provider",
+        choices=("openai", "anthropic", "gemini", "mcp"),
+        default="openai",
+    )
+    ag_exp.add_argument(
+        "--mode",
+        choices=("progressive", "full"),
+        default="progressive",
+    )
+    ag_exp.add_argument("--domain", type=str, default=None)
+    ag_exp.add_argument("--output", type=Path, default=None)
+    ag_exp.set_defaults(handler=_agent)
+
+    sapi = subparsers.add_parser(
+        "serve-api",
+        help="run the production verified HTTP/JSON & Prometheus serving API (V4-1)",
+    )
+    sapi.add_argument("--workspace", type=Path, default=Path(".formamech-runs/api"))
+    sapi.add_argument("--bundle", type=Path, default=None)
+    sapi.add_argument("--ledger", type=Path, default=None)
+    sapi.add_argument("--host", type=str, default="127.0.0.1")
+    sapi.add_argument("--port", type=int, default=8080)
+    sapi.add_argument("--max-fem-solves", type=int, default=32)
+    sapi.add_argument("--max-dofs", type=int, default=150_000)
+    sapi.set_defaults(handler=_serve_api)
+
+    bench = subparsers.add_parser(
+        "bench",
+        help="run reproducible 3D solver, foundation transfer, OOD & parity benchmarks (V4-2)",
+    )
+    bench_cmds = bench.add_subparsers(dest="bench_command", required=True)
+    b_run = bench_cmds.add_parser("run", help="execute B1-B4 3D benchmark suite")
+    b_run.add_argument("--profile", choices=("quick", "full"), default="quick")
+    b_run.add_argument("--workdir", type=Path, default=Path(".formamech-runs/bench"))
+    b_run.add_argument("--foundation-dir", type=Path, default=None)
+    b_run.add_argument("--output", type=Path, default=None)
+    b_run.add_argument("--markdown", type=Path, default=None)
+    b_run.set_defaults(handler=_bench)
+
+    fleet = subparsers.add_parser(
+        "fleet",
+        help="distributed 3D FEM fleet workers (local multiprocess, Slurm, Kubernetes) (V4-5)",
+    )
+    fleet_cmds = fleet.add_subparsers(dest="fleet_command", required=True)
+    fl_loc = fleet_cmds.add_parser(
+        "submit-local", help="run parallel local 3D FEM batch"
+    )
+    fl_loc.add_argument("--job-id", type=str, default="local-batch")
+    fl_loc.add_argument("--workdir", type=Path, required=True)
+    fl_loc.add_argument("--tasks-json", type=str, default=None)
+    fl_loc.add_argument("--max-workers", type=int, default=2)
+    fl_loc.add_argument("--use-threads", action="store_true")
+    fl_loc.add_argument("--output", type=Path, default=None)
+    fl_loc.set_defaults(handler=_fleet)
+
+    fl_sl = fleet_cmds.add_parser("generate-slurm", help="generate Slurm array script")
+    fl_sl.add_argument("--job-id", type=str, default="slurm-batch")
+    fl_sl.add_argument("--workdir", type=Path, required=True)
+    fl_sl.add_argument("--tasks-json", type=str, default=None)
+    fl_sl.add_argument("--partition", type=str, default="compute")
+    fl_sl.add_argument("--output", type=Path, default=None)
+    fl_sl.set_defaults(handler=_fleet)
+
+    fl_k8s = fleet_cmds.add_parser(
+        "generate-k8s", help="generate Kubernetes Indexed Job YAML"
+    )
+    fl_k8s.add_argument("--job-id", type=str, default="k8s-batch")
+    fl_k8s.add_argument("--workdir", type=Path, required=True)
+    fl_k8s.add_argument("--tasks-json", type=str, default=None)
+    fl_k8s.add_argument("--image", type=str, default="formamech/worker:v0.4")
+    fl_k8s.add_argument("--output", type=Path, default=None)
+    fl_k8s.set_defaults(handler=_fleet)
+
+    cont = subparsers.add_parser(
+        "continual",
+        help="inspect continual qualification loop, audit ledger & sharded 3D dataset (V4-5)",
+    )
+    cont_cmds = cont.add_subparsers(dest="continual_command", required=True)
+    ct_st = cont_cmds.add_parser(
+        "status", help="verify audit ledger & inspect continual backlog"
+    )
+    ct_st.add_argument("--ledger", type=Path, required=True)
+    ct_st.add_argument("--dataset", type=Path, required=True)
+    ct_st.add_argument("--output", type=Path, default=None)
+    ct_st.set_defaults(handler=_continual)
 
     export = subparsers.add_parser(
         "export",
