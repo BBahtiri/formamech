@@ -132,6 +132,8 @@ def render_navigation(
                 args=(destination, control),
                 key="wb-next-action",
             )
+        else:
+            st.empty()
 
     hidden = ", ".join(panel_selector(item) for item in STAGES if item != stage)
     st.html(
@@ -162,6 +164,13 @@ export default function({data}) {
   let attempts = 0;
   function moveFocus() {
     const section = document.querySelector(panel);
+    if (
+      !data.control
+      && section?.contains(document.activeElement)
+      && document.activeElement !== section
+    ) {
+      return;
+    }
     const heading = section?.querySelector(`#${data.anchor}`);
     const control = data.control && section?.querySelector(data.control);
     const target = control || heading;
@@ -179,7 +188,13 @@ export default function({data}) {
     )
 
 
-def focus_destination(st: Any) -> None:
+def focus_destination(st: Any, *, container: Any | None = None) -> None:
+    target = (
+        container if container is not None else st.container(key="wb-navigation-focus")
+    )
     if request := st.session_state.pop(FOCUS_KEY, None):
-        with st.container(key="wb-navigation-focus"):
+        with target:
             _focus_component()(data=request, key="wb-stage-focus-bridge")
+    elif container is not None:
+        with target:
+            st.empty()

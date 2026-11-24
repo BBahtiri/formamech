@@ -1213,19 +1213,32 @@ def run_streamlit_app(
 
     active_stage = render_navigation(st, workspace, wf_snapshot)
     render_job_completion(st, workspace)
+    # Reserve a fixed-position container so focus requests fire immediately after
+    # the active stage panel renders, rather than waiting behind hidden stages or
+    # background-job fragment reruns.
+    focus_slot = st.container(key="wb-navigation-focus")
     with stage_panel(st, IMPORT):
         _render_stage_1_import(st, workspace)
+    if active_stage == IMPORT:
+        focus_destination(st, container=focus_slot)
     with stage_panel(st, BOUNDARIES):
         _render_stage_2_boundaries(st, workspace)
+    if active_stage == BOUNDARIES:
+        focus_destination(st, container=focus_slot)
     with stage_panel(st, PLAN):
         pending_edits = _render_stage_3_physics_plan(st, workspace)
+    if active_stage == PLAN:
+        focus_destination(st, container=focus_slot)
     with stage_panel(st, TRAIN):
         _render_stage_4_train_qualify(st, workspace, default_bundle, pending_edits)
+    if active_stage == TRAIN:
+        focus_destination(st, container=focus_slot)
     with stage_panel(st, INSPECT):
         _render_stage_5_inspector(
             st, workspace, default_bundle, active=active_stage == INSPECT
         )
-    focus_destination(st)
+    if active_stage == INSPECT:
+        focus_destination(st, container=focus_slot)
 
 
 def _parse_cli_args(argv: list[str]) -> tuple[str, str]:

@@ -182,9 +182,36 @@ def _go_stage(page, name):
     stage.press("ArrowDown")
     stage.fill(name)
     stage.press("Enter")
-    playwright.expect(page.get_by_role("heading", name=name, exact=True)).to_be_visible(
-        timeout=30_000
+    heading = page.get_by_role("heading", name=name, exact=True)
+    playwright.expect(heading).to_be_visible(timeout=30_000)
+    playwright.expect(heading).to_be_focused(timeout=45_000)
+
+
+def _upload_cad_file(page, payload, filename: str) -> None:
+    uploader = page.locator('input[type="file"]')
+    with page.expect_response(
+        lambda response: (
+            "/_stcore/upload_file/" in response.url
+            and response.request.method in ("PUT", "POST")
+            and response.ok
+        ),
+        timeout=20_000,
+    ):
+        uploader.set_input_files(payload)
+    playwright.expect(page.get_by_text(filename, exact=True)).to_be_visible()
+    playwright.expect(page.get_by_test_id("stStatusWidget")).to_be_hidden(
+        timeout=20_000
     )
+
+
+def _open_selectbox(combobox) -> None:
+    combobox.wait_for(state="visible")
+    combobox.evaluate("el => el.scrollIntoView({block: 'center', inline: 'nearest'})")
+    combobox.evaluate(
+        "() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))"
+    )
+    combobox.focus()
+    combobox.press("ArrowDown")
 
 
 @pytest.mark.parametrize(
@@ -364,7 +391,7 @@ def _assert_mesh_and_boundaries(page):
 
 
 def test_import_uploaded_cad_in_fresh_workbench(workbench_page):
-    workbench_page.locator('input[type="file"]').set_input_files(PLATE)
+    _upload_cad_file(workbench_page, PLATE, PLATE.name)
     workbench_page.get_by_role("button", name="Import Uploaded CAD").click()
     _assert_mesh_and_boundaries(workbench_page)
 
@@ -376,13 +403,14 @@ def test_generate_sample_in_fresh_workbench(workbench_page):
 
 def test_retries_invalid_upload_in_same_session(workbench_page):
     page = workbench_page
-    uploader = page.locator('input[type="file"]')
-    uploader.set_input_files(
+    _upload_cad_file(
+        page,
         {
             "name": PLATE.name,
             "mimeType": "application/octet-stream",
             "buffer": b"bad CAD",
-        }
+        },
+        PLATE.name,
     )
     size = page.get_by_role("spinbutton", name="Target Mesh Size (mm)")
     size.fill("4")
@@ -401,8 +429,7 @@ def test_retries_invalid_upload_in_same_session(workbench_page):
     playwright.expect(page.get_by_text(re.compile("^CAD import failed"))).to_be_hidden(
         timeout=20_000
     )
-    uploader.set_input_files(PLATE)
-    playwright.expect(page.get_by_text(PLATE.name, exact=True)).to_be_visible()
+    _upload_cad_file(page, PLATE, PLATE.name)
     upload.click()
     _assert_mesh_and_boundaries(page)
 
@@ -461,15 +488,15 @@ def test_sample_and_replacement_preserve_a_populated_study(
         page.get_by_role("heading", name="cad-workbench-model", exact=True)
     ).to_be_visible()
 
-    uploader = page.locator('input[type="file"]')
-    uploader.set_input_files(
+    _upload_cad_file(
+        page,
         {
             "name": PLATE.name,
             "mimeType": "application/octet-stream",
             "buffer": b"bad CAD",
-        }
+        },
+        PLATE.name,
     )
-    playwright.expect(page.get_by_text(PLATE.name, exact=True)).to_be_visible()
     upload = page.get_by_role("button", name="Import Uploaded CAD")
     upload.click()
     review = page.get_by_text(re.compile(r"Replace .*plate-with-hole.step"))
@@ -488,9 +515,10 @@ def test_sample_and_replacement_preserve_a_populated_study(
         page.get_by_text(re.compile("^CAD import failed"))
     ).to_be_visible()
     assert all(p.read_bytes() == payload for p, payload in original.items())
-    page.get_by_role("button", name=f"Remove {PLATE.name}").click()
-    uploader.set_input_files(PLATE)
-    playwright.expect(page.get_by_text(PLATE.name, exact=True)).to_be_visible()
+    remove = page.get_by_role("button", name=f"Remove {PLATE.name}")
+    remove.click()
+    playwright.expect(remove).to_be_hidden()
+    _upload_cad_file(page, PLATE, PLATE.name)
     size = page.get_by_role("spinbutton", name="Target Mesh Size (mm)")
     size.fill("4")
     size.press("Enter")
@@ -931,7 +959,7 @@ def test_old_job_owns_its_log_during_new_job_polling(job_history, workbench_page
     flag, process, study = job_history
     _go_stage(page, "Train & Qualify")
     selector = page.get_by_role("combobox", name="Recorded job")
-    selector.press("ArrowDown")
+    _open_selectbox(selector)
     playwright.expect(page.get_by_role("option")).to_have_count(8)
     selector.fill("compile-0")
     selector.press("Enter")
@@ -965,13 +993,13 @@ def test_old_job_owns_its_log_during_new_job_polling(job_history, workbench_page
     playwright.expect(detail).to_contain_text("Report unavailable for this run")
 
     outcome = page.get_by_role("combobox", name="Job outcome")
-    outcome.press("ArrowDown")
+    _open_selectbox(outcome)
     outcome.fill("Execution failure")
     outcome.press("Enter")
     playwright.expect(
         page.get_by_text("2 of 8 recorded jobs", exact=True)
     ).to_be_visible()
-    selector.press("ArrowDown")
+    _open_selectbox(selector)
     playwright.expect(page.get_by_role("option")).to_have_count(2)
     selector.fill("compile-1")
     selector.press("Enter")
