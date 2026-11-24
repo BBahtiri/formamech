@@ -68,28 +68,36 @@ class FacePatch3D:
             raise ValueError("point_cloud patch requires at least one anchor point")
 
     def distance(self, query_xyz: torch.Tensor) -> torch.Tensor:
-        """Return nonnegative smooth distance ``d(x)`` vanishing exactly on the patch.
+        """Return nonnegative smooth linear ``O(r)`` distance ``d(x)`` (mm) vanishing on the patch.
+
+        Uses ``sqrt(r^2 + eps) - sqrt(eps)`` so ``d(x) == 0`` identically on the
+        Dirichlet surface while maintaining non-zero ``O(1)`` normal gradient
+        ``|grad d| -> 1`` immediately inside the solid (avoiding spurious
+        ``grad u = 0`` boundary-layer stress spikes at clamped roots).
 
         Shape: ``query_xyz (..., 3) -> (...)``.
         """
         dtype = query_xyz.dtype
         device = query_xyz.device
+        eps = 1.0e-10
+        sqrt_eps = math.sqrt(eps)
         if self.kind == "plane":
             p0 = torch.tensor(self.origin_mm, dtype=dtype, device=device)
             n = torch.tensor(self.axis_or_normal, dtype=dtype, device=device)
             signed = torch.sum((query_xyz - p0) * n, dim=-1)
-            # Squared distance -> exact zero on plane, C^inf smooth everywhere
-            return signed.square()
+            return torch.sqrt(signed.square() + eps) - sqrt_eps
         if self.kind == "cylinder":
             p0 = torch.tensor(self.origin_mm, dtype=dtype, device=device)
             a = torch.tensor(self.axis_or_normal, dtype=dtype, device=device)
             rel = query_xyz - p0
             proj = torch.sum(rel * a, dim=-1, keepdim=True) * a
             radial_sq = torch.sum((rel - proj).square(), dim=-1)
-            # (r^2 - R^2)^2 / (4 R^2) vanishes identically on cylinder r == R and is C^inf
-            r_sq = float(self.radius_mm) ** 2
-            return (radial_sq - r_sq).square() / (4.0 * r_sq)
-        # General triangulated face patch: shifted harmonic R-function vanishing at anchors
+            # (r^2 - R^2) / (2 R) = r - R + O((r-R)^2/R): vanishes identically on r == R,
+            # C^inf smooth at axis r == 0, and unit normal slope |grad d| == 1 on r == R.
+            r_val = float(self.radius_mm)
+            signed_r = (radial_sq - r_val * r_val) / (2.0 * r_val)
+            return torch.sqrt(signed_r.square() + eps) - sqrt_eps
+        # General triangulated face patch: smooth linear R-function vanishing at anchors
         anchors = torch.tensor(
             self.anchor_points_mm, dtype=dtype, device=device
         )  # (K, 3)
@@ -99,7 +107,8 @@ class FacePatch3D:
         safe_r2 = r2.clamp_min(1.0e-30)
         ratio = (r2_min / safe_r2).pow(self.power)
         denom = torch.sum(ratio, dim=-1).clamp_min(1.0)
-        return r2_min.squeeze(-1) / denom.pow(1.0 / self.power)
+        d_sq = r2_min.squeeze(-1) / denom.pow(1.0 / self.power)
+        return torch.sqrt(d_sq + eps) - sqrt_eps
 
     def document(self) -> dict[str, Any]:
         return {
@@ -174,7 +183,7 @@ class GeneralFaceADFLifting3D:
         """Return ``(scale, offset)`` of shape ``query_xyz.shape`` enforcing exact BCs."""
         dtype = query_xyz.dtype
         device = query_xyz.device
-        l_sq = float(self.extent_mm) ** 2
+        l_scale = float(self.extent_mm)
         d_all = [patch.distance(query_xyz) for patch in self.patches]
 
         scale_comps: list[torch.Tensor] = []
@@ -194,8 +203,8 @@ class GeneralFaceADFLifting3D:
                 continue
             active_d = [d_all[i] for i, _ in active]
             combined_d = _r_conjunction(active_d)
-            # Smoothly saturating scale vanishing identically wherever combined_d == 0
-            s_c = self.displacement_scale_mm * torch.tanh(combined_d / l_sq)
+            # Smoothly saturating O(r) scale vanishing identically wherever combined_d == 0
+            s_c = self.displacement_scale_mm * torch.tanh(combined_d / l_scale)
             scale_comps.append(s_c)
 
             if len(active) == 1:
@@ -211,7 +220,7 @@ class GeneralFaceADFLifting3D:
                     prod = ones_base
                     for idx_m in range(k_count):
                         if idx_m != idx_k:
-                            prod = prod * (d_stack[..., idx_m] / l_sq)
+                            prod = prod * (d_stack[..., idx_m] / l_scale)
                     weights_list.append(prod)
                 w_stack = torch.stack(weights_list, dim=-1)  # (..., K)
                 w_sum = torch.sum(w_stack, dim=-1, keepdim=True).clamp_min(1.0e-30)

@@ -348,7 +348,7 @@ class GeometryOODDetector3D:
         *,
         latent_vectors: Sequence[Sequence[float]] | None = None,
         threshold_multiplier: float = 1.6,
-        min_threshold: float = 3.5,
+        min_threshold: float = 1.25,
         ridge: float = 1.0e-3,
     ) -> GeometryOODDetector3D:
         if len(descriptors) < 2:
