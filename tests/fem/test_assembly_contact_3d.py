@@ -184,7 +184,62 @@ def test_3d_rigid_sphere_contact_fd_tangent_and_augmented_lagrangian_solve(
     assert float(third_medium_energy_density(f_id).item()) == 0.0
     assert float(third_medium_energy_density(f_comp).item()) > 0.0
 
-    # 4. Non-conformal tied interface contract sanity
+    # 4. Exact FD check & nonlinear AL solve for 3D Coulomb frictional contact (mu = 0.25)
+    indenter_fric = RigidSphereIndenter3D(
+        name="punch-fric",
+        contact_face_tags=faces["z_max"],
+        center_mm=(6.0, 6.0, 10.2),
+        radius_mm=5.0,
+        penalty_mpa_per_mm=150.0,
+        friction_mu=0.25,
+    )
+    u_slide = np.zeros_like(u0)
+    u_slide[0::3] = 0.03
+    u_slide[1::3] = -0.02
+    f_fr0, k_fr0, _, cforce_fr0, active_fr0, _ = assemble_rigid_sphere_contact_3d(
+        nodes_np, u_slide, c_nids, indenter_fric, lam0
+    )
+    assert active_fr0 > 0
+    # Net contact force exerted on body must equal -sum(f_c) identically (normal + friction)
+    f_sum = -np.sum(f_fr0.reshape(-1, 3), axis=0)
+    assert float(np.linalg.norm(np.asarray(cforce_fr0) - f_sum)) < 1.0e-12
+    fp_fr, _, _, _, _, _ = assemble_rigid_sphere_contact_3d(
+        nodes_np, u_slide + eps * du, c_nids, indenter_fric, lam0
+    )
+    fm_fr, _, _, _, _, _ = assemble_rigid_sphere_contact_3d(
+        nodes_np, u_slide - eps * du, c_nids, indenter_fric, lam0
+    )
+    fd_fr = (fp_fr - fm_fr) / (2.0 * eps)
+    an_fr = np.asarray(k_fr0 @ du, dtype=np.float64)
+    assert float(np.linalg.norm(fd_fr - an_fr) / np.linalg.norm(an_fr)) < 1.0e-8
+
+    indenter_fric_solve = RigidSphereIndenter3D(
+        name="punch-fric-solve",
+        contact_face_tags=faces["z_max"],
+        initial_center_mm=(6.0, 6.0, 11.0),
+        center_mm=(6.4, 6.0, 10.6),
+        radius_mm=5.0,
+        penalty_mpa_per_mm=40.0,
+        friction_mu=0.25,
+    )
+    res_fric = solve_3d_assembly_and_contact(
+        asm,
+        dirichlet_bcs=(
+            DirichletBC3D(
+                "clamp_bot", faces["z_min"], ("x", "y", "z"), (0.0, 0.0, 0.0)
+            ),
+        ),
+        indenter=indenter_fric_solve,
+        load_steps=4,
+        max_al_iterations=8,
+        penetration_tol_mm=2.0e-3,
+    )
+    assert res_fric.converged is True
+    assert res_fric.active_contact_nodes > 0
+    assert res_fric.max_penetration_mm < 5.0e-3
+    assert res_fric.contact_force_n[2] < 0.0
+
+    # 5. Non-conformal tied interface contract sanity
     iface = InterfacePairSpec(
         name="tie-1",
         kind=InterfaceKind.TIED,

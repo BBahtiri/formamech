@@ -25,6 +25,7 @@ from piginot.fem.modal_3d import (
     solve_3d_modal_analysis,
 )
 from piginot.fem.thermo_mechanical_3d import (
+    ConvectionBC3D,
     TemperatureBC3D,
     ThermalMaterialSpec,
     solve_3d_steady_heat_conduction,
@@ -73,6 +74,22 @@ def test_3d_steady_transient_heat_and_constrained_thermal_stress_analytical(
     t_exact = 300.0 + 100.0 * (xs / 20.0)
     assert float(np.max(np.abs(t_steady - t_exact))) < 1.0e-10
 
+    # 1b. Consistent P2 Robin convection on TET10 vs exact 1D Biot-number solution
+    h_conv = 0.0025  # Bi = h * L / k = 0.0025 * 20 / 0.05 = 1.0
+    bi = h_conv * 20.0 / thermal.conductivity_w_per_mm_k
+    t_conv = solve_3d_steady_heat_conduction(
+        imp.mesh,
+        thermal,
+        temperature_bcs=(TemperatureBC3D("hot", faces["x_min"], 400.0),),
+        convection_bcs=(
+            ConvectionBC3D(
+                "cool_end", faces["x_max"], h_w_per_mm2_k=h_conv, t_ambient_k=300.0
+            ),
+        ),
+    )
+    t_conv_exact = 400.0 - (bi / (1.0 + bi)) * 100.0 * (xs / 20.0)
+    assert float(np.max(np.abs(t_conv - t_conv_exact))) < 1.0e-10
+
     # 2. Transient heating moves smoothly toward steady state
     hist = solve_3d_transient_heat_conduction(
         imp.mesh,
@@ -87,6 +104,26 @@ def test_3d_steady_transient_heat_and_constrained_thermal_stress_analytical(
     )
     assert len(hist) == 4
     assert float(np.mean(hist[-1])) > float(np.mean(hist[0]))
+
+    # 2b. Transient 1D-in-3D sine eigenmode decay verifies exact W <-> mJ diffusivity alpha = k/(rho*cp)
+    t_init_sin = 300.0 + 100.0 * np.sin(math.pi * xs / 20.0)
+    hist_sin = solve_3d_transient_heat_conduction(
+        imp.mesh,
+        thermal,
+        initial_temperature_k=t_init_sin,
+        dt_s=0.1,
+        num_steps=10,
+        temperature_bcs=(
+            TemperatureBC3D("end0", faces["x_min"], 300.0),
+            TemperatureBC3D("end1", faces["x_max"], 300.0),
+        ),
+    )
+    alpha_mm2_s = thermal.conductivity_w_per_mm_k / (
+        1.0e-3 * thermal.density_t_per_mm3 * thermal.specific_heat_mj_per_t_k
+    )
+    decay_exact = math.exp(-alpha_mm2_s * ((math.pi / 20.0) ** 2) * 1.0)
+    t_sin_exact = 300.0 + 100.0 * decay_exact * np.sin(math.pi * xs / 20.0)
+    assert float(np.max(np.abs(hist_sin[-1] - t_sin_exact))) < 1.5
 
     # 3. Free uniform heating dT = +50 K -> exact zero stress & exact uniform expansion alpha*dT*L
     t_unif = np.full(len(imp.mesh.nodes), 350.0, dtype=np.float64)

@@ -179,16 +179,24 @@ def assemble_rigid_sphere_contact_3d(
             k_node = eps * nn - (trial_tn / r) * (eye3 - nn)
 
             # Optional regularized Coulomb tangential friction opposing u_t
+            # Exact consistent tangent df_t/dx_i including normal-load coupling and dn/dx_i.
             if indenter.friction_mu > 0.0:
-                u_t = u_i - float(np.dot(u_i, n_vec)) * n_vec
+                u_dot_n = float(np.dot(u_i, n_vec))
+                u_t = u_i - u_dot_n * n_vec
                 ut_norm = float(np.linalg.norm(u_t))
                 reg = float(indenter.friction_reg_mm)
                 denom = math.sqrt(ut_norm * ut_norm + reg * reg)
                 t_lim = indenter.friction_mu * trial_tn
-                f_t = t_lim * (u_t / denom)
+                t_hat = u_t / denom
+                f_t = t_lim * t_hat
                 f_c[list(dofs)] += f_t
+                total_force -= f_t
                 proj_t = eye3 - nn
-                k_t = (t_lim / denom) * (proj_t - np.outer(u_t, u_t) / (denom * denom))
+                du_t_dx = proj_t - (u_dot_n * proj_t + np.outer(n_vec, u_t)) / r
+                dt_hat_du_t = (eye3 - np.outer(t_hat, t_hat)) / denom
+                k_t = -indenter.friction_mu * eps * np.outer(t_hat, n_vec) + t_lim * (
+                    dt_hat_du_t @ du_t_dx
+                )
                 k_node = k_node + k_t
 
             for a in range(3):
@@ -353,7 +361,7 @@ def solve_3d_assembly_and_contact(
         ).tocsr()
         return f_int.reshape(-1), k_mat, p_np, f_np, total_e, min_det
 
-    u = np.zeros(n_dofs, dtype=np.float64)
+    u: FloatArray = np.zeros(n_dofs, dtype=np.float64)
     total_newton = 0
     al_done = 0
     last_res = float("inf")
@@ -449,6 +457,8 @@ def solve_3d_assembly_and_contact(
                     )
                 alpha = 1.0
                 accepted = False
+                best_u: FloatArray | None = None
+                best_res = float("inf")
                 for _ls in range(10):
                     u_cand = u.copy()
                     u_cand[free_dofs] += alpha * du_free
@@ -458,12 +468,44 @@ def solve_3d_assembly_and_contact(
                         + np.eye(3, dtype=np.float64)[None, None, :, :]
                     )
                     if float(np.min(np.linalg.det(f_c_chk))) > 1.0e-5:
-                        u = u_cand
-                        accepted = True
-                        break
+                        if not has_friction and step_indenter is None:
+                            u = u_cand
+                            accepted = True
+                            break
+                        f_int_c, _, _, _, _, det_c = _assemble_multimaterial(u_cand)
+                        if det_c > 1.0e-5:
+                            if assembly.interfaces:
+                                f_tc, _ = _assemble_tied_interfaces(assembly, u_cand)
+                                f_int_c = f_int_c + f_tc
+                            if step_indenter is not None:
+                                f_cc, _, _, _, _, _ = assemble_rigid_sphere_contact_3d(
+                                    nodes_np,
+                                    u_cand,
+                                    contact_nids,
+                                    step_indenter,
+                                    lambda_n,
+                                )
+                                f_int_c = f_int_c + f_cc
+                            cand_res = float(
+                                np.linalg.norm((f_int_c - f_ext)[free_dofs])
+                            )
+                            if np.isfinite(cand_res):
+                                if cand_res < best_res:
+                                    best_res = cand_res
+                                    best_u = u_cand
+                                if (
+                                    cand_res < (1.0 - 1.0e-4 * alpha) * res_norm
+                                    or cand_res <= solver_tolerance
+                                ):
+                                    u = u_cand
+                                    accepted = True
+                                    break
                     alpha *= 0.5
                 if not accepted:
-                    break
+                    if best_u is not None:
+                        u = best_u
+                    else:
+                        break
 
             if not step_conv:
                 return AssemblyContact3DResult(

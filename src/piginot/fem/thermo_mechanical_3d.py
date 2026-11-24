@@ -24,6 +24,7 @@ from piginot.fem.backend_3d import (
     DirichletBC3D,
     TorchFemBackend3D,
     TractionBC3D,
+    _build_edge_midside_map,
     _cauchy_von_mises_3d,
     _project_cell_scalar_to_nodes_3d,
     _tet_shape_grads_ref,
@@ -187,7 +188,12 @@ def _assemble_thermal_matrices(
     w_vol = det_j * w_ref[None, :]  # (E, Q)
 
     k_cond = float(thermal.conductivity_w_per_mm_k)
-    rho_cp = float(thermal.density_t_per_mm3 * thermal.specific_heat_mj_per_t_k)
+    # Convert mJ/(mm^3 K) -> J/(mm^3 K) so C_th/dt has units W/K matching K_th & K_conv
+    rho_cp = (
+        1.0e-3
+        * float(thermal.density_t_per_mm3)
+        * float(thermal.specific_heat_mj_per_t_k)
+    )
 
     # K_elem: (E, n_loc, n_loc)
     k_elem = k_cond * np.einsum("eq,eqni,eqmi->enm", w_vol, d_phys, d_phys)
@@ -200,30 +206,90 @@ def _assemble_thermal_matrices(
     return k_mat, c_mat
 
 
+_P1_TRI_MASS: Final[FloatArray] = (
+    np.array(
+        [
+            [2.0, 1.0, 1.0],
+            [1.0, 2.0, 1.0],
+            [1.0, 1.0, 2.0],
+        ],
+        dtype=np.float64,
+    )
+    / 12.0
+)
+_P1_TRI_LOAD: Final[FloatArray] = np.array([1.0, 1.0, 1.0], dtype=np.float64) / 3.0
+
+# Exact consistent P2 (6-node: v0, v1, v2, m01, m12, m20) reference triangle integrals
+# M_ab = (1 / A) * int_T N_a N_b dA,  b_a = (1 / A) * int_T N_a dA
+_P2_TRI_MASS: Final[FloatArray] = (
+    np.array(
+        [
+            [6.0, -1.0, -1.0, 0.0, -4.0, 0.0],
+            [-1.0, 6.0, -1.0, 0.0, 0.0, -4.0],
+            [-1.0, -1.0, 6.0, -4.0, 0.0, 0.0],
+            [0.0, 0.0, -4.0, 32.0, 16.0, 16.0],
+            [-4.0, 0.0, 0.0, 16.0, 32.0, 16.0],
+            [0.0, -4.0, 0.0, 16.0, 16.0, 32.0],
+        ],
+        dtype=np.float64,
+    )
+    / 180.0
+)
+_P2_TRI_LOAD: Final[FloatArray] = (
+    np.array([0.0, 0.0, 0.0, 1.0, 1.0, 1.0], dtype=np.float64) / 3.0
+)
+
+
 def _apply_convection_bcs(
     mesh: CanonicalMesh3D,
     convection_bcs: Sequence[ConvectionBC3D],
 ) -> tuple[csr_matrix, FloatArray]:
-    """Assemble lumped surface Robin convection matrix and ambient load vector."""
+    """Assemble exact consistent P1/P2 surface Robin convection matrix and ambient load."""
     n_nodes = len(mesh.nodes)
-    diag = np.zeros(n_nodes, dtype=np.float64)
     rhs = np.zeros(n_nodes, dtype=np.float64)
     if not convection_bcs:
         return csr_matrix((n_nodes, n_nodes), dtype=np.float64), rhs
     _, _, areas = mesh.surface_geometry()
+    is_p2 = mesh.cell_type is CellType3D.TET10
+    edge_map = _build_edge_midside_map(mesh) if is_p2 else {}
+    rows: list[int] = []
+    cols: list[int] = []
+    vals: list[float] = []
     for cbc in convection_bcs:
         h = float(cbc.h_w_per_mm2_k)
         t_inf = float(cbc.t_ambient_k)
         for tag in cbc.face_tags:
             for tid in mesh.semantic_face_tags[tag]:
                 area = float(areas[tid])
+                if area <= 0.0:
+                    continue
                 a, b, c = mesh.surface_triangles[tid]
-                for nid in (a, b, c):
-                    w = h * area / 3.0
-                    diag[nid] += w
-                    rhs[nid] += w * t_inf
-    idx = np.arange(n_nodes, dtype=np.int64)
-    return coo_matrix((diag, (idx, idx)), shape=(n_nodes, n_nodes)).tocsr(), rhs
+                loc_nodes: tuple[int, ...] = (a, b, c)
+                m_ref = _P1_TRI_MASS
+                b_ref = _P1_TRI_LOAD
+                if is_p2:
+                    mids: list[int] = []
+                    for u, v in ((a, b), (b, c), (c, a)):
+                        key = (u, v) if u < v else (v, u)
+                        mid = edge_map.get(key)
+                        if mid is not None:
+                            mids.append(mid)
+                    if len(mids) == 3:
+                        loc_nodes = (a, b, c, mids[0], mids[1], mids[2])
+                        m_ref = _P2_TRI_MASS
+                        b_ref = _P2_TRI_LOAD
+                scale = h * area
+                n_loc = len(loc_nodes)
+                for i in range(n_loc):
+                    ni = loc_nodes[i]
+                    rhs[ni] += scale * t_inf * float(b_ref[i])
+                    for j in range(n_loc):
+                        m_ij = float(m_ref[i, j])
+                        if m_ij != 0.0:
+                            rows.append(ni)
+                            cols.append(loc_nodes[j])
+                            vals.append(scale * m_ij)
+    return coo_matrix((vals, (rows, cols)), shape=(n_nodes, n_nodes)).tocsr(), rhs
 
 
 def solve_3d_steady_heat_conduction(
