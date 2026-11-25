@@ -104,3 +104,55 @@ def test_http_serving_api_predict_receipt_metrics_harness_and_ledger_tamper(
     ledger.path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     ok_tampered, errs = ledger.verify_chain()
     assert ok_tampered is False and errs
+
+
+def test_v4_1_api_server_hardening_auth_limits_strict_json_and_corrupt_ledger(
+    tmp_path: Path,
+) -> None:
+    """API rejects NaN JSON, oversized bodies, missing auth, disabled harness, and corrupt ledgers cleanly."""
+    app = FormaMechApiApplication(
+        tmp_path / "ws_hardened",
+        auth_token="secret-token-42",
+        enable_harness_endpoint=False,
+        max_body_bytes=2048,
+    )
+    # 1) /health open for liveness, protected endpoints require Bearer token
+    st_h, _, _ = app.handle_request("GET", "/health")
+    assert st_h == 200
+    st_unauth, _, _ = app.handle_request("GET", "/v1/capabilities")
+    assert st_unauth == 401
+    hdr = {"Authorization": "Bearer secret-token-42"}
+    st_auth, _, _ = app.handle_request("GET", "/v1/capabilities", headers=hdr)
+    assert st_auth == 200
+
+    # 2) Disabled /v1/harness/invoke returns 403
+    st_forb, _, _ = app.handle_request(
+        "POST",
+        "/v1/harness/invoke",
+        body=b'{"capability":"discover.capabilities","arguments":{}}',
+        headers=hdr,
+    )
+    assert st_forb == 403
+
+    # 3) Oversized body returns 413
+    st_big, _, _ = app.handle_request(
+        "POST", "/v1/verify-receipt", body=b"{" + b" " * 3000 + b"}", headers=hdr
+    )
+    assert st_big == 413
+
+    # 4) Non-finite NaN JSON rejected with 400
+    st_nan, _, _ = app.handle_request(
+        "POST",
+        "/v1/predict",
+        body=b'{"inputs":{"x":NaN},"mode":"fast"}',
+        headers=hdr,
+    )
+    assert st_nan == 400
+
+    # 5) Corrupt JSON line in audit ledger returns 409 (never unhandled 500)
+    app.ledger.path.write_text("{corrupt-json-line\n", encoding="utf-8")
+    st_ver, _, body_ver = app.handle_request("GET", "/v1/ledger/verify", headers=hdr)
+    assert st_ver == 409
+    parsed = json.loads(body_ver.decode("utf-8"))
+    assert parsed["verified"] is False
+    assert parsed["metrics"]["corrupt_lines"] == 1

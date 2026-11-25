@@ -218,9 +218,11 @@ def spectrally_safe_repair(
     linearization: DiscreteLinearization,
     initial_vector: FloatArray,
     *,
-    config: SpectralRepairConfig = SpectralRepairConfig(),
+    config: SpectralRepairConfig | None = None,
 ) -> tuple[FloatArray, SpectralRepairReport]:
     """Repair ``initial_vector`` until admissible and strictly coercive/SPD."""
+    if config is None:
+        config = SpectralRepairConfig()
     t0 = time.perf_counter()
     vec = linearization.with_exact_dirichlet(
         np.asarray(initial_vector, dtype=np.float64)

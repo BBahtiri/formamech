@@ -16,6 +16,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
+import os
+import tempfile
 from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
@@ -26,6 +29,12 @@ import numpy as np
 from numpy.typing import NDArray
 
 from piginot.contracts import canonical_json_bytes
+from piginot.contracts.canonical import strict_json_loads
+from piginot.contracts.errors import (
+    ContractValidationError,
+    DuplicateKeyError,
+    NonFiniteNumberError,
+)
 
 FloatArray = NDArray[np.float64]
 IntArray = NDArray[np.int64]
@@ -62,11 +71,36 @@ class ShardedRecord3D:
     displacement_mm: FloatArray  # (N, 3)
     metadata: Mapping[str, Any]
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.record_id, str) or not self.record_id.strip():
+            raise ValueError("record_id must be non-empty text")
+        if not isinstance(self.mesh_id, str) or not self.mesh_id.strip():
+            raise ValueError("mesh_id must be non-empty text")
+        nodes = np.asarray(self.nodes_mm, dtype=np.float64)
+        cells = np.asarray(self.cells, dtype=np.int64)
+        disp = np.asarray(self.displacement_mm, dtype=np.float64)
+        if nodes.ndim != 2 or nodes.shape[1] != 3 or nodes.shape[0] < 1:
+            raise ValueError("nodes_mm must have shape (N, 3) with N >= 1")
+        if not np.all(np.isfinite(nodes)):
+            raise ValueError("nodes_mm must contain only finite floats")
+        if cells.ndim != 2 or cells.shape[0] < 1 or cells.shape[1] < 3:
+            raise ValueError("cells must have shape (E, K) with E >= 1, K >= 3")
+        if int(np.min(cells)) < 0 or int(np.max(cells)) >= int(nodes.shape[0]):
+            raise ValueError("cells contain out-of-bounds node indices")
+        if disp.shape != nodes.shape or not np.all(np.isfinite(disp)):
+            raise ValueError("displacement_mm must be finite and match nodes_mm shape")
+        if any(not math.isfinite(float(v)) for v in self.parameters):
+            raise ValueError("parameters must contain only finite floats")
+
     def geometry_fingerprint(self) -> str:
-        """Deterministic SHA-256 fingerprint of ``(nodes_mm, cells)``."""
+        """Deterministic SHA-256 fingerprint of ``(nodes_mm, cells)`` with framing & +0.0 normalization."""
+        nodes_c = np.ascontiguousarray(self.nodes_mm, dtype=np.float64) + 0.0
+        cells_c = np.ascontiguousarray(self.cells, dtype=np.int64)
         h = hashlib.sha256()
-        h.update(np.ascontiguousarray(self.nodes_mm, dtype=np.float64).tobytes())
-        h.update(np.ascontiguousarray(self.cells, dtype=np.int64).tobytes())
+        h.update(f"nodes:{nodes_c.ndim}:{nodes_c.shape}:{nodes_c.dtype.str}|".encode())
+        h.update(nodes_c.tobytes())
+        h.update(f"cells:{cells_c.ndim}:{cells_c.shape}:{cells_c.dtype.str}|".encode())
+        h.update(cells_c.tobytes())
         return h.hexdigest()
 
 
@@ -76,6 +110,21 @@ def _sha256_file(path: Path) -> str:
         for chunk in iter(lambda: fh.read(65_536), b""):
             h.update(chunk)
     return h.hexdigest()
+
+
+def _atomic_write_bytes(path: Path, data: bytes) -> None:
+    fd, tmp_name = tempfile.mkstemp(prefix=".tmp-", dir=str(path.parent))
+    tmp_path = Path(tmp_name)
+    try:
+        with os.fdopen(fd, "wb") as fh:
+            fh.write(data)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp_path, path)
+    except Exception:
+        if tmp_path.exists():
+            tmp_path.unlink(missing_ok=True)
+        raise
 
 
 class ShardedMeshDataset3D:
@@ -99,18 +148,47 @@ class ShardedMeshDataset3D:
                     "max_records_per_shard": self.max_records_per_shard,
                     "shards": [],
                     "mesh_splits": {},
+                    "mesh_id_splits": {},
                     "record_ids": [],
                 }
             )
 
+    def _resolve_shard_path(self, relpath: str) -> Path:
+        if not isinstance(relpath, str) or not relpath.strip():
+            raise ShardIntegrityError("empty shard relpath in manifest")
+        rel = Path(relpath)
+        if rel.is_absolute():
+            raise ShardIntegrityError(
+                f"absolute shard path refused in manifest: {relpath!r}"
+            )
+        resolved = (self.root_dir / rel).resolve()
+        shards_root = self.shards_dir.resolve()
+        if not resolved.is_relative_to(shards_root):
+            raise ShardIntegrityError(
+                f"shard path escapes shards directory: {relpath!r}"
+            )
+        return resolved
+
     def _read_manifest(self) -> dict[str, Any]:
-        raw = json.loads(self.manifest_path.read_text(encoding="utf-8"))
+        try:
+            raw = strict_json_loads(self.manifest_path.read_text(encoding="utf-8"))
+        except (
+            OSError,
+            UnicodeDecodeError,
+            json.JSONDecodeError,
+            ContractValidationError,
+            DuplicateKeyError,
+            NonFiniteNumberError,
+        ) as exc:
+            raise ShardIntegrityError(
+                f"corrupted or unreadable dataset manifest ({exc})"
+            ) from exc
         if not isinstance(raw, dict) or raw.get("schema") != DATASET_3D_SCHEMA:
             raise ShardIntegrityError("invalid or corrupted dataset manifest schema")
         return raw
 
     def _write_manifest(self, doc: Mapping[str, Any]) -> None:
-        self.manifest_path.write_bytes(canonical_json_bytes(doc))
+        _atomic_write_bytes(self.manifest_path, canonical_json_bytes(doc))
 
     @property
     def manifest_sha256(self) -> str:
@@ -136,7 +214,7 @@ class ShardedMeshDataset3D:
         m = self._read_manifest()
         for shard in m["shards"]:
             rel = str(shard["relpath"])
-            p = self.root_dir / rel
+            p = self._resolve_shard_path(rel)
             if not p.is_file():
                 raise ShardIntegrityError(f"missing shard file {rel!r}")
             actual = _sha256_file(p)
@@ -152,17 +230,12 @@ class ShardedMeshDataset3D:
             "manifest_sha256": self.manifest_sha256,
         }
 
-    def append_records(self, records: Sequence[ShardedRecord3D]) -> list[str]:
-        """Append records into new immutable ``.npz`` shards with zero split leakage."""
-        if not records:
-            return []
+    def check_split_leakage(self, records: Sequence[ShardedRecord3D]) -> None:
+        """Validate a batch of records for duplicate IDs or cross-split leakage without writing."""
         manifest = self._read_manifest()
-        mesh_splits: dict[str, str] = dict(manifest["mesh_splits"])
-        seen_ids: set[str] = set(str(r) for r in manifest["record_ids"])
-
-        # Validate entire batch fail-closed BEFORE writing any shard
-        staged_splits = dict(mesh_splits)
-        staged_ids = set(seen_ids)
+        staged_splits: dict[str, str] = dict(manifest["mesh_splits"])
+        staged_mesh_ids: dict[str, str] = dict(manifest.get("mesh_id_splits", {}))
+        staged_ids: set[str] = {str(r) for r in manifest["record_ids"]}
         for rec in records:
             if rec.record_id in staged_ids:
                 raise ValueError(f"duplicate record_id {rec.record_id!r}")
@@ -174,13 +247,37 @@ class ShardedMeshDataset3D:
                     f"split leakage refused: geometry {rec.mesh_id!r} (sha={fp[:12]}) "
                     f"already locked in split {prior!r}, cannot add to {rec.split.value!r}"
                 )
+            prior_id = staged_mesh_ids.get(rec.mesh_id)
+            if prior_id is not None and prior_id != rec.split.value:
+                raise SplitLeakageError(
+                    f"split leakage refused: mesh_id {rec.mesh_id!r} "
+                    f"already locked in split {prior_id!r}, cannot add to {rec.split.value!r}"
+                )
             staged_splits[fp] = rec.split.value
+            staged_mesh_ids[rec.mesh_id] = rec.split.value
+
+    def append_records(self, records: Sequence[ShardedRecord3D]) -> list[str]:
+        """Append records into new immutable ``.npz`` shards with zero split leakage."""
+        if not records:
+            return []
+        self.check_split_leakage(records)
+        manifest = self._read_manifest()
+        staged_splits: dict[str, str] = dict(manifest["mesh_splits"])
+        staged_mesh_ids: dict[str, str] = dict(manifest.get("mesh_id_splits", {}))
+        staged_ids: set[str] = {str(r) for r in manifest["record_ids"]}
+        for rec in records:
+            staged_ids.add(rec.record_id)
+            staged_splits[rec.geometry_fingerprint()] = rec.split.value
+            staged_mesh_ids[rec.mesh_id] = rec.split.value
 
         written_shards: list[str] = []
         next_idx = len(manifest["shards"])
-        chunk_sz = int(
-            manifest.get("max_records_per_shard", self.max_records_per_shard)
-        )
+        raw_chunk_sz = manifest.get("max_records_per_shard", self.max_records_per_shard)
+        if type(raw_chunk_sz) is not int or raw_chunk_sz < 1:
+            raise ShardIntegrityError(
+                f"invalid max_records_per_shard in manifest: {raw_chunk_sz!r}"
+            )
+        chunk_sz = raw_chunk_sz
 
         for start in range(0, len(records), chunk_sz):
             batch = records[start : start + chunk_sz]
@@ -210,7 +307,19 @@ class ShardedMeshDataset3D:
             arrays["index_json"] = np.asarray(
                 canonical_json_bytes(index_rows).decode("utf-8")
             )
-            np.savez_compressed(shard_path, **arrays)
+            fd, tmp_name = tempfile.mkstemp(
+                prefix=".tmp-", suffix=".npz", dir=str(self.shards_dir)
+            )
+            tmp_path = Path(tmp_name)
+            try:
+                with os.fdopen(fd, "wb") as fh:
+                    np.savez_compressed(fh, **arrays)
+                    fh.flush()
+                    os.fsync(fh.fileno())
+                os.replace(tmp_path, shard_path)
+            except Exception:
+                tmp_path.unlink(missing_ok=True)
+                raise
 
             relpath = f"shards/{shard_name}"
             digest = _sha256_file(shard_path)
@@ -225,6 +334,7 @@ class ShardedMeshDataset3D:
             written_shards.append(relpath)
 
         manifest["mesh_splits"] = staged_splits
+        manifest["mesh_id_splits"] = staged_mesh_ids
         manifest["record_ids"] = sorted(staged_ids)
         self._write_manifest(manifest)
         return written_shards
@@ -240,23 +350,48 @@ class ShardedMeshDataset3D:
         for shard in manifest["shards"]:
             if split is not None and shard["split_counts"].get(split.value, 0) == 0:
                 continue
-            p = self.root_dir / str(shard["relpath"])
+            rel = str(shard["relpath"])
+            p = self._resolve_shard_path(rel)
             if not p.is_file():
-                raise ShardIntegrityError(f"missing shard {shard['relpath']!r}")
+                raise ShardIntegrityError(f"missing shard {rel!r}")
             if verify:
                 actual = _sha256_file(p)
                 if actual != str(shard["sha256"]):
                     raise ShardIntegrityError(
-                        f"tampered shard {shard['relpath']!r}: SHA-256 mismatch"
+                        f"tampered shard {rel!r}: SHA-256 mismatch"
                     )
             with np.load(p, allow_pickle=False) as zf:
-                rows = json.loads(str(zf["index_json"].item()))
+                try:
+                    rows = strict_json_loads(str(zf["index_json"].item()))
+                except (
+                    KeyError,
+                    json.JSONDecodeError,
+                    ContractValidationError,
+                    DuplicateKeyError,
+                    NonFiniteNumberError,
+                ) as exc:
+                    raise ShardIntegrityError(
+                        f"corrupted shard index in {rel!r} ({exc})"
+                    ) from exc
+                if not isinstance(rows, list):
+                    raise ShardIntegrityError(f"shard index in {rel!r} must be a list")
                 for row in rows:
+                    if not isinstance(row, dict):
+                        raise ShardIntegrityError(f"corrupt row in shard {rel!r}")
                     sp = DatasetSplit(str(row["split"]))
                     if split is not None and sp is not split:
                         continue
-                    slot = int(row["slot"])
-                    yield ShardedRecord3D(
+                    raw_slot = row.get("slot")
+                    if type(raw_slot) is not int:
+                        raise ShardIntegrityError(
+                            f"invalid slot in shard {rel!r}: {raw_slot!r}"
+                        )
+                    slot = raw_slot
+                    raw_meta = row.get("metadata")
+                    meta_dict: dict[str, Any] = (
+                        dict(raw_meta) if isinstance(raw_meta, dict) else {}
+                    )
+                    rec = ShardedRecord3D(
                         record_id=str(row["record_id"]),
                         mesh_id=str(row["mesh_id"]),
                         split=sp,
@@ -268,8 +403,18 @@ class ShardedMeshDataset3D:
                         displacement_mm=np.asarray(
                             zf[f"r{slot}_disp"], dtype=np.float64
                         ),
-                        metadata=dict(row.get("metadata", {})),
+                        metadata=meta_dict,
                     )
+                    if verify:
+                        expected_geo = row.get("geometry_sha256")
+                        if (
+                            not isinstance(expected_geo, str)
+                            or rec.geometry_fingerprint() != expected_geo
+                        ):
+                            raise ShardIntegrityError(
+                                f"record {rec.record_id!r} geometry_sha256 mismatch in {rel!r}"
+                            )
+                    yield rec
 
     def iter_batches(
         self,

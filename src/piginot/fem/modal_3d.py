@@ -75,7 +75,7 @@ def assemble_3d_mass_matrix(
     *,
     lumped: bool = False,
 ) -> csr_matrix:
-    """Assemble exact consistent (or row-sum lumped) 3D ``TET4``/``TET10`` mass matrix ``M``."""
+    """Assemble exact consistent (or HRZ-lumped) 3D ``TET4``/``TET10`` mass matrix ``M``."""
     if not math.isfinite(density_t_per_mm3) or density_t_per_mm3 <= 0.0:
         raise ValueError("density_t_per_mm3 must be finite and positive")
     nodes = np.asarray(mesh.nodes, dtype=np.float64)
@@ -92,22 +92,37 @@ def assemble_3d_mass_matrix(
     x_e = nodes[cells]
     jac = np.einsum("eni,qna->eqia", x_e, d_ref)
     det_j = np.linalg.det(jac)
+    if np.any(~np.isfinite(det_j)) or np.any(det_j <= 0.0):
+        raise ValueError("inverted or degenerate element encountered in mass assembly")
     w_vol = det_j * w_ref[None, :]  # (E, Q)
 
     # Scalar element mass M_s[e, a, b] = rho * sum_q w_vol[e, q] N_a(q) N_b(q)
     m_scalar = float(density_t_per_mm3) * np.einsum(
         "eq,qa,qb->eab", w_vol, n_val, n_val
     )
+
+    if lumped:
+        # Hinton-Rock-Zienkiewicz (HRZ) diagonal-scaling lumping: strictly positive
+        # on both TET4 and TET10 nodes (unlike row-sum lumping, which gives -V/20
+        # on TET10 corners) while conserving exact element & total mass.
+        m_tot_e = float(density_t_per_mm3) * np.sum(w_vol, axis=1)  # (E,)
+        m_diag_e = np.diagonal(m_scalar, axis1=1, axis2=2)  # (E, n_loc)
+        diag_sum_e = np.sum(m_diag_e, axis=1)  # (E,)
+        if np.any(m_diag_e <= 0.0) or np.any(diag_sum_e <= 0.0):
+            raise ValueError(
+                "non-positive element mass diagonal encountered during HRZ lumping"
+            )
+        m_hrz_e = m_diag_e * (m_tot_e / diag_sum_e)[:, None]
+        nodal_mass = np.zeros(n_nodes, dtype=np.float64)
+        np.add.at(nodal_mass, cells, m_hrz_e)
+        diag_3 = np.repeat(nodal_mass, 3)
+        return diags(diag_3, format="csr")
+
     ii_s = np.repeat(cells[:, :, None], n_loc, axis=2).reshape(-1)
     jj_s = np.repeat(cells[:, None, :], n_loc, axis=1).reshape(-1)
     m_s_mat = coo_matrix(
         (m_scalar.reshape(-1), (ii_s, jj_s)), shape=(n_nodes, n_nodes)
     ).tocsr()
-
-    if lumped:
-        row_sums = np.asarray(m_s_mat.sum(axis=1), dtype=np.float64).reshape(-1)
-        diag_3 = np.repeat(row_sums, 3)
-        return diags(diag_3, format="csr")
 
     # Expand scalar nodal mass identically onto x, y, z DOFs (3*i + c, 3*j + c)
     coo_s = m_s_mat.tocoo()

@@ -51,10 +51,20 @@ class ShellMesh3D:
     boundary_node_sets: Mapping[str, tuple[int, ...]]
 
     def __post_init__(self) -> None:
-        if self.nodes.ndim != 2 or self.nodes.shape[1] != 3:
-            raise ValueError("nodes must have shape (N, 3)")
-        if self.triangles.ndim != 2 or self.triangles.shape[1] != 3:
-            raise ValueError("triangles must have shape (E, 3)")
+        if self.nodes.ndim != 2 or self.nodes.shape[1] != 3 or self.nodes.shape[0] < 3:
+            raise ValueError("nodes must have shape (N, 3) with N >= 3")
+        if not np.all(np.isfinite(self.nodes)):
+            raise ValueError("nodes must be finite")
+        if (
+            self.triangles.ndim != 2
+            or self.triangles.shape[1] != 3
+            or self.triangles.shape[0] < 1
+        ):
+            raise ValueError("triangles must have shape (E, 3) with E >= 1")
+        if int(np.min(self.triangles)) < 0 or int(np.max(self.triangles)) >= int(
+            self.nodes.shape[0]
+        ):
+            raise ValueError("triangle node indices out of bounds")
         if not math.isfinite(self.thickness_mm) or self.thickness_mm <= 0.0:
             raise ValueError("thickness_mm must be finite and positive")
 
@@ -299,14 +309,21 @@ def solve_3d_dkt_shell(
     e_mod = float(youngs_modulus_mpa)
     nu = float(poisson_ratio)
     t_mm = float(mesh.thickness_mm)
-    if e_mod <= 0.0 or not (-0.1 <= nu < 0.5):
-        raise ValueError("invalid elastic constants for shell solve")
+    if (
+        not math.isfinite(e_mod)
+        or not math.isfinite(nu)
+        or not math.isfinite(uniform_pressure_mpa)
+        or e_mod <= 0.0
+        or not (-1.0 < nu < 0.5)
+    ):
+        raise ValueError("invalid elastic constants or pressure for shell solve")
 
     d_unit = np.array(
         [[1.0, nu, 0.0], [nu, 1.0, 0.0], [0.0, 0.0, 0.5 * (1.0 - nu)]],
         dtype=np.float64,
     ) / (1.0 - nu * nu)
     d_mem = (e_mod * t_mm) * d_unit
+    d_bend_scalar = e_mod * (t_mm**3) / (12.0 * (1.0 - nu * nu))
     d_bend = (e_mod * (t_mm**3) / 12.0) * d_unit
 
     n_nodes = int(mesh.nodes.shape[0])
@@ -314,6 +331,8 @@ def solve_3d_dkt_shell(
     f_global = np.zeros(n_dofs, dtype=np.float64)
     if nodal_loads_n is not None:
         arr_load = np.asarray(nodal_loads_n, dtype=np.float64).reshape(n_nodes, 6)
+        if not np.all(np.isfinite(arr_load)):
+            raise ValueError("nodal_loads_n must be finite")
         f_global += arr_load.reshape(-1)
 
     rows_list: list[IntArray] = []
@@ -322,7 +341,6 @@ def solve_3d_dkt_shell(
 
     mem_idx = np.array([0, 1, 6, 7, 12, 13], dtype=np.int64)
     bend_idx = np.array([2, 3, 4, 8, 9, 10, 14, 15, 16], dtype=np.int64)
-    drill_idx = np.array([5, 11, 17], dtype=np.int64)
 
     for tri in mesh.triangles:
         n0, n1, n2 = int(tri[0]), int(tri[1]), int(tri[2])
@@ -341,9 +359,34 @@ def solve_3d_dkt_shell(
         k_loc = np.zeros((18, 18), dtype=np.float64)
         k_loc[np.ix_(mem_idx, mem_idx)] += k_m
         k_loc[np.ix_(bend_idx, bend_idx)] += k_b
-        # Small drilling rotation regularization around local normal e3
-        k_drill = 1.0e-4 * e_mod * t_mm * area
-        k_loc[drill_idx, drill_idx] += k_drill
+        # Rigid-body-invariant O(t^3) relative drilling stabilization:
+        # r_a = rz_a - omega_z, where omega_z = 0.5 * sum_k (b_k v_k - c_k u_k)
+        # vanishes identically on all 6 rigid-body modes and eliminates fold locking.
+        b_vec = np.array(
+            [
+                xy[1, 1] - xy[2, 1],
+                xy[2, 1] - xy[0, 1],
+                xy[0, 1] - xy[1, 1],
+            ],
+            dtype=np.float64,
+        ) / (2.0 * area)
+        c_vec = np.array(
+            [
+                xy[2, 0] - xy[1, 0],
+                xy[0, 0] - xy[2, 0],
+                xy[1, 0] - xy[0, 0],
+            ],
+            dtype=np.float64,
+        ) / (2.0 * area)
+        c_drill = 1.0e-3 * d_bend_scalar
+        g_omega = np.zeros(18, dtype=np.float64)
+        for k_n in range(3):
+            g_omega[6 * k_n] = 0.5 * c_vec[k_n]
+            g_omega[6 * k_n + 1] = -0.5 * b_vec[k_n]
+        for k_n in range(3):
+            g_a = g_omega.copy()
+            g_a[6 * k_n + 5] = 1.0
+            k_loc += c_drill * np.outer(g_a, g_a)
 
         # Block-diagonal 18x18 rotation matrix T mapping global -> local DOFs
         t_mat = np.zeros((18, 18), dtype=np.float64)
@@ -382,6 +425,13 @@ def solve_3d_dkt_shell(
     for bc in dirichlet_bcs:
         if bc.node_set not in mesh.boundary_node_sets:
             raise ValueError(f"unknown shell boundary node_set {bc.node_set!r}")
+        for comp, val in zip(bc.components, bc.values, strict=True):
+            c_int = int(comp)
+            f_val = float(val)
+            if not (0 <= c_int < 6) or not math.isfinite(f_val):
+                raise ValueError(
+                    f"invalid shell Dirichlet component/value ({comp!r}, {val!r})"
+                )
         for nid in mesh.boundary_node_sets[bc.node_set]:
             for comp, val in zip(bc.components, bc.values, strict=True):
                 dof = 6 * int(nid) + int(comp)
@@ -438,10 +488,24 @@ class BeamSection3D:
     shear_factor_ky: float = 5.0 / 6.0
     shear_factor_kz: float = 5.0 / 6.0
 
+    def __post_init__(self) -> None:
+        for name, val in (
+            ("area_mm2", self.area_mm2),
+            ("iy_mm4", self.iy_mm4),
+            ("iz_mm4", self.iz_mm4),
+            ("j_torsion_mm4", self.j_torsion_mm4),
+            ("shear_factor_ky", self.shear_factor_ky),
+            ("shear_factor_kz", self.shear_factor_kz),
+        ):
+            if not math.isfinite(float(val)) or float(val) <= 0.0:
+                raise ValueError(f"BeamSection3D.{name} must be finite and positive")
+
     @classmethod
     def rectangular(cls, width_y_mm: float, height_z_mm: float) -> BeamSection3D:
         b = float(width_y_mm)
         h = float(height_z_mm)
+        if not math.isfinite(b) or not math.isfinite(h) or b <= 0.0 or h <= 0.0:
+            raise ValueError("rectangular beam dimensions must be finite and positive")
         area = b * h
         iy = b * (h**3) / 12.0
         iz = h * (b**3) / 12.0
@@ -490,7 +554,7 @@ def _timoshenko_beam_local_stiffness(
 ) -> FloatArray:
     """Exact 12x12 local Timoshenko beam stiffness in ``(u, v, w, rx, ry, rz)``."""
     le = float(length_mm)
-    if le <= 1.0e-12:
+    if not math.isfinite(le) or le <= 1.0e-12:
         raise ValueError("zero-length beam element")
     ea_l = e_mpa * section.area_mm2 / le
     gj_l = g_mpa * section.j_torsion_mm4 / le
@@ -546,14 +610,28 @@ def _timoshenko_beam_local_stiffness(
     return k
 
 
-def _beam_rotation_matrix(p0: FloatArray, p1: FloatArray) -> FloatArray:
+def _beam_rotation_matrix(
+    p0: FloatArray, p1: FloatArray, *, ref_vector: FloatArray | None = None
+) -> FloatArray:
     """Construct orthonormal 3x3 frame (e1 along beam axis, e2, e3 principal)."""
     vec = p1 - p0
     le = float(np.linalg.norm(vec))
+    if not math.isfinite(le) or le <= 1.0e-12:
+        raise ValueError("zero-length beam element")
     e1 = vec / le
-    ref = np.array([0.0, 0.0, 1.0], dtype=np.float64)
-    if abs(float(np.dot(e1, ref))) > 0.99:
-        ref = np.array([0.0, 1.0, 0.0], dtype=np.float64)
+    ref: FloatArray
+    if ref_vector is not None:
+        ref = np.asarray(ref_vector, dtype=np.float64).reshape(3)
+        ref_n = float(np.linalg.norm(ref))
+        if not np.all(np.isfinite(ref)) or ref_n <= 1.0e-12:
+            raise ValueError("ref_vector must be finite and non-zero")
+        ref = ref / ref_n
+        if abs(float(np.dot(e1, ref))) >= 1.0 - 1.0e-9:
+            raise ValueError("ref_vector is collinear with beam axis")
+    else:
+        ref = np.array([0.0, 0.0, 1.0], dtype=np.float64)
+        if abs(float(np.dot(e1, ref))) > 0.99:
+            ref = np.array([0.0, 1.0, 0.0], dtype=np.float64)
     e2 = np.cross(ref, e1)
     e2 /= float(np.linalg.norm(e2))
     e3 = np.cross(e1, e2)
@@ -569,14 +647,32 @@ def solve_3d_timoshenko_beam(
     poisson_ratio: float,
     constrained_dofs: Mapping[int, float],
     nodal_loads_n: FloatArray,
+    ref_vector: FloatArray | None = None,
 ) -> Beam3DResult:
     """Solve a 3D Timoshenko beam/frame structure with exact shear deformation."""
     t0 = time.perf_counter()
+    e_mpa = float(youngs_modulus_mpa)
+    nu = float(poisson_ratio)
+    if (
+        not math.isfinite(e_mpa)
+        or not math.isfinite(nu)
+        or e_mpa <= 0.0
+        or not (-1.0 < nu < 0.5)
+    ):
+        raise ValueError("invalid elastic constants for beam solve")
     nodes = np.asarray(nodes_mm, dtype=np.float64)
     elems = np.asarray(elements, dtype=np.int64)
+    if nodes.ndim != 2 or nodes.shape[1] != 3 or nodes.shape[0] < 2:
+        raise ValueError("nodes_mm must have shape (N, 3) with N >= 2")
+    if not np.all(np.isfinite(nodes)):
+        raise ValueError("nodes_mm must be finite")
+    if elems.ndim != 2 or elems.shape[1] != 2 or elems.shape[0] < 1:
+        raise ValueError("elements must have shape (E, 2) with E >= 1")
     n_nodes = int(nodes.shape[0])
+    if int(np.min(elems)) < 0 or int(np.max(elems)) >= n_nodes:
+        raise ValueError("beam element node indices out of bounds")
     n_dofs = 6 * n_nodes
-    g_mpa = float(youngs_modulus_mpa) / (2.0 * (1.0 + float(poisson_ratio)))
+    g_mpa = e_mpa / (2.0 * (1.0 + nu))
 
     rows_l: list[IntArray] = []
     cols_l: list[IntArray] = []
@@ -585,8 +681,8 @@ def solve_3d_timoshenko_beam(
         n0, n1 = int(elem[0]), int(elem[1])
         p0, p1 = nodes[n0], nodes[n1]
         le = float(np.linalg.norm(p1 - p0))
-        k_loc = _timoshenko_beam_local_stiffness(le, youngs_modulus_mpa, g_mpa, section)
-        r_mat = _beam_rotation_matrix(p0, p1)
+        k_loc = _timoshenko_beam_local_stiffness(le, e_mpa, g_mpa, section)
+        r_mat = _beam_rotation_matrix(p0, p1, ref_vector=ref_vector)
         t_mat = np.zeros((12, 12), dtype=np.float64)
         for blk in range(4):
             s = 3 * blk
@@ -609,13 +705,21 @@ def solve_3d_timoshenko_beam(
         shape=(n_dofs, n_dofs),
     ).tocsr()
     f_vec = np.asarray(nodal_loads_n, dtype=np.float64).reshape(n_dofs)
+    if not np.all(np.isfinite(f_vec)):
+        raise ValueError("nodal_loads_n must be finite")
 
     constrained = np.zeros(n_dofs, dtype=bool)
     u_pres = np.zeros(n_dofs, dtype=np.float64)
     for dof_idx, val in constrained_dofs.items():
-        constrained[int(dof_idx)] = True
-        u_pres[int(dof_idx)] = float(val)
+        d_i = int(dof_idx)
+        f_v = float(val)
+        if not (0 <= d_i < n_dofs) or not math.isfinite(f_v):
+            raise ValueError(f"invalid constrained beam DOF ({dof_idx!r}, {val!r})")
+        constrained[d_i] = True
+        u_pres[d_i] = f_v
     free = np.nonzero(~constrained)[0]
+    if free.size == 0:
+        raise ValueError("all beam DOFs are constrained")
     rhs = f_vec[free] - (k_mat[free][:, constrained] @ u_pres[constrained])
     u_f, rep = solve_linear_system(
         k_mat[free][:, free].tocsr(),

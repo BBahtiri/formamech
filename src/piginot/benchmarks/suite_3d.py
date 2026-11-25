@@ -72,7 +72,23 @@ class BenchmarkReport3D:
 
     @property
     def report_hash(self) -> str:
-        return hashlib.sha256(canonical_json_bytes(self.document())).hexdigest()
+        """Deterministic content hash excluding volatile wall-clock timings."""
+        stable_scaling = [
+            {k: v for k, v in row.items() if k != "wall_time_s"}
+            for row in self.solver_scaling
+        ]
+        stable_ft = {
+            k: v for k, v in self.foundation_transfer.items() if k != "wall_time_s"
+        }
+        payload = {
+            "schema": BENCHMARK_REPORT_SCHEMA,
+            "profile": self.profile,
+            "solver_scaling": stable_scaling,
+            "foundation_transfer": stable_ft,
+            "ood_stress": dict(self.ood_stress),
+            "cross_backend_parity": dict(self.cross_backend_parity),
+        }
+        return hashlib.sha256(canonical_json_bytes(payload)).hexdigest()
 
     def to_markdown(self) -> str:
         lines = [
@@ -83,23 +99,35 @@ class BenchmarkReport3D:
             "",
             "## B1 — 3D Linear Solver Scaling",
             "",
-            "| Method | DOFs | Converged | Newton Iters | Wall Time (s) |",
-            "| :--- | ---: | :---: | ---: | ---: |",
+            "| Method | DOFs | Converged | Newton Iters | Krylov Iters | Fallbacks | Wall Time (s) |",
+            "| :--- | ---: | :---: | ---: | ---: | ---: | ---: |",
         ]
         for row in self.solver_scaling:
             lines.append(
                 f"| `{row['method']}` | {row['dofs']} | {row['converged']} | "
-                f"{row['newton_iterations']} | {row['wall_time_s']:.4f} |"
+                f"{row['newton_iterations']} | {row.get('total_krylov_iterations', 0)} | "
+                f"{row.get('fallback_count', 0)} | {row['wall_time_s']:.4f} |"
             )
         ft = self.foundation_transfer
+        init_l = (
+            "N/A"
+            if ft.get("initial_loss") is None
+            else f"{float(ft['initial_loss']):.4f}"
+        )
+        final_l = (
+            "N/A" if ft.get("final_loss") is None else f"{float(ft['final_loss']):.4f}"
+        )
+        step_frac = float(ft.get("step_budget_fraction", 0.0))
         lines.extend(
             [
                 "",
-                "## B2 — 3D Foundation LoRA Transfer (`struct3d-base-v1`)",
+                f"## B2 — 3D Foundation LoRA Transfer (`{ft.get('checkpoint_dir', 'unknown')}`)",
                 "",
-                f"- **Trainable Parameter Fraction:** `{ft['trainable_fraction']:.4f}` (`<= 0.10` budget)",
-                f"- **Initial -> Final Loss:** `{ft['initial_loss']:.4f}` -> `{ft['final_loss']:.4f}`",
-                f"- **Adaptation Wall Time:** `{ft['wall_time_s']:.3f} s`",
+                f"- **Adapter State:** `{ft.get('state', 'UNKNOWN')}`",
+                f"- **Step Budget Fraction:** `{step_frac:.4f}` (`<= 0.10` budget)",
+                f"- **Trainable Parameter Fraction:** `{float(ft['trainable_fraction']):.4f}`",
+                f"- **Initial -> Final Loss:** `{init_l}` -> `{final_l}`",
+                f"- **Adaptation Wall Time:** `{float(ft['wall_time_s']):.3f} s`",
                 "",
                 "## B3 — Geometry OOD Refusal Stress Check",
                 "",
@@ -109,6 +137,7 @@ class BenchmarkReport3D:
                 "## B4 — Cross-Backend 3D Parity (`torch-fem-3d` vs `scikit-fem-3d` vs Analytical)",
                 "",
                 f"- **Max Rel Error vs Analytical (`torch-fem-3d`):** `{self.cross_backend_parity['torch_vs_analytical_rel']:.3e}`",
+                f"- **Max Rel Error vs Analytical (`scikit-fem-3d`):** `{self.cross_backend_parity.get('skfem_vs_analytical_rel', 0.0):.3e}`",
                 f"- **Max Rel Error (`torch-fem-3d` vs `scikit-fem-3d`):** `{self.cross_backend_parity['torch_vs_skfem_rel']:.3e}`",
             ]
         )
@@ -122,6 +151,10 @@ def run_benchmark_suite_3d(
     foundation_dir: Path | str | None = None,
 ) -> BenchmarkReport3D:
     """Execute reproducible B1–B4 benchmarks and return a canonical report."""
+    if profile not in ("quick", "full"):
+        raise ValueError(
+            f"unsupported benchmark profile {profile!r}; expected 'quick' or 'full'"
+        )
     t_start = time.perf_counter()
     root = Path(work_dir).resolve()
     root.mkdir(parents=True, exist_ok=True)
@@ -160,36 +193,47 @@ def run_benchmark_suite_3d(
             linear_solver=LinearSolverConfig(method=method, rtol=1.0e-9),
         )
         res = backend_t.solve(req)
+        lstats = res.linear_solver_stats or {}
         b1_rows.append(
             {
                 "method": method.value,
                 "dofs": len(mesh_b1.nodes) * 3,
                 "converged": res.converged,
                 "newton_iterations": res.total_newton_iterations,
+                "total_krylov_iterations": int(
+                    lstats.get("total_krylov_iterations", 0)
+                ),
+                "fallback_count": int(lstats.get("fallback_count", 0)),
+                "methods_used": list(lstats.get("methods_used", [method.value])),
                 "wall_time_s": round(float(res.wall_time_s), 5),
                 "max_displacement_mm": round(float(res.max_displacement_mm), 6),
             }
         )
 
     # B2: Foundation 3D LoRA transfer
-    f_dir = (
-        default_foundation_checkpoint_dir()
-        if foundation_dir is None
-        else Path(foundation_dir).resolve()
-    )
-    if not (f_dir / "foundation.json").is_file():
-        f_dir = root / "tmp_foundation"
-        pretrain_struct3d_foundation(
-            f_dir,
-            config=FoundationPretrainConfig(
-                samples_per_family=2, mesh_size_mm=10.0, epochs=4, hidden_dim=24
-            ),
-        )
+    if foundation_dir is not None:
+        f_dir = Path(foundation_dir).resolve()
+        if not (f_dir / "foundation.json").is_file():
+            raise FileNotFoundError(
+                f"explicit foundation_dir does not contain foundation.json: {f_dir}"
+            )
+    else:
+        f_dir = default_foundation_checkpoint_dir()
+        if not (f_dir / "foundation.json").is_file():
+            f_dir = root / "tmp_foundation"
+            pretrain_struct3d_foundation(
+                f_dir,
+                config=FoundationPretrainConfig(
+                    samples_per_family=2, mesh_size_mm=10.0, epochs=4, hidden_dim=24
+                ),
+            )
     step_path = generate_3d_holed_block_step(
         root / "bench_target.step", lx=28.0, ly=14.0, lz=10.0, hole_radius=3.0
     )
     imp = import_cad_3d(step_path, mesh_size_mm=9.0, element_type=CellType3D.TET4)
     faces = classify_faces_by_bbox(imp)
+    max_adapt_steps = 6 if profile == "quick" else 12
+    ref_steps = 120
     _, ad_res = adapt_foundation_to_3d_part(
         f_dir,
         mesh=imp.mesh,
@@ -199,14 +243,15 @@ def run_benchmark_suite_3d(
         traction_mpa=(0.35, 0.0, 0.0),
         adapter_config=LowRankAdapter3DConfig(
             rank=4,
-            max_steps=6 if profile == "quick" else 12,
-            from_scratch_reference_steps=120,
+            max_steps=max_adapt_steps,
+            from_scratch_reference_steps=ref_steps,
             allow_ood_adaptation=True,
         ),
     )
     b2_doc = {
         "checkpoint_dir": str(f_dir.name),
         "state": ad_res.state.value,
+        "step_budget_fraction": round(max_adapt_steps / float(ref_steps), 6),
         "trainable_fraction": round(
             ad_res.adapter_parameter_count / max(ad_res.base_parameter_count, 1), 6
         ),
@@ -268,6 +313,11 @@ def run_benchmark_suite_3d(
     )
     res_t = backend_t.solve(req_p)
     res_s = ScikitFemBackend3D().solve(req_p)
+    if not (res_t.converged and res_s.converged):
+        raise RuntimeError(
+            f"B4 cross-backend parity solve failed "
+            f"(torch_converged={res_t.converged}, skfem_converged={res_s.converged})"
+        )
     nodes_p = np.asarray(mesh_p.nodes, dtype=np.float64)
     u_exact = np.column_stack(
         (
@@ -279,8 +329,13 @@ def run_benchmark_suite_3d(
     denom = max(float(np.linalg.norm(u_exact)), 1.0e-12)
     b4_doc = {
         "analytical_p11_mpa": round(float(p11_an), 6),
+        "torch_converged": bool(res_t.converged),
+        "skfem_converged": bool(res_s.converged),
         "torch_vs_analytical_rel": float(
             np.linalg.norm(res_t.nodal_displacement - u_exact) / denom
+        ),
+        "skfem_vs_analytical_rel": float(
+            np.linalg.norm(res_s.nodal_displacement - u_exact) / denom
         ),
         "torch_vs_skfem_rel": float(
             np.linalg.norm(res_t.nodal_displacement - res_s.nodal_displacement) / denom

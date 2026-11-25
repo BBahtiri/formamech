@@ -31,7 +31,12 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 from scipy.sparse import csr_matrix  # type: ignore[import-untyped]
-from skfem import BilinearForm, FacetBasis, LinearForm, asm  # type: ignore[import-untyped]
+from skfem import (  # type: ignore[import-untyped]
+    BilinearForm,
+    FacetBasis,
+    LinearForm,
+    asm,
+)
 from skfem.helpers import grad  # type: ignore[import-untyped]
 
 from piginot.contracts import CanonicalMesh, LoadSpec, Unit

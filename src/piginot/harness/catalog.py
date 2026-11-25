@@ -1278,6 +1278,7 @@ def _register_surrogate_opt_ingest_export_governance(reg: CapabilityRegistry) ->
     def _run_bench(ctx: HarnessContext, args: Mapping[str, Any]) -> Mapping[str, Any]:
         from piginot.benchmarks import run_benchmark_suite_3d
 
+        ctx.consume_fem_solves(4)
         wdir = ctx.resolve_path(str(args.get("workdir", "bench_3d")))
         rep = run_benchmark_suite_3d(
             wdir, profile=cast(Any, str(args.get("profile", "quick")))
@@ -1429,6 +1430,8 @@ def _register_v4_physics_capabilities(reg: CapabilityRegistry) -> None:
         mesh = make_rectangular_plate_shell_mesh(
             lx, ly, nx=nx, ny=ny, thickness_mm=t_mm
         )
+        ctx.check_dofs(len(mesh.nodes) * 6)
+        ctx.consume_fem_solves(1)
         if bc_kind == "simply_supported":
             bcs = (
                 ShellDirichletBC(
@@ -1478,6 +1481,7 @@ def _register_v4_physics_capabilities(reg: CapabilityRegistry) -> None:
                 "additionalProperties": False,
             },
             cost_class=CostClass.SOLVER_ORACLE,
+            default_fem_solves=1,
             tags=("shell", "dkt", "plate", "3d"),
         ),
         _solve_shell_plate,
@@ -1495,6 +1499,8 @@ def _register_v4_physics_capabilities(reg: CapabilityRegistry) -> None:
         width = float(args.get("width_mm", 10.0))
         height = float(args.get("height_mm", 10.0))
         n_el = int(args.get("num_elements", 4))
+        ctx.check_dofs((n_el + 1) * 6)
+        ctx.consume_fem_solves(1)
         xs = np.linspace(0.0, length, n_el + 1)
         nodes = np.column_stack((xs, np.zeros_like(xs), np.zeros_like(xs)))
         elems = np.column_stack((np.arange(n_el), np.arange(1, n_el + 1)))
@@ -1537,6 +1543,7 @@ def _register_v4_physics_capabilities(reg: CapabilityRegistry) -> None:
                 "additionalProperties": False,
             },
             cost_class=CostClass.SOLVER_ORACLE,
+            default_fem_solves=1,
             tags=("beam", "timoshenko", "3d"),
         ),
         _solve_beam_3d,
@@ -1558,6 +1565,8 @@ def _register_v4_physics_capabilities(reg: CapabilityRegistry) -> None:
             ny=int(args.get("ny", 2)),
             nz=int(args.get("nz", 2)),
         )
+        ctx.check_dofs(len(mesh.nodes) * 3)
+        ctx.consume_fem_solves(1)
         mat = MaterialSpec(
             name="buckling-nh",
             model="compressible_neo_hookean",
@@ -1618,6 +1627,7 @@ def _register_v4_physics_capabilities(reg: CapabilityRegistry) -> None:
                 "additionalProperties": False,
             },
             cost_class=CostClass.SOLVER_ORACLE,
+            default_fem_solves=1,
             tags=("buckling", "stability", "eigen", "3d"),
         ),
         _solve_buckling_3d,
@@ -1643,6 +1653,8 @@ def _register_v4_physics_capabilities(reg: CapabilityRegistry) -> None:
             ny=int(args.get("ny", 1)),
             nz=int(args.get("nz", 1)),
         )
+        ctx.check_dofs(len(mesh.nodes) * 3)
+        ctx.consume_fem_solves(1)
         mat = MaterialSpec(
             name="dyn-nh",
             model="compressible_neo_hookean",
@@ -1719,6 +1731,7 @@ def _register_v4_physics_capabilities(reg: CapabilityRegistry) -> None:
                 "additionalProperties": False,
             },
             cost_class=CostClass.SOLVER_ORACLE,
+            default_fem_solves=1,
             tags=("dynamics", "newmark", "hht", "explicit", "3d"),
         ),
         _solve_transient_dynamics,
@@ -1813,6 +1826,8 @@ def _register_v4_physics_capabilities(reg: CapabilityRegistry) -> None:
             ny=int(args.get("ny", 1)),
             nz=int(args.get("nz", 1)),
         )
+        ctx.check_dofs(len(mesh.nodes) * 3)
+        ctx.consume_fem_solves(1)
         u_end = float(args.get("end_displacement_x_mm", 0.05))
         cfg = PhaseFieldConfig(
             youngs_modulus_mpa=float(args.get("youngs_modulus_mpa", 20_000.0)),
@@ -1865,6 +1880,7 @@ def _register_v4_physics_capabilities(reg: CapabilityRegistry) -> None:
                 "additionalProperties": False,
             },
             cost_class=CostClass.SOLVER_ORACLE,
+            default_fem_solves=1,
             tags=("fracture", "phase-field", "at2", "damage", "3d"),
         ),
         _solve_phase_field,
@@ -1892,6 +1908,8 @@ def _register_v4_generative_capabilities(reg: CapabilityRegistry) -> None:
             ny=int(args.get("ny", 2)),
             nz=int(args.get("nz", 1)),
         )
+        ctx.check_dofs(len(mesh.nodes) * 3)
+        ctx.consume_fem_solves(1)
         cfg = TopologyOpt3DConfig(
             volume_fraction=float(args.get("volume_fraction", 0.55)),
             penalization=float(args.get("penalization", 3.0)),
@@ -1959,6 +1977,7 @@ def _register_v4_generative_capabilities(reg: CapabilityRegistry) -> None:
                 "additionalProperties": False,
             },
             cost_class=CostClass.SOLVER_ORACLE,
+            default_fem_solves=1,
             tags=("topology-optimization", "simp", "generative", "3d"),
         ),
         _run_topology_simp_3d,
@@ -1980,6 +1999,8 @@ def _register_v4_generative_capabilities(reg: CapabilityRegistry) -> None:
             ny=int(args.get("ny", 1)),
             nz=int(args.get("nz", 1)),
         )
+        ctx.check_dofs(len(mesh.nodes) * 3)
+        ctx.consume_fem_solves(1)
         mat = MaterialSpec(
             name="ffd-nh",
             model="compressible_neo_hookean",
@@ -2044,6 +2065,7 @@ def _register_v4_generative_capabilities(reg: CapabilityRegistry) -> None:
                 "additionalProperties": False,
             },
             cost_class=CostClass.SOLVER_ORACLE,
+            default_fem_solves=1,
             tags=("ffd", "shape-optimization", "generative", "3d"),
         ),
         _run_ffd_shape_3d,
@@ -2071,6 +2093,8 @@ def _register_v4_fleet_continual_capabilities(reg: CapabilityRegistry) -> None:
             FleetTaskSpec(task_id=f"t{i:03d}", payload=dict(item))
             for i, item in enumerate(raw_tasks)
         ]
+        if backend_kind in ("local-threads", "local-multiprocess"):
+            ctx.consume_fem_solves(len(tasks))
         workdir = ctx.resolve_path(str(args.get("workdir", "fleet-jobs")))
         backend: WorkerBackend
         if backend_kind == "slurm":
@@ -2118,6 +2142,7 @@ def _register_v4_fleet_continual_capabilities(reg: CapabilityRegistry) -> None:
                 "additionalProperties": False,
             },
             cost_class=CostClass.SOLVER_ORACLE,
+            default_fem_solves=2,
             tags=("fleet", "slurm", "kubernetes", "parallel", "3d"),
         ),
         _fleet_submit_3d,

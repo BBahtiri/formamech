@@ -28,7 +28,7 @@ from typing import Any, Final
 
 import numpy as np
 from numpy.typing import NDArray
-from scipy.sparse import coo_matrix, csr_matrix  # type: ignore[import-untyped]
+from scipy.sparse import coo_matrix, csr_matrix, diags  # type: ignore[import-untyped]
 from scipy.sparse.linalg import spsolve  # type: ignore[import-untyped]
 
 from piginot.fem.backend_3d import (
@@ -84,12 +84,27 @@ class FatigueMaterialSpec:
     endurance_limit_mpa: float = 0.0
 
     def __post_init__(self) -> None:
+        for name, val in (
+            ("ultimate_tensile_mpa", self.ultimate_tensile_mpa),
+            ("fatigue_strength_coeff_mpa", self.fatigue_strength_coeff_mpa),
+            ("fatigue_strength_exp", self.fatigue_strength_exp),
+            ("youngs_modulus_mpa", self.youngs_modulus_mpa),
+            ("fatigue_ductility_coeff", self.fatigue_ductility_coeff),
+            ("fatigue_ductility_exp", self.fatigue_ductility_exp),
+            ("endurance_limit_mpa", self.endurance_limit_mpa),
+        ):
+            if not math.isfinite(float(val)):
+                raise ValueError(f"FatigueMaterialSpec.{name} must be finite")
         if self.ultimate_tensile_mpa <= 0.0 or self.fatigue_strength_coeff_mpa <= 0.0:
             raise ValueError("strength parameters must be positive")
         if self.fatigue_strength_exp >= 0.0 or self.fatigue_ductility_exp >= 0.0:
             raise ValueError("fatigue exponents b and c must be strictly negative")
+        if self.fatigue_ductility_coeff <= 0.0:
+            raise ValueError("fatigue_ductility_coeff must be positive")
         if self.youngs_modulus_mpa <= 0.0:
             raise ValueError("youngs_modulus_mpa must be positive")
+        if self.endurance_limit_mpa < 0.0:
+            raise ValueError("endurance_limit_mpa must be nonnegative")
 
 
 @dataclass(frozen=True, slots=True)
@@ -112,7 +127,9 @@ class FatigueLifeResult:
             "model": self.model.value,
             "mean_stress_model": self.mean_stress_model.value,
             "cycle_count": len(self.cycles),
-            "miner_damage": float(self.miner_damage),
+            "miner_damage": (
+                float(self.miner_damage) if math.isfinite(self.miner_damage) else None
+            ),
             "blocks_to_failure": (
                 float(self.blocks_to_failure)
                 if math.isfinite(self.blocks_to_failure)
@@ -129,11 +146,13 @@ class FatigueLifeResult:
 
 def _extract_turning_points(series: Sequence[float]) -> list[float]:
     """Filter a stress/strain history down to local peaks and valleys."""
-    if len(series) < 2:
-        return [float(v) for v in series]
-    dedup: list[float] = [float(series[0])]
-    for v in series[1:]:
-        fv = float(v)
+    vals = [float(v) for v in series]
+    if any(not math.isfinite(v) for v in vals):
+        raise ValueError("stress_history_mpa must contain only finite numbers")
+    if len(vals) < 2:
+        return vals
+    dedup: list[float] = [vals[0]]
+    for fv in vals[1:]:
         if abs(fv - dedup[-1]) > 1.0e-14:
             dedup.append(fv)
     if len(dedup) <= 2:
@@ -148,11 +167,41 @@ def _extract_turning_points(series: Sequence[float]) -> list[float]:
     return pts
 
 
+def _rearrange_repeating_block(reversals: list[float]) -> list[float]:
+    """Rearrange a periodic block to start & end at its global maximum (ASTM E1049 §5.4.4)."""
+    pts = list(reversals)
+    if len(pts) < 3:
+        return pts
+    if abs(pts[-1] - pts[0]) <= 1.0e-14:
+        pts.pop()
+    # Prune circular non-turning points across the periodic wrap-around boundary
+    changed = True
+    while changed and len(pts) >= 3:
+        changed = False
+        n = len(pts)
+        for i in range(n):
+            p_prev = pts[i - 1]
+            p_curr = pts[i]
+            p_next = pts[(i + 1) % n]
+            if (p_curr - p_prev) * (p_next - p_curr) >= -1.0e-28:
+                pts.pop(i)
+                changed = True
+                break
+    if len(pts) < 2:
+        return pts
+    i_max = max(range(len(pts)), key=lambda i: pts[i])
+    return pts[i_max:] + pts[:i_max] + [pts[i_max]]
+
+
 def rainflow_count_astm_e1049(
     stress_history_mpa: Sequence[float],
+    *,
+    repeating_block: bool = False,
 ) -> tuple[RainflowCycle, ...]:
     """Extract full (1.0) and half (0.5) cycles via ASTM E1049-85 3-point algorithm."""
     reversals = _extract_turning_points(stress_history_mpa)
+    if repeating_block:
+        reversals = _rearrange_repeating_block(reversals)
     if len(reversals) < 2:
         return ()
 
@@ -167,17 +216,31 @@ def rainflow_count_astm_e1049(
             if x_range < y_range - 1.0e-14:
                 break
             if len(stack) == 3:
-                # Half-cycle starting at the beginning of the series
                 y_mean = 0.5 * (stack[0] + stack[1])
-                cycles.append(
-                    RainflowCycle(
-                        range_mpa=y_range,
-                        amplitude_mpa=0.5 * y_range,
-                        mean_mpa=y_mean,
-                        count=0.5,
+                if repeating_block:
+                    # Rearranged periodic block starts/ends at global extremum:
+                    # touching stack[0] closes a full cycle (ASTM E1049 §5.4.4).
+                    cycles.append(
+                        RainflowCycle(
+                            range_mpa=y_range,
+                            amplitude_mpa=0.5 * y_range,
+                            mean_mpa=y_mean,
+                            count=1.0,
+                        )
                     )
-                )
-                stack.pop(0)
+                    stack.pop()
+                    stack.pop()
+                else:
+                    # Half-cycle starting at the beginning of an open-ended series
+                    cycles.append(
+                        RainflowCycle(
+                            range_mpa=y_range,
+                            amplitude_mpa=0.5 * y_range,
+                            mean_mpa=y_mean,
+                            count=0.5,
+                        )
+                    )
+                    stack.pop(0)
             else:
                 # Full enclosed cycle
                 y_mean = 0.5 * (stack[-2] + stack[-3])
@@ -207,7 +270,9 @@ def rainflow_count_astm_e1049(
 def _equivalent_amplitude(
     amp_mpa: float, mean_mpa: float, uts_mpa: float, model: MeanStressModel
 ) -> float:
-    """Apply Goodman or Gerber mean-stress correction (tensile mean only)."""
+    """Apply Goodman or Gerber mean-stress correction with static UTS rupture guard."""
+    if mean_mpa + amp_mpa >= uts_mpa:
+        return float("inf")
     if model is MeanStressModel.NONE or mean_mpa <= 0.0:
         return amp_mpa
     ratio = mean_mpa / uts_mpa
@@ -216,6 +281,45 @@ def _equivalent_amplitude(
     if model is MeanStressModel.GOODMAN:
         return amp_mpa / (1.0 - ratio)
     return amp_mpa / (1.0 - ratio * ratio)
+
+
+def _neuber_elastoplastic_strain_amp(
+    sig_eq_mpa: float, mat: FatigueMaterialSpec
+) -> float:
+    """Convert elastic nominal stress amplitude to local elastoplastic strain via Neuber + Ramberg-Osgood.
+
+    Compatibility of Basquin and Coffin-Manson defines the cyclic Ramberg-Osgood curve::
+
+        eps_a(sigma_a) = sigma_a / E + eps_f' * (sigma_a / sigma_f')^(c / b)
+
+    Neuber's rule ``sigma_a * eps_a(sigma_a) = sig_eq^2 / E`` has a unique positive
+    root ``sigma_a in (0, sig_eq]``, capturing cyclic plasticity in LCF while
+    recovering ``eps_a -> sig_eq / E`` smoothly in HCF.
+    """
+    if sig_eq_mpa <= 1.0e-15:
+        return 0.0
+    e_mpa = mat.youngs_modulus_mpa
+    target_energy = (sig_eq_mpa * sig_eq_mpa) / e_mpa
+    exp_ratio = mat.fatigue_ductility_exp / mat.fatigue_strength_exp  # c / b > 0
+
+    def _neuber_res(sig_a: float) -> float:
+        if sig_a <= 0.0:
+            return -target_energy
+        eps_tot = sig_a / e_mpa + mat.fatigue_ductility_coeff * (
+            (sig_a / mat.fatigue_strength_coeff_mpa) ** exp_ratio
+        )
+        return float(sig_a * eps_tot - target_energy)
+
+    lo = 0.0
+    hi = sig_eq_mpa
+    for _ in range(80):
+        mid = 0.5 * (lo + hi)
+        if _neuber_res(mid) < 0.0:
+            lo = mid
+        else:
+            hi = mid
+    sig_local = max(0.5 * (lo + hi), 1.0e-30)
+    return float(target_energy / sig_local)
 
 
 def _coffin_manson_cycles(strain_amp: float, mat: FatigueMaterialSpec) -> float:
@@ -253,11 +357,17 @@ def evaluate_fatigue_life(
     model: FatigueModel = FatigueModel.BASQUIN_SN,
     mean_stress_model: MeanStressModel = MeanStressModel.GOODMAN,
     block_repetitions: float = 1.0,
+    repeating_block: bool | None = None,
 ) -> FatigueLifeResult:
     """Compute ASTM E1049 rainflow cycles and Palmgren-Miner cumulative damage."""
-    if block_repetitions <= 0.0:
-        raise ValueError("block_repetitions must be positive")
-    cycles = rainflow_count_astm_e1049(stress_history_mpa)
+    if not math.isfinite(block_repetitions) or block_repetitions <= 0.0:
+        raise ValueError("block_repetitions must be finite and positive")
+    use_repeating = (
+        (block_repetitions > 1.0) if repeating_block is None else bool(repeating_block)
+    )
+    cycles = rainflow_count_astm_e1049(
+        stress_history_mpa, repeating_block=use_repeating
+    )
     damage_per_block = 0.0
 
     for cyc in cycles:
@@ -279,7 +389,7 @@ def evaluate_fatigue_life(
                 ** (1.0 / material.fatigue_strength_exp)
             )
         else:
-            eps_a = sig_eq / material.youngs_modulus_mpa
+            eps_a = _neuber_elastoplastic_strain_amp(sig_eq, material)
             n_f = _coffin_manson_cycles(eps_a, material)
         if n_f <= 0.0:
             damage_per_block = float("inf")
@@ -322,6 +432,33 @@ class PhaseFieldConfig:
     load_steps: int = 8
     staggered_iters: int = 4
     tolerance: float = 1.0e-4
+
+    def __post_init__(self) -> None:
+        if not math.isfinite(self.youngs_modulus_mpa) or self.youngs_modulus_mpa <= 0.0:
+            raise ValueError("youngs_modulus_mpa must be finite and positive")
+        if not math.isfinite(self.poisson_ratio) or not (
+            -1.0 < self.poisson_ratio < 0.5
+        ):
+            raise ValueError("poisson_ratio must lie in (-1, 0.5)")
+        if (
+            not math.isfinite(self.fracture_toughness_gc_n_per_mm)
+            or self.fracture_toughness_gc_n_per_mm <= 0.0
+        ):
+            raise ValueError(
+                "fracture_toughness_gc_n_per_mm must be finite and positive"
+            )
+        if not math.isfinite(self.length_scale_lc_mm) or self.length_scale_lc_mm <= 0.0:
+            raise ValueError("length_scale_lc_mm must be finite and positive")
+        if not math.isfinite(self.residual_stiffness_k) or not (
+            0.0 < self.residual_stiffness_k < 1.0
+        ):
+            raise ValueError("residual_stiffness_k must lie in (0, 1)")
+        if type(self.load_steps) is not int or self.load_steps < 1:
+            raise ValueError("load_steps must be an integer >= 1")
+        if type(self.staggered_iters) is not int or self.staggered_iters < 1:
+            raise ValueError("staggered_iters must be an integer >= 1")
+        if not math.isfinite(self.tolerance) or self.tolerance <= 0.0:
+            raise ValueError("tolerance must be finite and positive")
 
 
 @dataclass(frozen=True, slots=True)
@@ -368,6 +505,101 @@ def _spectral_tensile_energy_density(
     return psi_plus, psi_minus
 
 
+def _miehe_spectral_stress_tangent_batch(
+    eps_v: FloatArray,
+    g_deg: FloatArray,
+    lam: float,
+    mu: float,
+) -> tuple[FloatArray, FloatArray, FloatArray, FloatArray]:
+    """Exact vectorized Miehe (2010) spectral split: ``(sigma_v, d_tan, psi_plus, psi_tot)``.
+
+    Uses Voigt order ``[xx, yy, zz, yz, xz, xy]`` with engineering shear strains.
+    Degrades ONLY the tensile volumetric/principal parts ``sigma = g sigma^+ + sigma^-``
+    so compressed elements retain 100% compressive stiffness and pre-cracks act on step 0.
+    """
+    n_elem = int(eps_v.shape[0])
+    eps_mat = np.empty((n_elem, 3, 3), dtype=np.float64)
+    eps_mat[:, 0, 0] = eps_v[:, 0]
+    eps_mat[:, 1, 1] = eps_v[:, 1]
+    eps_mat[:, 2, 2] = eps_v[:, 2]
+    eps_mat[:, 1, 2] = eps_mat[:, 2, 1] = 0.5 * eps_v[:, 3]
+    eps_mat[:, 0, 2] = eps_mat[:, 2, 0] = 0.5 * eps_v[:, 4]
+    eps_mat[:, 0, 1] = eps_mat[:, 1, 0] = 0.5 * eps_v[:, 5]
+
+    eigvals, eigvecs = np.linalg.eigh(eps_mat)  # (E, 3), (E, 3, 3) cols=n_a
+    tr = eps_v[:, 0] + eps_v[:, 1] + eps_v[:, 2]
+    tr_pos = np.maximum(tr, 0.0)
+    tr_neg = np.minimum(tr, 0.0)
+    h_tr_pos = (tr > 0.0).astype(np.float64)
+    h_tr_neg = 1.0 - h_tr_pos
+
+    ep_pos = np.maximum(eigvals, 0.0)
+    ep_neg = np.minimum(eigvals, 0.0)
+    psi_plus = 0.5 * lam * (tr_pos**2) + mu * np.sum(ep_pos**2, axis=1)
+    psi_minus = 0.5 * lam * (tr_neg**2) + mu * np.sum(ep_neg**2, axis=1)
+    psi_tot = g_deg * psi_plus + psi_minus
+
+    g_col = g_deg[:, None]
+    phi_e = g_col * ep_pos + ep_neg
+    dphi_e = np.where(eigvals > 0.0, g_col, 1.0)
+
+    sig_iso = lam * (g_deg * tr_pos + tr_neg)
+    sig_mat = 2.0 * mu * np.einsum("ea,eia,eja->eij", phi_e, eigvecs, eigvecs)
+    sig_mat[:, 0, 0] += sig_iso
+    sig_mat[:, 1, 1] += sig_iso
+    sig_mat[:, 2, 2] += sig_iso
+
+    sig_v = np.empty((n_elem, 6), dtype=np.float64)
+    sig_v[:, 0] = sig_mat[:, 0, 0]
+    sig_v[:, 1] = sig_mat[:, 1, 1]
+    sig_v[:, 2] = sig_mat[:, 2, 2]
+    sig_v[:, 3] = sig_mat[:, 1, 2]
+    sig_v[:, 4] = sig_mat[:, 0, 2]
+    sig_v[:, 5] = sig_mat[:, 0, 1]
+
+    v_eye = np.array([1.0, 1.0, 1.0, 0.0, 0.0, 0.0], dtype=np.float64)
+    vol_coeff = lam * (g_deg * h_tr_pos + h_tr_neg)
+    d_tan = vol_coeff[:, None, None] * np.outer(v_eye, v_eye)[None, :, :]
+
+    n0 = eigvecs[:, 0, :]
+    n1 = eigvecs[:, 1, :]
+    n2 = eigvecs[:, 2, :]
+    v_aa = np.stack(
+        (n0 * n0, n1 * n1, n2 * n2, n1 * n2, n0 * n2, n0 * n1), axis=-1
+    )  # (E, 3, 6)
+    d_tan += 2.0 * mu * np.einsum("ea,eai,eaj->eij", dphi_e, v_aa, v_aa)
+
+    inv_sqrt2 = 1.0 / math.sqrt(2.0)
+    for a, b in ((0, 1), (0, 2), (1, 2)):
+        diff = eigvals[:, a] - eigvals[:, b]
+        scale = np.maximum(
+            np.maximum(np.abs(eigvals[:, a]), np.abs(eigvals[:, b])), 1.0
+        )
+        distinct = np.abs(diff) > 1.0e-12 * scale
+        safe_diff = np.where(distinct, diff, 1.0)
+        theta_ab = np.where(
+            distinct,
+            (phi_e[:, a] - phi_e[:, b]) / safe_diff,
+            0.5 * (dphi_e[:, a] + dphi_e[:, b]),
+        )
+        na = eigvecs[:, :, a]
+        nb = eigvecs[:, :, b]
+        v_ab = inv_sqrt2 * np.stack(
+            (
+                2.0 * na[:, 0] * nb[:, 0],
+                2.0 * na[:, 1] * nb[:, 1],
+                2.0 * na[:, 2] * nb[:, 2],
+                na[:, 1] * nb[:, 2] + na[:, 2] * nb[:, 1],
+                na[:, 0] * nb[:, 2] + na[:, 2] * nb[:, 0],
+                na[:, 0] * nb[:, 1] + na[:, 1] * nb[:, 0],
+            ),
+            axis=-1,
+        )
+        d_tan += 2.0 * mu * np.einsum("e,ei,ej->eij", theta_ab, v_ab, v_ab)
+
+    return sig_v, d_tan, psi_plus, psi_tot
+
+
 def solve_phase_field_fracture(
     mesh: CanonicalMesh3D,
     *,
@@ -377,14 +609,16 @@ def solve_phase_field_fracture(
 ) -> PhaseFieldFractureResult:
     """Solve quasi-static staggered AT2 brittle phase-field fracture on a 3D ``TET4`` mesh.
 
-    Uses Miehe's spectral tension-compression strain energy split so compressive
-    elements maintain ``psi^+ = 0`` and never nucleate damage, while tensile
-    elements drive irreversible damage ``H_e = max_t psi^+_e`` with ``d_dot >= 0``.
+    Uses exact Miehe (2010) spectral tension-compression stress/tangent splitting
+    so compressed regions retain full elastic stiffness and pre-cracks degrade
+    tensile resistance immediately, coupled to a lumped-mass AT2 phase-field
+    problem with primal-dual active-set irreversibility ``d >= d_prev``.
     """
     t0 = time.perf_counter()
     if mesh.cell_type is not CellType3D.TET4:
         raise ValueError("solve_phase_field_fracture currently requires TET4 meshes")
     cfg = PhaseFieldConfig() if config is None else config
+    mesh.validate_incompressibility_locking(cfg.poisson_ratio)
     e_mpa = float(cfg.youngs_modulus_mpa)
     nu = float(cfg.poisson_ratio)
     mu = e_mpa / (2.0 * (1.0 + nu))
@@ -405,25 +639,15 @@ def solve_phase_field_fracture(
     x_e = nodes[cells]  # (E, 4, 3)
     jac = np.einsum("eni,na->eia", x_e, d_ref)  # (E, 3, 3)
     det_j = np.linalg.det(jac)
+    if np.any(~np.isfinite(det_j)) or np.any(det_j <= 0.0):
+        raise ValueError(
+            "mesh contains degenerate or inverted TET4 elements (det_j <= 0)"
+        )
     vols = det_j / 6.0  # (E,)
     jac_inv = np.linalg.inv(jac)
     d_phys = np.einsum("na,eai->eni", d_ref, jac_inv)  # (E, 4, 3)
 
-    # Linear isotropic elasticity matrix D (6x6 Voigt: xx, yy, zz, yz, xz, xy)
-    d_mat = np.array(
-        [
-            [lam + 2 * mu, lam, lam, 0.0, 0.0, 0.0],
-            [lam, lam + 2 * mu, lam, 0.0, 0.0, 0.0],
-            [lam, lam, lam + 2 * mu, 0.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0, mu, 0.0, 0.0],
-            [0.0, 0.0, 0.0, 0.0, mu, 0.0],
-            [0.0, 0.0, 0.0, 0.0, 0.0, mu],
-        ],
-        dtype=np.float64,
-    )
-
-    # Precompute B_e (E, 6, 12) and undegraded K_e0 (E, 12, 12) plus scalar
-    # phase-field element stiffness K_d_grad (E, 4, 4) and mass M_d (E, 4, 4)
+    # Precompute B_e (E, 6, 12), gradient stiffness K_d_grad, and lumped nodal volumes
     b_all = np.zeros((n_elem, 6, 12), dtype=np.float64)
     for a in range(4):
         gx, gy, gz = d_phys[:, a, 0], d_phys[:, a, 1], d_phys[:, a, 2]
@@ -437,14 +661,9 @@ def solve_phase_field_fracture(
         b_all[:, 5, 3 * a] = gy
         b_all[:, 5, 3 * a + 1] = gx
 
-    k_e0 = np.einsum("e,eik,ij,ejl->ekl", vols, b_all, d_mat, b_all)
-    m_ref_tet4 = (
-        np.ones((4, 4), dtype=np.float64) + np.eye(4, dtype=np.float64)
-    ) / 20.0
-    k_d_base = (gc * lc) * np.einsum("e,eai,ebi->eab", vols, d_phys, d_phys) + (
-        gc / lc
-    ) * vols[:, None, None] * m_ref_tet4[None, :, :]
-    m_d_vol = vols[:, None, None] * m_ref_tet4[None, :, :]  # (E, 4, 4)
+    k_d_grad = (gc * lc) * np.einsum("e,eai,ebi->eab", vols, d_phys, d_phys)
+    m_d_lump = np.zeros(n_nodes, dtype=np.float64)
+    np.add.at(m_d_lump, cells, (vols / 4.0)[:, None])
 
     # Sparse assembly index arrays
     elem_u_dofs = np.empty((n_elem, 12), dtype=np.int64)
@@ -456,6 +675,9 @@ def solve_phase_field_fracture(
     u_cols = np.repeat(elem_u_dofs[:, None, :], 12, axis=1).reshape(-1)
     d_rows = np.repeat(cells[:, :, None], 4, axis=2).reshape(-1)
     d_cols = np.repeat(cells[:, None, :], 4, axis=1).reshape(-1)
+    k_d_grad_mat: csr_matrix = coo_matrix(
+        (k_d_grad.reshape(-1), (d_rows, d_cols)), shape=(n_nodes, n_nodes)
+    ).tocsr()
 
     # Collect target Dirichlet constraints
     comp_idx = {"x": 0, "y": 1, "z": 2}
@@ -472,88 +694,144 @@ def solve_phase_field_fracture(
     if free_u.size == 0:
         raise ValueError("all displacement DOFs are constrained")
 
-    d_nodal: FloatArray = (
-        np.zeros(n_nodes, dtype=np.float64)
-        if initial_damage_nodal is None
-        else np.clip(
-            np.asarray(initial_damage_nodal, dtype=np.float64).copy(), 0.0, 1.0
-        )
-    )
+    if initial_damage_nodal is None:
+        d_nodal: FloatArray = np.zeros(n_nodes, dtype=np.float64)
+    else:
+        d_init = np.asarray(initial_damage_nodal, dtype=np.float64).reshape(-1)
+        if d_init.shape != (n_nodes,) or not np.all(np.isfinite(d_init)):
+            raise ValueError(
+                f"initial_damage_nodal must be finite with length {n_nodes}"
+            )
+        d_nodal = np.clip(d_init.copy(), 0.0, 1.0)
+
     u_full: FloatArray = np.zeros(n_dofs, dtype=np.float64)
-    hist_h = np.zeros(n_elem, dtype=np.float64)
+    hist_h: FloatArray = np.zeros(n_elem, dtype=np.float64)
 
     load_factors: list[float] = []
     max_d_hist: list[float] = []
     crack_e_hist: list[float] = []
     monotone = True
 
+    def _assemble_mechanics(
+        u_vec: FloatArray, g_deg: FloatArray
+    ) -> tuple[FloatArray, csr_matrix, FloatArray, float]:
+        u_e_vec = u_vec[elem_u_dofs]
+        eps_v = np.einsum("eij,ej->ei", b_all, u_e_vec)
+        sig_v, d_tan, psi_p, psi_tot = _miehe_spectral_stress_tangent_batch(
+            eps_v, g_deg, lam, mu
+        )
+        f_elem = np.einsum("e,eij,ei->ej", vols, b_all, sig_v)
+        f_int = np.zeros(n_dofs, dtype=np.float64)
+        np.add.at(f_int, elem_u_dofs, f_elem)
+        k_e = np.einsum("e,eik,eij,ejl->ekl", vols, b_all, d_tan, b_all)
+        k_u: csr_matrix = coo_matrix(
+            (k_e.reshape(-1), (u_rows, u_cols)), shape=(n_dofs, n_dofs)
+        ).tocsr()
+        total_psi = float(np.sum(vols * psi_tot))
+        return f_int, k_u, psi_p, total_psi
+
     for step in range(1, cfg.load_steps + 1):
         lam_load = step / float(cfg.load_steps)
         u_pres = lam_load * u_target
         d_prev_step = d_nodal.copy()
+        hist_h_prev = hist_h.copy()
+        hist_h_trial = hist_h_prev.copy()
+
+        # Apply updated boundary displacements while warm-starting free DOFs
+        u_full[constrained] = u_pres[constrained]
 
         for _st in range(cfg.staggered_iters):
             d_old = d_nodal.copy()
-            # 1) Mechanics step with element degradation g(d_e) = (1 - d_e)^2 + k_res
-            #    applied when tensile energy dominates (tension-compression split)
+            # 1) Nonlinear mechanics equilibrium with exact Miehe spectral stress & tangent
             d_elem = np.mean(d_nodal[cells], axis=1)
             g_deg = (1.0 - d_elem) ** 2 + k_res
-            # Apply degradation to elements with positive tensile history
-            eff_deg = np.where(hist_h > 1.0e-14, g_deg, 1.0)
-            k_scaled = eff_deg[:, None, None] * k_e0
-            k_u: csr_matrix = coo_matrix(
-                (k_scaled.reshape(-1), (u_rows, u_cols)), shape=(n_dofs, n_dofs)
-            ).tocsr()
-            rhs_u = -(k_u[free_u][:, constrained] @ u_pres[constrained])
-            u_f = np.asarray(
-                spsolve(k_u[free_u][:, free_u].tocsc(), rhs_u), dtype=np.float64
-            )
-            u_full = u_pres.copy()
-            u_full[free_u] = u_f
+            psi_p: FloatArray = np.zeros(n_elem, dtype=np.float64)
 
-            # 2) Update irreversible Miehe tensile history field H_e
-            u_e_vec = u_full[elem_u_dofs]  # (E, 12)
-            eps_v = np.einsum("eij,ej->ei", b_all, u_e_vec)  # (E, 6)
-            for e in range(n_elem):
-                ev = eps_v[e]
-                eps_mat = np.array(
-                    [
-                        [ev[0], 0.5 * ev[5], 0.5 * ev[4]],
-                        [0.5 * ev[5], ev[1], 0.5 * ev[3]],
-                        [0.5 * ev[4], 0.5 * ev[3], ev[2]],
-                    ],
+            for _n_it in range(15):
+                f_int, k_u, psi_p, total_psi = _assemble_mechanics(u_full, g_deg)
+                res_free = f_int[free_u]
+                res_norm = float(np.linalg.norm(res_free))
+                f_scale = max(float(np.linalg.norm(f_int)), 1.0)
+                if res_norm <= 1.0e-10 * f_scale:
+                    break
+                du_f = np.asarray(
+                    spsolve(k_u[free_u][:, free_u].tocsc(), -res_free),
                     dtype=np.float64,
                 )
-                psi_p, _ = _spectral_tensile_energy_density(eps_mat, lam, mu)
-                if psi_p > hist_h[e]:
-                    hist_h[e] = psi_p
+                if not np.all(np.isfinite(du_f)):
+                    raise RuntimeError(
+                        "non-finite Newton step in phase-field mechanics"
+                    )
+                # Convex potential-energy backtracking guarantees global convergence
+                alpha = 1.0
+                for _ls in range(10):
+                    u_cand = u_full.copy()
+                    u_cand[free_u] += alpha * du_f
+                    eps_c = np.einsum("eij,ej->ei", b_all, u_cand[elem_u_dofs])
+                    _, _, _, psi_c = _miehe_spectral_stress_tangent_batch(
+                        eps_c, g_deg, lam, mu
+                    )
+                    if float(np.sum(vols * psi_c)) <= total_psi + 1.0e-10 * max(
+                        abs(total_psi), 1.0
+                    ):
+                        u_full = u_cand
+                        break
+                    alpha *= 0.5
+                else:
+                    u_full[free_u] += alpha * du_f
 
-            # 3) Phase-field AT2 linear step:
-            #    (G_c l_c grad^2 + (G_c / l_c + 2 H_e)) d = 2 H_e
-            k_d_e = k_d_base + (2.0 * hist_h[:, None, None]) * m_d_vol
-            k_d: csr_matrix = coo_matrix(
-                (k_d_e.reshape(-1), (d_rows, d_cols)), shape=(n_nodes, n_nodes)
-            ).tocsr()
-            rhs_d = np.zeros(n_nodes, dtype=np.float64)
-            elem_rhs = 0.5 * hist_h * vols  # 2 * H_e * (V_e / 4) per vertex
-            np.add.at(rhs_d, cells, elem_rhs[:, None])
-            d_cand = np.asarray(spsolve(k_d.tocsc(), rhs_d), dtype=np.float64)
-            # Enforce admissibility [0, 1] and irreversibility d >= d_prev_step
+            # Re-evaluate tensile energy at converged u_full for history trial
+            eps_v_fin = np.einsum("eij,ej->ei", b_all, u_full[elem_u_dofs])
+            _, _, psi_p, _ = _miehe_spectral_stress_tangent_batch(
+                eps_v_fin, g_deg, lam, mu
+            )
+            # Keep hist_h_prev frozen across staggered iterations (commit only after step)
+            hist_h_trial = np.maximum(hist_h_prev, psi_p)
+
+            # 2) Lumped-mass AT2 phase-field step with primal-dual active-set irreversibility
+            h_lump = np.zeros(n_nodes, dtype=np.float64)
+            np.add.at(h_lump, cells, (hist_h_trial * vols / 4.0)[:, None])
+            diag_d = (gc / lc) * m_d_lump + 2.0 * h_lump
+            k_d: csr_matrix = (k_d_grad_mat + diags(diag_d, format="csr")).tocsr()
+            rhs_d = 2.0 * h_lump
+
+            active = np.zeros(n_nodes, dtype=bool)
+            d_cand = d_prev_step.copy()
+            for _as in range(6):
+                free_d = np.nonzero(~active)[0]
+                if free_d.size == 0:
+                    d_cand = d_prev_step.copy()
+                    break
+                rhs_free = rhs_d[free_d] - (
+                    k_d[free_d][:, active] @ d_prev_step[active]
+                )
+                d_sol = np.asarray(
+                    spsolve(k_d[free_d][:, free_d].tocsc(), rhs_free),
+                    dtype=np.float64,
+                )
+                d_next = d_prev_step.copy()
+                d_next[free_d] = d_sol
+                res_dual = k_d @ d_next - rhs_d
+                new_active = (d_next < d_prev_step - 1.0e-12) | (
+                    active & (res_dual >= -1.0e-12)
+                )
+                d_cand = d_next
+                if np.array_equal(new_active, active):
+                    break
+                active = new_active
+
+            if np.any(d_cand < d_prev_step - 1.0e-9):
+                monotone = False
             d_nodal = np.clip(np.maximum(d_cand, d_prev_step), 0.0, 1.0)
             if float(np.max(np.abs(d_nodal - d_old))) <= cfg.tolerance:
                 break
 
-        if np.any(d_nodal < d_prev_step - 1.0e-12):
-            monotone = False
-        # Compute AT2 crack surface energy: integral G_c * (d^2 / (2 lc) + lc/2 |grad d|^2) dV
-        crack_e = 0.5 * float(
-            d_nodal
-            @ (
-                coo_matrix(
-                    (k_d_base.reshape(-1), (d_rows, d_cols)), shape=(n_nodes, n_nodes)
-                ).tocsr()
-                @ d_nodal
-            )
+        # Commit irreversible history ONLY after load step completes
+        hist_h = hist_h_trial
+        # Exact AT2 crack surface energy: integral G_c * (d^2 / (2 lc) + lc/2 |grad d|^2) dV
+        crack_e = 0.5 * (
+            float(d_nodal @ (k_d_grad_mat @ d_nodal))
+            + (gc / lc) * float(np.sum(m_d_lump * d_nodal * d_nodal))
         )
         load_factors.append(float(lam_load))
         max_d_hist.append(float(np.max(d_nodal)))

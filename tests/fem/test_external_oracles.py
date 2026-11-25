@@ -179,3 +179,83 @@ def test_live_cad_connectors_opencascade_and_onshape_guards(tmp_path: Path) -> N
     o_res = onshape_mock.generate_step("part-1", {"r": 3.0}, tmp_path / "onshape.step")
     assert (tmp_path / "onshape.step").is_file()
     assert o_res.connector_name == "onshape-rest"
+
+
+def test_v4_1_audit_regressions_connector_security_and_calculix_fail_closed(
+    tmp_path: Path,
+) -> None:
+    """Regressions for CAD connector hardening & fail-closed CalculiX oracle parsing."""
+    from piginot.cad.connectors import CadQueryConnector, FreeCadSubprocessConnector
+    from piginot.fem.backend_3d import TractionBC3D
+
+    # 1) CadQuery refuses arbitrary script execution unless explicitly enabled
+    cq = CadQueryConnector()
+    assert cq.is_available() is False
+    with pytest.raises(PermissionError, match="disabled by default"):
+        cq.generate_step(str(tmp_path / "evil.py"), {}, tmp_path / "out.step")
+
+    # 2) FreeCAD refuses CLI flag injection in model_ref
+    fc = FreeCadSubprocessConnector(executable=sys.executable)
+    with pytest.raises(ValueError, match="CLI flag"):
+        fc.generate_step("-c", {}, tmp_path / "fc.step")
+
+    # 3) Onshape rejects non-https URLs, path traversal, and non-STEP responses
+    with pytest.raises(ValueError, match="https://"):
+        OnshapeRestConnector(
+            access_key="k",
+            secret_key="s",
+            base_url="http://169.254.169.254/latest",
+            http_fetch=lambda _u, _h, _p: b"ISO-10303-21;",
+        )
+    onshape = OnshapeRestConnector(
+        access_key="k",
+        secret_key="s",
+        http_fetch=lambda _u, _h, _p: b"NOT_A_STEP_FILE",
+    )
+    with pytest.raises(ValueError, match="traversal"):
+        onshape.generate_step("../admin", {}, tmp_path / "bad.step")
+    with pytest.raises(RuntimeError, match="ISO-10303-21"):
+        onshape.generate_step("part-1", {}, tmp_path / "bad.step")
+
+    # 4) CalculiX oracle fails closed when .frd omits DISP block (never silent zeros -> VERIFIED)
+    empty_ccx = tmp_path / "empty_ccx.py"
+    empty_ccx.write_text(
+        "from pathlib import Path\n"
+        "import sys\n"
+        "job = sys.argv[sys.argv.index('-i') + 1]\n"
+        "Path(f'{job}.frd').write_text('    1C\\n    9999\\n', encoding='utf-8')\n",
+        encoding="utf-8",
+    )
+    mesh = make_brick_tet4_mesh(10.0, 4.0, 4.0, nx=1, ny=1, nz=1)
+    mat = MaterialSpec(
+        name="nh",
+        model="compressible_neo_hookean",
+        properties={
+            "elastic_modulus": Quantity(100.0, Unit.MPA).to_canonical(),
+            "poisson_ratio": Quantity(0.3, Unit.ONE).to_canonical(),
+        },
+    )
+    req = FemRequest3D(
+        request_id="ccx-missing-disp",
+        mesh=mesh,
+        material=mat,
+        dirichlet_bcs=(
+            DirichletBC3D("fix", ("x_min",), ("x", "y", "z"), (0.0, 0.0, 0.0)),
+        ),
+        traction_bcs=(TractionBC3D("load", ("x_max",), (1.0, 0.0, 0.0)),),
+        load_steps=1,
+    )
+    oracle = CalculixOracleBackend(
+        ExternalSolverConfig(
+            executable=str(empty_ccx), command_prefix=(sys.executable,)
+        )
+    )
+    res_missing = oracle.solve(req)
+    assert res_missing.converged is False
+    assert "DISP" in res_missing.reason
+
+    # 5) Unimplemented oracle stubs honestly report available=False
+    oracles_by_name = {o["name"]: o for o in list_external_oracles()}
+    assert oracles_by_name["pyansys-mapdl"]["implemented"] is False
+    assert oracles_by_name["pyansys-mapdl"]["available"] is False
+    assert oracles_by_name["dolfinx-subprocess"]["available"] is False

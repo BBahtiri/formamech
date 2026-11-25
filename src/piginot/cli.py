@@ -948,6 +948,7 @@ def _mcp(args: argparse.Namespace) -> int:
         server = FormaMechMcpServer(
             args.workspace,
             max_dof_limit=int(args.max_dofs),
+            max_fem_solves=int(getattr(args, "max_fem_solves", 16)),
             require_qualified=bool(getattr(args, "require_qualified", False)),
         )
     except ValueError as exc:
@@ -1255,7 +1256,15 @@ def _agent(args: argparse.Namespace) -> int:
 
         ws = Path(args.workspace)
         if cmd == "invoke":
-            raw_args = json.loads(args.args_json) if args.args_json else {}
+            from piginot.mcp_server import redirect_native_stdout_to_stderr
+
+            args_file = getattr(args, "args_file", None)
+            if args_file is not None:
+                raw_args = json.loads(Path(args_file).read_text(encoding="utf-8"))
+            else:
+                raw_args = json.loads(args.args_json) if args.args_json else {}
+            if not isinstance(raw_args, Mapping):
+                raise ValueError("capability arguments must be a JSON object")
             sfile = ws / ".formamech-agent" / "session.json"
             if sfile.is_file():
                 harness = FormaMechAgentHarness.resume(ws)
@@ -1267,9 +1276,10 @@ def _agent(args: argparse.Namespace) -> int:
                         max_dofs=int(args.max_dofs),
                     ),
                 )
-            env = harness.invoke(
-                str(args.capability), raw_args, dry_run=bool(args.dry_run)
-            )
+            with redirect_native_stdout_to_stderr():
+                env = harness.invoke(
+                    str(args.capability), raw_args, dry_run=bool(args.dry_run)
+                )
             _emit(env.document(), args.output)
             return EXIT_OK if env.ok else EXIT_REFUSED
         if cmd == "session-status":
@@ -1287,13 +1297,21 @@ def _agent(args: argparse.Namespace) -> int:
             )
             return EXIT_OK if ok else EXIT_REFUSED
         if cmd == "verify-ledger":
-            harness = FormaMechAgentHarness.resume(ws)
-            ok, errs = harness.verify_ledger()
+            sfile = ws / ".formamech-agent" / "session.json"
+            if not sfile.is_file():
+                raise FileNotFoundError(f"no saved harness session found at {sfile}")
+            raw_session = json.loads(sfile.read_text(encoding="utf-8"))
+            probe = FormaMechAgentHarness(
+                ws,
+                session_id=str(raw_session.get("session_id", "")),
+                _persist_initial=False,
+            )
+            ok, errs = probe.verify_ledger()
             _emit(
                 {
-                    "session_id": harness.session_id,
+                    "session_id": probe.session_id,
                     "verified": ok,
-                    "entry_count": len(harness.read_ledger()),
+                    "entry_count": len(probe.read_ledger()),
                     "errors": list(errs),
                 },
                 args.output,
@@ -2002,6 +2020,7 @@ def build_parser(*, prog: str = "piginot") -> argparse.ArgumentParser:
     )
     mcp_serve.add_argument("--workspace", type=Path, default=Path("."))
     mcp_serve.add_argument("--max-dofs", type=int, default=100_000)
+    mcp_serve.add_argument("--max-fem-solves", type=int, default=16)
     mcp_serve.add_argument(
         "--require-qualified",
         action="store_true",
@@ -2044,6 +2063,12 @@ def build_parser(*, prog: str = "piginot") -> argparse.ArgumentParser:
     ag_inv.add_argument("capability", type=str)
     ag_inv.add_argument("--workspace", type=Path, required=True)
     ag_inv.add_argument("--args-json", type=str, default="{}")
+    ag_inv.add_argument(
+        "--args-file",
+        type=Path,
+        default=None,
+        help="optional path to a JSON file containing capability arguments",
+    )
     ag_inv.add_argument("--dry-run", action="store_true")
     ag_inv.add_argument("--max-fem-solves", type=int, default=32)
     ag_inv.add_argument("--max-dofs", type=int, default=150_000)

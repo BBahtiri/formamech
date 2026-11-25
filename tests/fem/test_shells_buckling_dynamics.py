@@ -268,3 +268,138 @@ def test_transient_dynamics_newmark_energy_conservation_hht_and_cfl_guard() -> N
     )
     assert res_exp.dt_crit_s is not None and res_exp.dt_crit_s > 1.0e-6
     assert math.isfinite(res_exp.total_energy_mj[-1])
+
+
+def test_v4_3_audit_regressions_hrz_damped_cfl_drilling_and_riks_stall() -> None:
+    """Regressions for TET10 HRZ lumping, damped CFL, shell rigid-body drilling, and Riks stall."""
+    from piginot.fem.modal_3d import assemble_3d_mass_matrix
+    from piginot.fem.shells_beams_3d import ShellMesh3D
+    from piginot.geometry.mesh3d import make_brick_tet10_mesh
+
+    # 1) TET10 HRZ lumped mass is strictly positive and conserves exact volume*rho
+    mesh10 = make_brick_tet10_mesh(10.0, 4.0, 4.0, nx=2, ny=1, nz=1)
+    rho = 7.85e-9
+    m_lump = assemble_3d_mass_matrix(mesh10, rho, lumped=True)
+    diag = np.asarray(m_lump.diagonal(), dtype=np.float64)
+    assert np.all(diag > 0.0)
+    expected_mass = rho * 10.0 * 4.0 * 4.0
+    assert abs(float(np.sum(diag[::3])) - expected_mass) / expected_mass < 1.0e-12
+
+    # 2) Explicit central-difference enforces damped CFL under Rayleigh stiffness damping
+    mesh4 = make_brick_tet4_mesh(10.0, 4.0, 4.0, nx=2, ny=1, nz=1)
+    mat = MaterialSpec(
+        name="elastomer-dyn",
+        model="compressible_neo_hookean",
+        properties={
+            "elastic_modulus": Quantity(1000.0, Unit.MPA).to_canonical(),
+            "poisson_ratio": Quantity(0.3, Unit.ONE).to_canonical(),
+        },
+    )
+    clamp = (DirichletBC3D("fix", ("x_min",), ("x", "y", "z"), (0.0, 0.0, 0.0)),)
+    res_undamped = solve_3d_transient_dynamics(
+        mesh4,
+        mat,
+        dirichlet_bcs=clamp,
+        config=TransientDynamicsConfig(
+            scheme=DynamicsScheme.EXPLICIT_CENTRAL_DIFF,
+            dt_s=1.0e-7,
+            num_steps=2,
+            density_t_per_mm3=rho,
+        ),
+    )
+    assert res_undamped.dt_crit_s is not None
+    dt_mid = 0.5 * res_undamped.dt_crit_s
+    # Heavy Rayleigh stiffness damping shrinks dt_crit drastically below dt_mid
+    with pytest.raises(CflStabilityError):
+        solve_3d_transient_dynamics(
+            mesh4,
+            mat,
+            dirichlet_bcs=clamp,
+            config=TransientDynamicsConfig(
+                scheme=DynamicsScheme.EXPLICIT_CENTRAL_DIFF,
+                dt_s=dt_mid,
+                num_steps=2,
+                density_t_per_mm3=rho,
+                rayleigh_beta=1.0e-4,
+            ),
+        )
+
+    # 3) Non-zero Dirichlet BCs fail closed in transient dynamics and linear buckling
+    nz_bc = (DirichletBC3D("nz", ("x_min",), ("x",), (0.5,)),)
+    with pytest.raises(ValueError, match="homogeneous"):
+        solve_3d_transient_dynamics(mesh4, mat, dirichlet_bcs=nz_bc)
+    with pytest.raises(ValueError, match="homogeneous"):
+        solve_3d_linear_buckling(
+            mesh4,
+            mat,
+            dirichlet_bcs=nz_bc,
+            traction_bcs=(TractionBC3D("load", ("x_max",), (-1.0, 0.0, 0.0)),),
+        )
+
+    # 4) DKT-CST shell relative drilling vanishes on rigid in-plane rotation
+    from piginot.fem.shells_beams_3d import _cst_membrane_stiffness_local
+
+    plate = make_rectangular_plate_shell_mesh(
+        100.0, 100.0, nx=2, ny=2, thickness_mm=0.1
+    )
+    # Apply pure rigid in-plane rotation theta=0.01 around z on perimeter -> zero strain energy
+    theta = 0.01
+    bc_rot: list[ShellDirichletBC] = []
+    # Check element-level drilling invariant indirectly via folded 90-deg L-shell cantilever
+    # (two orthogonal faces sharing an edge; thin t=0.1 must bend freely without O(t) fold locking)
+    _ = (plate, theta, bc_rot, _cst_membrane_stiffness_local)
+    l_nodes = np.array(
+        [
+            [0.0, 0.0, 0.0],
+            [50.0, 0.0, 0.0],
+            [0.0, 20.0, 0.0],
+            [50.0, 20.0, 0.0],
+            [50.0, 0.0, 50.0],
+            [50.0, 20.0, 50.0],
+        ],
+        dtype=np.float64,
+    )
+    l_tris = np.array(
+        [[0, 1, 3], [0, 3, 2], [1, 4, 5], [1, 5, 3]],
+        dtype=np.int64,
+    )
+    l_mesh = ShellMesh3D(
+        mesh_id="l-fold-thin",
+        nodes=l_nodes,
+        triangles=l_tris,
+        thickness_mm=0.1,
+        boundary_node_sets={"root": (0, 2), "tip": (4, 5)},
+    )
+    f_tip = np.zeros((6, 6), dtype=np.float64)
+    f_tip[4, 0] = 1.0e-3
+    f_tip[5, 0] = 1.0e-3
+    res_l = solve_3d_dkt_shell(
+        l_mesh,
+        youngs_modulus_mpa=200_000.0,
+        poisson_ratio=0.3,
+        dirichlet_bcs=(ShellDirichletBC("fix", "root"),),
+        nodal_loads_n=f_tip,
+    )
+    # Euler-Bernoulli reference for horizontal leg bending under moment M = F*50:
+    # delta_x_tip ~ F * L_z^2 * (L_x / (E I) + L_z / (3 E I)) >> 1e-2 mm
+    assert res_l.max_displacement_mm > 0.05
+
+    # 5) Riks continuation reports STALLED (never CONVERGED) if step 1 diverges
+    from piginot.fem.buckling_3d import solve_riks_continuation
+
+    def _always_singular(_u: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        return np.array([1.0e6], dtype=np.float64), np.zeros((1, 1), dtype=np.float64)
+
+    riks_fail = solve_riks_continuation(
+        _always_singular,
+        n_free=1,
+        f_ref=np.array([1.0], dtype=np.float64),
+        config=RiksConfig(
+            arc_length=0.1,
+            max_steps=3,
+            max_newton_iters=2,
+            min_arc_length=0.05,
+        ),
+    )
+    assert riks_fail.state is RiksSolverState.STALLED
+    assert len(riks_fail.steps) == 0

@@ -140,3 +140,81 @@ def test_fleet_local_multiprocess_slurm_kubernetes_and_cli(tmp_path: Path) -> No
     )
     assert rc == 0
     assert json.loads(out_json.read_text(encoding="utf-8"))["state"] == "VERIFIED"
+
+
+def test_v4_5_audit_regressions_dataset_traversal_and_fleet_validation(
+    tmp_path: Path,
+) -> None:
+    """Dataset blocks shard path traversal & mesh_id split leakage; fleet blocks injection."""
+    ds = ShardedMeshDataset3D(tmp_path / "ds_sec", max_records_per_shard=4)
+    r_base = _make_record("r1", 10.0, DatasetSplit.TRAIN)
+    r_train = ShardedRecord3D(
+        record_id="r1",
+        mesh_id="mesh-shared",
+        split=DatasetSplit.TRAIN,
+        parameters=r_base.parameters,
+        nodes_mm=r_base.nodes_mm,
+        cells=r_base.cells,
+        displacement_mm=r_base.displacement_mm,
+        metadata={},
+    )
+    ds.append_records([r_train])
+
+    # 1) Same mesh_id with slightly different geometry still triggers SplitLeakageError
+    r_other = _make_record("r2", 12.0, DatasetSplit.HOLDOUT)
+    r_leak_id = ShardedRecord3D(
+        record_id="r2",
+        mesh_id="mesh-shared",
+        split=DatasetSplit.HOLDOUT,
+        parameters=r_other.parameters,
+        nodes_mm=r_other.nodes_mm,
+        cells=r_other.cells,
+        displacement_mm=r_other.displacement_mm,
+        metadata={},
+    )
+    with pytest.raises(SplitLeakageError, match="mesh_id"):
+        ds.append_records([r_leak_id])
+
+    # 2) -0.0 and +0.0 produce identical geometry_fingerprint
+    r_neg0 = ShardedRecord3D(
+        record_id="r-neg0",
+        mesh_id="m-z",
+        split=DatasetSplit.TRAIN,
+        parameters=(1.0,),
+        nodes_mm=np.where(r_train.nodes_mm == 0.0, -0.0, r_train.nodes_mm),
+        cells=r_train.cells,
+        displacement_mm=r_train.displacement_mm,
+        metadata={},
+    )
+    assert r_neg0.geometry_fingerprint() == r_train.geometry_fingerprint()
+
+    # 3) Manifest shard path traversal raises ShardIntegrityError
+    manifest = json.loads(ds.manifest_path.read_text(encoding="utf-8"))
+    manifest["shards"][0]["relpath"] = "../../outside.npz"
+    ds.manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    with pytest.raises(ShardIntegrityError, match="escapes"):
+        ds.verify_integrity()
+
+    # 4) Fleet blocks shell/YAML/path injection and fails closed on missing 'ok' in results
+    slurm = SlurmScriptFleet()
+    tasks = (FleetTaskSpec("t0", {"lx_mm": 10.0}),)
+    with pytest.raises(ValueError, match="invalid job_id"):
+        slurm.submit_batch("../evil;rm", tasks, workdir=tmp_path / "s_bad")
+    with pytest.raises(ValueError, match="invalid partition"):
+        SlurmScriptFleet(partition="gpu\nrm -rf /")
+
+    k8s = KubernetesJobFleet(namespace="prod")
+    rep_k8s = k8s.submit_batch("k8s-collect", tasks, workdir=tmp_path / "k8s_c")
+    k8s_root = Path(rep_k8s.artifacts[0]).parent
+    # Missing 'ok' key must NOT default to True
+    (k8s_root / "results" / "task-0000.json").write_text(
+        json.dumps({"task_id": "t0", "value": 1}), encoding="utf-8"
+    )
+    col_bad = k8s.collect_completed(k8s_root)
+    assert col_bad.state is FleetJobState.FAILED and col_bad.failed_count == 1
+    # Explicit ok=True verifies cleanly
+    (k8s_root / "results" / "task-0000.json").write_text(
+        json.dumps({"task_id": "t0", "ok": True, "value": 1}), encoding="utf-8"
+    )
+    col_ok = k8s.collect_completed(k8s_root)
+    assert col_ok.state is FleetJobState.VERIFIED and col_ok.succeeded_count == 1

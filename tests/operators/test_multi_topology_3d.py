@@ -150,3 +150,39 @@ def test_multi_topology_surface_features_and_two_tier_ood_across_genera(
     )
     assert u_refused is None and ood_refused is not None
     assert ood_refused.status is GeometryOOD3DStatus.TOPOLOGY_REFUSED
+
+
+def test_v4_4_multi_topology_fail_closed_nan_and_unfitted_ood() -> None:
+    """MultiTopologyOODDetector3D rejects NaN descriptors and unfitted operator fails closed."""
+    from dataclasses import replace
+
+    import pytest
+
+    b1 = make_brick_tet4_mesh(20.0, 8.0, 8.0, nx=2, ny=1, nz=1)
+    b2 = make_brick_tet4_mesh(24.0, 8.0, 8.0, nx=2, ny=1, nz=1)
+    d1 = compute_geometry_descriptor_3d(b1)
+    d2 = compute_geometry_descriptor_3d(b2)
+    det = MultiTopologyOODDetector3D.fit([d1, d2])
+
+    # NaN descriptor field must be refused fail-closed
+    d_nan = replace(d1, volume_mm3=float("nan"))
+    rep_nan = det.score(d_nan)
+    assert rep_nan.accepted is False
+    assert rep_nan.status is GeometryOOD3DStatus.OUT_OF_DISTRIBUTION
+
+    # Unfitted operator with enforce_ood=True refuses fail-closed
+    op_unfit = MultiTopologyOperator3D(
+        parameter_dim=2, hidden_dim=16, slice_count=4, num_blocks=1
+    )
+    u_none, rep_unfit = op_unfit.predict_nodal_displacement(
+        b1, parameters=(0.0, 0.0), enforce_ood=True
+    )
+    assert u_none is None and rep_unfit is not None and not rep_unfit.accepted
+
+    # Wrong parameter_dim or NaN parameter raises ValueError
+    with pytest.raises(ValueError, match="parameter_dim"):
+        op_unfit.predict_nodal_displacement(b1, parameters=(0.0,), enforce_ood=False)
+    with pytest.raises(ValueError, match="finite"):
+        op_unfit.predict_nodal_displacement(
+            b1, parameters=(float("nan"), 0.0), enforce_ood=False
+        )

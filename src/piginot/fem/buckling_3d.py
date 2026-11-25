@@ -25,6 +25,7 @@ from enum import StrEnum
 from typing import Any, Final
 
 import numpy as np
+import torch
 from numpy.typing import NDArray
 from scipy.linalg import eigh  # type: ignore[import-untyped]
 from scipy.sparse import coo_matrix, csr_matrix  # type: ignore[import-untyped]
@@ -41,6 +42,7 @@ from piginot.fem.backend_3d import (
     DirichletBC3D,
     TorchFemBackend3D,
     TractionBC3D,
+    _tet_shape_grads_ref,
     assemble_surface_tractions_3d,
     face_node_indices_3d,
 )
@@ -49,7 +51,9 @@ from piginot.fem.linear_solvers import (
     LinearSolverMethod,
     solve_linear_system,
 )
-from piginot.geometry.mesh3d import CanonicalMesh3D
+from piginot.fem.thermo_mechanical_3d import duffy_tet_quadrature
+from piginot.geometry.mesh3d import CanonicalMesh3D, CellType3D
+from piginot.physics import consistent_tangent
 
 FloatArray = NDArray[np.float64]
 IntArray = NDArray[np.int64]
@@ -142,19 +146,33 @@ class Buckling3DResult:
         }
 
 
-def _elastic_lame_from_material(material: MaterialSpec) -> tuple[float, float]:
-    """Extract linear Lamé parameters ``(lam, mu)`` in MPa from a MaterialSpec."""
-    e_q = material.properties.get("elastic_modulus")
-    nu_q = material.properties.get("poisson_ratio")
-    if e_q is None or nu_q is None:
+class _InadmissibleDeformationError(RuntimeError):
+    """Internal signal for det(F) <= 0 during continuation so Riks can cut back ds."""
+
+
+def _precompute_kg_quadrature(
+    mesh: CanonicalMesh3D,
+) -> tuple[IntArray, FloatArray, FloatArray]:
+    """Build exact quadrature geometry for ``K_G`` (degree-3 Duffy rule on ``TET10``)."""
+    nodes = np.asarray(mesh.nodes, dtype=np.float64)
+    cells = np.asarray(mesh.cells, dtype=np.int64)
+    if mesh.cell_type is CellType3D.TET10:
+        xi_pts, w_ref = duffy_tet_quadrature(3)
+    else:
+        xi_pts = np.array([[0.25, 0.25, 0.25]], dtype=np.float64)
+        w_ref = np.array([1.0 / 6.0], dtype=np.float64)
+    d_ref = _tet_shape_grads_ref(mesh.cell_type, xi_pts)
+    x_e = nodes[cells]
+    jac = np.einsum("eni,qna->eqia", x_e, d_ref)
+    det_j = np.linalg.det(jac)
+    if np.any(~np.isfinite(det_j)) or np.any(det_j <= 0.0):
         raise ValueError(
-            "linear buckling requires 'elastic_modulus' and 'poisson_ratio' in MaterialSpec"
+            "3D tetrahedral element has non-positive Jacobian determinant in buckling"
         )
-    e_mpa = float(e_q.value)
-    nu = float(nu_q.value)
-    mu = e_mpa / (2.0 * (1.0 + nu))
-    lam = e_mpa * nu / ((1.0 + nu) * (1.0 - 2.0 * nu))
-    return lam, mu
+    inv_j = np.linalg.inv(jac)
+    d_phys = np.einsum("qna,eqaj->eqnj", d_ref, inv_j)
+    w_vol = det_j * w_ref[None, :]
+    return cells, d_phys, w_vol
 
 
 def _assemble_3d_geometric_stiffness(
@@ -165,18 +183,25 @@ def _assemble_3d_geometric_stiffness(
     material: MaterialSpec,
     n_dofs: int,
 ) -> csr_matrix:
-    """Assemble exact 3D initial-stress geometric stiffness ``K_G(sigma_0)``."""
-    lam, mu = _elastic_lame_from_material(material)
+    """Assemble exact 3D initial-stress geometric stiffness ``K_G(sigma_0)``.
+
+    Computes ``sigma_0 = C_0(I) : grad(u_lin)`` using the exact fourth-order
+    :func:`~piginot.physics.consistent_tangent` at ``F = I``, supporting every
+    constitutive model registered in :mod:`piginot.physics`.
+    """
     n_elem, n_loc = cells.shape
+    del n_elem
     u_nod = u_lin.reshape(-1, 3)
     u_e = u_nod[cells]  # (E, n_loc, 3)
 
     # Small-strain gradient grad_u[e, q, i, j] = sum_a u_e[e, a, i] * d_phys[e, q, a, j]
     grad_u = np.einsum("eai,eqaj->eqij", u_e, d_phys)
-    eps = 0.5 * (grad_u + np.swapaxes(grad_u, -1, -2))
-    tr_eps = eps[..., 0, 0] + eps[..., 1, 1] + eps[..., 2, 2]
-    eye3 = np.eye(3, dtype=np.float64)[None, None, :, :]
-    sigma = lam * tr_eps[..., None, None] * eye3 + 2.0 * mu * eps  # (E, Q, 3, 3)
+    with torch.no_grad():
+        c0 = consistent_tangent(
+            torch.eye(3, dtype=torch.float64), material
+        ).numpy()  # (3, 3, 3, 3)
+    sigma_raw = np.einsum("ijkl,eqkl->eqij", c0, grad_u)
+    sigma = 0.5 * (sigma_raw + np.swapaxes(sigma_raw, -1, -2))  # (E, Q, 3, 3)
 
     # Scalar geometric stiffness per element:
     # K_gs[e, a, b] = sum_q w_vol[e, q] * dN_a[e, q, i] * sigma[e, q, i, j] * dN_b[e, q, j]
@@ -218,6 +243,9 @@ def solve_3d_linear_buckling(
     t0 = time.perf_counter()
     if type(num_modes) is not int or num_modes < 1:
         raise ValueError("num_modes must be >= 1")
+    nu_prop = material.properties.get("poisson_ratio")
+    if nu_prop is not None:
+        mesh.validate_incompressibility_locking(float(nu_prop.value))
     n_nodes = len(mesh.nodes)
     n_dofs = 3 * n_nodes
 
@@ -233,13 +261,21 @@ def solve_3d_linear_buckling(
     if traction_bcs:
         f_ref += assemble_surface_tractions_3d(mesh, traction_bcs).reshape(n_dofs)
     if nodal_forces_n is not None:
-        f_ref += np.asarray(nodal_forces_n, dtype=np.float64).reshape(n_dofs)
+        f_add = np.asarray(nodal_forces_n, dtype=np.float64).reshape(n_dofs)
+        if not np.all(np.isfinite(f_add)):
+            raise ValueError("nodal_forces_n must be finite")
+        f_ref += f_add
     if float(np.linalg.norm(f_ref)) <= 1.0e-15:
         raise ValueError("non-zero reference load is required for buckling analysis")
 
     comp_idx = {"x": 0, "y": 1, "z": 2}
     constrained = np.zeros(n_dofs, dtype=bool)
     for bc in dirichlet_bcs:
+        if any(abs(float(val)) > 1.0e-15 for val in bc.values_mm):
+            raise ValueError(
+                f"solve_3d_linear_buckling requires homogeneous (zero) Dirichlet BCs; "
+                f"got non-zero values_mm={bc.values_mm!r} on {bc.name!r}"
+            )
         nids = face_node_indices_3d(mesh, bc.face_tags)
         for comp in bc.components:
             c = comp_idx[comp]
@@ -261,7 +297,14 @@ def solve_3d_linear_buckling(
     u_lin = np.zeros(n_dofs, dtype=np.float64)
     u_lin[free] = u_f
 
-    kg = _assemble_3d_geometric_stiffness(u_lin, cells, d_phys, w_vol, material, n_dofs)
+    cells_kg, d_phys_kg, w_vol_kg = (
+        _precompute_kg_quadrature(mesh)
+        if mesh.cell_type is CellType3D.TET10
+        else (cells, d_phys, w_vol)
+    )
+    kg = _assemble_3d_geometric_stiffness(
+        u_lin, cells_kg, d_phys_kg, w_vol_kg, material, n_dofs
+    )
     neg_kg_ff = (-kg[free][:, free]).tocsc()
     k0_ff_csc = k0_ff.tocsc()
 
@@ -269,7 +312,9 @@ def solve_3d_linear_buckling(
     # factors are lambda = 1 / mu for largest positive mu.
     if free.size <= 350:
         mu_all, vecs_all = eigh(neg_kg_ff.toarray(), k0_ff_csc.toarray())
-        pos_mask = mu_all > 1.0e-12
+        max_abs_mu = max(float(np.max(np.abs(mu_all))), 1.0e-30)
+        mu_tol = 1.0e-12 * max_abs_mu
+        pos_mask = mu_all > mu_tol
         if int(np.sum(pos_mask)) < num_modes:
             raise ValueError(
                 "fewer than num_modes positive compressive buckling modes found"
@@ -287,7 +332,9 @@ def solve_3d_linear_buckling(
             M=k0_ff_csc,
             which="LA",
         )
-        pos_idx = np.nonzero(mu_raw > 1.0e-12)[0]
+        max_abs_mu = max(float(np.max(np.abs(mu_raw))), 1.0e-30)
+        mu_tol = 1.0e-12 * max_abs_mu
+        pos_idx = np.nonzero(mu_raw > mu_tol)[0]
         if pos_idx.size < num_modes:
             raise ValueError(
                 "fewer than num_modes positive compressive buckling modes found"
@@ -334,6 +381,28 @@ class RiksConfig:
     desired_iters: int = 4
     min_arc_length: float = 1.0e-3
     max_arc_length: float = 2.0
+    normalize_load_scale: bool = False
+
+    def __post_init__(self) -> None:
+        if not math.isfinite(self.arc_length) or self.arc_length <= 0.0:
+            raise ValueError("arc_length must be finite and positive")
+        if not math.isfinite(self.psi) or self.psi < 0.0:
+            raise ValueError("psi must be finite and nonnegative")
+        if type(self.max_steps) is not int or self.max_steps < 1:
+            raise ValueError("max_steps must be an integer >= 1")
+        if type(self.max_newton_iters) is not int or self.max_newton_iters < 1:
+            raise ValueError("max_newton_iters must be an integer >= 1")
+        if not math.isfinite(self.tolerance) or self.tolerance <= 0.0:
+            raise ValueError("tolerance must be finite and positive")
+        if type(self.desired_iters) is not int or self.desired_iters < 1:
+            raise ValueError("desired_iters must be an integer >= 1")
+        if not math.isfinite(self.min_arc_length) or self.min_arc_length <= 0.0:
+            raise ValueError("min_arc_length must be finite and positive")
+        if (
+            not math.isfinite(self.max_arc_length)
+            or self.max_arc_length < self.min_arc_length
+        ):
+            raise ValueError("max_arc_length must be finite and >= min_arc_length")
 
 
 @dataclass(frozen=True, slots=True)
@@ -388,15 +457,19 @@ def solve_riks_continuation(
 
     Traces ``f_int(u) - lambda * f_ref = 0`` with spherical constraint::
 
-        ||du||^2 + psi^2 * (d_lambda)^2 * ||f_ref||^2 = ds^2
+        ||du||^2 + psi^2 * (d_lambda)^2 * scale^2 = ds^2
     """
     t0 = time.perf_counter()
+    if type(n_free) is not int or n_free < 1:
+        raise ValueError("n_free must be an integer >= 1")
     cfg = RiksConfig() if config is None else config
     f_vec = np.asarray(f_ref, dtype=np.float64).reshape(n_free)
+    if not np.all(np.isfinite(f_vec)):
+        raise ValueError("f_ref must be finite")
     f_norm2 = float(np.dot(f_vec, f_vec))
+    f_norm = math.sqrt(f_norm2)
     if f_norm2 <= 1.0e-20:
         raise ValueError("f_ref must be non-zero")
-    psi2_f2 = (cfg.psi**2) * f_norm2
 
     state = RiksSolverState.INITIALIZED
     history: list[StateSnapshot[RiksSolverState]] = [
@@ -413,12 +486,28 @@ def solve_riks_continuation(
     ds = float(cfg.arc_length)
     limit_passed = False
 
+    if cfg.normalize_load_scale:
+        _, k_init = internal_force_and_tangent(u)
+        try:
+            du_ref0 = np.linalg.solve(k_init, f_vec)
+        except np.linalg.LinAlgError:
+            du_ref0 = np.linalg.solve(
+                k_init + 1.0e-10 * np.eye(n_free, dtype=np.float64), f_vec
+            )
+        psi2_scale = (cfg.psi**2) * max(float(np.dot(du_ref0, du_ref0)), 1.0e-20)
+    else:
+        psi2_scale = (cfg.psi**2) * f_norm2
+
     u_hist: list[FloatArray] = [u.copy()]
     lam_hist: list[float] = [lam]
     step_records: list[RiksStepRecord] = []
 
-    for step in range(1, cfg.max_steps + 1):
-        f_int0, k_t0 = internal_force_and_tangent(u)
+    accepted = 0
+    consecutive_cutbacks = 0
+    max_cutbacks = 8
+
+    while accepted < cfg.max_steps:
+        _, k_t0 = internal_force_and_tangent(u)
         # Tangent predictor du_t = K_t^{-1} f_ref
         try:
             du_t = np.linalg.solve(k_t0, f_vec)
@@ -426,13 +515,13 @@ def solve_riks_continuation(
             k_reg = k_t0 + 1.0e-10 * np.eye(n_free, dtype=np.float64)
             du_t = np.linalg.solve(k_reg, f_vec)
 
-        denom_pred = math.sqrt(float(np.dot(du_t, du_t)) + psi2_f2)
+        denom_pred = math.sqrt(float(np.dot(du_t, du_t)) + psi2_scale)
         dlam_p = ds / max(denom_pred, 1.0e-15)
         du_p = dlam_p * du_t
 
         # Consistent orientation with previous converged increment
-        if step > 1:
-            dot_prev = float(np.dot(du_p, du_prev)) + psi2_f2 * dlam_p * dlam_prev
+        if accepted > 0:
+            dot_prev = float(np.dot(du_p, du_prev)) + psi2_scale * dlam_p * dlam_prev
             if dot_prev < 0.0:
                 dlam_p = -dlam_p
                 du_p = -du_p
@@ -452,24 +541,31 @@ def solve_riks_continuation(
             iters_used = it
             u_try = u + du
             lam_try = lam + dlam
-            f_int, k_t = internal_force_and_tangent(u_try)
+            try:
+                f_int, k_t = internal_force_and_tangent(u_try)
+            except _InadmissibleDeformationError:
+                break
             r_vec = lam_try * f_vec - f_int
-            res_norm = float(np.linalg.norm(r_vec)) / max(math.sqrt(f_norm2), 1.0)
+            if not np.all(np.isfinite(r_vec)):
+                break
+            res_denom = max(abs(lam_try) * f_norm, f_norm, 1.0e-15)
+            res_norm = float(np.linalg.norm(r_vec)) / res_denom
             if res_norm <= cfg.tolerance:
                 converged_step = True
                 break
 
             try:
-                du_r = np.linalg.solve(k_t, r_vec)
-                du_f = np.linalg.solve(k_t, f_vec)
+                sol_rf = np.linalg.solve(k_t, np.column_stack((r_vec, f_vec)))
+                du_r = sol_rf[:, 0]
+                du_f = sol_rf[:, 1]
             except np.linalg.LinAlgError:
                 break
 
             # Crisfield spherical quadratic: a * ddlam^2 + b * ddlam + c = 0
-            a_q = float(np.dot(du_f, du_f)) + psi2_f2
+            a_q = float(np.dot(du_f, du_f)) + psi2_scale
             du_bar = du + du_r
-            b_q = 2.0 * (float(np.dot(du_bar, du_f)) + psi2_f2 * dlam)
-            c_q = float(np.dot(du_bar, du_bar)) + psi2_f2 * (dlam**2) - ds * ds
+            b_q = 2.0 * (float(np.dot(du_bar, du_f)) + psi2_scale * dlam)
+            c_q = float(np.dot(du_bar, du_bar)) + psi2_scale * (dlam**2) - ds * ds
 
             disc = b_q * b_q - 4.0 * a_q * c_q
             if disc >= 0.0 and a_q > 1.0e-20:
@@ -479,12 +575,12 @@ def solve_riks_continuation(
                 # Choose root with maximal alignment to current increment (du, dlam)
                 cand1_u = du_bar + r1 * du_f
                 cand2_u = du_bar + r2 * du_f
-                cos1 = float(np.dot(du, cand1_u)) + psi2_f2 * dlam * (dlam + r1)
-                cos2 = float(np.dot(du, cand2_u)) + psi2_f2 * dlam * (dlam + r2)
+                cos1 = float(np.dot(du, cand1_u)) + psi2_scale * dlam * (dlam + r1)
+                cos2 = float(np.dot(du, cand2_u)) + psi2_scale * dlam * (dlam + r2)
                 ddlam = r1 if cos1 >= cos2 else r2
             else:
                 # Linearized orthogonal corrector fallback
-                denom_lin = float(np.dot(du, du_f)) + psi2_f2 * dlam
+                denom_lin = float(np.dot(du, du_f)) + psi2_scale * dlam
                 if abs(denom_lin) <= 1.0e-15:
                     ddlam = 0.0
                 else:
@@ -494,9 +590,9 @@ def solve_riks_continuation(
             dlam = dlam + ddlam
 
         if not converged_step:
-            # Cut arc length and retry once
+            consecutive_cutbacks += 1
             ds_next = max(0.5 * ds, cfg.min_arc_length)
-            if ds_next < ds - 1.0e-12:
+            if consecutive_cutbacks <= max_cutbacks and ds_next < ds - 1.0e-12:
                 ds = ds_next
                 continue
             RIKS_SOLVER_MACHINE.require_transition(state, RiksSolverState.STALLED)
@@ -504,6 +600,8 @@ def solve_riks_continuation(
             history.append(RIKS_SOLVER_MACHINE.snapshot(state))
             break
 
+        consecutive_cutbacks = 0
+        accepted += 1
         u = np.asarray(u + du, dtype=np.float64)
         lam = lam + dlam
         du_prev = np.asarray(du, dtype=np.float64).copy()
@@ -521,7 +619,7 @@ def solve_riks_continuation(
         lam_hist.append(lam)
         step_records.append(
             RiksStepRecord(
-                step_index=step,
+                step_index=accepted,
                 load_factor=float(lam),
                 displacement_norm=float(np.linalg.norm(u)),
                 residual_norm=float(res_norm),
@@ -534,8 +632,9 @@ def solve_riks_continuation(
         ds = min(cfg.max_arc_length, max(cfg.min_arc_length, ds * scale))
 
     if state in (RiksSolverState.STEPPING, RiksSolverState.LIMIT_POINT_PASSED):
-        RIKS_SOLVER_MACHINE.require_transition(state, RiksSolverState.CONVERGED)
-        state = RiksSolverState.CONVERGED
+        final_s = RiksSolverState.CONVERGED if accepted > 0 else RiksSolverState.STALLED
+        RIKS_SOLVER_MACHINE.require_transition(state, final_s)
+        state = final_s
         history.append(RIKS_SOLVER_MACHINE.snapshot(state))
 
     lam_arr = np.asarray(lam_hist, dtype=np.float64)
@@ -562,14 +661,25 @@ def solve_3d_truss_riks(
     config: RiksConfig | None = None,
 ) -> RiksContinuationResult:
     """Solve geometrically nonlinear 3D Green-Lagrange truss/arch snap-through via Riks."""
+    if not math.isfinite(ea_n) or ea_n <= 0.0:
+        raise ValueError("ea_n must be finite and positive")
     nodes = np.asarray(nodes_mm, dtype=np.float64)
     elems = np.asarray(bars, dtype=np.int64)
+    if nodes.ndim != 2 or nodes.shape[1] != 3 or nodes.shape[0] < 2:
+        raise ValueError("nodes_mm must have shape (N, 3) with N >= 2")
+    if elems.ndim != 2 or elems.shape[1] != 2 or elems.shape[0] < 1:
+        raise ValueError("bars must have shape (E, 2) with E >= 1")
     n_nodes = int(nodes.shape[0])
     n_dofs = 3 * n_nodes
     fixed = np.zeros(n_dofs, dtype=bool)
     for d in constrained_dofs:
-        fixed[int(d)] = True
+        di = int(d)
+        if not (0 <= di < n_dofs):
+            raise ValueError(f"constrained DOF index out of range: {di}")
+        fixed[di] = True
     free = np.nonzero(~fixed)[0]
+    if free.size == 0:
+        raise ValueError("all truss DOFs are constrained")
     f_full = np.asarray(f_ref_n, dtype=np.float64).reshape(n_dofs)
 
     def _fint_and_kt(u_f: FloatArray) -> tuple[FloatArray, FloatArray]:
@@ -582,6 +692,8 @@ def solve_3d_truss_riks(
             n0, n1 = int(bar[0]), int(bar[1])
             dx0 = nodes[n1] - nodes[n0]
             l0_sq = float(np.dot(dx0, dx0))
+            if l0_sq <= 1.0e-24:
+                raise ValueError("zero-length truss bar encountered")
             l0 = math.sqrt(l0_sq)
             dx = dx0 + (u_nod[n1] - u_nod[n0])
             # Green-Lagrange axial strain E_gl = (L^2 - L0^2) / (2 L0^2)
@@ -617,6 +729,9 @@ def solve_3d_riks_arc_length(
     config: RiksConfig | None = None,
 ) -> RiksContinuationResult:
     """Run Crisfield spherical arc-length continuation on a 3D hyperelastic solid."""
+    nu_prop = material.properties.get("poisson_ratio")
+    if nu_prop is not None:
+        mesh.validate_incompressibility_locking(float(nu_prop.value))
     n_nodes = len(mesh.nodes)
     n_dofs = 3 * n_nodes
     helper = TorchFemBackend3D()
@@ -626,12 +741,19 @@ def solve_3d_riks_arc_length(
     comp_idx = {"x": 0, "y": 1, "z": 2}
     constrained = np.zeros(n_dofs, dtype=bool)
     for bc in dirichlet_bcs:
+        if any(abs(float(val)) > 1.0e-15 for val in bc.values_mm):
+            raise ValueError(
+                f"solve_3d_riks_arc_length requires homogeneous (zero) Dirichlet BCs; "
+                f"got non-zero values_mm={bc.values_mm!r} on {bc.name!r}"
+            )
         nids = face_node_indices_3d(mesh, bc.face_tags)
         for comp in bc.components:
             c = comp_idx[comp]
             for nid in nids:
                 constrained[3 * nid + c] = True
     free = np.nonzero(~constrained)[0]
+    if free.size == 0:
+        raise ValueError("all DOFs are constrained for 3D Riks continuation")
 
     def _fint_and_kt(u_f: FloatArray) -> tuple[FloatArray, FloatArray]:
         u_full = np.zeros(n_dofs, dtype=np.float64)
@@ -639,8 +761,10 @@ def solve_3d_riks_arc_length(
         f_int, k_mat, _, _, _, min_det = helper._assemble(
             u_full, cells, d_phys, w_vol, rows, cols, material, n_dofs
         )
-        if min_det <= 1.0e-8:
-            raise ValueError("inverted element encountered during 3D Riks continuation")
+        if not math.isfinite(min_det) or min_det <= 1.0e-8:
+            raise _InadmissibleDeformationError(
+                f"inverted element encountered during 3D Riks continuation (min_det={min_det:.3e})"
+            )
         return f_int[free], k_mat[free][:, free].toarray()
 
     return solve_riks_continuation(

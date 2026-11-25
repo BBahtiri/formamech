@@ -175,3 +175,85 @@ def test_harness_invokes_v4_3_structural_physics_pack(tmp_path: Path) -> None:
         and env_pf.result is not None
         and env_pf.result["monotone_irreversible"] is True
     )
+
+
+def test_v4_3_audit_regressions_uts_neuber_periodic_rainflow_and_miehe_compression() -> (
+    None
+):
+    """Regressions for UTS rupture guard, Neuber Coffin-Manson, periodic rainflow, and Miehe compression."""
+    import math
+
+    import numpy as np
+
+    mat = FatigueMaterialSpec(
+        name="steel-4340",
+        ultimate_tensile_mpa=600.0,
+        fatigue_strength_coeff_mpa=1000.0,
+        fatigue_strength_exp=-0.1,
+        youngs_modulus_mpa=210_000.0,
+        fatigue_ductility_coeff=0.5,
+        fatigue_ductility_exp=-0.6,
+    )
+    # 1) Static UTS rupture triggers infinite damage even with mean_stress_model=NONE
+    res_uts = evaluate_fatigue_life(
+        [0.0, 650.0, 0.0],
+        mat,
+        model=FatigueModel.BASQUIN_SN,
+        mean_stress_model=MeanStressModel.NONE,
+    )
+    assert not math.isfinite(res_uts.miner_damage)
+    assert res_uts.status == "FATIGUE_FAILURE_PREDICTED"
+    assert res_uts.document()["miner_damage"] is None
+
+    # 2) Periodic repeating block closes all cycles to full count=1.0
+    cycles_rep = rainflow_count_astm_e1049(
+        [0.0, 100.0, -50.0, 200.0, 50.0, 150.0, 0.0], repeating_block=True
+    )
+    assert all(c.count == 1.0 for c in cycles_rep)
+    assert any(abs(c.range_mpa - 250.0) < 1.0e-12 for c in cycles_rep)
+
+    # 3) Neuber+Ramberg-Osgood Coffin-Manson predicts strictly higher LCF damage than pure elastic strain
+    from piginot.stateful.fatigue_fracture import (
+        _coffin_manson_cycles,
+        _neuber_elastoplastic_strain_amp,
+    )
+
+    sig_lcf = 520.0
+    eps_neuber = _neuber_elastoplastic_strain_amp(sig_lcf, mat)
+    eps_elastic = sig_lcf / mat.youngs_modulus_mpa
+    assert eps_neuber > eps_elastic * 1.1
+    assert _coffin_manson_cycles(eps_neuber, mat) < _coffin_manson_cycles(
+        eps_elastic, mat
+    )
+
+    # 4) Exact Miehe spectral split preserves compressive stiffness on a pre-cracked (d=0.99) solid
+    mesh = make_brick_tet4_mesh(10.0, 4.0, 4.0, nx=2, ny=1, nz=1)
+    n_nodes = len(mesh.nodes)
+    d_precrack = np.full(n_nodes, 0.99, dtype=np.float64)
+    cfg = PhaseFieldConfig(
+        youngs_modulus_mpa=20_000.0,
+        poisson_ratio=0.25,
+        fracture_toughness_gc_n_per_mm=1.0,
+        length_scale_lc_mm=2.0,
+        load_steps=2,
+        staggered_iters=2,
+    )
+    # Laterally confined compression: intact vs d=0.99 pre-cracked must yield identical displacement
+    bcs_comp = (
+        DirichletBC3D("x0", ("x_min",), ("x",), (0.0,)),
+        DirichletBC3D("y0", ("y_min", "y_max"), ("y",), (0.0,)),
+        DirichletBC3D("z0", ("z_min", "z_max"), ("z",), (0.0,)),
+        DirichletBC3D("x1", ("x_max",), ("x",), (-0.05,)),
+    )
+    res_intact = solve_phase_field_fracture(mesh, dirichlet_bcs=bcs_comp, config=cfg)
+    res_cracked = solve_phase_field_fracture(
+        mesh,
+        dirichlet_bcs=bcs_comp,
+        config=cfg,
+        initial_damage_nodal=d_precrack,
+    )
+    assert np.allclose(
+        res_cracked.final_displacement_mm,
+        res_intact.final_displacement_mm,
+        atol=1.0e-9,
+    )

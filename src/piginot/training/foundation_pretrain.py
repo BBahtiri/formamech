@@ -10,6 +10,7 @@ provides one-call budgeted 3D LoRA transfer onto unseen user 3D parts.
 from __future__ import annotations
 
 import math
+import os
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -26,7 +27,6 @@ from piginot.cad.parametric_3d import (
     sample_parametric_cad_3d_doe,
 )
 from piginot.contracts import MaterialSpec, Quantity, Unit
-from piginot.fem.backend_3d import TractionBC3D, assemble_surface_tractions_3d
 from piginot.geometry.mesh3d import CanonicalMesh3D
 from piginot.lifting.adf_3d import (
     GeneralFaceADFLifting3D,
@@ -54,7 +54,6 @@ from piginot.operators.surface_operator_3d import (
     Surface3DEnergyOperator,
 )
 from piginot.physics import energy_density, reference_modulus
-from piginot.training.energy_engine_3d import _volumetric_quadrature_3d
 
 FOUNDATION_PARAM_DIM: Final = 4
 DEFAULT_FOUNDATION_ID: Final = "struct3d-base-v1"
@@ -80,6 +79,42 @@ class FoundationPretrainConfig:
     traction_x_mpa: float = 0.30
     seed: int = 7
 
+    def __post_init__(self) -> None:
+        if not self.checkpoint_id.strip():
+            raise ValueError("checkpoint_id must be non-empty")
+        if not self.family_domain.strip():
+            raise ValueError("family_domain must be non-empty")
+        if type(self.samples_per_family) is not int or self.samples_per_family < 1:
+            raise ValueError("samples_per_family must be an integer >= 1")
+        if not math.isfinite(self.mesh_size_mm) or self.mesh_size_mm <= 0.0:
+            raise ValueError("mesh_size_mm must be finite and positive")
+        if type(self.epochs) is not int or self.epochs < 1:
+            raise ValueError("epochs must be an integer >= 1")
+        if not math.isfinite(self.learning_rate) or self.learning_rate <= 0.0:
+            raise ValueError("learning_rate must be finite and positive")
+        if type(self.hidden_dim) is not int or self.hidden_dim < 4:
+            raise ValueError("hidden_dim must be an integer >= 4")
+        if type(self.slice_count) is not int or self.slice_count < 1:
+            raise ValueError("slice_count must be an integer >= 1")
+        if type(self.num_blocks) is not int or self.num_blocks < 1:
+            raise ValueError("num_blocks must be an integer >= 1")
+        if (
+            type(self.num_heads) is not int
+            or self.num_heads < 1
+            or self.hidden_dim % self.num_heads != 0
+        ):
+            raise ValueError("num_heads must be >= 1 and divide hidden_dim")
+        if type(self.quadrature_subsample) is not int or self.quadrature_subsample < 1:
+            raise ValueError("quadrature_subsample must be an integer >= 1")
+        if not math.isfinite(self.youngs_modulus_mpa) or self.youngs_modulus_mpa <= 0.0:
+            raise ValueError("youngs_modulus_mpa must be finite and positive")
+        if not math.isfinite(self.poisson_ratio) or not (
+            -1.0 < self.poisson_ratio < 0.5
+        ):
+            raise ValueError("poisson_ratio must lie in (-1, 0.5)")
+        if not math.isfinite(self.traction_x_mpa):
+            raise ValueError("traction_x_mpa must be finite")
+
 
 def _canonical_param_vector(
     spec: ParametricCadSpec3D, params: dict[str, float]
@@ -100,6 +135,9 @@ def pretrain_struct3d_foundation(
     config: FoundationPretrainConfig | None = None,
 ) -> tuple[FoundationCheckpointSpec, dict[str, Any]]:
     """Pretrain a multi-family 3D structural foundation model and persist its checkpoint."""
+    from piginot.fem.backend_3d import TractionBC3D, assemble_surface_tractions_3d
+    from piginot.training.energy_engine_3d import _volumetric_quadrature_3d
+
     cfg = FoundationPretrainConfig() if config is None else config
     torch.manual_seed(cfg.seed)
     dtype = torch.float32
@@ -229,9 +267,15 @@ def pretrain_struct3d_foundation(
                 )[0]
                 grads.append(g)
             grad_u = torch.stack(grads, dim=-2)
-            f_mat = grad_u.squeeze(0) + torch.eye(3, dtype=dtype)
+            eye3 = torch.eye(3, dtype=dtype, device=grad_u.device)
+            f_mat = grad_u.squeeze(0) + eye3
             det_f = torch.linalg.det(f_mat)
-            w_int = energy_density(f_mat, mat)
+            # Guard energy_density against element inversion so the barrier restores det(F) > 0
+            adm = det_f > 1.0e-5
+            safe_f = torch.where(adm[:, None, None], f_mat, eye3.expand_as(f_mat))
+            w_int = torch.where(
+                adm, energy_density(safe_f, mat), torch.zeros_like(det_f)
+            )
             e_int = torch.sum(w_int * w_use)
             barrier = 200.0 * torch.relu(0.25 - det_f).square().mean()
 
@@ -250,8 +294,18 @@ def pretrain_struct3d_foundation(
         if not math.isfinite(float(total_loss.item())):
             raise RuntimeError("non-finite loss during 3D foundation pretraining")
         torch.autograd.backward(total_loss)
+        for p in operator.parameters():
+            if p.grad is not None and not torch.all(torch.isfinite(p.grad)):
+                raise RuntimeError(
+                    "non-finite gradient during 3D foundation pretraining"
+                )
         torch.nn.utils.clip_grad_norm_(operator.parameters(), max_norm=5.0)
         opt.step()
+        for p in operator.parameters():
+            if not torch.all(torch.isfinite(p)):
+                raise RuntimeError(
+                    "non-finite model weights produced during 3D foundation pretraining"
+                )
         loss_history.append(float(total_loss.item()))
 
     # Fit GeometryOODDetector3D on the primary genus-1 (chi=0) TRAIN descriptors
@@ -289,6 +343,10 @@ def pretrain_struct3d_foundation(
 
 def default_foundation_checkpoint_dir(repo_root: Path | None = None) -> Path:
     """Resolve the shipped ``bundles/foundation/struct3d-base-v1`` checkpoint directory."""
+    if repo_root is None:
+        env_override = os.environ.get("FORMAMECH_FOUNDATION_DIR", "").strip()
+        if env_override:
+            return Path(env_override).resolve()
     root = (
         Path(__file__).resolve().parents[3]
         if repo_root is None
@@ -309,6 +367,15 @@ def adapt_foundation_to_3d_part(
     adapter_config: LowRankAdapter3DConfig | None = None,
 ) -> tuple[Surface3DEnergyOperator | None, Adapter3DResult]:
     """Load a verified 3D foundation checkpoint and adapt via budgeted 3D LoRA."""
+    from piginot.fem.backend_3d import TractionBC3D
+
+    if len(traction_mpa) != 3 or any(not math.isfinite(float(v)) for v in traction_mpa):
+        raise ValueError("traction_mpa must contain 3 finite floats")
+    if parameter_vector is not None and any(
+        not math.isfinite(float(v)) for v in parameter_vector
+    ):
+        raise ValueError("parameter_vector must contain only finite floats")
+
     loaded = load_foundation_3d_checkpoint(checkpoint_dir)
     lift = build_adf_lifting_from_mesh_faces(
         mesh, clamped_face_tags, displacement_scale_mm=1.0
@@ -317,7 +384,7 @@ def adapt_foundation_to_3d_part(
     p_vec = (
         [0.0] * p_dim
         if parameter_vector is None
-        else list(parameter_vector[:p_dim])
+        else [float(v) for v in parameter_vector[:p_dim]]
         + [0.0] * max(0, p_dim - len(parameter_vector))
     )
     ood_report = None

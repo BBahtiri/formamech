@@ -24,8 +24,10 @@ from piginot.fem.backend_3d import (
     FemRequest3D,
     TorchFemBackend3D,
     TractionBC3D,
+    _tet_quadrature,
+    _tet_shape_grads_ref,
 )
-from piginot.geometry.mesh3d import CanonicalMesh3D
+from piginot.geometry.mesh3d import CanonicalMesh3D, CellType3D
 
 FloatArray = NDArray[np.float64]
 
@@ -46,23 +48,104 @@ def _bernstein_basis_1d(u: FloatArray, degree: int) -> FloatArray:
     return out
 
 
+def _hex8_gauss_grads_ref() -> tuple[FloatArray, FloatArray]:
+    """2x2x2 Gauss-Legendre reference points & shape gradients ``(8, 8, 3)`` for HEX8."""
+    g = 1.0 / math.sqrt(3.0)
+    signs = np.array(
+        [
+            [-1, -1, -1],
+            [1, -1, -1],
+            [1, 1, -1],
+            [-1, 1, -1],
+            [-1, -1, 1],
+            [1, -1, 1],
+            [1, 1, 1],
+            [-1, 1, 1],
+        ],
+        dtype=np.float64,
+    )
+    pts = g * signs
+    d_ref = np.empty((8, 8, 3), dtype=np.float64)
+    for q in range(8):
+        xi, eta, zeta = float(pts[q, 0]), float(pts[q, 1]), float(pts[q, 2])
+        d_ref[q, :, 0] = (
+            0.125 * signs[:, 0] * (1.0 + signs[:, 1] * eta) * (1.0 + signs[:, 2] * zeta)
+        )
+        d_ref[q, :, 1] = (
+            0.125 * (1.0 + signs[:, 0] * xi) * signs[:, 1] * (1.0 + signs[:, 2] * zeta)
+        )
+        d_ref[q, :, 2] = (
+            0.125 * (1.0 + signs[:, 0] * xi) * (1.0 + signs[:, 1] * eta) * signs[:, 2]
+        )
+    return d_ref, np.ones(8, dtype=np.float64)
+
+
+def _min_cell_det_j(
+    nodes: FloatArray,
+    cells: NDArray[np.int64],
+    cell_type: CellType3D = CellType3D.TET4,
+) -> float:
+    """Compute minimum signed isoparametric Jacobian determinant across TET4/TET10/HEX8."""
+    if cell_type is CellType3D.TET4:
+        p0 = nodes[cells[:, 0]]
+        p1 = nodes[cells[:, 1]]
+        p2 = nodes[cells[:, 2]]
+        p3 = nodes[cells[:, 3]]
+        det_j = np.einsum("ei,ei->e", np.cross(p1 - p0, p2 - p0), p3 - p0)
+        return float(np.min(det_j))
+    if cell_type is CellType3D.TET10:
+        q_pts, _ = _tet_quadrature(CellType3D.TET10)
+        corners = np.array(
+            [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+            dtype=np.float64,
+        )
+        check_pts = np.vstack((q_pts, corners))
+        d_ref = _tet_shape_grads_ref(CellType3D.TET10, check_pts)
+        x_e = nodes[cells]
+        jac = np.einsum("eni,qna->eqia", x_e, d_ref)
+        return float(np.min(np.linalg.det(jac)))
+    if cell_type is CellType3D.HEX8:
+        d_ref, _ = _hex8_gauss_grads_ref()
+        x_e = nodes[cells]
+        jac = np.einsum("eni,qna->eqia", x_e, d_ref)
+        return float(np.min(np.linalg.det(jac)))
+    raise ValueError(f"unsupported cell_type for FFD Jacobian check: {cell_type!r}")
+
+
+def _total_mesh_volume(
+    nodes: FloatArray,
+    cells: NDArray[np.int64],
+    cell_type: CellType3D = CellType3D.TET4,
+) -> float:
+    """Compute exact 3D mesh volume for TET4, TET10, or HEX8."""
+    if cell_type is CellType3D.TET4:
+        p0 = nodes[cells[:, 0]]
+        p1 = nodes[cells[:, 1]]
+        p2 = nodes[cells[:, 2]]
+        p3 = nodes[cells[:, 3]]
+        vols = np.einsum("ei,ei->e", np.cross(p1 - p0, p2 - p0), p3 - p0) / 6.0
+        return float(np.sum(vols))
+    if cell_type is CellType3D.TET10:
+        q_pts, w_ref = _tet_quadrature(CellType3D.TET10)
+        d_ref = _tet_shape_grads_ref(CellType3D.TET10, q_pts)
+        x_e = nodes[cells]
+        jac = np.einsum("eni,qna->eqia", x_e, d_ref)
+        return float(np.sum(np.linalg.det(jac) * w_ref[None, :]))
+    if cell_type is CellType3D.HEX8:
+        d_ref, w_ref = _hex8_gauss_grads_ref()
+        x_e = nodes[cells]
+        jac = np.einsum("eni,qna->eqia", x_e, d_ref)
+        return float(np.sum(np.linalg.det(jac) * w_ref[None, :]))
+    raise ValueError(f"unsupported cell_type for FFD volume check: {cell_type!r}")
+
+
 def _min_tet_det_j(nodes: FloatArray, cells: NDArray[np.int64]) -> float:
     """Compute minimum signed Jacobian determinant ``det J = 6 * V_e`` across tets."""
-    p0 = nodes[cells[:, 0]]
-    p1 = nodes[cells[:, 1]]
-    p2 = nodes[cells[:, 2]]
-    p3 = nodes[cells[:, 3]]
-    det_j = np.einsum("ei,ei->e", np.cross(p1 - p0, p2 - p0), p3 - p0)
-    return float(np.min(det_j))
+    return _min_cell_det_j(nodes, cells, CellType3D.TET4)
 
 
 def _total_tet_volume(nodes: FloatArray, cells: NDArray[np.int64]) -> float:
-    p0 = nodes[cells[:, 0]]
-    p1 = nodes[cells[:, 1]]
-    p2 = nodes[cells[:, 2]]
-    p3 = nodes[cells[:, 3]]
-    vols = np.einsum("ei,ei->e", np.cross(p1 - p0, p2 - p0), p3 - p0) / 6.0
-    return float(np.sum(vols))
+    return _total_mesh_volume(nodes, cells, CellType3D.TET4)
 
 
 @dataclass(frozen=True, slots=True)
@@ -76,10 +159,19 @@ class FFDGrid3D:
     nz: int = 2
 
     def __post_init__(self) -> None:
-        if self.nx < 2 or self.ny < 2 or self.nz < 2:
-            raise ValueError("FFD control grid must have >= 2 points per axis")
-        if any(e <= 1.0e-12 for e in self.extent_mm):
-            raise ValueError("FFD cage extents must be positive")
+        if (
+            type(self.nx) is not int
+            or type(self.ny) is not int
+            or type(self.nz) is not int
+            or self.nx < 2
+            or self.ny < 2
+            or self.nz < 2
+        ):
+            raise ValueError("FFD control grid must have integer >= 2 points per axis")
+        if any(not math.isfinite(float(o)) for o in self.origin_mm):
+            raise ValueError("FFD cage origin must be finite")
+        if any(not math.isfinite(float(e)) or e <= 1.0e-12 for e in self.extent_mm):
+            raise ValueError("FFD cage extents must be finite and positive")
 
     @property
     def num_control_points(self) -> int:
@@ -92,7 +184,11 @@ class FFDGrid3D:
         nodes = np.asarray(mesh.nodes, dtype=np.float64)
         lo = nodes.min(axis=0)
         hi = nodes.max(axis=0)
-        ext = np.maximum(hi - lo, 1.0e-6)
+        ext = hi - lo
+        if np.any(~np.isfinite(ext)) or np.any(ext <= 1.0e-12):
+            raise ValueError(
+                "cannot construct 3D FFD cage on degenerate or flat bounding box"
+            )
         return cls(
             origin_mm=(float(lo[0]), float(lo[1]), float(lo[2])),
             extent_mm=(float(ext[0]), float(ext[1]), float(ext[2])),
@@ -130,15 +226,20 @@ class FFDGrid3D:
         delta = np.asarray(delta_control_mm, dtype=np.float64).reshape(
             self.num_control_points, 3
         )
+        if not np.all(np.isfinite(delta)):
+            raise ValueError("delta_control_mm must contain only finite numbers")
         nodes0 = np.asarray(mesh.nodes, dtype=np.float64)
         b_mat = self.basis_matrix(nodes0)
         nodes_new = nodes0 + b_mat @ delta
 
         cells = np.asarray(mesh.cells, dtype=np.int64)
-        min_det = _min_tet_det_j(nodes_new, cells)
-        if not math.isfinite(min_det) or min_det <= 1.0e-10:
+        min_det0 = _min_cell_det_j(nodes0, cells, mesh.cell_type)
+        min_det = _min_cell_det_j(nodes_new, cells, mesh.cell_type)
+        min_allowed = max(1.0e-10, 1.0e-4 * max(min_det0, 0.0))
+        if not math.isfinite(min_det) or min_det <= min_allowed:
             raise FfdMeshInversionError(
-                f"FFD morph refused: inverted or degenerate tetrahedron (min_det_j={min_det:.3e} <= 0)"
+                f"FFD morph refused: inverted or sliver element "
+                f"(min_det_j={min_det:.3e} <= {min_allowed:.3e})"
             )
         morphed = CanonicalMesh3D(
             nodes=tuple((float(r[0]), float(r[1]), float(r[2])) for r in nodes_new),
@@ -207,15 +308,22 @@ def optimize_3d_ffd_shape(
     3D FEM verification on every accepted iterate.
     """
     t0 = time.perf_counter()
+    if not math.isfinite(max_displacement_limit_mm) or max_displacement_limit_mm <= 0.0:
+        raise ValueError("max_displacement_limit_mm must be finite and positive")
+    if not math.isfinite(max_move_fraction) or not (0.0 < max_move_fraction < 0.95):
+        raise ValueError("max_move_fraction must lie in (0, 0.95)")
+    if type(iterations) is not int or iterations < 1:
+        raise ValueError("iterations must be an integer >= 1")
+
     nx, ny, nz = grid_shape
     cage = FFDGrid3D.from_mesh(mesh, nx=nx, ny=ny, nz=nz)
     backend = TorchFemBackend3D()
 
     nodes0 = np.asarray(mesh.nodes, dtype=np.float64)
     cells = np.asarray(mesh.cells, dtype=np.int64)
-    vol0 = _total_tet_volume(nodes0, cells)
+    vol0 = _total_mesh_volume(nodes0, cells, mesh.cell_type)
 
-    def _eval(m_cur: CanonicalMesh3D, tag: str) -> float:
+    def _eval(m_cur: CanonicalMesh3D, tag: str) -> tuple[bool, float]:
         res = backend.solve(
             FemRequest3D(
                 request_id=tag,
@@ -226,9 +334,14 @@ def optimize_3d_ffd_shape(
                 load_steps=1,
             )
         )
-        return float(res.max_displacement_mm)
+        ok = bool(res.converged) and math.isfinite(float(res.max_displacement_mm))
+        return ok, float(res.max_displacement_mm)
 
-    u0 = _eval(mesh, "ffd-init")
+    ok0, u0 = _eval(mesh, "ffd-init")
+    if not ok0:
+        raise RuntimeError(
+            "initial 3D FEM evaluation did not converge for FFD shape optimization"
+        )
     fem_evals = 1
     rejected_inv = 0
 
@@ -240,7 +353,7 @@ def optimize_3d_ffd_shape(
     best_mesh = mesh
     best_vol = vol0
     best_u = u0
-    best_det_j = _min_tet_det_j(nodes0, cells)
+    best_det_j = _min_cell_det_j(nodes0, cells, mesh.cell_type)
 
     def _alphas_to_delta(a_vec: FloatArray) -> FloatArray:
         delta = np.zeros((nx, ny, nz, 3), dtype=np.float64)
@@ -279,13 +392,16 @@ def optimize_3d_ffd_shape(
                 except FfdMeshInversionError:
                     rejected_inv += 1
                     continue
-                v_cand = _total_tet_volume(
-                    np.asarray(m_cand.nodes, dtype=np.float64), cells
+                v_cand = _total_mesh_volume(
+                    np.asarray(m_cand.nodes, dtype=np.float64), cells, mesh.cell_type
                 )
                 if v_cand >= best_vol - 1.0e-9 and best_u <= max_displacement_limit_mm:
                     continue
-                u_cand = _eval(m_cand, f"ffd-eval-{fem_evals}")
+                ok_cand, u_cand = _eval(m_cand, f"ffd-eval-{fem_evals}")
                 fem_evals += 1
+                if not ok_cand:
+                    rejected_inv += 1
+                    continue
                 feasible = u_cand <= max_displacement_limit_mm
                 # Accept if feasible with smaller volume, or reduces infeasibility
                 if feasible and (
@@ -314,11 +430,17 @@ def optimize_3d_ffd_shape(
                 break
 
     best_delta = _alphas_to_delta(best_alphas)
+    delta_sha = hashlib.sha256(
+        np.ascontiguousarray(best_delta + 0.0, dtype=np.float64).tobytes()
+    ).hexdigest()
     receipt = hashlib.sha256(
         canonical_json_bytes(
             {
                 "schema": FFD_SHAPE_OPT_SCHEMA,
+                "source_mesh_id": mesh.mesh_id,
                 "mesh_id": best_mesh.mesh_id,
+                "max_displacement_limit_mm": float(max_displacement_limit_mm),
+                "delta_control_sha256": delta_sha,
                 "initial_volume_mm3": float(vol0),
                 "optimized_volume_mm3": float(best_vol),
                 "optimized_max_displacement_mm": float(best_u),

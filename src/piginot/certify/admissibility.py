@@ -140,13 +140,15 @@ def _rms(values: Any) -> float:
 def evaluate_tier0_admissibility(
     fields: Mapping[str, Any],
     *,
-    thresholds: AdmissibilityThresholds = AdmissibilityThresholds(),
+    thresholds: AdmissibilityThresholds | None = None,
     dirichlet_deviation: float | None = None,
     equilibrium_residual: Any | None = None,
     free_traction_residual: Any | None = None,
     section_forces: Sequence[float] | None = None,
 ) -> Tier0AdmissibilityResult:
     """Evaluate Tier 0 physical admissibility on served field arrays."""
+    if thresholds is None:
+        thresholds = AdmissibilityThresholds()
     failed: list[str] = []
     all_finite = True
 

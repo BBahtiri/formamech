@@ -124,9 +124,10 @@ class HarnessContext:
         used = self._harness.fem_solves_used
         cap = self._harness.budget.max_fem_solves
         if used + count > cap:
-            self._harness._mark_budget_exhausted(
-                f"FEM solve budget exhausted ({used}+{count} > {cap})"
-            )
+            if used >= cap:
+                self._harness._mark_budget_exhausted(
+                    f"FEM solve budget exhausted ({used}+{count} > {cap})"
+                )
             raise ResourceLimitError(
                 f"FEM solve budget exhausted: requested {count}, used {used}/{cap}"
             )
@@ -138,9 +139,10 @@ class HarnessContext:
         used = self._harness.training_epochs_used
         cap = self._harness.budget.max_training_epochs
         if used + epochs > cap:
-            self._harness._mark_budget_exhausted(
-                f"training epoch budget exhausted ({used}+{epochs} > {cap})"
-            )
+            if used >= cap:
+                self._harness._mark_budget_exhausted(
+                    f"training epoch budget exhausted ({used}+{epochs} > {cap})"
+                )
             raise ResourceLimitError(
                 f"training epoch budget exhausted: requested {epochs}, used {used}/{cap}"
             )
@@ -179,6 +181,7 @@ class FormaMechAgentHarness:
         budget: HarnessBudget | None = None,
         session_dir: Path | str | None = None,
         session_id: str | None = None,
+        _persist_initial: bool = True,
     ) -> None:
         root = Path(workspace_root).resolve()
         if not root.exists():
@@ -214,7 +217,8 @@ class FormaMechAgentHarness:
         self._artifacts: list[str] = []
         self._state_kv: dict[str, Any] = {}
         self._last_receipt_sha256: str | None = None
-        self._persist_session()
+        if _persist_initial:
+            self._persist_session()
 
     @classmethod
     def resume(
@@ -248,6 +252,7 @@ class FormaMechAgentHarness:
             budget=HarnessBudget.from_document(raw["budget"]),
             session_dir=sdir,
             session_id=str(raw["session_id"]),
+            _persist_initial=False,
         )
         harness.state = HarnessSessionState(str(raw["state"]))
         harness.invocation_count = int(raw["invocation_count"])
@@ -550,15 +555,18 @@ class FormaMechAgentHarness:
             result = dict(handler(ctx, args))
             dt = time.perf_counter() - t0
             self.total_wall_time_s += dt
-            receipt = ctx.receipt_sha256 or (
-                str(result["result_hash"])
-                if isinstance(result.get("result_hash"), str)
-                else (
-                    str(result["trust_receipt_sha256"])
-                    if isinstance(result.get("trust_receipt_sha256"), str)
-                    else None
-                )
-            )
+            receipt = ctx.receipt_sha256
+            if receipt is None:
+                for key in (
+                    "receipt_sha256",
+                    "result_hash",
+                    "trust_receipt_sha256",
+                    "report_hash",
+                ):
+                    val = result.get(key)
+                    if isinstance(val, str) and val:
+                        receipt = val
+                        break
             entry_sha = self._append_ledger(
                 capability=capability,
                 arguments=args,
@@ -635,15 +643,14 @@ class FormaMechAgentHarness:
                 "multiphysics.solve_modal_3d",
             ),
             "fem.solve_3d_solid": (
-                "export.vtu_3d",
-                "export.glb_3d",
+                "export.vtu_or_glb_3d",
                 "governance.verify_session_ledger",
             ),
             "cad.parametric_3d_sample": ("surrogate.train_parametric_3d",),
             "surrogate.train_parametric_3d": (
-                "surrogate.qualify_parametric_3d",
                 "surrogate.predict_parametric_3d",
-                "optimize.design_parametric_3d",
+                "optimize.topology_simp_3d",
+                "optimize.ffd_shape_3d",
             ),
         }
         return suggestions.get(spec.name, ("discover.capabilities",))

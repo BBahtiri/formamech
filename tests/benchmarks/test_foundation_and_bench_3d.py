@@ -127,3 +127,61 @@ def test_benchmark_suite_3d_and_cli_runner(tmp_path: Path) -> None:
     assert rc == 0
     assert json.loads(out_json.read_text(encoding="utf-8"))["report_hash"]
     assert out_md.is_file()
+
+
+def test_v4_2_benchmark_validation_and_markdown_none_safety(tmp_path: Path) -> None:
+    """Benchmark suite validates profile/explicit foundation_dir and renders None losses safely."""
+    from piginot.benchmarks.suite_3d import BenchmarkReport3D
+
+    with pytest.raises(ValueError, match="unsupported benchmark profile"):
+        run_benchmark_suite_3d(tmp_path / "bad_prof", profile="invalid")  # type: ignore[arg-type]
+
+    with pytest.raises(FileNotFoundError, match="foundation.json"):
+        run_benchmark_suite_3d(
+            tmp_path / "bad_fdir",
+            profile="quick",
+            foundation_dir=tmp_path / "does-not-exist",
+        )
+
+    rep_none = BenchmarkReport3D(
+        profile="quick",
+        solver_scaling=(
+            {
+                "method": "direct",
+                "dofs": 36,
+                "converged": True,
+                "newton_iterations": 2,
+                "total_krylov_iterations": 0,
+                "fallback_count": 0,
+                "wall_time_s": 0.01,
+            },
+        ),
+        foundation_transfer={
+            "checkpoint_dir": "custom-ckpt",
+            "state": "REFUSED",
+            "step_budget_fraction": 0.05,
+            "trainable_fraction": 0.04,
+            "initial_loss": None,
+            "final_loss": None,
+            "wall_time_s": 0.02,
+        },
+        ood_stress={"in_envelope_accept_rate": 1.0, "ood_refusal_rate": 1.0},
+        cross_backend_parity={
+            "torch_vs_analytical_rel": 1e-12,
+            "skfem_vs_analytical_rel": 1e-12,
+            "torch_vs_skfem_rel": 1e-12,
+        },
+        total_wall_time_s=0.05,
+    )
+    md = rep_none.to_markdown()
+    assert "custom-ckpt" in md and "N/A" in md
+    # Deterministic hash ignores volatile wall_time_s
+    rep_none_slow = BenchmarkReport3D(
+        profile=rep_none.profile,
+        solver_scaling=({**rep_none.solver_scaling[0], "wall_time_s": 99.9},),
+        foundation_transfer={**rep_none.foundation_transfer, "wall_time_s": 88.8},
+        ood_stress=rep_none.ood_stress,
+        cross_backend_parity=rep_none.cross_backend_parity,
+        total_wall_time_s=123.4,
+    )
+    assert rep_none.report_hash == rep_none_slow.report_hash

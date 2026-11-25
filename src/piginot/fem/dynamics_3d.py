@@ -10,8 +10,9 @@ with Rayleigh damping ``C = rayleigh_alpha * M + rayleigh_beta * K`` using:
   unconditionally stable and strictly energy-conserving for undamped free vibration.
 * **Implicit HHT-alpha** (``alpha in [-1/3, 0]``): unconditionally stable with
   controllable high-frequency numerical dissipation.
-* **Explicit Central-Difference** with row-sum lumped mass ``M_L`` and automatic
-  CFL stability guard (``dt_crit = 2 / omega_max``) that raises
+* **Explicit Central-Difference** with HRZ-lumped mass ``M_L`` and automatic
+  damped CFL stability guard
+  (``dt_crit = 2 / (omega_max * (sqrt(1 + xi_max^2) + xi_max))``) that raises
   :class:`CflStabilityError` fail-closed when ``dt_s > cfl_safety * dt_crit``.
 """
 
@@ -80,12 +81,33 @@ class TransientDynamicsConfig:
             raise ValueError("num_steps must be >= 1")
         if not math.isfinite(self.density_t_per_mm3) or self.density_t_per_mm3 <= 0.0:
             raise ValueError("density_t_per_mm3 must be positive")
-        if self.rayleigh_alpha < 0.0 or self.rayleigh_beta < 0.0:
-            raise ValueError("Rayleigh damping coefficients must be nonnegative")
-        if not (-1.0 / 3.0 <= self.hht_alpha <= 0.0):
-            raise ValueError("hht_alpha must lie in [-1/3, 0]")
-        if not (0.0 < self.cfl_safety <= 1.0):
-            raise ValueError("cfl_safety must lie in (0, 1]")
+        if (
+            not math.isfinite(self.rayleigh_alpha)
+            or not math.isfinite(self.rayleigh_beta)
+            or self.rayleigh_alpha < 0.0
+            or self.rayleigh_beta < 0.0
+        ):
+            raise ValueError(
+                "Rayleigh damping coefficients must be finite and nonnegative"
+            )
+        if not math.isfinite(self.newmark_beta) or self.newmark_beta <= 0.0:
+            raise ValueError("newmark_beta must be finite and strictly positive")
+        if not math.isfinite(self.newmark_gamma) or self.newmark_gamma < 0.5:
+            raise ValueError("newmark_gamma must be finite and >= 0.5")
+        if (
+            self.scheme is DynamicsScheme.NEWMARK_BETA
+            and self.newmark_beta < 0.25 * ((0.5 + self.newmark_gamma) ** 2) - 1.0e-12
+        ):
+            raise ValueError(
+                "implicit Newmark-beta requires unconditional stability "
+                "newmark_beta >= 0.25 * (0.5 + newmark_gamma)^2"
+            )
+        if not math.isfinite(self.hht_alpha) or not (
+            -1.0 / 3.0 <= self.hht_alpha <= 0.0
+        ):
+            raise ValueError("hht_alpha must be finite and lie in [-1/3, 0]")
+        if not math.isfinite(self.cfl_safety) or not (0.0 < self.cfl_safety <= 1.0):
+            raise ValueError("cfl_safety must be finite and lie in (0, 1]")
 
 
 @dataclass(frozen=True, slots=True)
@@ -122,10 +144,30 @@ class TransientDynamics3DResult:
         }
 
 
-def estimate_explicit_cfl_dt(k_ff: csr_matrix, m_diag_f: FloatArray) -> float:
-    """Compute exact critical time step ``dt_crit = 2 / omega_max`` for lumped mass."""
-    if np.any(m_diag_f <= 0.0):
-        raise ValueError("lumped mass diagonal must be strictly positive on free DOFs")
+def estimate_explicit_cfl_dt(
+    k_ff: csr_matrix,
+    m_diag_f: FloatArray,
+    *,
+    rayleigh_alpha: float = 0.0,
+    rayleigh_beta: float = 0.0,
+) -> float:
+    """Compute exact damped CFL critical time step for lumped-mass central difference.
+
+    For Rayleigh damping ``C = alpha M + beta K``, Schur-Cohn stability over all
+    modes is governed by the highest eigenfrequency ``omega_max`` with damping
+    ratio ``xi_max = 0.5 * (alpha / omega_max + beta * omega_max)``::
+
+        dt_crit = (2 / omega_max) * (sqrt(1 + xi_max^2) - xi_max)
+                = 2 / (omega_max * (sqrt(1 + xi_max^2) + xi_max))
+    """
+    if not math.isfinite(rayleigh_alpha) or not math.isfinite(rayleigh_beta):
+        raise ValueError("Rayleigh damping coefficients must be finite")
+    if rayleigh_alpha < 0.0 or rayleigh_beta < 0.0:
+        raise ValueError("Rayleigh damping coefficients must be nonnegative")
+    if np.any(~np.isfinite(m_diag_f)) or np.any(m_diag_f <= 0.0):
+        raise ValueError(
+            "lumped mass diagonal must be finite and strictly positive on free DOFs"
+        )
     inv_sqrt_m = 1.0 / np.sqrt(m_diag_f)
     # Transform K_tilde = M^{-1/2} K M^{-1/2} so lambda_max(K_tilde) = omega_max^2
     n_f = int(m_diag_f.size)
@@ -142,7 +184,8 @@ def estimate_explicit_cfl_dt(k_ff: csr_matrix, m_diag_f: FloatArray) -> float:
         vals = eigsh(k_tilde_sp, k=1, which="LA", return_eigenvectors=False)
         lam_max = float(np.max(vals))
     omega_max = math.sqrt(max(lam_max, 1.0e-20))
-    return 2.0 / omega_max
+    xi_max = 0.5 * (rayleigh_alpha / omega_max + rayleigh_beta * omega_max)
+    return 2.0 / (omega_max * (math.sqrt(1.0 + xi_max * xi_max) + xi_max))
 
 
 def solve_3d_transient_dynamics(
@@ -159,6 +202,9 @@ def solve_3d_transient_dynamics(
     """Integrate 3D linear transient elastodynamics via Newmark, HHT-alpha, or Explicit."""
     t0 = time.perf_counter()
     cfg = TransientDynamicsConfig() if config is None else config
+    nu_prop = material.properties.get("poisson_ratio")
+    if nu_prop is not None:
+        mesh.validate_incompressibility_locking(float(nu_prop.value))
     n_nodes = len(mesh.nodes)
     n_dofs = 3 * n_nodes
 
@@ -179,6 +225,11 @@ def solve_3d_transient_dynamics(
     comp_idx = {"x": 0, "y": 1, "z": 2}
     constrained = np.zeros(n_dofs, dtype=bool)
     for bc in dirichlet_bcs:
+        if any(abs(float(val)) > 1.0e-15 for val in bc.values_mm):
+            raise ValueError(
+                f"solve_3d_transient_dynamics requires homogeneous (zero) Dirichlet BCs; "
+                f"got non-zero values_mm={bc.values_mm!r} on {bc.name!r}"
+            )
         nids = face_node_indices_3d(mesh, bc.face_tags)
         for comp in bc.components:
             c = comp_idx[comp]
@@ -197,22 +248,22 @@ def solve_3d_transient_dynamics(
         if not traction_bcs:
             return np.zeros(free.size, dtype=np.float64)
         scale = 1.0 if load_multiplier is None else float(load_multiplier(t_val))
+        if not math.isfinite(scale):
+            raise ValueError(f"non-finite load_multiplier({t_val})={scale!r}")
         return scale * f_base_f
 
     u: FloatArray = np.zeros(free.size, dtype=np.float64)
     v: FloatArray = np.zeros(free.size, dtype=np.float64)
     if initial_displacement_mm is not None:
-        u = (
-            np.asarray(initial_displacement_mm, dtype=np.float64)
-            .reshape(n_dofs)[free]
-            .copy()
-        )
+        u_init = np.asarray(initial_displacement_mm, dtype=np.float64).reshape(n_dofs)
+        if not np.all(np.isfinite(u_init)):
+            raise ValueError("initial_displacement_mm must be finite")
+        u = u_init[free].copy()
     if initial_velocity_mm_s is not None:
-        v = (
-            np.asarray(initial_velocity_mm_s, dtype=np.float64)
-            .reshape(n_dofs)[free]
-            .copy()
-        )
+        v_init = np.asarray(initial_velocity_mm_s, dtype=np.float64).reshape(n_dofs)
+        if not np.all(np.isfinite(v_init)):
+            raise ValueError("initial_velocity_mm_s must be finite")
+        v = v_init[free].copy()
 
     dt = float(cfg.dt_s)
     n_steps = cfg.num_steps
@@ -235,7 +286,12 @@ def solve_3d_transient_dynamics(
 
     if cfg.scheme is DynamicsScheme.EXPLICIT_CENTRAL_DIFF:
         m_diag = np.asarray(m_ff.diagonal(), dtype=np.float64)
-        dt_crit = estimate_explicit_cfl_dt(k_ff, m_diag)
+        dt_crit = estimate_explicit_cfl_dt(
+            k_ff,
+            m_diag,
+            rayleigh_alpha=cfg.rayleigh_alpha,
+            rayleigh_beta=cfg.rayleigh_beta,
+        )
         if dt > cfg.cfl_safety * dt_crit:
             raise CflStabilityError(
                 f"Explicit central-difference time step dt={dt:.3e}s exceeds "

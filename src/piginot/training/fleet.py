@@ -21,6 +21,11 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
+import os
+import re
+import shlex
+import tempfile
 import time
 from collections.abc import Callable, Mapping, Sequence
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
@@ -30,19 +35,18 @@ from pathlib import Path
 from typing import Any, Final, Protocol, runtime_checkable
 
 from piginot.contracts import MaterialSpec, Quantity, Unit, canonical_json_bytes
+from piginot.contracts.canonical import strict_json_loads
+from piginot.contracts.errors import (
+    ContractValidationError,
+    DuplicateKeyError,
+    NonFiniteNumberError,
+)
 from piginot.contracts.state_machine import (
     StateMachineSpec,
     StateSnapshot,
     TransitionSpec,
     register_state_machine,
 )
-from piginot.fem.backend_3d import (
-    DirichletBC3D,
-    FemRequest3D,
-    TorchFemBackend3D,
-    TractionBC3D,
-)
-from piginot.geometry.mesh3d import make_brick_tet4_mesh
 
 FLEET_JOB_SCHEMA: Final = "formamech.fleet-job-v1"
 
@@ -183,12 +187,56 @@ class FleetJobReport:
         }
 
 
+_SAFE_ID_RE: Final = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,62}$")
+_SLURM_TIME_RE: Final = re.compile(r"^(\d+-)?\d{1,2}:\d{2}(:\d{2})?$")
+_CONTAINER_IMAGE_RE: Final = re.compile(r"^[^\s\x00-\x1f]+$")
+
+
+def _validate_safe_id(value: str, label: str) -> str:
+    if not isinstance(value, str) or not _SAFE_ID_RE.match(value):
+        raise ValueError(
+            f"invalid {label} {value!r}; must match {_SAFE_ID_RE.pattern!r}"
+        )
+    return value
+
+
+def _resolve_job_root(workdir: Path | str, job_id: str) -> Path:
+    _validate_safe_id(job_id, "job_id")
+    base = Path(workdir).resolve()
+    root = (base / job_id).resolve()
+    if not root.is_relative_to(base):
+        raise ValueError(f"job_id {job_id!r} escapes workdir {base}")
+    return root
+
+
+def _atomic_write_bytes(path: Path, data: bytes) -> None:
+    fd, tmp_name = tempfile.mkstemp(prefix=".tmp-", dir=str(path.parent))
+    tmp_path = Path(tmp_name)
+    try:
+        with os.fdopen(fd, "wb") as fh:
+            fh.write(data)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp_path, path)
+    except Exception:
+        tmp_path.unlink(missing_ok=True)
+        raise
+
+
 def _sha256_doc(doc: object) -> str:
     return hashlib.sha256(canonical_json_bytes(doc)).hexdigest()
 
 
 def solve_3d_brick_fem_task(payload: Mapping[str, Any]) -> dict[str, Any]:
     """Top-level picklable 3D hyperelastic FEM worker task for multiprocess fleets."""
+    from piginot.fem.backend_3d import (
+        DirichletBC3D,
+        FemRequest3D,
+        TorchFemBackend3D,
+        TractionBC3D,
+    )
+    from piginot.geometry.mesh3d import make_brick_tet4_mesh
+
     lx = float(payload.get("lx_mm", 20.0))
     ly = float(payload.get("ly_mm", 8.0))
     lz = float(payload.get("lz_mm", 8.0))
@@ -220,6 +268,8 @@ def solve_3d_brick_fem_task(payload: Mapping[str, Any]) -> dict[str, Any]:
             load_steps=int(payload.get("load_steps", 1)),
         )
     )
+    if not res.converged:
+        raise RuntimeError(f"3D FEM task did not converge: {res.reason}")
     return {
         "mesh_id": mesh.mesh_id,
         "converged": res.converged,
@@ -248,16 +298,162 @@ def _execute_one_task(
         )
     except Exception as exc:
         dt = time.perf_counter() - t0
+        err_msg = f"{type(exc).__name__}: {exc}"
         return FleetTaskResult(
             task_id=task_id,
             ok=False,
             result=None,
-            error=f"{type(exc).__name__}: {exc}",
+            error=err_msg,
             wall_time_s=dt,
             result_sha256=_sha256_doc(
-                {"task_id": task_id, "ok": False, "error": str(exc)}
+                {"task_id": task_id, "ok": False, "error": err_msg}
             ),
         )
+
+
+def _collect_disk_results(job_dir: Path | str, *, backend_name: str) -> FleetJobReport:
+    """Ingest & verify completed JSON task results written under ``job_dir/results/``."""
+    t0 = time.perf_counter()
+    root = Path(job_dir).resolve()
+    tasks_dir = root / "tasks"
+    results_dir = root / "results"
+    task_files = sorted(tasks_dir.glob("task-*.json"))
+
+    state = FleetJobState.QUEUED
+    hist: list[StateSnapshot[FleetJobState]] = [FLEET_JOB_MACHINE.snapshot(state)]
+    for nxt in (
+        FleetJobState.DISPATCHED,
+        FleetJobState.RUNNING,
+        FleetJobState.COLLECTED,
+    ):
+        FLEET_JOB_MACHINE.require_transition(state, nxt)
+        state = nxt
+        hist.append(FLEET_JOB_MACHINE.snapshot(state))
+
+    results: list[FleetTaskResult] = []
+    for tf in task_files:
+        tdoc = strict_json_loads(tf.read_text(encoding="utf-8"))
+        if not isinstance(tdoc, dict):
+            raise ValueError(f"corrupt task spec file {tf.name}")
+        raw_tid = tdoc.get("task_id")
+        if not isinstance(raw_tid, str):
+            raise ValueError(f"corrupt task spec file {tf.name}")
+        tid: str = raw_tid
+        rf = results_dir / tf.name
+        if not rf.is_file():
+            err_msg = f"missing result file {rf.name}"
+            results.append(
+                FleetTaskResult(
+                    task_id=tid,
+                    ok=False,
+                    result=None,
+                    error=err_msg,
+                    wall_time_s=0.0,
+                    result_sha256=_sha256_doc(
+                        {"task_id": tid, "ok": False, "error": err_msg}
+                    ),
+                )
+            )
+            continue
+        try:
+            rdoc = strict_json_loads(rf.read_text(encoding="utf-8"))
+        except (
+            OSError,
+            UnicodeDecodeError,
+            json.JSONDecodeError,
+            ContractValidationError,
+            DuplicateKeyError,
+            NonFiniteNumberError,
+        ) as exc:
+            err_msg = f"corrupt JSON in {rf.name}: {exc}"
+            results.append(
+                FleetTaskResult(
+                    task_id=tid,
+                    ok=False,
+                    result=None,
+                    error=err_msg,
+                    wall_time_s=0.0,
+                    result_sha256=_sha256_doc(
+                        {"task_id": tid, "ok": False, "error": err_msg}
+                    ),
+                )
+            )
+            continue
+        if not isinstance(rdoc, dict):
+            err_msg = f"result file {rf.name} must be a JSON object"
+            results.append(
+                FleetTaskResult(
+                    task_id=tid,
+                    ok=False,
+                    result=None,
+                    error=err_msg,
+                    wall_time_s=0.0,
+                    result_sha256=_sha256_doc(
+                        {"task_id": tid, "ok": False, "error": err_msg}
+                    ),
+                )
+            )
+            continue
+        if "task_id" in rdoc and str(rdoc["task_id"]) != tid:
+            err_msg = f"task_id mismatch in {rf.name}: expected {tid!r}, got {rdoc['task_id']!r}"
+            results.append(
+                FleetTaskResult(
+                    task_id=tid,
+                    ok=False,
+                    result=None,
+                    error=err_msg,
+                    wall_time_s=0.0,
+                    result_sha256=_sha256_doc(
+                        {"task_id": tid, "ok": False, "error": err_msg}
+                    ),
+                )
+            )
+            continue
+        ok_flag = rdoc.get("ok") is True
+        raw_wt = rdoc.get("wall_time_s", 0.0)
+        wt = (
+            float(raw_wt)
+            if isinstance(raw_wt, (int, float))
+            and not isinstance(raw_wt, bool)
+            and math.isfinite(float(raw_wt))
+            and float(raw_wt) >= 0.0
+            else 0.0
+        )
+        err_val = None if ok_flag else str(rdoc.get("error", "result ok flag not true"))
+        results.append(
+            FleetTaskResult(
+                task_id=tid,
+                ok=ok_flag,
+                result=rdoc if ok_flag else None,
+                error=err_val,
+                wall_time_s=wt,
+                result_sha256=_sha256_doc(rdoc),
+            )
+        )
+
+    succeeded = sum(1 for r in results if r.ok)
+    failed = len(results) - succeeded
+    final_state = (
+        FleetJobState.VERIFIED
+        if failed == 0 and bool(results)
+        else FleetJobState.FAILED
+    )
+    FLEET_JOB_MACHINE.require_transition(state, final_state)
+    state = final_state
+    hist.append(FLEET_JOB_MACHINE.snapshot(state))
+
+    return FleetJobReport(
+        job_id=root.name,
+        backend_name=backend_name,
+        state=state,
+        state_history=tuple(hist),
+        task_count=len(task_files),
+        succeeded_count=succeeded,
+        failed_count=failed,
+        results=tuple(results),
+        artifacts=(str(results_dir),),
+        wall_time_s=time.perf_counter() - t0,
+    )
 
 
 @runtime_checkable
@@ -281,8 +477,8 @@ class LocalMultiprocessFleet:
     """Parallel local CPU worker pool using processes (or threads for closures)."""
 
     def __init__(self, *, max_workers: int = 2, use_threads: bool = False) -> None:
-        if max_workers < 1:
-            raise ValueError("max_workers must be >= 1")
+        if type(max_workers) is not int or max_workers < 1:
+            raise ValueError("max_workers must be an integer >= 1")
         self.max_workers = max_workers
         self.use_threads = use_threads
 
@@ -299,8 +495,10 @@ class LocalMultiprocessFleet:
         worker_fn: Callable[[Mapping[str, Any]], dict[str, Any]] | None = None,
     ) -> FleetJobReport:
         t0 = time.perf_counter()
+        if not tasks:
+            raise ValueError("LocalMultiprocessFleet requires at least one task")
         fn = solve_3d_brick_fem_task if worker_fn is None else worker_fn
-        root = Path(workdir).resolve() / job_id
+        root = _resolve_job_root(workdir, job_id)
         root.mkdir(parents=True, exist_ok=True)
 
         state = FleetJobState.QUEUED
@@ -317,8 +515,28 @@ class LocalMultiprocessFleet:
         pool_cls: type[ThreadPoolExecutor] | type[ProcessPoolExecutor] = (
             ThreadPoolExecutor if self.use_threads else ProcessPoolExecutor
         )
-        with pool_cls(max_workers=min(self.max_workers, max(1, len(work_items)))) as ex:
-            results = list(ex.map(_execute_one_task, work_items))
+        results: list[FleetTaskResult] = []
+        with pool_cls(max_workers=min(self.max_workers, len(work_items))) as ex:
+            futs = [
+                (item[0], ex.submit(_execute_one_task, item)) for item in work_items
+            ]
+            for tid, fut in futs:
+                try:
+                    results.append(fut.result())
+                except Exception as exc:
+                    err_msg = f"{type(exc).__name__}: {exc}"
+                    results.append(
+                        FleetTaskResult(
+                            task_id=tid,
+                            ok=False,
+                            result=None,
+                            error=err_msg,
+                            wall_time_s=0.0,
+                            result_sha256=_sha256_doc(
+                                {"task_id": tid, "ok": False, "error": err_msg}
+                            ),
+                        )
+                    )
 
         FLEET_JOB_MACHINE.require_transition(state, FleetJobState.COLLECTED)
         state = FleetJobState.COLLECTED
@@ -332,7 +550,8 @@ class LocalMultiprocessFleet:
         hist.append(FLEET_JOB_MACHINE.snapshot(state))
 
         report_path = root / "fleet-report.json"
-        report_path.write_bytes(
+        _atomic_write_bytes(
+            report_path,
             canonical_json_bytes(
                 {
                     "schema": FLEET_JOB_SCHEMA,
@@ -341,7 +560,7 @@ class LocalMultiprocessFleet:
                     "state": state.value,
                     "results": [r.document() for r in results],
                 }
-            )
+            ),
         )
         return FleetJobReport(
             job_id=job_id,
@@ -368,6 +587,17 @@ class SlurmScriptFleet:
         time_limit: str = "01:00:00",
         python_executable: str = "python",
     ) -> None:
+        _validate_safe_id(partition, "partition")
+        if type(cpus_per_task) is not int or cpus_per_task < 1:
+            raise ValueError("cpus_per_task must be an integer >= 1")
+        if not isinstance(time_limit, str) or not _SLURM_TIME_RE.match(time_limit):
+            raise ValueError(f"invalid Slurm time_limit {time_limit!r}")
+        if (
+            not isinstance(python_executable, str)
+            or not python_executable.strip()
+            or any(c in python_executable for c in ("\n", "\r", "\x00"))
+        ):
+            raise ValueError("python_executable must be a single-line non-empty path")
         self.partition = partition
         self.cpus_per_task = cpus_per_task
         self.time_limit = time_limit
@@ -389,7 +619,7 @@ class SlurmScriptFleet:
         t0 = time.perf_counter()
         if not tasks:
             raise ValueError("SlurmScriptFleet requires at least one task")
-        root = Path(workdir).resolve() / job_id
+        root = _resolve_job_root(workdir, job_id)
         tasks_dir = root / "tasks"
         results_dir = root / "results"
         tasks_dir.mkdir(parents=True, exist_ok=True)
@@ -398,12 +628,17 @@ class SlurmScriptFleet:
         state = FleetJobState.QUEUED
         hist: list[StateSnapshot[FleetJobState]] = [FLEET_JOB_MACHINE.snapshot(state)]
         for idx, t in enumerate(tasks):
-            (tasks_dir / f"task-{idx:04d}.json").write_bytes(
-                canonical_json_bytes(t.document())
+            _atomic_write_bytes(
+                tasks_dir / f"task-{idx:04d}.json",
+                canonical_json_bytes(t.document()),
             )
 
         sbatch_path = root / "submit_slurm.sh"
         n_max = len(tasks) - 1
+        q_py = shlex.quote(self.python_executable)
+        q_root = shlex.quote(str(root))
+        q_tasks = shlex.quote(str(tasks_dir))
+        q_results = shlex.quote(str(results_dir))
         script = "\n".join(
             [
                 "#!/usr/bin/env bash",
@@ -415,11 +650,16 @@ class SlurmScriptFleet:
                 f"#SBATCH --output={root}/slurm-%A_%a.out",
                 "set -euo pipefail",
                 'IDX=$(printf "%04d" "${SLURM_ARRAY_TASK_ID}")',
-                f'{self.python_executable} -m piginot.cli agent invoke fem.solve_3d_solid --workspace "{root}/ws-${{IDX}}" --args-file "{tasks_dir}/task-${{IDX}}.json" > "{results_dir}/task-${{IDX}}.json"',
+                (
+                    f"{q_py} -m piginot.cli agent invoke fem.solve_3d_solid "
+                    f'--workspace {q_root}/ws-"${{IDX}}" '
+                    f'--args-file {q_tasks}/task-"${{IDX}}".json '
+                    f'> {q_results}/task-"${{IDX}}".json'
+                ),
                 "",
             ]
         )
-        sbatch_path.write_text(script, encoding="utf-8")
+        _atomic_write_bytes(sbatch_path, script.encode("utf-8"))
 
         FLEET_JOB_MACHINE.require_transition(state, FleetJobState.DISPATCHED)
         state = FleetJobState.DISPATCHED
@@ -440,56 +680,7 @@ class SlurmScriptFleet:
 
     def collect_completed(self, job_dir: Path | str) -> FleetJobReport:
         """Ingest completed JSON task results written under ``job_dir/results/``."""
-        t0 = time.perf_counter()
-        root = Path(job_dir).resolve()
-        tasks_dir = root / "tasks"
-        results_dir = root / "results"
-        task_files = sorted(tasks_dir.glob("task-*.json"))
-        results: list[FleetTaskResult] = []
-        for tf in task_files:
-            tdoc = json.loads(tf.read_text(encoding="utf-8"))
-            tid = str(tdoc["task_id"])
-            rf = results_dir / tf.name
-            if not rf.is_file():
-                results.append(
-                    FleetTaskResult(
-                        task_id=tid,
-                        ok=False,
-                        result=None,
-                        error=f"missing result file {rf.name}",
-                        wall_time_s=0.0,
-                        result_sha256=_sha256_doc({"task_id": tid, "ok": False}),
-                    )
-                )
-            else:
-                rdoc = json.loads(rf.read_text(encoding="utf-8"))
-                results.append(
-                    FleetTaskResult(
-                        task_id=tid,
-                        ok=bool(rdoc.get("ok", True)),
-                        result=rdoc,
-                        error=None if rdoc.get("ok", True) else str(rdoc.get("error")),
-                        wall_time_s=float(rdoc.get("wall_time_s", 0.0)),
-                        result_sha256=_sha256_doc(rdoc),
-                    )
-                )
-        succeeded = sum(1 for r in results if r.ok)
-        failed = len(results) - succeeded
-        state = (
-            FleetJobState.VERIFIED if failed == 0 and results else FleetJobState.FAILED
-        )
-        return FleetJobReport(
-            job_id=root.name,
-            backend_name=self.name,
-            state=state,
-            state_history=(FLEET_JOB_MACHINE.snapshot(state),),
-            task_count=len(task_files),
-            succeeded_count=succeeded,
-            failed_count=failed,
-            results=tuple(results),
-            artifacts=(str(results_dir),),
-            wall_time_s=time.perf_counter() - t0,
-        )
+        return _collect_disk_results(job_dir, backend_name=self.name)
 
 
 class KubernetesJobFleet:
@@ -502,6 +693,11 @@ class KubernetesJobFleet:
         namespace: str = "default",
         parallelism: int = 4,
     ) -> None:
+        if not isinstance(image, str) or not _CONTAINER_IMAGE_RE.match(image):
+            raise ValueError(f"invalid container image {image!r}")
+        _validate_safe_id(namespace, "namespace")
+        if type(parallelism) is not int or parallelism < 1:
+            raise ValueError("parallelism must be an integer >= 1")
         self.image = image
         self.namespace = namespace
         self.parallelism = parallelism
@@ -522,22 +718,28 @@ class KubernetesJobFleet:
         t0 = time.perf_counter()
         if not tasks:
             raise ValueError("KubernetesJobFleet requires at least one task")
-        root = Path(workdir).resolve() / job_id
+        root = _resolve_job_root(workdir, job_id)
         tasks_dir = root / "tasks"
+        results_dir = root / "results"
         tasks_dir.mkdir(parents=True, exist_ok=True)
+        results_dir.mkdir(parents=True, exist_ok=True)
         for idx, t in enumerate(tasks):
-            (tasks_dir / f"task-{idx:04d}.json").write_bytes(
-                canonical_json_bytes(t.document())
+            _atomic_write_bytes(
+                tasks_dir / f"task-{idx:04d}.json",
+                canonical_json_bytes(t.document()),
             )
 
+        dns_name = re.sub(r"[^a-z0-9-]+", "-", f"formamech-{job_id.lower()}").strip(
+            "-"
+        )[:63]
         yaml_path = root / "k8s-indexed-job.yaml"
         yaml_text = "\n".join(
             [
                 "apiVersion: batch/v1",
                 "kind: Job",
                 "metadata:",
-                f"  name: formamech-{job_id.lower().replace('_', '-')}",
-                f"  namespace: {self.namespace}",
+                f"  name: {json.dumps(dns_name)}",
+                f"  namespace: {json.dumps(self.namespace)}",
                 "spec:",
                 "  completionMode: Indexed",
                 f"  completions: {len(tasks)}",
@@ -547,12 +749,12 @@ class KubernetesJobFleet:
                 "      restartPolicy: OnFailure",
                 "      containers:",
                 "        - name: formamech-worker",
-                f"          image: {self.image}",
-                "          command: ['formamech', 'agent', 'invoke', 'fem.solve_3d_solid']",
+                f"          image: {json.dumps(self.image)}",
+                '          command: ["formamech", "agent", "invoke", "fem.solve_3d_solid"]',
                 "",
             ]
         )
-        yaml_path.write_text(yaml_text, encoding="utf-8")
+        _atomic_write_bytes(yaml_path, yaml_text.encode("utf-8"))
 
         state = FleetJobState.QUEUED
         hist = [FLEET_JOB_MACHINE.snapshot(state)]
@@ -572,6 +774,10 @@ class KubernetesJobFleet:
             artifacts=(str(yaml_path), str(tasks_dir)),
             wall_time_s=time.perf_counter() - t0,
         )
+
+    def collect_completed(self, job_dir: Path | str) -> FleetJobReport:
+        """Ingest completed JSON task results written under ``job_dir/results/``."""
+        return _collect_disk_results(job_dir, backend_name=self.name)
 
 
 __all__ = (

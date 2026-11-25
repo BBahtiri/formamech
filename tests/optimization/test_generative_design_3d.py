@@ -194,3 +194,33 @@ def test_harness_invokes_v4_4_generative_design_capabilities(tmp_path: Path) -> 
         {"iterations": 3, "max_displacement_limit_mm": 0.30},
     )
     assert e2.ok and e2.result is not None and e2.result["min_det_j"] > 0.0
+
+
+def test_v4_4_audit_regressions_tet10_ffd_inversion_and_simp_guards() -> None:
+    """FFD catches TET10 midside inversion; SIMP refuses non-zero Dirichlet & floating islands."""
+    from piginot.geometry.mesh3d import make_brick_tet10_mesh
+    from piginot.optimization.topology_opt_3d import _has_floating_solid_island
+
+    # 1) TET10 midside-node inversion check via full isoparametric quadrature
+    mesh10 = make_brick_tet10_mesh(10.0, 4.0, 4.0, nx=1, ny=1, nz=1)
+    cage10 = FFDGrid3D.from_mesh(mesh10, nx=3, ny=2, nz=2)
+    delta_fold = np.zeros((cage10.num_control_points, 3), dtype=np.float64)
+    delta_fold[-4:, 0] = -25.0  # fold right face past left face
+    with pytest.raises(FfdMeshInversionError):
+        cage10.morph_mesh(mesh10, delta_fold)
+
+    # 2) Floating island detector refuses unsupported disconnected tetrahedron
+    cells_two = np.array([[0, 1, 2, 3], [4, 5, 6, 7]], dtype=np.int64)
+    supported = np.array([True, True, False, False, False, False, False, False])
+    assert _has_floating_solid_island(cells_two, supported, 8) is True
+    supported_both = np.array([True, False, False, False, True, False, False, False])
+    assert _has_floating_solid_island(cells_two, supported_both, 8) is False
+
+    # 3) SIMP refuses non-zero Dirichlet BC fail-closed
+    mesh4 = make_brick_tet4_mesh(12.0, 4.0, 4.0, nx=2, ny=1, nz=1)
+    with pytest.raises(ValueError, match="homogeneous"):
+        optimize_3d_topology_simp(
+            mesh4,
+            dirichlet_bcs=(DirichletBC3D("nz", ("x_min",), ("x",), (0.2,)),),
+            traction_bcs=(TractionBC3D("load", ("x_max",), (1.0, 0.0, 0.0)),),
+        )

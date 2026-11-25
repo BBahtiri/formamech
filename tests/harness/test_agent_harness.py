@@ -229,3 +229,150 @@ def test_harness_budget_exhaustion_provider_exporters_mcp_and_cli(
     )
     assert json.loads(inv_out.read_text(encoding="utf-8"))["ok"] is True
     assert cli_main(["agent", "verify-ledger", "--workspace", str(cli_ws)]) == 0
+
+
+def test_harness_v4_hardening_mcp_stdio_isolation_budget_self_heal_and_tamper_preservation(
+    tmp_path: Path,
+) -> None:
+    import subprocess
+    import sys
+
+    # 1) Real `formamech mcp serve` subprocess over stdio stays 100% pure JSON
+    #    even when OpenCASCADE writes C-level STEP transfer statistics!
+    mcp_ws = tmp_path / "mcp_stdio_ws"
+    mcp_ws.mkdir()
+    proc = subprocess.Popen(
+        [
+            sys.executable,
+            "-m",
+            "formamech",
+            "mcp",
+            "serve",
+            "--workspace",
+            str(mcp_ws),
+            "--max-dofs",
+            "150000",
+            "--max-fem-solves",
+            "16",
+        ],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    reqs = (
+        "\n".join(
+            [
+                json.dumps(
+                    {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}}
+                ),
+                json.dumps({"jsonrpc": "2.0", "method": "notifications/initialized"}),
+                json.dumps(
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 2,
+                        "method": "resources/templates/list",
+                        "params": {},
+                    }
+                ),
+                json.dumps(
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 3,
+                        "method": "tools/call",
+                        "params": {
+                            "name": "invoke_capability",
+                            "arguments": {
+                                "capability": "cad.connector_generate",
+                                "arguments": {
+                                    "connector": "opencascade-builtin",
+                                    "model_ref": "parametric-holed-block",
+                                    "parameters": {
+                                        "lx": 24.0,
+                                        "ly": 12.0,
+                                        "lz": 8.0,
+                                        "hole_radius": 2.5,
+                                    },
+                                    "output_step": "cad/part.step",
+                                },
+                            },
+                        },
+                    }
+                ),
+            ]
+        )
+        + "\n"
+    )
+    out, _ = proc.communicate(reqs, timeout=30)
+    assert proc.returncode == 0
+    lines = [ln for ln in out.splitlines() if ln.strip()]
+    assert len(lines) == 3, (
+        f"Unexpected stdout lines contaminating MCP stdio: {lines!r}"
+    )
+    parsed = [json.loads(ln) for ln in lines]
+    assert parsed[0]["id"] == 1
+    assert (
+        parsed[1]["result"]["resourceTemplates"][0]["uriTemplate"]
+        == "formamech://artifact/{relpath}"
+    )
+    step_env = json.loads(parsed[2]["result"]["content"][0]["text"])
+    assert step_env["ok"] is True
+
+    # 2) Oversized budget request when remaining > 0 refuses WITHOUT permanently locking session
+    ws = tmp_path / "self_heal_budget"
+    h = FormaMechAgentHarness(
+        ws, budget=HarnessBudget(max_fem_solves=2, max_dofs=50_000)
+    )
+    over = h.invoke(
+        "multiphysics.solve_stateful_j2_3d",
+        {"output_dir": "cyc_over", "ux_sequence_mm": [0.05, 0.10, 0.15, 0.20]},
+    )
+    assert over.ok is False
+    assert over.error_code == "BUDGET_OR_RESOURCE_LIMIT"
+    assert h.state is HarnessSessionState.ACTIVE
+    assert h.fem_solves_used == 0
+    # Self-healed smaller retry succeeds and consumes budget accurately
+    ok_retry = h.invoke(
+        "fem.solve_timoshenko_beam_3d",
+        {"length_mm": 60.0, "tip_load_y_n": 100.0},
+    )
+    assert ok_retry.ok is True
+    assert h.fem_solves_used == 1
+
+    # 3) All allowed_next_actions resolve to registered capabilities
+    reg = h.registry
+    for cap_entry in reg.list_capabilities():
+        spec, _ = reg.get(cap_entry["name"])
+        for nxt in FormaMechAgentHarness._suggest_next(spec):
+            assert reg.has(nxt), f"_suggest_next recommended unknown capability {nxt!r}"
+
+    # 4) dispatch_tool_call returns self-healing refusal on malformed JSON / missing capability
+    bad_json = dispatch_tool_call(h, "formamech_invoke_capability", "{bad json")
+    assert bad_json["ok"] is False and bad_json["error_code"] == "INVALID_ARGUMENTS"
+    missing_cap = dispatch_tool_call(h, "formamech_invoke_capability", {})
+    assert (
+        missing_cap["ok"] is False and missing_cap["error_code"] == "INVALID_ARGUMENTS"
+    )
+
+    # 5) Failed resume() on tampered ledger does NOT clobber session.json,
+    #    and CLI verify-ledger emits structured JSON with EXIT_REFUSED (2)
+    orig_session = h.session_file.read_bytes()
+    led_txt = h.ledger_file.read_text(encoding="utf-8")
+    h.ledger_file.write_text(
+        led_txt.replace('"ok": true', '"ok": false', 1), encoding="utf-8"
+    )
+    try:
+        FormaMechAgentHarness.resume(ws)
+        raise AssertionError("resume() must reject tampered ledger")
+    except ValueError as exc:
+        assert "tampered" in str(exc)
+    assert h.session_file.read_bytes() == orig_session
+
+    led_out = tmp_path / "tamper_verify.json"
+    rc = cli_main(
+        ["agent", "verify-ledger", "--workspace", str(ws), "--output", str(led_out)]
+    )
+    assert rc == 2
+    led_doc = json.loads(led_out.read_text(encoding="utf-8"))
+    assert led_doc["verified"] is False
+    assert led_doc["errors"]

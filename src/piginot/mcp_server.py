@@ -10,8 +10,10 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import sys
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterator, Mapping, Sequence
+from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
@@ -37,6 +39,44 @@ from piginot.mcp_agent_workflows import (
 MCP_PROTOCOL_VERSION: Final = "2024-11-05"
 SERVER_NAME: Final = "formamech-mcp"
 DEFAULT_MAX_DOF_LIMIT: Final = 100_000
+
+
+@contextmanager
+def _protocol_stdio_guard(stdout: TextIO | None) -> Iterator[TextIO]:
+    """Keep native C/C++ stdout (e.g. OpenCASCADE) out of the JSON-RPC stdio stream."""
+    if stdout is not None:
+        yield stdout
+        return
+    try:
+        stdout_fd = sys.stdout.fileno()
+        stderr_fd = sys.stderr.fileno()
+    except (AttributeError, OSError, ValueError):
+        yield sys.stdout
+        return
+    sys.stdout.flush()
+    sys.stderr.flush()
+    proto_fd = os.dup(stdout_fd)
+    proto_stream = os.fdopen(proto_fd, "w", encoding="utf-8", buffering=1)
+    saved_py_stdout = sys.stdout
+    try:
+        os.dup2(stderr_fd, stdout_fd)
+        sys.stdout = sys.stderr
+        yield proto_stream
+    finally:
+        try:
+            sys.stdout.flush()
+            proto_stream.flush()
+        finally:
+            os.dup2(proto_fd, stdout_fd)
+            sys.stdout = saved_py_stdout
+            proto_stream.close()
+
+
+@contextmanager
+def redirect_native_stdout_to_stderr() -> Iterator[None]:
+    """Temporarily route OS-level FD 1 (C/C++ stdout) and ``sys.stdout`` to ``stderr``."""
+    with _protocol_stdio_guard(None):
+        yield
 
 
 class McpSessionState(StrEnum):
@@ -430,6 +470,7 @@ class FormaMechMcpServer:
             "tools/list",
             "tools/call",
             "resources/list",
+            "resources/templates/list",
             "resources/read",
             "prompts/list",
             "prompts/get",
@@ -449,6 +490,11 @@ class FormaMechMcpServer:
 
         if method == "resources/list":
             return self._result(req_id, {"resources": self.list_resources()})
+
+        if method == "resources/templates/list":
+            return self._result(
+                req_id, {"resourceTemplates": self.list_resource_templates()}
+            )
 
         if method == "resources/read":
             if not isinstance(params, Mapping) or not isinstance(
@@ -546,30 +592,38 @@ class FormaMechMcpServer:
         stdin: TextIO | None = None,
         stdout: TextIO | None = None,
     ) -> None:
-        """Serve newline-delimited JSON-RPC 2.0 MCP frames over stdio."""
+        """Serve newline-delimited JSON-RPC 2.0 MCP frames over stdio.
+
+        When serving on real process stdio (``stdout is None``), native C/C++
+        stdout output (such as OpenCASCADE STEP transfer statistics) is routed
+        to ``stderr`` at the OS file-descriptor level so the MCP JSON-RPC 2.0
+        protocol stream on FD 1 remains strictly uncorrupted.
+        """
         in_stream = sys.stdin if stdin is None else stdin
-        out_stream = sys.stdout if stdout is None else stdout
-        for raw_line in in_stream:
-            line = raw_line.strip()
-            if not line:
-                continue
-            try:
-                msg = json.loads(line)
-            except json.JSONDecodeError as exc:
-                resp: dict[str, Any] | None = self._error(
-                    None, -32700, f"parse error: {exc}"
-                )
-            else:
-                resp = (
-                    self.handle_message(msg)
-                    if isinstance(msg, Mapping)
-                    else self._error(None, -32600, "JSON-RPC message must be an object")
-                )
-            if resp is not None:
-                out_stream.write(
-                    json.dumps(resp, sort_keys=True, allow_nan=False) + "\n"
-                )
-                out_stream.flush()
+        with _protocol_stdio_guard(stdout) as out_stream:
+            for raw_line in in_stream:
+                line = raw_line.strip()
+                if not line:
+                    continue
+                try:
+                    msg = json.loads(line)
+                except json.JSONDecodeError as exc:
+                    resp: dict[str, Any] | None = self._error(
+                        None, -32700, f"parse error: {exc}"
+                    )
+                else:
+                    resp = (
+                        self.handle_message(msg)
+                        if isinstance(msg, Mapping)
+                        else self._error(
+                            None, -32600, "JSON-RPC message must be an object"
+                        )
+                    )
+                if resp is not None:
+                    out_stream.write(
+                        json.dumps(resp, sort_keys=True, allow_nan=False) + "\n"
+                    )
+                    out_stream.flush()
 
     @staticmethod
     def _result(req_id: Any, result: dict[str, Any]) -> dict[str, Any]:
@@ -1600,6 +1654,17 @@ class FormaMechMcpServer:
             },
         ]
 
+    def list_resource_templates(self) -> list[dict[str, Any]]:
+        """Declare parameterized MCP 2024-11-05 resource URI templates."""
+        return [
+            {
+                "uriTemplate": "formamech://artifact/{relpath}",
+                "name": "Workspace Artifact File",
+                "description": "Read a text/JSON artifact strictly inside the active workspace_root.",
+                "mimeType": "text/plain",
+            }
+        ]
+
     def read_resource(self, uri: str) -> list[dict[str, Any]]:
         """Resolve one ``formamech://`` resource URI safely within the workspace."""
         if uri == "formamech://capabilities":
@@ -1734,4 +1799,5 @@ __all__ = (
     "McpToolSpec",
     "ResourceLimitError",
     "SandboxViolationError",
+    "redirect_native_stdout_to_stderr",
 )

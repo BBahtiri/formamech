@@ -166,7 +166,32 @@ def dispatch_tool_call(
     if arguments is None:
         parsed = {}
     elif isinstance(arguments, str):
-        parsed = json.loads(arguments) if arguments.strip() else {}
+        if arguments.strip():
+            try:
+                loaded = json.loads(arguments)
+            except json.JSONDecodeError as exc:
+                return {
+                    "ok": False,
+                    "capability": tool_name,
+                    "session_id": harness.session_id,
+                    "error_code": "INVALID_ARGUMENTS",
+                    "error_message": f"malformed JSON arguments: {exc}",
+                    "recovery_hint": "Pass a valid JSON object matching the tool parameter schema.",
+                    "allowed_next_actions": ["discover.capabilities"],
+                }
+            if not isinstance(loaded, Mapping):
+                return {
+                    "ok": False,
+                    "capability": tool_name,
+                    "session_id": harness.session_id,
+                    "error_code": "INVALID_ARGUMENTS",
+                    "error_message": "tool arguments JSON must decode to an object",
+                    "recovery_hint": "Pass a JSON object mapping parameter names to values.",
+                    "allowed_next_actions": ["discover.capabilities"],
+                }
+            parsed = loaded
+        else:
+            parsed = {}
     else:
         parsed = arguments
 
@@ -183,8 +208,29 @@ def dispatch_tool_call(
             "budget": harness.budget_status(),
         }
     if tool_name == "formamech_invoke_capability":
-        cap = str(parsed["capability"])
+        raw_cap = parsed.get("capability")
+        if not isinstance(raw_cap, str) or not raw_cap.strip():
+            return {
+                "ok": False,
+                "capability": tool_name,
+                "session_id": harness.session_id,
+                "error_code": "INVALID_ARGUMENTS",
+                "error_message": "formamech_invoke_capability requires a non-empty string 'capability'",
+                "recovery_hint": "Call formamech_discover_capabilities to obtain valid capability names.",
+                "allowed_next_actions": ["discover.capabilities"],
+            }
+        cap = raw_cap
         cap_args = parsed.get("arguments", {})
+        if not isinstance(cap_args, Mapping):
+            return {
+                "ok": False,
+                "capability": cap,
+                "session_id": harness.session_id,
+                "error_code": "INVALID_ARGUMENTS",
+                "error_message": "'arguments' must be a JSON object",
+                "recovery_hint": "Inspect input_schema via formamech_describe_capability.",
+                "allowed_next_actions": ["discover.describe"],
+            }
         dry_run = bool(parsed.get("dry_run", False))
         return harness.invoke(cap, cap_args, dry_run=dry_run).document()
 

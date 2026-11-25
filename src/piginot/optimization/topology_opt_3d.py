@@ -32,6 +32,8 @@ from typing import Any, Final
 import numpy as np
 from numpy.typing import NDArray
 from scipy.sparse import coo_matrix, csr_matrix, eye  # type: ignore[import-untyped]
+from scipy.sparse.csgraph import connected_components  # type: ignore[import-untyped]
+from scipy.spatial import cKDTree  # type: ignore[import-untyped]
 
 from piginot.contracts import canonical_json_bytes
 from piginot.contracts.state_machine import (
@@ -155,14 +157,38 @@ class TopologyOpt3DConfig:
     poisson_ratio: float = 0.30
 
     def __post_init__(self) -> None:
-        if not (0.05 <= self.volume_fraction <= 0.98):
+        if not math.isfinite(self.volume_fraction) or not (
+            0.05 <= self.volume_fraction <= 0.98
+        ):
             raise ValueError("volume_fraction must lie in [0.05, 0.98]")
-        if self.penalization < 1.0:
-            raise ValueError("penalization must be >= 1.0")
-        if not (1.0e-9 <= self.min_density < 0.1):
+        if not math.isfinite(self.penalization) or self.penalization < 1.0:
+            raise ValueError("penalization must be finite and >= 1.0")
+        if not math.isfinite(self.min_density) or not (
+            1.0e-9 <= self.min_density < 0.1
+        ):
             raise ValueError("min_density must lie in [1e-9, 0.1)")
-        if self.max_iterations < 1:
-            raise ValueError("max_iterations must be >= 1")
+        if not math.isfinite(self.filter_radius_mm) or self.filter_radius_mm < 0.0:
+            raise ValueError("filter_radius_mm must be finite and nonnegative")
+        if not math.isfinite(self.heaviside_beta) or self.heaviside_beta <= 0.0:
+            raise ValueError("heaviside_beta must be finite and positive")
+        if not math.isfinite(self.heaviside_eta) or not (
+            0.0 < self.heaviside_eta < 1.0
+        ):
+            raise ValueError("heaviside_eta must lie in (0, 1)")
+        if type(self.max_iterations) is not int or self.max_iterations < 1:
+            raise ValueError("max_iterations must be an integer >= 1")
+        if not math.isfinite(self.move_limit) or not (0.0 < self.move_limit <= 1.0):
+            raise ValueError("move_limit must lie in (0, 1]")
+        if not math.isfinite(self.tolerance) or self.tolerance <= 0.0:
+            raise ValueError("tolerance must be finite and positive")
+        if not math.isfinite(self.threshold_density) or self.threshold_density <= 0.0:
+            raise ValueError("threshold_density must be finite and positive")
+        if not math.isfinite(self.youngs_modulus_mpa) or self.youngs_modulus_mpa <= 0.0:
+            raise ValueError("youngs_modulus_mpa must be finite and positive")
+        if not math.isfinite(self.poisson_ratio) or not (
+            -1.0 < self.poisson_ratio < 0.5
+        ):
+            raise ValueError("poisson_ratio must lie in (-1, 0.5)")
 
 
 @dataclass(frozen=True, slots=True)
@@ -221,6 +247,7 @@ def _precompute_tet4_linear_elements(
     """Precompute TET4 element stiffnesses ``K_e0``, volumes, centroids, and indices."""
     if mesh.cell_type is not CellType3D.TET4:
         raise ValueError("3D SIMP topology optimization requires TET4 meshes")
+    mesh.validate_incompressibility_locking(nu)
     nodes = np.asarray(mesh.nodes, dtype=np.float64)
     cells = np.asarray(mesh.cells, dtype=np.int64)
     n_elem = int(cells.shape[0])
@@ -231,7 +258,7 @@ def _precompute_tet4_linear_elements(
     centroids = np.mean(x_e, axis=1)  # (E, 3)
     jac = np.einsum("eni,na->eia", x_e, d_ref)
     vols = np.linalg.det(jac) / 6.0
-    if np.any(vols <= 0.0):
+    if np.any(~np.isfinite(vols)) or np.any(vols <= 0.0):
         raise ValueError("mesh contains non-positive volume tetrahedra")
     jac_inv = np.linalg.inv(jac)
     d_phys = np.einsum("na,eai->eni", d_ref, jac_inv)
@@ -273,28 +300,42 @@ def _precompute_tet4_linear_elements(
     return k_e0, vols, centroids, elem_u_dofs, u_rows, u_cols
 
 
-def _build_cone_filter(centroids: FloatArray, radius_mm: float) -> csr_matrix:
-    """Build row-normalized radial cone density filter matrix ``H``."""
+def _build_cone_filter(
+    centroids: FloatArray,
+    radius_mm: float,
+    vols: FloatArray | None = None,
+) -> csr_matrix:
+    """Build volume-weighted row-normalized radial cone density filter matrix ``H``."""
     n_elem = int(centroids.shape[0])
     if radius_mm <= 0.0:
         return eye(n_elem, format="csr", dtype=np.float64)
+    elem_w = np.ones(n_elem, dtype=np.float64) if vols is None else vols
+    tree = cKDTree(centroids)
+    neighbors_list = tree.query_ball_point(centroids, r=float(radius_mm))
     rows: list[int] = []
     cols: list[int] = []
     vals: list[float] = []
-    for e in range(n_elem):
-        dist = np.linalg.norm(centroids - centroids[e], axis=1)
-        nbrs = np.nonzero(dist < radius_mm)[0]
-        w = np.maximum(radius_mm - dist[nbrs], 0.0)
-        if nbrs.size == 0 or float(np.sum(w)) <= 1.0e-15:
+    for e, nbr_idx in enumerate(neighbors_list):
+        if not nbr_idx:
+            rows.append(e)
+            cols.append(e)
+            vals.append(1.0)
+            continue
+        nbrs = np.asarray(nbr_idx, dtype=np.int64)
+        dist = np.linalg.norm(centroids[nbrs] - centroids[e], axis=1)
+        w = np.maximum(float(radius_mm) - dist, 0.0) * elem_w[nbrs]
+        w_sum = float(np.sum(w))
+        if w_sum <= 1.0e-15:
             rows.append(e)
             cols.append(e)
             vals.append(1.0)
         else:
-            w = w / float(np.sum(w))
+            w = w / w_sum
             for idx_n, wt in zip(nbrs.tolist(), w.tolist(), strict=True):
-                rows.append(e)
-                cols.append(int(idx_n))
-                vals.append(float(wt))
+                if wt > 0.0:
+                    rows.append(e)
+                    cols.append(int(idx_n))
+                    vals.append(float(wt))
     return coo_matrix((vals, (rows, cols)), shape=(n_elem, n_elem)).tocsr()
 
 
@@ -350,6 +391,38 @@ def simp_3d_compliance_and_sensitivity(
     return compliance, dc_drho, u_full
 
 
+def _has_floating_solid_island(
+    cells_solid: IntArray, constrained_nodes: NDArray[np.bool_], n_nodes: int
+) -> bool:
+    """Return True if any connected component of retained solid elements lacks support."""
+    if cells_solid.shape[0] == 0:
+        return True
+    active_nodes = np.unique(cells_solid.reshape(-1))
+    remap = np.full(n_nodes, -1, dtype=np.int64)
+    remap[active_nodes] = np.arange(active_nodes.size, dtype=np.int64)
+    mapped = remap[cells_solid]
+    # Build nodal adjacency graph across all tetrahedron edges (6 undirected edges per tet)
+    r_list: list[IntArray] = []
+    c_list: list[IntArray] = []
+    for a, b in ((0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3)):
+        r_list.append(mapped[:, a])
+        c_list.append(mapped[:, b])
+        r_list.append(mapped[:, b])
+        c_list.append(mapped[:, a])
+    rows = np.concatenate(r_list)
+    cols = np.concatenate(c_list)
+    adj = coo_matrix(
+        (np.ones(rows.size, dtype=np.int8), (rows, cols)),
+        shape=(active_nodes.size, active_nodes.size),
+    ).tocsr()
+    n_comp, labels = connected_components(adj, directed=False)
+    node_supported = constrained_nodes[active_nodes]
+    for cid in range(int(n_comp)):
+        if not np.any(node_supported[labels == cid]):
+            return True
+    return False
+
+
 def optimize_3d_topology_simp(
     mesh: CanonicalMesh3D,
     *,
@@ -375,7 +448,7 @@ def optimize_3d_topology_simp(
     )
     n_elem = int(vols.size)
     v_total = float(np.sum(vols))
-    h_filter = _build_cone_filter(centroids, cfg.filter_radius_mm)
+    h_filter = _build_cone_filter(centroids, cfg.filter_radius_mm, vols)
 
     f_vec = assemble_surface_tractions_3d(mesh, traction_bcs).reshape(n_dofs)
     if float(np.linalg.norm(f_vec)) <= 1.0e-15:
@@ -383,12 +456,19 @@ def optimize_3d_topology_simp(
 
     comp_idx = {"x": 0, "y": 1, "z": 2}
     constrained = np.zeros(n_dofs, dtype=bool)
+    constrained_nodes = np.zeros(n_nodes, dtype=bool)
     for bc in dirichlet_bcs:
+        if any(abs(float(val)) > 1.0e-15 for val in bc.values_mm):
+            raise ValueError(
+                f"optimize_3d_topology_simp requires homogeneous (zero) Dirichlet BCs; "
+                f"got non-zero values_mm={bc.values_mm!r} on {bc.name!r}"
+            )
         nids = face_node_indices_3d(mesh, bc.face_tags)
         for comp in bc.components:
             c = comp_idx[comp]
             for nid in nids:
                 constrained[3 * nid + c] = True
+                constrained_nodes[nid] = True
     free = np.nonzero(~constrained)[0]
     if free.size == 0:
         raise ValueError("all DOFs are constrained")
@@ -427,16 +507,20 @@ def optimize_3d_topology_simp(
         dv = np.asarray(h_filter.T @ (vols * d_proj), dtype=np.float64)
         dv = np.maximum(dv, 1.0e-15)
 
-        # Optimality Criteria (OC) bisection enforcing physical volume fraction
-        l1, l2 = 0.0, 1.0e9
+        # Scale-invariant Optimality Criteria (OC) bisection with non-absorbing lower clip
+        max_ratio = float(np.max(np.maximum(-dc, 0.0) / dv))
+        l1 = 0.0
+        l2 = max(1.0e9, max_ratio * 100.0, 1.0)
         move = cfg.move_limit
         rho_new = rho.copy()
-        while (l2 - l1) / max(l1 + l2, 1.0e-12) > 1.0e-4:
+        for _bi in range(80):
+            if (l2 - l1) / max(l1 + l2, 1.0e-30) <= 1.0e-5:
+                break
             lmid = 0.5 * (l1 + l2)
-            b_e = np.maximum(-dc / (lmid * dv), 1.0e-12)
+            b_e = np.maximum(-dc / np.maximum(lmid * dv, 1.0e-300), 1.0e-12)
             cand = np.clip(
                 rho * np.sqrt(b_e),
-                np.maximum(0.0, rho - move),
+                np.maximum(1.0e-6, rho - move),
                 np.minimum(1.0, rho + move),
             )
             r_p_cand, _ = _project(cand)
@@ -474,7 +558,6 @@ def optimize_3d_topology_simp(
     history.append(TOPOLOGY_OPT_MACHINE.snapshot(state))
 
     solid_mask = rho_phys >= cfg.threshold_density
-    # Ensure boundary-loaded and clamped elements touching non-zero traction are evaluated honestly
     retained_frac = (
         float(np.sum(vols[solid_mask])) / v_total if np.any(solid_mask) else 0.0
     )
@@ -498,6 +581,7 @@ def optimize_3d_topology_simp(
 
         # Assemble exact discrete stiffness on retained solid elements ONLY (no void ersatz)
         solid_idx = np.nonzero(solid_mask)[0]
+        cells_solid = np.asarray(mesh.cells, dtype=np.int64)[solid_idx]
         sub_dofs = elem_u_dofs[solid_idx]
         s_rows = np.repeat(sub_dofs[:, :, None], 12, axis=2).reshape(-1)
         s_cols = np.repeat(sub_dofs[:, None, :], 12, axis=1).reshape(-1)
@@ -507,11 +591,18 @@ def optimize_3d_topology_simp(
         active_dofs = np.unique(sub_dofs.reshape(-1))
         free_active = np.intersect1d(free, active_dofs)
         loaded_dofs = np.nonzero(np.abs(f_vec) > 1.0e-15)[0]
-        if free_active.size == 0 or not np.any(np.isin(loaded_dofs, active_dofs)):
+        if free_active.size == 0 or not np.all(np.isin(loaded_dofs, active_dofs)):
             TOPOLOGY_OPT_MACHINE.require_transition(state, TopologyOpt3DState.REFUSED)
             state = TopologyOpt3DState.REFUSED
             history.append(TOPOLOGY_OPT_MACHINE.snapshot(state))
-            reason = "thresholded 3D solid disconnected from loaded boundary"
+            reason = "thresholded 3D solid drops one or more loaded boundary DOFs"
+        elif _has_floating_solid_island(cells_solid, constrained_nodes, n_nodes):
+            TOPOLOGY_OPT_MACHINE.require_transition(state, TopologyOpt3DState.REFUSED)
+            state = TopologyOpt3DState.REFUSED
+            history.append(TOPOLOGY_OPT_MACHINE.snapshot(state))
+            reason = (
+                "thresholded 3D solid contains an unsupported floating solid component"
+            )
         else:
             try:
                 u_f_cert, rep_cert = solve_linear_system(
@@ -520,8 +611,16 @@ def optimize_3d_topology_simp(
                     config=LinearSolverConfig(method=LinearSolverMethod.DIRECT),
                     is_symmetric=True,
                 )
-                if not rep_cert.converged or not np.all(np.isfinite(u_f_cert)):
-                    raise RuntimeError("singular or non-convergent thresholded solid")
+                if (
+                    not rep_cert.converged
+                    or not math.isfinite(rep_cert.relative_residual)
+                    or rep_cert.relative_residual > 1.0e-8
+                    or not np.all(np.isfinite(u_f_cert))
+                ):
+                    raise RuntimeError(
+                        f"singular or inaccurate thresholded solid "
+                        f"(rel_res={rep_cert.relative_residual:.3e})"
+                    )
                 u_cert = np.zeros(n_dofs, dtype=np.float64)
                 u_cert[free_active] = u_f_cert
                 certified_comp = float(f_vec[free_active] @ u_f_cert)
@@ -545,11 +644,18 @@ def optimize_3d_topology_simp(
                 history.append(TOPOLOGY_OPT_MACHINE.snapshot(state))
                 reason = f"final exact FEM certification refused: {exc}"
 
+    mask_sha256 = hashlib.sha256(
+        np.packbits(solid_mask.astype(np.uint8)).tobytes()
+    ).hexdigest()
     receipt_payload = {
         "schema": TOPOLOGY_OPT_3D_SCHEMA,
         "mesh_id": mesh.mesh_id,
         "state": state.value,
         "claim_level": claim_level,
+        "volume_fraction": float(cfg.volume_fraction),
+        "penalization": float(cfg.penalization),
+        "threshold_density": float(cfg.threshold_density),
+        "solid_mask_sha256": mask_sha256,
         "initial_compliance_mj": float(comp_hist[0]),
         "final_simp_compliance_mj": float(final_simp_comp),
         "certified_fem_compliance_mj": certified_comp,

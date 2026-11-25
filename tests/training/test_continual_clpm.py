@@ -151,3 +151,75 @@ def test_continual_qualification_promotes_clean_and_rolls_back_holdout_regressio
         and env_cs.result is not None
         and env_cs.result["ledger_valid"] is True
     )
+
+
+def test_v4_5_continual_clpm_nan_guard_cycle_id_and_tampered_ledger_preservation(
+    tmp_path: Path,
+) -> None:
+    """CLPM refuses NaN metrics fail-closed, validates cycle_id, and never appends to corrupt ledgers."""
+    import pytest
+
+    active_v0 = tmp_path / "ckpt-v0"
+    active_v0.mkdir()
+    (active_v0 / "model.json").write_text('{"version": 0}', encoding="utf-8")
+
+    ledger = SignedAuditLedger(tmp_path / "audit.jsonl")
+    ledger.append(
+        event_kind=AuditEventKind.OOD_REFUSED,
+        bundle_name="demo",
+        mode="certified",
+        verdict="REFUSED",
+        inputs={"lx": 30.0},
+    )
+    ds = ShardedMeshDataset3D(tmp_path / "ds")
+    ds.append_records(
+        [
+            _rec("tr-1", 20.0, DatasetSplit.TRAIN),
+            _rec("ho-1", 22.0, DatasetSplit.HOLDOUT),
+        ]
+    )
+    loop = ContinualQualificationLoop(
+        active_checkpoint_dir=active_v0,
+        audit_ledger=ledger,
+        dataset=ds,
+        workdir=tmp_path / "clpm_sec",
+    )
+
+    # 1) Path-traversal cycle_id rejected
+    fb = _rec("fb-sec", 30.0, DatasetSplit.TRAIN)
+    with pytest.raises(ValueError, match="invalid cycle_id"):
+        loop.run_cycle(
+            "../escape",
+            solved_fallbacks=[fb],
+            evaluator=lambda _d, _r: 0.05,
+        )
+
+    # 2) NaN shadow metric rolls back fail-closed, cleans shadow dir, leaves dataset & fallback count clean
+    fb_count_before = len(ledger.query_fallbacks())
+    train_before = ds.summary()["split_counts"]["TRAIN"]
+    res_nan = loop.run_cycle(
+        "cycle-nan",
+        solved_fallbacks=[fb],
+        evaluator=lambda d, _r: float("nan") if "shadow-" in d.name else 0.05,
+    )
+    assert res_nan.promoted is False
+    assert res_nan.state is ContinualLoopState.ROLLED_BACK
+    assert loop.current_active_checkpoint() == active_v0.resolve()
+    assert not (tmp_path / "clpm_sec" / "shadow-cycle-nan").exists()
+    # Rollback must NOT mutate TRAIN dataset or self-amplify query_fallbacks()
+    assert ds.summary()["split_counts"]["TRAIN"] == train_before
+    assert len(ledger.query_fallbacks()) == fb_count_before
+
+    # 3) Tampered ledger triggers rollback WITHOUT appending new entries onto corrupt chain
+    raw_lines = ledger.path.read_text(encoding="utf-8").splitlines()
+    raw_lines[0] = raw_lines[0].replace("REFUSED", "TAMPERED")
+    ledger.path.write_text("\n".join(raw_lines) + "\n", encoding="utf-8")
+    before_bytes = ledger.path.read_bytes()
+    res_tamp = loop.run_cycle(
+        "cycle-tampered",
+        solved_fallbacks=[fb],
+        evaluator=lambda _d, _r: 0.01,
+    )
+    assert res_tamp.promoted is False
+    assert res_tamp.state is ContinualLoopState.ROLLED_BACK
+    assert ledger.path.read_bytes() == before_bytes

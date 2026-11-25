@@ -24,7 +24,9 @@ Every cycle:
 from __future__ import annotations
 
 import hashlib
-import json
+import math
+import os
+import re
 import shutil
 import time
 from collections.abc import Callable, Mapping, Sequence
@@ -34,6 +36,7 @@ from pathlib import Path
 from typing import Any, Final
 
 from piginot.contracts import canonical_json_bytes
+from piginot.contracts.canonical import strict_json_loads
 from piginot.contracts.state_machine import (
     StateMachineSpec,
     StateSnapshot,
@@ -45,6 +48,7 @@ from piginot.store.dataset_3d import (
     DatasetSplit,
     ShardedMeshDataset3D,
     ShardedRecord3D,
+    SplitLeakageError,
 )
 
 CONTINUAL_LOOP_SCHEMA: Final = "formamech.continual-clpm-v1"
@@ -61,6 +65,8 @@ class ContinualLoopState(StrEnum):
     PROMOTED = "PROMOTED"
     ROLLED_BACK = "ROLLED_BACK"
 
+
+_CYCLE_ID_RE: Final = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 
 CONTINUAL_LOOP_MACHINE: Final[StateMachineSpec[ContinualLoopState]] = (
     register_state_machine(
@@ -103,10 +109,22 @@ CONTINUAL_LOOP_MACHINE: Final[StateMachineSpec[ContinualLoopState]] = (
                     "Adapt isolated shadow checkpoint on curated replay batch.",
                 ),
                 TransitionSpec(
+                    ContinualLoopState.REPLAY_CURATED,
+                    ContinualLoopState.ROLLED_BACK,
+                    "abort_replay",
+                    "Aborted before shadow adaptation.",
+                ),
+                TransitionSpec(
                     ContinualLoopState.ADAPTING,
                     ContinualLoopState.SHADOW_QUALIFYING,
                     "evaluate_shadow",
                     "Evaluate shadow candidate on frozen blind HOLDOUT + fallback cases.",
+                ),
+                TransitionSpec(
+                    ContinualLoopState.ADAPTING,
+                    ContinualLoopState.ROLLED_BACK,
+                    "abort_adaptation",
+                    "Shadow adapter failed or produced an invalid checkpoint directory.",
                 ),
                 TransitionSpec(
                     ContinualLoopState.SHADOW_QUALIFYING,
@@ -137,10 +155,28 @@ class ContinualQualificationConfig:
     replay_max_records: int = 64
 
     def __post_init__(self) -> None:
-        if self.min_fallbacks_to_trigger < 1:
-            raise ValueError("min_fallbacks_to_trigger must be >= 1")
-        if self.max_holdout_regression_tol < 0.0:
-            raise ValueError("max_holdout_regression_tol must be >= 0")
+        if (
+            type(self.min_fallbacks_to_trigger) is not int
+            or self.min_fallbacks_to_trigger < 1
+        ):
+            raise ValueError("min_fallbacks_to_trigger must be an integer >= 1")
+        if (
+            not math.isfinite(self.max_holdout_regression_tol)
+            or self.max_holdout_regression_tol < 0.0
+        ):
+            raise ValueError("max_holdout_regression_tol must be finite and >= 0")
+        if (
+            not math.isfinite(self.max_allowed_holdout_error)
+            or self.max_allowed_holdout_error <= 0.0
+        ):
+            raise ValueError("max_allowed_holdout_error must be finite and > 0")
+        if type(self.replay_max_records) is not int or self.replay_max_records < 1:
+            raise ValueError("replay_max_records must be an integer >= 1")
+
+
+def _safe_metric_json(val: float) -> float | None:
+    fv = float(val)
+    return fv if math.isfinite(fv) else None
 
 
 @dataclass(frozen=True, slots=True)
@@ -160,10 +196,10 @@ class ShadowEvaluationMetrics:
         return {
             "holdout_count": self.holdout_count,
             "fallback_count": self.fallback_count,
-            "holdout_error_active": float(self.holdout_error_active),
-            "holdout_error_shadow": float(self.holdout_error_shadow),
-            "fallback_error_active": float(self.fallback_error_active),
-            "fallback_error_shadow": float(self.fallback_error_shadow),
+            "holdout_error_active": _safe_metric_json(self.holdout_error_active),
+            "holdout_error_shadow": _safe_metric_json(self.holdout_error_shadow),
+            "fallback_error_active": _safe_metric_json(self.fallback_error_active),
+            "fallback_error_shadow": _safe_metric_json(self.fallback_error_shadow),
             "holdout_regressed": self.holdout_regressed,
             "improved_on_fallbacks": self.improved_on_fallbacks,
         }
@@ -253,20 +289,27 @@ class ContinualQualificationLoop:
 
     def _write_pointer(self, ckpt_dir: Path, *, cycle_id: str) -> None:
         tmp = self.pointer_path.with_suffix(".json.tmp")
-        tmp.write_bytes(
-            canonical_json_bytes(
-                {
-                    "schema": CONTINUAL_LOOP_SCHEMA,
-                    "active_checkpoint_dir": str(ckpt_dir.resolve()),
-                    "cycle_id": cycle_id,
-                }
-            )
+        payload = canonical_json_bytes(
+            {
+                "schema": CONTINUAL_LOOP_SCHEMA,
+                "active_checkpoint_dir": str(ckpt_dir.resolve()),
+                "cycle_id": cycle_id,
+            }
         )
-        tmp.replace(self.pointer_path)
+        with tmp.open("wb") as fh:
+            fh.write(payload)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp, self.pointer_path)
 
     def current_active_checkpoint(self) -> Path:
-        doc = json.loads(self.pointer_path.read_text(encoding="utf-8"))
-        return Path(str(doc["active_checkpoint_dir"])).resolve()
+        doc = strict_json_loads(self.pointer_path.read_text(encoding="utf-8"))
+        if not isinstance(doc, dict):
+            raise ValueError("corrupted active-checkpoint.json pointer")
+        raw_dir = doc.get("active_checkpoint_dir")
+        if not isinstance(raw_dir, str):
+            raise ValueError("corrupted active-checkpoint.json pointer")
+        return Path(raw_dir).resolve()
 
     def status_summary(self) -> dict[str, Any]:
         ledger_valid, _ = self.audit_ledger.verify_chain()
@@ -287,6 +330,10 @@ class ContinualQualificationLoop:
         adapter: ShadowAdapterFn | None = None,
     ) -> ContinualCycleResult:
         """Execute one full OBSERVING -> ... -> PROMOTED | ROLLED_BACK cycle."""
+        if not isinstance(cycle_id, str) or not _CYCLE_ID_RE.match(cycle_id):
+            raise ValueError(
+                f"invalid cycle_id {cycle_id!r}; must match {_CYCLE_ID_RE.pattern!r}"
+            )
         t0 = time.perf_counter()
         state = ContinualLoopState.OBSERVING
         hist: list[StateSnapshot[ContinualLoopState]] = [
@@ -302,7 +349,6 @@ class ContinualQualificationLoop:
 
         active_dir = self.current_active_checkpoint()
         ledger_valid, _ = self.audit_ledger.verify_chain()
-        ledger_fallbacks = self.audit_ledger.query_fallbacks()
 
         if not ledger_valid:
             return self._rollback(
@@ -316,8 +362,10 @@ class ContinualQualificationLoop:
                 metrics=None,
                 reason="SignedAuditLedger chain integrity verification failed",
                 t0=t0,
+                log_to_ledger=False,
             )
 
+        ledger_fallbacks = self.audit_ledger.query_fallbacks()
         if (
             len(ledger_fallbacks) < self.config.min_fallbacks_to_trigger
             or len(solved_fallbacks) < self.config.min_fallbacks_to_trigger
@@ -345,11 +393,10 @@ class ContinualQualificationLoop:
                     "solved fallback records ingested by continual loop must belong to TRAIN"
                 )
 
-        # 2) Append solved fallbacks into ShardedMeshDataset3D (enforces zero leakage)
-        self.dataset.append_records(solved_fallbacks)
+        # Verify dataset integrity & zero split leakage BEFORE mutating dataset on disk
         self.dataset.verify_integrity()
+        self.dataset.check_split_leakage(solved_fallbacks)
 
-        prior_train = list(self.dataset.iter_records(split=DatasetSplit.TRAIN))
         holdout_records = list(self.dataset.iter_records(split=DatasetSplit.HOLDOUT))
         if not holdout_records:
             return self._rollback(
@@ -358,28 +405,63 @@ class ContinualQualificationLoop:
                 hist=hist,
                 active_dir=active_dir,
                 shadow_dir=None,
-                ingested=len(solved_fallbacks),
+                ingested=0,
                 replay_count=0,
                 metrics=None,
                 reason="cannot qualify shadow without frozen blind HOLDOUT records",
                 t0=t0,
             )
 
-        replay_batch = prior_train[-self.config.replay_max_records :]
+        # Preserve historical prior-TRAIN replay fraction so fallback bursts cannot evict history
+        prior_train = list(self.dataset.iter_records(split=DatasetSplit.TRAIN))
+        max_r = self.config.replay_max_records
+        if len(prior_train) + len(solved_fallbacks) <= max_r:
+            replay_batch = [*prior_train, *solved_fallbacks]
+        else:
+            prior_quota = min(len(prior_train), max(1, max_r // 2))
+            fb_quota = max_r - prior_quota
+            replay_batch = [
+                *prior_train[-prior_quota:],
+                *list(solved_fallbacks)[-fb_quota:],
+            ]
+
         CONTINUAL_LOOP_MACHINE.require_transition(
             state, ContinualLoopState.REPLAY_CURATED
         )
         state = ContinualLoopState.REPLAY_CURATED
         hist.append(CONTINUAL_LOOP_MACHINE.snapshot(state))
 
+        shadow_dir = (self.workdir / f"shadow-{cycle_id}").resolve()
+        if not shadow_dir.is_relative_to(self.workdir) or shadow_dir == active_dir:
+            raise ValueError(f"invalid shadow checkpoint directory: {shadow_dir}")
+        if shadow_dir.exists():
+            raise FileExistsError(
+                f"shadow checkpoint directory already exists for cycle_id {cycle_id!r}: {shadow_dir}"
+            )
+
         # 3) Adapt isolated shadow checkpoint (active checkpoint stays untouched!)
         CONTINUAL_LOOP_MACHINE.require_transition(state, ContinualLoopState.ADAPTING)
         state = ContinualLoopState.ADAPTING
         hist.append(CONTINUAL_LOOP_MACHINE.snapshot(state))
 
-        shadow_dir = self.workdir / f"shadow-{cycle_id}"
         adapt_fn = _default_copy_adapter if adapter is None else adapter
-        adapt_fn(active_dir, shadow_dir, replay_batch)
+        try:
+            adapt_fn(active_dir, shadow_dir, replay_batch)
+            if not shadow_dir.is_dir():
+                raise RuntimeError("adapter did not create shadow checkpoint directory")
+        except Exception as exc:
+            return self._rollback(
+                cycle_id=cycle_id,
+                state=state,
+                hist=hist,
+                active_dir=active_dir,
+                shadow_dir=shadow_dir,
+                ingested=0,
+                replay_count=len(replay_batch),
+                metrics=None,
+                reason=f"ROLLED BACK: shadow adaptation failed ({exc})",
+                t0=t0,
+            )
 
         # 4) Shadow qualification on frozen blind HOLDOUT + new fallbacks
         CONTINUAL_LOOP_MACHINE.require_transition(
@@ -388,16 +470,35 @@ class ContinualQualificationLoop:
         state = ContinualLoopState.SHADOW_QUALIFYING
         hist.append(CONTINUAL_LOOP_MACHINE.snapshot(state))
 
-        h_active = float(evaluator(active_dir, holdout_records))
-        h_shadow = float(evaluator(shadow_dir, holdout_records))
-        f_active = float(evaluator(active_dir, solved_fallbacks))
-        f_shadow = float(evaluator(shadow_dir, solved_fallbacks))
+        try:
+            h_active = float(evaluator(active_dir, holdout_records))
+            h_shadow = float(evaluator(shadow_dir, holdout_records))
+            f_active = float(evaluator(active_dir, solved_fallbacks))
+            f_shadow = float(evaluator(shadow_dir, solved_fallbacks))
+        except Exception as exc:
+            return self._rollback(
+                cycle_id=cycle_id,
+                state=state,
+                hist=hist,
+                active_dir=active_dir,
+                shadow_dir=shadow_dir,
+                ingested=0,
+                replay_count=len(replay_batch),
+                metrics=None,
+                reason=f"ROLLED BACK: shadow evaluation raised error ({exc})",
+                t0=t0,
+            )
 
-        holdout_regressed = (
-            h_shadow > h_active + self.config.max_holdout_regression_tol
-            or h_shadow > self.config.max_allowed_holdout_error
+        metrics_valid = all(
+            math.isfinite(v) and v >= 0.0
+            for v in (h_active, h_shadow, f_active, f_shadow)
         )
-        improved_fb = f_shadow < f_active - 1.0e-12
+        holdout_regressed = (
+            (not metrics_valid)
+            or (h_shadow > h_active + self.config.max_holdout_regression_tol)
+            or (h_shadow > self.config.max_allowed_holdout_error)
+        )
+        improved_fb = metrics_valid and (f_shadow < f_active - 1.0e-12)
         metrics = ShadowEvaluationMetrics(
             holdout_count=len(holdout_records),
             fallback_count=len(solved_fallbacks),
@@ -410,6 +511,24 @@ class ContinualQualificationLoop:
         )
 
         # 5) Fail-closed atomic promotion OR rollback
+        if not metrics_valid:
+            return self._rollback(
+                cycle_id=cycle_id,
+                state=state,
+                hist=hist,
+                active_dir=active_dir,
+                shadow_dir=shadow_dir,
+                ingested=0,
+                replay_count=len(replay_batch),
+                metrics=metrics,
+                reason=(
+                    "ROLLED BACK: non-finite or negative shadow evaluator metrics "
+                    f"(h_active={h_active}, h_shadow={h_shadow}, "
+                    f"f_active={f_active}, f_shadow={f_shadow})"
+                ),
+                t0=t0,
+            )
+
         if holdout_regressed:
             return self._rollback(
                 cycle_id=cycle_id,
@@ -417,7 +536,7 @@ class ContinualQualificationLoop:
                 hist=hist,
                 active_dir=active_dir,
                 shadow_dir=shadow_dir,
-                ingested=len(solved_fallbacks),
+                ingested=0,
                 replay_count=len(replay_batch),
                 metrics=metrics,
                 reason=(
@@ -434,7 +553,7 @@ class ContinualQualificationLoop:
                 hist=hist,
                 active_dir=active_dir,
                 shadow_dir=shadow_dir,
-                ingested=len(solved_fallbacks),
+                ingested=0,
                 replay_count=len(replay_batch),
                 metrics=metrics,
                 reason=(
@@ -443,6 +562,39 @@ class ContinualQualificationLoop:
                 ),
                 t0=t0,
             )
+
+        # Commit solved fallbacks to dataset & compute receipt BEFORE atomic pointer flip
+        try:
+            self.dataset.append_records(solved_fallbacks)
+            self.dataset.verify_integrity()
+        except SplitLeakageError:
+            raise
+        except Exception as exc:
+            return self._rollback(
+                cycle_id=cycle_id,
+                state=state,
+                hist=hist,
+                active_dir=active_dir,
+                shadow_dir=shadow_dir,
+                ingested=0,
+                replay_count=len(replay_batch),
+                metrics=metrics,
+                reason=f"ROLLED BACK: dataset commit failed before promotion ({exc})",
+                t0=t0,
+            )
+
+        receipt = hashlib.sha256(
+            canonical_json_bytes(
+                {
+                    "schema": CONTINUAL_LOOP_SCHEMA,
+                    "cycle_id": cycle_id,
+                    "state": ContinualLoopState.PROMOTED.value,
+                    "promoted": True,
+                    "active_checkpoint_dir": str(shadow_dir),
+                    "metrics": metrics.document(),
+                }
+            )
+        ).hexdigest()
 
         # Atomic promotion!
         CONTINUAL_LOOP_MACHINE.require_transition(state, ContinualLoopState.PROMOTED)
@@ -454,18 +606,6 @@ class ContinualQualificationLoop:
             f"PROMOTED shadow {shadow_dir.name}: fallback error {f_active:.4g} -> {f_shadow:.4g}, "
             f"frozen HOLDOUT {h_active:.4g} -> {h_shadow:.4g}"
         )
-        receipt = hashlib.sha256(
-            canonical_json_bytes(
-                {
-                    "schema": CONTINUAL_LOOP_SCHEMA,
-                    "cycle_id": cycle_id,
-                    "state": state.value,
-                    "promoted": True,
-                    "active_checkpoint_dir": str(shadow_dir),
-                    "metrics": metrics.document(),
-                }
-            )
-        ).hexdigest()
         self.audit_ledger.append(
             event_kind=AuditEventKind.VERIFY_RECEIPT,
             bundle_name=shadow_dir.name,
@@ -503,7 +643,16 @@ class ContinualQualificationLoop:
         metrics: ShadowEvaluationMetrics | None,
         reason: str,
         t0: float,
+        log_to_ledger: bool = True,
     ) -> ContinualCycleResult:
+        # Clean up rejected shadow checkpoint directory so failed runs leave no debris
+        if (
+            shadow_dir is not None
+            and shadow_dir.exists()
+            and shadow_dir != active_dir
+            and shadow_dir.resolve().is_relative_to(self.workdir)
+        ):
+            shutil.rmtree(shadow_dir, ignore_errors=True)
         CONTINUAL_LOOP_MACHINE.require_transition(state, ContinualLoopState.ROLLED_BACK)
         state = ContinualLoopState.ROLLED_BACK
         hist.append(CONTINUAL_LOOP_MACHINE.snapshot(state))
@@ -519,15 +668,17 @@ class ContinualQualificationLoop:
                 }
             )
         ).hexdigest()
-        self.audit_ledger.append(
-            event_kind=AuditEventKind.OOD_REFUSED,
-            bundle_name=active_dir.name,
-            mode="continual-clpm",
-            verdict="ROLLED_BACK",
-            inputs={"cycle_id": cycle_id},
-            trust_receipt_sha256=receipt,
-            metadata={"reason": reason},
-        )
+        if log_to_ledger:
+            # Record rollback as VERIFY_RECEIPT (never OOD_REFUSED, which would inflate query_fallbacks)
+            self.audit_ledger.append(
+                event_kind=AuditEventKind.VERIFY_RECEIPT,
+                bundle_name=active_dir.name,
+                mode="continual-clpm",
+                verdict="ROLLED_BACK",
+                inputs={"cycle_id": cycle_id},
+                trust_receipt_sha256=receipt,
+                metadata={"reason": reason},
+            )
         return ContinualCycleResult(
             cycle_id=cycle_id,
             state=state,
