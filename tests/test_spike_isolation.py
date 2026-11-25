@@ -9,8 +9,11 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_ROOT = REPOSITORY_ROOT / "src"
 EXPERIMENTS_PREFIX = "experiments"
 IGNORED_DIRECTORY_NAMES = {
+    ".formamech-runs",
     ".git",
     ".mypy_cache",
+    ".piginot-private",
+    ".piginot-runs",
     ".pytest_cache",
     ".ruff_cache",
     ".venv",
