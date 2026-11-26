@@ -495,13 +495,14 @@ def _register_fem_and_multiphysics_capabilities(reg: CapabilityRegistry) -> None
             raise FileNotFoundError(f"no 3D mesh in workspace {ws_path}")
         ctx.check_dofs(len(mesh.nodes) * 3)
         ctx.consume_fem_solves(1)
-        _ = LinearSolverConfig(
+        ls_cfg = LinearSolverConfig(
             method=LinearSolverMethod(str(args.get("linear_solver", "auto")))
         )
         res = ws.solve_preview_fem(
             youngs_modulus_mpa=float(args.get("youngs_modulus_mpa", 100.0)),
             poisson_ratio=float(args.get("poisson_ratio", 0.30)),
             load_steps=int(args.get("load_steps", 2)),
+            linear_solver=ls_cfg,
         )
         # Save nodal fields for downstream export capabilities
         res_dir = ws.results_dir
@@ -965,7 +966,8 @@ def _register_surrogate_opt_ingest_export_governance(reg: CapabilityRegistry) ->
         )
         out_dir = ctx.resolve_path(str(args.get("output_dir", "parametric_3d_bundle")))
         save_parametric_3d_bundle(bundle, out_dir)
-        ctx.record_artifact(out_dir / "manifest.json")
+        ctx.record_artifact(out_dir / "bundle.json")
+        ctx.record_artifact(out_dir / "weights.safetensors")
         ctx.set_receipt(bundle.bundle_hash)
         return {
             "bundle_dir": ctx.relative_path(out_dir),
@@ -1018,7 +1020,7 @@ def _register_surrogate_opt_ingest_export_governance(reg: CapabilityRegistry) ->
 
         bdir = ctx.resolve_path(str(args["bundle_dir"]))
         mode = str(args.get("mode", "fast"))
-        if mode == "exact":
+        if mode in ("certified", "exact"):
             ctx.consume_fem_solves(1)
         bundle = load_parametric_3d_bundle(bdir)
         params = {str(k): float(v) for k, v in dict(args["parameters"]).items()}
@@ -1933,7 +1935,23 @@ def _register_v4_generative_capabilities(reg: CapabilityRegistry) -> None:
             ),
             config=cfg,
         )
-        return res.document()
+        ctx.set_receipt(res.receipt_sha256)
+        doc = res.document()
+        if args.get("output_dir"):
+            out_dir = ctx.resolve_path(str(args["output_dir"]))
+            out_dir.mkdir(parents=True, exist_ok=True)
+            npz_path = out_dir / "simp_3d_result.npz"
+            np.savez_compressed(
+                npz_path,
+                nodes=np.asarray(mesh.nodes, dtype=np.float64),
+                cells=np.asarray(mesh.cells, dtype=np.int64),
+                element_densities=res.element_densities,
+                solid_element_mask=res.solid_element_mask,
+                compliance_history=np.asarray(res.compliance_history, dtype=np.float64),
+            )
+            ctx.record_artifact(npz_path)
+            doc["artifact_npz"] = ctx.relative_path(npz_path)
+        return doc
 
     reg.register(
         CapabilitySpec(
@@ -1973,6 +1991,7 @@ def _register_v4_generative_capabilities(reg: CapabilityRegistry) -> None:
                         "maximum": 0.49,
                     },
                     "traction_y_mpa": {"type": "number"},
+                    "output_dir": {"type": "string"},
                 },
                 "additionalProperties": False,
             },
@@ -2031,7 +2050,23 @@ def _register_v4_generative_capabilities(reg: CapabilityRegistry) -> None:
             ),
             iterations=int(args.get("iterations", 4)),
         )
-        return res.document()
+        ctx.set_receipt(res.receipt_sha256)
+        doc = res.document()
+        if args.get("output_dir"):
+            out_dir = ctx.resolve_path(str(args["output_dir"]))
+            out_dir.mkdir(parents=True, exist_ok=True)
+            npz_path = out_dir / "ffd_3d_result.npz"
+            np.savez_compressed(
+                npz_path,
+                initial_nodes=np.asarray(mesh.nodes, dtype=np.float64),
+                optimized_nodes=np.asarray(res.optimized_mesh.nodes, dtype=np.float64),
+                cells=np.asarray(mesh.cells, dtype=np.int64),
+                surface_triangles=np.asarray(mesh.surface_triangles, dtype=np.int64),
+                delta_control_mm=res.delta_control_mm,
+            )
+            ctx.record_artifact(npz_path)
+            doc["artifact_npz"] = ctx.relative_path(npz_path)
+        return doc
 
     reg.register(
         CapabilitySpec(
@@ -2061,6 +2096,7 @@ def _register_v4_generative_capabilities(reg: CapabilityRegistry) -> None:
                     "traction_x_mpa": {"type": "number"},
                     "max_displacement_limit_mm": {"type": "number", "minimum": 1.0e-5},
                     "iterations": {"type": "integer", "minimum": 1, "maximum": 20},
+                    "output_dir": {"type": "string"},
                 },
                 "additionalProperties": False,
             },

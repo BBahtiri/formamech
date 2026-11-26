@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import math
 import time
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any, Final
@@ -461,6 +461,12 @@ class PhaseFieldConfig:
             raise ValueError("tolerance must be finite and positive")
 
 
+PhaseFieldWarmStartPredictor = Callable[
+    [float, FloatArray, FloatArray],
+    tuple[FloatArray | None, FloatArray | None],
+]
+
+
 @dataclass(frozen=True, slots=True)
 class PhaseFieldFractureResult:
     """Auditable staggered AT2 phase-field fracture history & fields."""
@@ -473,6 +479,13 @@ class PhaseFieldFractureResult:
     final_damage_nodal: FloatArray  # (N_nodes,) in [0, 1]
     final_displacement_mm: FloatArray  # (N_nodes, 3)
     wall_time_s: float
+    total_newton_iterations: int = 0
+    total_staggered_iterations: int = 0
+    per_step_newton_iterations: tuple[int, ...] = ()
+    per_step_staggered_iterations: tuple[int, ...] = ()
+    reaction_force_history_n: tuple[float, ...] = ()
+    damage_snapshots: tuple[FloatArray, ...] = ()
+    displacement_snapshots: tuple[FloatArray, ...] = ()
 
     def document(self) -> dict[str, Any]:
         return {
@@ -486,6 +499,8 @@ class PhaseFieldFractureResult:
             if self.crack_surface_energy_mj
             else 0.0,
             "monotone_irreversible": self.monotone_irreversible,
+            "total_newton_iterations": int(self.total_newton_iterations),
+            "total_staggered_iterations": int(self.total_staggered_iterations),
             "wall_time_s": float(self.wall_time_s),
         }
 
@@ -606,6 +621,9 @@ def solve_phase_field_fracture(
     dirichlet_bcs: Sequence[DirichletBC3D],
     config: PhaseFieldConfig | None = None,
     initial_damage_nodal: FloatArray | None = None,
+    warm_start_predictor: PhaseFieldWarmStartPredictor | None = None,
+    record_history: bool = False,
+    cold_start_each_step: bool = False,
 ) -> PhaseFieldFractureResult:
     """Solve quasi-static staggered AT2 brittle phase-field fracture on a 3D ``TET4`` mesh.
 
@@ -710,7 +728,15 @@ def solve_phase_field_fracture(
     load_factors: list[float] = []
     max_d_hist: list[float] = []
     crack_e_hist: list[float] = []
+    reaction_hist: list[float] = []
+    per_step_newton: list[int] = []
+    per_step_staggered: list[int] = []
+    damage_snaps: list[FloatArray] = []
+    disp_snaps: list[FloatArray] = []
     monotone = True
+
+    loaded_dofs = np.nonzero(np.abs(u_target) > 1.0e-15)[0]
+    loaded_signs = np.sign(u_target[loaded_dofs])
 
     def _assemble_mechanics(
         u_vec: FloatArray, g_deg: FloatArray
@@ -736,11 +762,38 @@ def solve_phase_field_fracture(
         d_prev_step = d_nodal.copy()
         hist_h_prev = hist_h.copy()
         hist_h_trial = hist_h_prev.copy()
+        u_prev_3d = u_full.reshape(n_nodes, 3).copy()
 
-        # Apply updated boundary displacements while warm-starting free DOFs
+        if cold_start_each_step:
+            u_full[:] = 0.0
+
+        # Optional neural-operator / physics warm start for free DOFs and trial damage.
+        # Irreversible history (d_prev_step, hist_h_prev) stays strictly frozen until
+        # exact FEM equilibrium and active-set phase-field convergence complete.
+        if warm_start_predictor is not None:
+            u_guess, d_guess = warm_start_predictor(lam_load, u_prev_3d, d_prev_step)
+            if u_guess is not None:
+                u_arr = np.asarray(u_guess, dtype=np.float64).reshape(-1)
+                if u_arr.shape != (n_dofs,) or not np.all(np.isfinite(u_arr)):
+                    raise ValueError(
+                        f"warm-start displacement must be finite with {n_dofs} entries"
+                    )
+                u_full = u_arr.copy()
+            if d_guess is not None:
+                d_arr = np.asarray(d_guess, dtype=np.float64).reshape(-1)
+                if d_arr.shape != (n_nodes,) or not np.all(np.isfinite(d_arr)):
+                    raise ValueError(
+                        f"warm-start damage must be finite with {n_nodes} entries"
+                    )
+                d_nodal = np.clip(np.maximum(d_arr, d_prev_step), 0.0, 1.0)
+
+        # Apply exact boundary displacements
         u_full[constrained] = u_pres[constrained]
 
+        step_staggered = 0
+        step_newton = 0
         for _st in range(cfg.staggered_iters):
+            step_staggered += 1
             d_old = d_nodal.copy()
             # 1) Nonlinear mechanics equilibrium with exact Miehe spectral stress & tangent
             d_elem = np.mean(d_nodal[cells], axis=1)
@@ -754,6 +807,7 @@ def solve_phase_field_fracture(
                 f_scale = max(float(np.linalg.norm(f_int)), 1.0)
                 if res_norm <= 1.0e-10 * f_scale:
                     break
+                step_newton += 1
                 du_f = np.asarray(
                     spsolve(k_u[free_u][:, free_u].tocsc(), -res_free),
                     dtype=np.float64,
@@ -828,6 +882,22 @@ def solve_phase_field_fracture(
 
         # Commit irreversible history ONLY after load step completes
         hist_h = hist_h_trial
+        # Compute exact reaction force at converged state along prescribed non-zero BCs
+        d_elem_fin = np.mean(d_nodal[cells], axis=1)
+        g_deg_fin = (1.0 - d_elem_fin) ** 2 + k_res
+        eps_v_post = np.einsum("eij,ej->ei", b_all, u_full[elem_u_dofs])
+        sig_v_post, _, _, _ = _miehe_spectral_stress_tangent_batch(
+            eps_v_post, g_deg_fin, lam, mu
+        )
+        f_elem_post = np.einsum("e,eij,ei->ej", vols, b_all, sig_v_post)
+        f_int_post = np.zeros(n_dofs, dtype=np.float64)
+        np.add.at(f_int_post, elem_u_dofs, f_elem_post)
+        react_n = (
+            float(np.sum(f_int_post[loaded_dofs] * loaded_signs))
+            if loaded_dofs.size > 0
+            else 0.0
+        )
+
         # Exact AT2 crack surface energy: integral G_c * (d^2 / (2 lc) + lc/2 |grad d|^2) dV
         crack_e = 0.5 * (
             float(d_nodal @ (k_d_grad_mat @ d_nodal))
@@ -836,6 +906,12 @@ def solve_phase_field_fracture(
         load_factors.append(float(lam_load))
         max_d_hist.append(float(np.max(d_nodal)))
         crack_e_hist.append(crack_e)
+        reaction_hist.append(react_n)
+        per_step_newton.append(step_newton)
+        per_step_staggered.append(step_staggered)
+        if record_history:
+            damage_snaps.append(d_nodal.copy())
+            disp_snaps.append(u_full.reshape(n_nodes, 3).copy())
 
     return PhaseFieldFractureResult(
         mesh_id=mesh.mesh_id,
@@ -846,6 +922,13 @@ def solve_phase_field_fracture(
         final_damage_nodal=d_nodal,
         final_displacement_mm=u_full.reshape(n_nodes, 3),
         wall_time_s=time.perf_counter() - t0,
+        total_newton_iterations=sum(per_step_newton),
+        total_staggered_iterations=sum(per_step_staggered),
+        per_step_newton_iterations=tuple(per_step_newton),
+        per_step_staggered_iterations=tuple(per_step_staggered),
+        reaction_force_history_n=tuple(reaction_hist),
+        damage_snapshots=tuple(damage_snaps),
+        displacement_snapshots=tuple(disp_snaps),
     )
 
 
@@ -858,6 +941,7 @@ __all__ = (
     "MeanStressModel",
     "PhaseFieldConfig",
     "PhaseFieldFractureResult",
+    "PhaseFieldWarmStartPredictor",
     "RainflowCycle",
     "evaluate_fatigue_life",
     "rainflow_count_astm_e1049",

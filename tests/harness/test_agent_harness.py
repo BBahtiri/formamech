@@ -376,3 +376,66 @@ def test_harness_v4_hardening_mcp_stdio_isolation_budget_self_heal_and_tamper_pr
     led_doc = json.loads(led_out.read_text(encoding="utf-8"))
     assert led_doc["verified"] is False
     assert led_doc["errors"]
+
+
+def test_harness_audit_fixes_linear_solver_receipts_and_certified_budget(
+    tmp_path: Path,
+) -> None:
+    """Audit regressions: linear_solver pass-through, opt receipts/artifacts, and bundle.json."""
+    ws = tmp_path / "audit_ws"
+    h = FormaMechAgentHarness(
+        ws,
+        budget=HarnessBudget(max_fem_solves=8, max_dofs=50_000, max_training_epochs=10),
+    )
+    assert h.invoke(
+        "cad.generate_sample_3d",
+        {"workspace_dir": "box", "template": "box", "mesh_size_mm": 9.0},
+    ).ok
+    fem_pcg = h.invoke(
+        "fem.solve_3d_solid",
+        {"workspace_dir": "box", "load_steps": 1, "linear_solver": "pcg-ilu"},
+    )
+    assert fem_pcg.ok and fem_pcg.result is not None
+    assert fem_pcg.result["converged"] is True
+
+    e_simp = h.invoke(
+        "optimize.topology_simp_3d",
+        {
+            "nx": 3,
+            "ny": 2,
+            "nz": 1,
+            "max_iterations": 4,
+            "volume_fraction": 0.6,
+            "threshold_density": 0.3,
+            "output_dir": "out_simp",
+        },
+    )
+    assert e_simp.ok and e_simp.receipt_sha256 is not None
+    assert (ws / "out_simp" / "simp_3d_result.npz").is_file()
+
+    e_ffd = h.invoke(
+        "optimize.ffd_shape_3d",
+        {"iterations": 2, "max_displacement_limit_mm": 0.30, "output_dir": "out_ffd"},
+    )
+    assert e_ffd.ok and e_ffd.receipt_sha256 is not None
+    assert (ws / "out_ffd" / "ffd_3d_result.npz").is_file()
+
+    e_train = h.invoke(
+        "surrogate.train_parametric_3d",
+        {"output_dir": "p3d_b", "train_count": 2, "epochs": 2, "mesh_size_mm": 10.0},
+    )
+    assert e_train.ok
+    assert any(p.endswith("bundle.json") for p in e_train.artifact_paths)
+    assert (ws / "p3d_b" / "bundle.json").is_file()
+
+    solves_before = h.fem_solves_used
+    e_cert = h.invoke(
+        "surrogate.predict_parametric_3d",
+        {
+            "bundle_dir": "p3d_b",
+            "parameters": {"lx": 20.0, "ly": 12.0, "hole_radius": 2.4},
+            "mode": "certified",
+        },
+    )
+    assert e_cert.ok
+    assert h.fem_solves_used == solves_before + 1

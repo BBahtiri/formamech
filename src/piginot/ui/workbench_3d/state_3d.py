@@ -26,6 +26,7 @@ from piginot.fem.backend_3d import (
     TorchFemBackend3D,
     TractionBC3D,
 )
+from piginot.fem.linear_solvers import LinearSolverConfig
 from piginot.geometry.mesh3d import CanonicalMesh3D, CellType3D
 
 VIEWER_3D_PREVIEW_SCHEMA: Final = "formamech.cad-preview-3d-v1"
@@ -514,6 +515,7 @@ class Workbench3DWorkspace:
         youngs_modulus_mpa: float = 100.0,
         poisson_ratio: float = 0.30,
         load_steps: int = 2,
+        linear_solver: LinearSolverConfig | None = None,
     ) -> FemResult3D:
         """Run an authoritative 3D ``TorchFemBackend3D`` solve from persisted face BCs."""
         mesh = self.load_mesh()
@@ -584,6 +586,7 @@ class Workbench3DWorkspace:
             dirichlet_bcs=tuple(dirichlet_bcs),
             traction_bcs=tuple(traction_bcs),
             load_steps=load_steps,
+            linear_solver=linear_solver,
         )
         return TorchFemBackend3D().solve(req)
 

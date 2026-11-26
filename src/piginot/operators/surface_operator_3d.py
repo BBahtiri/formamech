@@ -29,6 +29,7 @@ class Surface3DConfig:
     num_heads: int = 4
     num_blocks: int = 2
     positional_frequencies: int = 3
+    decoder_blocks: int = 1
 
     def __post_init__(self) -> None:
         if self.hidden_dim <= 0 or self.hidden_dim % self.num_heads != 0:
@@ -39,6 +40,8 @@ class Surface3DConfig:
             raise ValueError("num_blocks must be >= 1")
         if self.positional_frequencies < 1:
             raise ValueError("positional_frequencies must be >= 1")
+        if self.decoder_blocks < 1:
+            raise ValueError("decoder_blocks must be >= 1")
 
 
 @dataclass(frozen=True, slots=True)
@@ -141,6 +144,28 @@ def _fourier_encode_3d(coords: torch.Tensor, frequencies: int) -> torch.Tensor:
     return torch.cat(parts, dim=-1)
 
 
+class _DecoderCrossBlock(nn.Module):
+    """Double-backward-safe residual slice cross-attention + FFN decoder block."""
+
+    def __init__(self, hidden_dim: int, num_heads: int) -> None:
+        super().__init__()
+        self.cross = _ExplicitMultiHeadAttention(hidden_dim, num_heads)
+        self.norm1 = nn.LayerNorm(hidden_dim)
+        self.ffn = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim * 2),
+            nn.GELU(),
+            nn.Linear(hidden_dim * 2, hidden_dim),
+        )
+        self.norm2 = nn.LayerNorm(hidden_dim)
+
+    def forward(self, q_tok: torch.Tensor, slice_tokens: torch.Tensor) -> torch.Tensor:
+        out: torch.Tensor = self.norm1(
+            q_tok + self.cross(q_tok, slice_tokens, slice_tokens)
+        )
+        out = self.norm2(out + self.ffn(out))
+        return out
+
+
 class Surface3DEnergyOperator(nn.Module):
     """Mesh-free 3D surface-conditioned neural operator with O(N * S) slice attention."""
 
@@ -172,6 +197,12 @@ class Surface3DEnergyOperator(nn.Module):
         )
         self.query_cross_attn = _ExplicitMultiHeadAttention(d, config.num_heads)
         self.query_norm = nn.LayerNorm(d)
+        self.extra_decoder_blocks = nn.ModuleList(
+            [
+                _DecoderCrossBlock(d, config.num_heads)
+                for _ in range(config.decoder_blocks - 1)
+            ]
+        )
         self.decoder_head = nn.Sequential(
             nn.Linear(d, d),
             nn.GELU(),
@@ -255,6 +286,8 @@ class Surface3DEnergyOperator(nn.Module):
             q_tok, encoding.slice_tokens, encoding.slice_tokens
         )
         q_tok = self.query_norm(q_tok + cross)
+        for dec_block in self.extra_decoder_blocks:
+            q_tok = dec_block(q_tok, encoding.slice_tokens)
         raw_u: torch.Tensor = self.decoder_head(q_tok)
         if lifting_scale is not None:
             raw_u = raw_u * lifting_scale

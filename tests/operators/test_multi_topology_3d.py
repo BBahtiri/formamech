@@ -186,3 +186,56 @@ def test_v4_4_multi_topology_fail_closed_nan_and_unfitted_ood() -> None:
         op_unfit.predict_nodal_displacement(
             b1, parameters=(float("nan"), 0.0), enforce_ood=False
         )
+
+    # Exact 3D ADF lifting enforces u == 0 on clamped faces across multi-topology solids
+    from piginot.fem.backend_3d import face_node_indices_3d
+
+    u_lifted, _ = op_unfit.predict_nodal_displacement(
+        b1,
+        parameters=(0.5, -0.2),
+        clamped_face_tags=("x_min",),
+        loaded_face_tags=("x_max",),
+        enforce_ood=False,
+        apply_adf_lifting=True,
+    )
+    assert u_lifted is not None
+    clamped_ids = list(face_node_indices_3d(b1, ("x_min",)))
+    assert float(abs(u_lifted[clamped_ids]).max()) < 1.0e-12
+
+
+def test_multi_topology_multi_block_decoder_double_backward_and_compat() -> None:
+    """Default decoder_blocks=1 keeps legacy state_dict; decoder_blocks>=2 supports double-backward."""
+    b1 = make_brick_tet4_mesh(20.0, 8.0, 8.0, nx=2, ny=1, nz=1)
+    op_default = MultiTopologyOperator3D(
+        parameter_dim=3, hidden_dim=16, slice_count=4, num_blocks=1
+    )
+    assert not any(
+        k.startswith("extra_decoder_blocks.") for k in op_default.operator.state_dict()
+    )
+
+    op_deep = MultiTopologyOperator3D(
+        parameter_dim=3,
+        hidden_dim=16,
+        slice_count=4,
+        num_blocks=1,
+        positional_frequencies=3,
+        decoder_blocks=2,
+    )
+    assert any(
+        k.startswith("extra_decoder_blocks.0.") for k in op_deep.operator.state_dict()
+    )
+    c_t, n_t, a_t, f_t = build_multi_topology_surface_tensors(
+        b1, clamped_face_tags=("x_min",), loaded_face_tags=("x_max",)
+    )
+    enc = op_deep.operator.encode_surface(c_t, n_t, a_t, f_t)
+    q = torch.tensor(b1.nodes[:6], dtype=torch.float32).unsqueeze(0)
+    p = torch.tensor([[0.1, -0.2, 0.3]], dtype=torch.float32)
+    u, grad_u = op_deep.operator.displacement_and_gradient(
+        encoding=enc, query_xyz=q, parameters=p, create_graph=True
+    )
+    loss = u.square().mean() + grad_u.square().mean()
+    loss.backward()
+    assert all(
+        param.grad is not None and torch.all(torch.isfinite(param.grad))
+        for param in op_deep.operator.parameters()
+    )

@@ -257,3 +257,105 @@ def test_v4_3_audit_regressions_uts_neuber_periodic_rainflow_and_miehe_compressi
         res_intact.final_displacement_mm,
         atol=1.0e-9,
     )
+
+
+def test_phase_field_warm_start_preserves_exact_fem_solution_and_cuts_iterations() -> (
+    None
+):
+    """Warm-starting 3D phase-field FEM matches exact FEM equilibrium and cuts iterations."""
+    import numpy as np
+
+    mesh = make_brick_tet4_mesh(12.0, 6.0, 2.0, nx=8, ny=4, nz=1)
+    nodes = np.asarray(mesh.nodes)
+    d0 = np.zeros(len(nodes), dtype=np.float64)
+    d0[(np.abs(nodes[:, 0] - 6.0) <= 0.8) & (nodes[:, 1] <= 2.0)] = 1.0
+    cfg = PhaseFieldConfig(
+        youngs_modulus_mpa=20_000.0,
+        poisson_ratio=0.25,
+        fracture_toughness_gc_n_per_mm=0.5,
+        length_scale_lc_mm=1.2,
+        load_steps=6,
+        staggered_iters=50,
+        tolerance=1.0e-4,
+    )
+    bcs = (
+        DirichletBC3D("x0", ("x_min",), ("x", "y", "z"), (0.0, 0.0, 0.0)),
+        DirichletBC3D("x1", ("x_max",), ("x",), (0.08,)),
+    )
+    res_cold = solve_phase_field_fracture(
+        mesh,
+        dirichlet_bcs=bcs,
+        config=cfg,
+        initial_damage_nodal=d0,
+        record_history=True,
+    )
+    assert res_cold.total_newton_iterations > 0
+    assert res_cold.total_staggered_iterations >= cfg.load_steps
+    assert len(res_cold.damage_snapshots) == cfg.load_steps
+    assert len(res_cold.displacement_snapshots) == cfg.load_steps
+    assert len(res_cold.reaction_force_history_n) == cfg.load_steps
+    assert max(res_cold.reaction_force_history_n) > 0.0
+
+    # Slightly noisy oracle warm-start predictor (~1% noise) must cut iterations while
+    # converging to the exact same physical crack & displacement solution
+    rng = np.random.default_rng(7)
+    step_map = {
+        round(lam, 6): (u_s, d_s)
+        for lam, u_s, d_s in zip(
+            res_cold.load_factors,
+            res_cold.displacement_snapshots,
+            res_cold.damage_snapshots,
+            strict=True,
+        )
+    }
+
+    def _noisy_predictor(
+        lam: float, _u_prev: np.ndarray, _d_prev: np.ndarray
+    ) -> tuple[np.ndarray, np.ndarray]:
+        u_ref, d_ref = step_map[round(lam, 6)]
+        u_noisy = u_ref + 0.01 * np.max(np.abs(u_ref)) * rng.normal(size=u_ref.shape)
+        d_noisy = np.clip(d_ref + 0.01 * rng.normal(size=d_ref.shape), 0.0, 1.0)
+        return u_noisy, d_noisy
+
+    res_warm = solve_phase_field_fracture(
+        mesh,
+        dirichlet_bcs=bcs,
+        config=cfg,
+        initial_damage_nodal=d0,
+        warm_start_predictor=_noisy_predictor,
+    )
+    assert res_warm.monotone_irreversible is True
+    assert res_warm.total_staggered_iterations <= res_cold.total_staggered_iterations
+    assert res_warm.total_newton_iterations < res_cold.total_newton_iterations
+    assert np.allclose(
+        res_warm.final_damage_nodal, res_cold.final_damage_nodal, atol=5.0e-3
+    )
+    assert np.allclose(
+        res_warm.final_displacement_mm, res_cold.final_displacement_mm, atol=5.0e-4
+    )
+
+    # Deliberate massive overshoot warm-start guess must NOT permanently poison irreversibility
+    def _bad_overshoot(
+        _lam: float, _u_prev: np.ndarray, _d_prev: np.ndarray
+    ) -> tuple[np.ndarray, np.ndarray]:
+        return np.zeros_like(nodes), np.full(len(nodes), 0.95, dtype=np.float64)
+
+    res_guarded = solve_phase_field_fracture(
+        mesh,
+        dirichlet_bcs=(
+            DirichletBC3D("x0", ("x_min",), ("x", "y", "z"), (0.0, 0.0, 0.0)),
+            DirichletBC3D("x1", ("x_max",), ("x",), (1.0e-5,)),
+        ),
+        config=PhaseFieldConfig(
+            youngs_modulus_mpa=20_000.0,
+            poisson_ratio=0.25,
+            fracture_toughness_gc_n_per_mm=10.0,
+            length_scale_lc_mm=1.2,
+            load_steps=2,
+            staggered_iters=6,
+            tolerance=1.0e-5,
+        ),
+        warm_start_predictor=_bad_overshoot,
+    )
+    assert res_guarded.monotone_irreversible is True
+    assert float(np.max(res_guarded.final_damage_nodal)) < 1.0e-3

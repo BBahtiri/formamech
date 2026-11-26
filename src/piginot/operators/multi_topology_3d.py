@@ -33,6 +33,7 @@ from scipy.sparse.linalg import (  # type: ignore[import-untyped]
 )
 
 from piginot.geometry.mesh3d import CanonicalMesh3D
+from piginot.lifting.adf_3d import build_adf_lifting_from_mesh_faces
 from piginot.operators.geometry_3d import (
     SURFACE_3D_GALE_FEATURE_DIM,
     GeometryDescriptor3D,
@@ -138,11 +139,29 @@ def _surface_spectral_coords(
                 else np.zeros(m, dtype=np.float64)
             )
 
-    # Translation-invariant canonical sign disambiguation + normalization to [-1, 1]
+    # Translation-invariant canonical 2D Procrustes alignment + normalization to [-1, 1].
+    # On symmetric 3D CAD solids (e.g., bolted mounting lugs), the 2nd & 3rd Laplacian
+    # eigenvalues are nearly degenerate and can swap or rotate in their 2D eigenspace
+    # across unstructured remeshes. Orthogonal Procrustes alignment against canonical
+    # geometric directions makes (phi1, phi2) invariant to both sign flips AND 2D
+    # eigenspace rotations/swaps while preserving the exact Fiedler harmonic subspace.
     c_centered = centroids - np.mean(centroids, axis=0, keepdims=True)
-    proj = c_centered @ np.array([1.0, 0.7, 0.3], dtype=np.float64)
-    for arr in (phi1, phi2):
-        if float(np.dot(arr, proj)) < 0.0:
+    ref_dirs = np.column_stack(
+        (
+            c_centered @ np.array([1.0, 0.31, 0.13], dtype=np.float64),
+            c_centered @ np.array([-0.29, 1.0, 0.37], dtype=np.float64),
+        )
+    )  # (M, 2)
+    phi_mat = np.column_stack((phi1, phi2))  # (M, 2)
+    if float(np.linalg.norm(phi_mat)) > 1.0e-12:
+        u_p, _, vt_p = np.linalg.svd(phi_mat.T @ ref_dirs, full_matrices=False)
+        rot_2x2 = u_p @ vt_p
+        phi_aligned = phi_mat @ rot_2x2
+        phi1 = phi_aligned[:, 0].copy()
+        phi2 = phi_aligned[:, 1].copy()
+
+    for idx_a, arr in enumerate((phi1, phi2)):
+        if float(np.dot(arr, ref_dirs[:, idx_a])) < 0.0:
             arr *= -1.0
         scale = max(float(np.max(np.abs(arr))), 1.0e-12)
         arr /= scale
@@ -434,6 +453,8 @@ class MultiTopologyOperator3D:
         slice_count: int = 6,
         num_blocks: int = 2,
         num_heads: int = 4,
+        positional_frequencies: int = 3,
+        decoder_blocks: int = 1,
         ood_detector: MultiTopologyOODDetector3D | None = None,
     ) -> None:
         self.config = Surface3DConfig(
@@ -443,6 +464,8 @@ class MultiTopologyOperator3D:
             slice_count=slice_count,
             num_blocks=num_blocks,
             num_heads=num_heads,
+            positional_frequencies=positional_frequencies,
+            decoder_blocks=decoder_blocks,
         )
         self.operator = Surface3DEnergyOperator(self.config)
         self.ood_detector = ood_detector
@@ -491,6 +514,8 @@ class MultiTopologyOperator3D:
         clamped_face_tags: Sequence[str] = (),
         loaded_face_tags: Sequence[str] = (),
         enforce_ood: bool = True,
+        apply_adf_lifting: bool = False,
+        displacement_scale_mm: float = 1.0,
     ) -> tuple[FloatArray | None, GeometryOODReport3D | None]:
         """Predict 3D nodal displacement, refusing fail-closed if OOD/unseen topology."""
         params_list = [float(v) for v in parameters]
@@ -534,8 +559,21 @@ class MultiTopologyOperator3D:
             enc = self.operator.encode_surface(c_t, n_t, a_t, f_t)
             pts = torch.tensor(mesh.nodes, dtype=dtype, device=device).unsqueeze(0)
             p_vec = torch.tensor([params_list], dtype=dtype, device=device)
+            lift_scale: torch.Tensor | None = None
+            lift_offset: torch.Tensor | None = None
+            if apply_adf_lifting and clamped_face_tags:
+                lift = build_adf_lifting_from_mesh_faces(
+                    mesh,
+                    clamped_face_tags,
+                    displacement_scale_mm=float(displacement_scale_mm),
+                )
+                lift_scale, lift_offset = lift.scale_and_offset(pts)
             u_t = self.operator.displacement(
-                encoding=enc, query_xyz=pts, parameters=p_vec
+                encoding=enc,
+                query_xyz=pts,
+                parameters=p_vec,
+                lifting_offset=lift_offset,
+                lifting_scale=lift_scale,
             )
             return u_t[0].detach().cpu().numpy().astype(np.float64), ood
 

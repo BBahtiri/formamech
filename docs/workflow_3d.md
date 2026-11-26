@@ -109,7 +109,7 @@ faces = classify_faces_by_bbox(imported)
 clamped = faces["z_min"]
 bore = min(
     [f for f in imported.faces if f.kind == "cylindrical" and f.centroid_mm[2] > 10.0],
-    key=lambda f: f.area_mm2,
+    key=lambda f: f.centroid_mm[2],
 )
 loaded = (bore.name,)
 
