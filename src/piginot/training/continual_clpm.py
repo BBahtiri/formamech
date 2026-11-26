@@ -43,6 +43,10 @@ from piginot.contracts.state_machine import (
     TransitionSpec,
     register_state_machine,
 )
+from piginot.governance.hitl_signoff import (
+    HitlSignoffRecord,
+    require_valid_hitl_signoff,
+)
 from piginot.serving.audit_ledger import AuditEventKind, SignedAuditLedger
 from piginot.store.dataset_3d import (
     DatasetSplit,
@@ -153,6 +157,7 @@ class ContinualQualificationConfig:
     max_allowed_holdout_error: float = 0.25
     require_fallback_improvement: bool = True
     replay_max_records: int = 64
+    require_hitl_signoff: bool = False
 
     def __post_init__(self) -> None:
         if (
@@ -328,6 +333,7 @@ class ContinualQualificationLoop:
         solved_fallbacks: Sequence[ShardedRecord3D],
         evaluator: ShadowEvaluatorFn,
         adapter: ShadowAdapterFn | None = None,
+        hitl_signoff: HitlSignoffRecord | None = None,
     ) -> ContinualCycleResult:
         """Execute one full OBSERVING -> ... -> PROMOTED | ROLLED_BACK cycle."""
         if not isinstance(cycle_id, str) or not _CYCLE_ID_RE.match(cycle_id):
@@ -562,6 +568,10 @@ class ContinualQualificationLoop:
                 ),
                 t0=t0,
             )
+
+        # Optional Veteran-Engineer HITL Signoff Gate (V5-4) before promotion
+        if self.config.require_hitl_signoff:
+            require_valid_hitl_signoff(hitl_signoff)
 
         # Commit solved fallbacks to dataset & compute receipt BEFORE atomic pointer flip
         try:

@@ -209,6 +209,9 @@ class FemResult3D:
     wall_time_s: float
     reason: str = "converged"
     linear_solver_stats: Mapping[str, Any] | None = None
+    element_peak_von_mises_mpa: FloatArray | None = None  # (E,) unsmoothed Gauss peak
+    quadrature_peak_von_mises_mpa: float | None = None  # global unsmoothed Gauss peak
+    element_max_principal_strain: FloatArray | None = None  # (E,) Green-Lagrange peak
 
     @property
     def result_hash(self) -> str:
@@ -266,6 +269,12 @@ class FemResult3D:
             "peak_von_mises_mpa": (
                 self.peak_von_mises_mpa
                 if math.isfinite(self.peak_von_mises_mpa)
+                else None
+            ),
+            "quadrature_peak_von_mises_mpa": (
+                self.quadrature_peak_von_mises_mpa
+                if self.quadrature_peak_von_mises_mpa is not None
+                and math.isfinite(self.quadrature_peak_von_mises_mpa)
                 else None
             ),
             "final_residual_norm": (
@@ -367,6 +376,27 @@ def _cauchy_von_mises_3d(p_arr: FloatArray, f_arr: FloatArray) -> FloatArray:
     dev = sigma - (tr / 3.0)[..., None, None] * np.eye(3, dtype=np.float64)
     vm_sq = 1.5 * np.sum(dev * dev, axis=(-2, -1))
     return np.asarray(np.sqrt(np.maximum(vm_sq, 0.0)), dtype=np.float64)
+
+
+def compute_3d_element_hotspots(
+    p_arr: FloatArray, f_arr: FloatArray
+) -> tuple[FloatArray, float, FloatArray]:
+    """Preserve unsmoothed element-bound Gauss-point stress & strain hotspots (V5-1).
+
+    Returns ``(element_peak_von_mises_mpa (E,), quadrature_peak_von_mises_mpa,
+    element_max_principal_strain (E,))`` directly from integration points without
+    nodal averaging attenuation ("Preserve Output Bindings").
+    """
+    vm_q = _cauchy_von_mises_3d(p_arr, f_arr)  # (E, Q)
+    elem_peak_vm = np.asarray(np.max(vm_q, axis=-1), dtype=np.float64)
+    quad_peak_vm = float(np.max(elem_peak_vm)) if elem_peak_vm.size > 0 else 0.0
+    # Green-Lagrange strain E_GL = 0.5 * (F^T F - I) at each Gauss point
+    c_right = np.einsum("...ki,...kj->...ij", f_arr, f_arr)
+    e_gl = 0.5 * (c_right - np.eye(3, dtype=np.float64))
+    eigvals = np.linalg.eigvalsh(0.5 * (e_gl + np.swapaxes(e_gl, -1, -2)))
+    max_p_q = np.max(eigvals, axis=-1)
+    elem_max_strain = np.asarray(np.max(max_p_q, axis=-1), dtype=np.float64)
+    return elem_peak_vm, quad_peak_vm, elem_max_strain
 
 
 def _project_cell_scalar_to_nodes_3d(
@@ -762,8 +792,11 @@ class TorchFemBackend3D:
                     time.perf_counter() - t0,
                 )
 
-        # Post-process nodal von Mises stress & per-BC reaction forces
+        # Post-process nodal von Mises stress, unsmoothed hotspots & per-BC reactions
         vm_q = _cauchy_von_mises_3d(last_p, last_f)  # (E, Q)
+        elem_peak_vm, quad_peak_vm, elem_max_strain = compute_3d_element_hotspots(
+            last_p, last_f
+        )
         vm_cell = np.sum(vm_q * w_vol, axis=1) / np.maximum(cell_vols, 1.0e-12)
         vm_nodes = _project_cell_scalar_to_nodes_3d(mesh, vm_cell, cell_vols)
 
@@ -808,6 +841,9 @@ class TorchFemBackend3D:
             wall_time_s=time.perf_counter() - t0,
             reason="converged",
             linear_solver_stats=lin_stats,
+            element_peak_von_mises_mpa=elem_peak_vm,
+            quadrature_peak_von_mises_mpa=quad_peak_vm,
+            element_max_principal_strain=elem_max_strain,
         )
 
     def solve_many(
@@ -1272,6 +1308,9 @@ class ScikitFemBackend3D:
                 u_nodal[nid, c] = u[canon_to_vec[nid, c]]
 
         vm_q = _cauchy_von_mises_3d(last_p, last_f)
+        elem_peak_vm, quad_peak_vm, elem_max_strain = compute_3d_element_hotspots(
+            last_p, last_f
+        )
         vm_cell = np.sum(vm_q * dx_w, axis=1) / np.maximum(cell_vols, 1.0e-12)
         vm_nodes = _project_cell_scalar_to_nodes_3d(mesh, vm_cell, cell_vols)
 
@@ -1314,6 +1353,9 @@ class ScikitFemBackend3D:
             wall_time_s=time.perf_counter() - t0,
             reason="converged",
             linear_solver_stats=lin_stats,
+            element_peak_von_mises_mpa=elem_peak_vm,
+            quadrature_peak_von_mises_mpa=quad_peak_vm,
+            element_max_principal_strain=elem_max_strain,
         )
 
 
@@ -1362,5 +1404,6 @@ __all__ = (
     "VolumetricLockingError",
     "analytical_3d_uniaxial_hyperelastic",
     "assemble_surface_tractions_3d",
+    "compute_3d_element_hotspots",
     "face_node_indices_3d",
 )

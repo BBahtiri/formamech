@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from piginot.active.acquisition import (
     ACQUISITION_ARMS,
@@ -31,6 +31,24 @@ from piginot.active.feedback import (
     FallbackReturnRecord,
 )
 
+if TYPE_CHECKING:
+    from piginot.active.test_planner import (
+        PHYSICAL_TEST_PLAN_SCHEMA,
+        RETROSPECTIVE_BENCH_SCHEMA,
+        BayBeAcquisitionBackend,
+        BoTorchAcquisitionBackend,
+        PhysicalTestCandidate,
+        PhysicalTestPlanConfig,
+        PhysicalTestPlanResult,
+        RbfGpInformationGainBackend,
+        RecommendedPhysicalTest,
+        RetrospectiveTestReductionReport,
+        TestAcquisitionBackend,
+        recommend_next_physical_tests,
+        resolve_test_acquisition_backend,
+        run_retrospective_test_reduction_benchmark,
+    )
+
 _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     "MULTIFIDELITY_DISCLOSURE": (
         "piginot.active.multifidelity",
@@ -41,6 +59,62 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     "multifidelity_energy_loss": (
         "piginot.active.multifidelity",
         "multifidelity_energy_loss",
+    ),
+    "PHYSICAL_TEST_PLAN_SCHEMA": (
+        "piginot.active.test_planner",
+        "PHYSICAL_TEST_PLAN_SCHEMA",
+    ),
+    "RETROSPECTIVE_BENCH_SCHEMA": (
+        "piginot.active.test_planner",
+        "RETROSPECTIVE_BENCH_SCHEMA",
+    ),
+    "BayBeAcquisitionBackend": (
+        "piginot.active.test_planner",
+        "BayBeAcquisitionBackend",
+    ),
+    "BoTorchAcquisitionBackend": (
+        "piginot.active.test_planner",
+        "BoTorchAcquisitionBackend",
+    ),
+    "PhysicalTestCandidate": (
+        "piginot.active.test_planner",
+        "PhysicalTestCandidate",
+    ),
+    "PhysicalTestPlanConfig": (
+        "piginot.active.test_planner",
+        "PhysicalTestPlanConfig",
+    ),
+    "PhysicalTestPlanResult": (
+        "piginot.active.test_planner",
+        "PhysicalTestPlanResult",
+    ),
+    "RbfGpInformationGainBackend": (
+        "piginot.active.test_planner",
+        "RbfGpInformationGainBackend",
+    ),
+    "RecommendedPhysicalTest": (
+        "piginot.active.test_planner",
+        "RecommendedPhysicalTest",
+    ),
+    "RetrospectiveTestReductionReport": (
+        "piginot.active.test_planner",
+        "RetrospectiveTestReductionReport",
+    ),
+    "TestAcquisitionBackend": (
+        "piginot.active.test_planner",
+        "TestAcquisitionBackend",
+    ),
+    "recommend_next_physical_tests": (
+        "piginot.active.test_planner",
+        "recommend_next_physical_tests",
+    ),
+    "resolve_test_acquisition_backend": (
+        "piginot.active.test_planner",
+        "resolve_test_acquisition_backend",
+    ),
+    "run_retrospective_test_reduction_benchmark": (
+        "piginot.active.test_planner",
+        "run_retrospective_test_reduction_benchmark",
     ),
 }
 
@@ -63,6 +137,8 @@ __all__ = (
     "FALLBACK_LEDGER_SCHEMA",
     "FEM_COST_LEDGER_SCHEMA",
     "MULTIFIDELITY_DISCLOSURE",
+    "PHYSICAL_TEST_PLAN_SCHEMA",
+    "RETROSPECTIVE_BENCH_SCHEMA",
     "SELECTION_EVIDENCE_SCHEMA",
     "TRAINING_MODES",
     "AcquisitionCandidate",
@@ -70,15 +146,27 @@ __all__ = (
     "AcquisitionWeights",
     "ActiveFemCampaignResult",
     "ActiveFemSolveOutcome",
+    "BayBeAcquisitionBackend",
+    "BoTorchAcquisitionBackend",
     "FEMCostLedger",
     "FEMCostLedgerEntry",
     "FallbackFeedbackLedger",
     "FallbackReturnRecord",
     "MultiFidelityConfig",
     "MultiFidelityTerms",
+    "PhysicalTestCandidate",
+    "PhysicalTestPlanConfig",
+    "PhysicalTestPlanResult",
+    "RbfGpInformationGainBackend",
+    "RecommendedPhysicalTest",
+    "RetrospectiveTestReductionReport",
     "SelectionEvidence",
     "SelectionScoreBreakdown",
+    "TestAcquisitionBackend",
     "multifidelity_energy_loss",
+    "recommend_next_physical_tests",
+    "resolve_test_acquisition_backend",
     "run_active_fem_campaign",
+    "run_retrospective_test_reduction_benchmark",
     "select_acquisition_batch",
 )

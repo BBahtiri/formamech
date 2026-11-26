@@ -1148,10 +1148,41 @@ def _export(args: argparse.Namespace) -> int:
 
 
 def _bench(args: argparse.Namespace) -> int:
-    """Run reproducible 3D scaling, foundation transfer, OOD & parity benchmarks (V4-2)."""
-    from piginot.benchmarks import run_benchmark_suite_3d
+    """Run reproducible 3D scaling, industry multi-scale, and V&V dataset benchmarks (V4-2 / V5-3)."""
+    from piginot.benchmarks import (
+        IndustryBenchmarkConfig,
+        prepare_dataset_cache,
+        run_benchmark_suite_3d,
+        run_industry_benchmark_suite,
+    )
 
+    cmd = str(getattr(args, "bench_command", "run"))
     try:
+        if cmd == "fetch-dataset":
+            prepared = prepare_dataset_cache(
+                str(args.name),
+                args.cache_dir,
+                allow_noncommercial=bool(args.allow_noncommercial),
+                allow_synthetic_fallback=not bool(args.no_synthetic_fallback),
+            )
+            _emit(prepared.document(), args.output)
+            return EXIT_OK
+        if cmd == "industry":
+            scales = tuple(
+                int(tok.strip()) for tok in str(args.scales).split(",") if tok.strip()
+            )
+            cfg = IndustryBenchmarkConfig(
+                dataset_name=str(args.dataset),
+                scales=scales,
+                epochs_per_scale=int(args.epochs),
+                hidden_dim=int(args.hidden_dim),
+                allow_noncommercial=bool(args.allow_noncommercial),
+                seed=int(args.seed),
+            )
+            ind_rep = run_industry_benchmark_suite(cfg, work_dir=args.output_dir)
+            _emit(ind_rep.document(), args.output)
+            return EXIT_OK
+
         rep = run_benchmark_suite_3d(
             args.workdir,
             profile=args.profile,
@@ -1162,8 +1193,11 @@ def _bench(args: argparse.Namespace) -> int:
         if args.markdown is not None:
             Path(args.markdown).write_text(rep.to_markdown(), encoding="utf-8")
         return EXIT_OK
+    except PermissionError as exc:
+        print(f"{_program(args)} bench {cmd}: {exc}", file=sys.stderr)
+        return EXIT_REFUSED
     except Exception as exc:
-        print(f"{_program(args)} bench: {exc}", file=sys.stderr)
+        print(f"{_program(args)} bench {cmd}: {exc}", file=sys.stderr)
         return EXIT_ERROR
 
 
@@ -2132,6 +2166,35 @@ def build_parser(*, prog: str = "piginot") -> argparse.ArgumentParser:
     b_run.add_argument("--output", type=Path, default=None)
     b_run.add_argument("--markdown", type=Path, default=None)
     b_run.set_defaults(handler=_bench)
+
+    b_fetch = bench_cmds.add_parser(
+        "fetch-dataset",
+        help="verify or prepare a license-tiered external V&V dataset cache (V5-3)",
+    )
+    b_fetch.add_argument("--name", type=str, required=True)
+    b_fetch.add_argument(
+        "--cache-dir", type=Path, default=Path(".formamech-runs/datasets")
+    )
+    b_fetch.add_argument("--allow-noncommercial", action="store_true")
+    b_fetch.add_argument("--no-synthetic-fallback", action="store_true")
+    b_fetch.add_argument("--output", type=Path, default=None)
+    b_fetch.set_defaults(handler=_bench)
+
+    b_ind = bench_cmds.add_parser(
+        "industry",
+        help="run neutral multi-scale + BC-shift industry benchmark suite (V5-3)",
+    )
+    b_ind.add_argument("--dataset", type=str, default="deepjeb")
+    b_ind.add_argument("--scales", type=str, default="3,5,7")
+    b_ind.add_argument("--epochs", type=int, default=6)
+    b_ind.add_argument("--hidden-dim", type=int, default=16)
+    b_ind.add_argument("--allow-noncommercial", action="store_true")
+    b_ind.add_argument("--seed", type=int, default=0)
+    b_ind.add_argument(
+        "--output-dir", type=Path, default=Path(".formamech-runs/bench/industry")
+    )
+    b_ind.add_argument("--output", type=Path, default=None)
+    b_ind.set_defaults(handler=_bench)
 
     fleet = subparsers.add_parser(
         "fleet",

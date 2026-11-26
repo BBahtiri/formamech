@@ -29,6 +29,10 @@ class CaeSourceFormat(StrEnum):
     CALCULIX_FRD = "calculix-frd"
     ABAQUS_INP = "abaqus-inp"
     NASTRAN_BDF = "nastran-bdf"
+    ANSYS_CDB = "ansys-cdb"
+    LSDYNA_K = "lsdyna-k"
+    SIMJEB_NPZ = "simjeb-npz"
+    CGNS_HDF5 = "cgns-hdf5"
     CUSTOM_PLUGIN = "custom-plugin"
 
 

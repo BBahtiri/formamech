@@ -25,12 +25,31 @@ from numpy.typing import NDArray
 from safetensors.torch import load as load_safetensors
 from safetensors.torch import save as save_safetensors
 
+from piginot.bounds.conformal_3d import (
+    Conformal3DAssessment,
+    Conformal3DCalibrationRecord,
+    PhysicalUnitErrorSummary,
+    summarize_physical_errors,
+)
 from piginot.cad.parametric_3d import (
     ParametricCadSpec3D,
     ParametricInstance3D,
     ParametricTopology3DError,
     TopologyStabilityGuard3D,
     sample_parametric_cad_3d_doe,
+)
+from piginot.certify.adjoint_3d import (
+    Dwr3DCertificationResult,
+    estimate_qoi_dwr_3d,
+)
+from piginot.certify.receipt import (
+    ArtifactDigests,
+    TrustReceipt,
+    VerificationTier,
+)
+from piginot.certify.regime_guards import (
+    PhysicsRegimeGuard3D,
+    RegimeGuardVerdict,
 )
 from piginot.contracts import MaterialSpec, Quantity, Unit, canonical_json_bytes
 from piginot.fem.backend_3d import (
@@ -42,6 +61,7 @@ from piginot.fem.backend_3d import (
     _cauchy_von_mises_3d,
     _project_cell_scalar_to_nodes_3d,
     assemble_surface_tractions_3d,
+    compute_3d_element_hotspots,
 )
 from piginot.fem.linear_solvers import LinearSolverConfig
 from piginot.lifting.adf_3d import (
@@ -532,13 +552,22 @@ class Parametric3DPredictionReport:
     wall_time_s: float
     claim_level: str
     reason: str
+    quadrature_peak_von_mises_mpa: float | None = None
+    element_peak_von_mises_mpa: FloatArray | None = None
+    conformal_uq: Conformal3DAssessment | None = None
+    regime_verdict: RegimeGuardVerdict | None = None
+    dwr_3d: Dwr3DCertificationResult | None = None
+    escalated: bool = False
+    serving_path: str = "operator"
+    trust_receipt: Mapping[str, Any] | None = None
+    trust_receipt_sha256: str | None = None
 
     @property
     def report_hash(self) -> str:
         return _sha256_doc(self.document())
 
     def document(self) -> dict[str, Any]:
-        return {
+        doc: dict[str, Any] = {
             "schema": PARAMETRIC_3D_PREDICTION_SCHEMA,
             "parameters": {k: float(v) for k, v in sorted(self.parameters.items())},
             "mode": self.mode,
@@ -549,13 +578,102 @@ class Parametric3DPredictionReport:
             "volume_mm3": self.volume_mm3,
             "max_displacement_mm": self.max_displacement_mm,
             "peak_von_mises_mpa": self.peak_von_mises_mpa,
+            "quadrature_peak_von_mises_mpa": self.quadrature_peak_von_mises_mpa,
             "compliance_n_mm": self.compliance_n_mm,
             "min_det_f": self.min_det_f,
             "displacement_rel_l2_error": self.displacement_rel_l2_error,
             "wall_time_s": float(self.wall_time_s),
             "claim_level": self.claim_level,
+            "serving_path": self.serving_path,
+            "escalated": self.escalated,
             "reason": self.reason,
         }
+        if self.conformal_uq is not None:
+            doc["conformal_uq"] = self.conformal_uq.document()
+        if self.regime_verdict is not None:
+            doc["regime_verdict"] = self.regime_verdict.document()
+        if self.dwr_3d is not None:
+            doc["dwr_3d"] = self.dwr_3d.document()
+        if self.trust_receipt is not None:
+            doc["trust_receipt"] = dict(self.trust_receipt)
+            doc["trust_receipt_sha256"] = self.trust_receipt_sha256
+        return doc
+
+
+def _build_3d_trust_receipt(
+    *,
+    bundle: Parametric3DBundle,
+    mode: str,
+    serving_path: str,
+    mesh_id: str | None,
+    accepted: bool,
+    min_det_f: float | None,
+    conformal_uq: Conformal3DAssessment | None,
+    dwr_3d: Dwr3DCertificationResult | None,
+    fem_res: FemResult3D | None,
+    reason: str,
+) -> tuple[dict[str, Any], str]:
+    tier0_doc: dict[str, Any] | None = None
+    if accepted and min_det_f is not None:
+        tier0_doc = {
+            "passed": bool(math.isfinite(min_det_f) and min_det_f > 1.0e-6),
+            "min_det_f_3d": float(min_det_f),
+        }
+    conf_doc = None if conformal_uq is None else conformal_uq.document()
+    dwr_doc = (
+        None
+        if dwr_3d is None
+        else {
+            "verdict": dwr_3d.verdict.value,
+            "eta_energy": dwr_3d.eta_energy,
+            "one_step_disp_rel_l2": dwr_3d.one_step_disp_rel_l2,
+        }
+    )
+    tier2_doc = (
+        None
+        if fem_res is None
+        else {
+            "converged": bool(fem_res.converged),
+            "serving_path": serving_path,
+            "newton_iterations": fem_res.total_newton_iterations,
+        }
+    )
+    if not accepted:
+        tier = VerificationTier.REFUSED
+    elif fem_res is not None and fem_res.converged:
+        tier = VerificationTier.DISCRETE_FEM_VERIFIED
+    elif dwr_doc is not None and dwr_doc.get("verdict") == "OK":
+        tier = VerificationTier.DWR_BOUNDED
+    elif (
+        tier0_doc is not None
+        and tier0_doc.get("passed") is True
+        and conf_doc is not None
+        and conf_doc.get("refused") is False
+    ):
+        tier = VerificationTier.CONFORMAL_BOUNDED
+    elif tier0_doc is not None and tier0_doc.get("passed") is True:
+        tier = VerificationTier.SURROGATE_ADMISSIBLE
+    else:
+        tier = VerificationTier.SURROGATE_UNCHECKED
+
+    receipt = TrustReceipt(
+        mode=mode,
+        serving_path=serving_path,
+        claim_level=bundle.claim_level,
+        verification_tier=tier,
+        artifact_digests=ArtifactDigests(
+            bundle_manifest_sha256=bundle.bundle_hash,
+            mesh_id=mesh_id,
+            problem_hash=bundle.spec.spec_hash,
+            solver_backend_id=None if fem_res is None else fem_res.backend_name,
+        ),
+        tier0_admissibility=tier0_doc,
+        tier1_conformal=conf_doc,
+        tier1_dwr=dwr_doc,
+        tier2_fem=tier2_doc,
+        reason=reason,
+    )
+    return receipt.document(), receipt.receipt_sha256
 
 
 def predict_parametric_3d(
@@ -565,13 +683,42 @@ def predict_parametric_3d(
     mode: PredictMode3D = "fast",
     backend: TorchFemBackend3D | None = None,
     linear_solver: LinearSolverConfig | None = None,
+    conformal_record: Conformal3DCalibrationRecord | None = None,
+    regime_guard: PhysicsRegimeGuard3D | None = None,
+    escalate: bool = False,
+    dwr_tolerance: float | None = None,
+    emit_receipt: bool = True,
 ) -> Parametric3DPredictionReport:
-    """Evaluate (or fail-closed refuse) an unseen 3D CAD variant."""
+    """Evaluate (or fail-closed refuse) an unseen 3D CAD variant.
+
+    * ``fast``: zero-FEM 3D operator + unsmoothed element hotspots + <1% conformal
+      UQ / AS6983 shifts + physics-regime guards + RFC 8785 Trust Receipt.
+    * ``certified``: fast path + single-linearization 3D DWR adjoint (no nonlinear
+      FEM solve unless ``escalate=True`` and a DWR/regime guard triggers).
+    * ``exact``: warm-started 3D nonlinear FEM verification solve.
+    """
     t0 = time.perf_counter()
     guard = TopologyStabilityGuard3D(bundle.spec)
     try:
         inst = guard.build_and_verify(parameters, instance_id="query-3d")
     except ParametricTopology3DError as exc:
+        reason = f"topology refused: {exc}"
+        rc_doc, rc_sha = (
+            _build_3d_trust_receipt(
+                bundle=bundle,
+                mode=mode,
+                serving_path="refused",
+                mesh_id=None,
+                accepted=False,
+                min_det_f=None,
+                conformal_uq=None,
+                dwr_3d=None,
+                fem_res=None,
+                reason=reason,
+            )
+            if emit_receipt
+            else (None, None)
+        )
         return Parametric3DPredictionReport(
             parameters=dict(parameters),
             mode=mode,
@@ -588,7 +735,10 @@ def predict_parametric_3d(
             nodal_von_mises_mpa=None,
             wall_time_s=time.perf_counter() - t0,
             claim_level=bundle.claim_level,
-            reason=f"topology refused: {exc}",
+            reason=reason,
+            serving_path="refused",
+            trust_receipt=rc_doc,
+            trust_receipt_sha256=rc_sha,
         )
 
     mesh = inst.imported.mesh
@@ -605,6 +755,23 @@ def predict_parametric_3d(
 
     ood_rep = bundle.ood_detector.score(inst.descriptor, latent_vector=pooled)
     if not ood_rep.accepted:
+        reason = f"OOD refused: {ood_rep.reason}"
+        rc_doc, rc_sha = (
+            _build_3d_trust_receipt(
+                bundle=bundle,
+                mode=mode,
+                serving_path="refused",
+                mesh_id=mesh.mesh_id,
+                accepted=False,
+                min_det_f=None,
+                conformal_uq=None,
+                dwr_3d=None,
+                fem_res=None,
+                reason=reason,
+            )
+            if emit_receipt
+            else (None, None)
+        )
         return Parametric3DPredictionReport(
             parameters=dict(inst.parameters),
             mode=mode,
@@ -621,7 +788,10 @@ def predict_parametric_3d(
             nodal_von_mises_mpa=None,
             wall_time_s=time.perf_counter() - t0,
             claim_level=bundle.claim_level,
-            reason=f"OOD refused: {ood_rep.reason}",
+            reason=reason,
+            serving_path="refused",
+            trust_receipt=rc_doc,
+            trust_receipt_sha256=rc_sha,
         )
 
     lift = build_adf_lifting_from_mesh_faces(
@@ -640,7 +810,7 @@ def predict_parametric_3d(
         )
     u_pred = u_pred_t[0].to(torch.float64).numpy()
 
-    # Cell centroid gradient for det(F) & Cauchy von Mises stress
+    # Cell centroid gradient for det(F), unsmoothed element hotspots & nodal Cauchy VM
     nodes_np = np.asarray(mesh.nodes, dtype=np.float64)
     cells_np = np.asarray(mesh.cells, dtype=np.int64)
     cell_centers = np.mean(nodes_np[cells_np[:, :4]], axis=1)
@@ -666,6 +836,23 @@ def predict_parametric_3d(
     )
     min_det = float(np.min(np.linalg.det(f_c)))
     if min_det <= 1.0e-6 or not np.all(np.isfinite(f_c)):
+        reason = f"inadmissible predicted 3D deformation (min det F = {min_det:.4g})"
+        rc_doc, rc_sha = (
+            _build_3d_trust_receipt(
+                bundle=bundle,
+                mode=mode,
+                serving_path="refused",
+                mesh_id=mesh.mesh_id,
+                accepted=False,
+                min_det_f=min_det,
+                conformal_uq=None,
+                dwr_3d=None,
+                fem_res=None,
+                reason=reason,
+            )
+            if emit_receipt
+            else (None, None)
+        )
         return Parametric3DPredictionReport(
             parameters=dict(inst.parameters),
             mode=mode,
@@ -682,13 +869,19 @@ def predict_parametric_3d(
             nodal_von_mises_mpa=None,
             wall_time_s=time.perf_counter() - t0,
             claim_level=bundle.claim_level,
-            reason=f"inadmissible predicted 3D deformation (min det F = {min_det:.4g})",
+            reason=reason,
+            serving_path="refused",
+            trust_receipt=rc_doc,
+            trust_receipt_sha256=rc_sha,
         )
 
     with torch.no_grad():
         p_c = first_piola(
             torch.from_numpy(np.ascontiguousarray(f_c)), bundle.physics.material_spec()
         ).numpy()
+    elem_peak_vm, quad_peak_vm, _ = compute_3d_element_hotspots(
+        p_c[:, None, :, :], f_c[:, None, :, :]
+    )
     vm_cell = _cauchy_von_mises_3d(p_c[:, None, :, :], f_c[:, None, :, :])[:, 0]
     vm_nodes = _project_cell_scalar_to_nodes_3d(mesh, vm_cell, cell_vols)
     f_ext = assemble_surface_tractions_3d(
@@ -696,31 +889,161 @@ def predict_parametric_3d(
         (TractionBC3D("loaded", inst.loaded_face_tags, bundle.physics.traction_mpa),),
     )
     comp = float(np.sum(f_ext * u_pred))
+    max_u_pred = float(np.max(np.linalg.norm(u_pred, axis=1)))
+    peak_vm_nodal = float(np.max(vm_nodes))
+
+    # Negligible-overhead (<1%) 3D split-conformal UQ & AS6983 conservative shifts
+    conformal_uq: Conformal3DAssessment | None = None
+    if conformal_record is not None:
+        conformal_uq = conformal_record.evaluate(
+            {
+                "max_displacement_mm": max_u_pred,
+                "peak_von_mises_mpa": peak_vm_nodal,
+                "quadrature_peak_von_mises_mpa": quad_peak_vm,
+                "compliance_n_mm": comp,
+            },
+            latent_vector=pooled,
+        )
+
+    # Physics-regime transition guards
+    regime_verdict: RegimeGuardVerdict | None = None
+    if regime_guard is not None:
+        req_tmp = _build_fem_request(inst, bundle.physics, linear_solver=linear_solver)
+        regime_verdict = regime_guard.evaluate(
+            mesh,
+            nodal_displacement=u_pred,
+            min_det_f=min_det,
+            element_peak_von_mises_mpa=elem_peak_vm,
+            clamped_face_tags=inst.clamped_face_tags,
+            loaded_face_tags=inst.loaded_face_tags,
+            traction_mpa=bundle.physics.traction_mpa,
+            material=req_tmp.material,
+            dirichlet_bcs=req_tmp.dirichlet_bcs,
+            traction_bcs=req_tmp.traction_bcs,
+        )
+        if not regime_verdict.passed and not escalate and mode == "fast":
+            reason = f"physics-regime guard refused: {regime_verdict.reason}"
+            rc_doc, rc_sha = (
+                _build_3d_trust_receipt(
+                    bundle=bundle,
+                    mode=mode,
+                    serving_path="refused",
+                    mesh_id=mesh.mesh_id,
+                    accepted=False,
+                    min_det_f=min_det,
+                    conformal_uq=conformal_uq,
+                    dwr_3d=None,
+                    fem_res=None,
+                    reason=reason,
+                )
+                if emit_receipt
+                else (None, None)
+            )
+            return Parametric3DPredictionReport(
+                parameters=dict(inst.parameters),
+                mode=mode,
+                accepted=False,
+                ood_report=ood_rep,
+                volume_mm3=float(inst.imported.volume_mm3),
+                max_displacement_mm=max_u_pred,
+                peak_von_mises_mpa=peak_vm_nodal,
+                quadrature_peak_von_mises_mpa=quad_peak_vm,
+                element_peak_von_mises_mpa=elem_peak_vm,
+                compliance_n_mm=comp,
+                min_det_f=min_det,
+                displacement_rel_l2_error=None,
+                fem_result=None,
+                nodal_displacement=u_pred,
+                nodal_von_mises_mpa=vm_nodes,
+                wall_time_s=time.perf_counter() - t0,
+                claim_level=bundle.claim_level,
+                reason=reason,
+                conformal_uq=conformal_uq,
+                regime_verdict=regime_verdict,
+                serving_path="refused",
+                trust_receipt=rc_doc,
+                trust_receipt_sha256=rc_sha,
+            )
 
     fem_res: FemResult3D | None = None
+    dwr_3d: Dwr3DCertificationResult | None = None
     disp_err: float | None = None
     final_u = u_pred
     final_vm = vm_nodes
+    final_elem_vm = elem_peak_vm
+    final_quad_vm = quad_peak_vm
     final_min_det = min_det
     final_comp = comp
+    escalated = False
+    serving_path = "operator"
 
-    if mode in ("certified", "exact"):
+    if mode == "certified":
+        req = _build_fem_request(inst, bundle.physics, linear_solver=linear_solver)
+        dwr_3d = estimate_qoi_dwr_3d(
+            req,
+            u_pred,
+            linear_solver=linear_solver,
+            escalation_tolerance=dwr_tolerance,
+        )
+        disp_err = dwr_3d.one_step_disp_rel_l2
+        serving_path = "operator+dwr_3d"
+        need_escalation = dwr_3d.should_escalate or (
+            regime_verdict is not None and not regime_verdict.passed
+        )
+        if escalate and need_escalation:
+            solver = TorchFemBackend3D() if backend is None else backend
+            fem_res = solver.solve(req, initial_displacement=u_pred)
+            escalated = True
+            serving_path = "warm_newton_3d" if fem_res.converged else "solve_failed"
+            if fem_res.converged:
+                ref_n = max(float(np.linalg.norm(fem_res.nodal_displacement)), 1.0e-12)
+                disp_err = float(
+                    np.linalg.norm(u_pred - fem_res.nodal_displacement) / ref_n
+                )
+                final_u = fem_res.nodal_displacement
+                final_vm = fem_res.nodal_von_mises_mpa
+                final_min_det = fem_res.min_det_f
+                final_comp = fem_res.external_work_n_mm
+                if fem_res.element_peak_von_mises_mpa is not None:
+                    final_elem_vm = fem_res.element_peak_von_mises_mpa
+                if fem_res.quadrature_peak_von_mises_mpa is not None:
+                    final_quad_vm = fem_res.quadrature_peak_von_mises_mpa
+    elif mode == "exact":
         solver = TorchFemBackend3D() if backend is None else backend
         req = _build_fem_request(inst, bundle.physics, linear_solver=linear_solver)
-        fem_res = solver.solve(
-            req, initial_displacement=u_pred if mode == "exact" else None
-        )
+        fem_res = solver.solve(req, initial_displacement=u_pred)
+        serving_path = "warm_newton_3d" if fem_res.converged else "solve_failed"
         if fem_res.converged:
             ref_n = max(float(np.linalg.norm(fem_res.nodal_displacement)), 1.0e-12)
             disp_err = float(
                 np.linalg.norm(u_pred - fem_res.nodal_displacement) / ref_n
             )
-            if mode == "exact":
-                final_u = fem_res.nodal_displacement
-                final_vm = fem_res.nodal_von_mises_mpa
-                final_min_det = fem_res.min_det_f
-                final_comp = fem_res.external_work_n_mm
+            final_u = fem_res.nodal_displacement
+            final_vm = fem_res.nodal_von_mises_mpa
+            final_min_det = fem_res.min_det_f
+            final_comp = fem_res.external_work_n_mm
+            if fem_res.element_peak_von_mises_mpa is not None:
+                final_elem_vm = fem_res.element_peak_von_mises_mpa
+            if fem_res.quadrature_peak_von_mises_mpa is not None:
+                final_quad_vm = fem_res.quadrature_peak_von_mises_mpa
 
+    reason_ok = "escalated to exact 3D FEM" if escalated else "accepted"
+    rc_doc, rc_sha = (
+        _build_3d_trust_receipt(
+            bundle=bundle,
+            mode=mode,
+            serving_path=serving_path,
+            mesh_id=mesh.mesh_id,
+            accepted=True,
+            min_det_f=final_min_det,
+            conformal_uq=conformal_uq,
+            dwr_3d=dwr_3d,
+            fem_res=fem_res,
+            reason=reason_ok,
+        )
+        if emit_receipt
+        else (None, None)
+    )
     return Parametric3DPredictionReport(
         parameters=dict(inst.parameters),
         mode=mode,
@@ -729,6 +1052,8 @@ def predict_parametric_3d(
         volume_mm3=float(inst.imported.volume_mm3),
         max_displacement_mm=float(np.max(np.linalg.norm(final_u, axis=1))),
         peak_von_mises_mpa=float(np.max(final_vm)),
+        quadrature_peak_von_mises_mpa=final_quad_vm,
+        element_peak_von_mises_mpa=final_elem_vm,
         compliance_n_mm=final_comp,
         min_det_f=final_min_det,
         displacement_rel_l2_error=disp_err,
@@ -737,7 +1062,14 @@ def predict_parametric_3d(
         nodal_von_mises_mpa=final_vm,
         wall_time_s=time.perf_counter() - t0,
         claim_level=bundle.claim_level,
-        reason="accepted",
+        reason=reason_ok,
+        conformal_uq=conformal_uq,
+        regime_verdict=regime_verdict,
+        dwr_3d=dwr_3d,
+        escalated=escalated,
+        serving_path=serving_path,
+        trust_receipt=rc_doc,
+        trust_receipt_sha256=rc_sha,
     )
 
 
@@ -754,13 +1086,14 @@ class Parametric3DQualificationReport:
     mean_displacement_rel_l2: float
     max_displacement_rel_l2: float
     reason: str
+    physical_unit_errors: Mapping[str, PhysicalUnitErrorSummary] | None = None
 
     @property
     def manifest_hash(self) -> str:
         return _sha256_doc(self.document())
 
     def document(self) -> dict[str, Any]:
-        return {
+        doc: dict[str, Any] = {
             "schema": PARAMETRIC_3D_QUALIFICATION_SCHEMA,
             "bundle_hash": self.bundle_hash,
             "passed": self.passed,
@@ -772,6 +1105,11 @@ class Parametric3DQualificationReport:
             "max_displacement_rel_l2": float(self.max_displacement_rel_l2),
             "reason": self.reason,
         }
+        if self.physical_unit_errors is not None:
+            doc["physical_unit_errors"] = {
+                k: v.document() for k, v in sorted(self.physical_unit_errors.items())
+            }
+        return doc
 
 
 def qualify_parametric_3d_bundle(
@@ -788,9 +1126,16 @@ def qualify_parametric_3d_bundle(
         bundle.spec, count=holdout_count, seed_offset=seed_offset
     )
     errs: list[float] = []
+    u_true_list: list[float] = []
+    u_pred_list: list[float] = []
+    vm_true_list: list[float] = []
+    vm_pred_list: list[float] = []
     for inst in doe.instances:
+        rep_fast = predict_parametric_3d(
+            bundle, inst.parameters, mode="fast", backend=backend
+        )
         rep = predict_parametric_3d(
-            bundle, inst.parameters, mode="certified", backend=backend
+            bundle, inst.parameters, mode="exact", backend=backend
         )
         if not rep.accepted or rep.displacement_rel_l2_error is None:
             return Parametric3DQualificationReport(
@@ -805,6 +1150,28 @@ def qualify_parametric_3d_bundle(
                 reason=f"in-envelope holdout {inst.instance_id} failed: {rep.reason}",
             )
         errs.append(rep.displacement_rel_l2_error)
+        if (
+            rep_fast.max_displacement_mm is not None
+            and rep.max_displacement_mm is not None
+        ):
+            u_pred_list.append(rep_fast.max_displacement_mm)
+            u_true_list.append(rep.max_displacement_mm)
+        if (
+            rep_fast.quadrature_peak_von_mises_mpa is not None
+            and rep.quadrature_peak_von_mises_mpa is not None
+        ):
+            vm_pred_list.append(rep_fast.quadrature_peak_von_mises_mpa)
+            vm_true_list.append(rep.quadrature_peak_von_mises_mpa)
+
+    phys_errs: dict[str, PhysicalUnitErrorSummary] = {}
+    if u_true_list:
+        phys_errs["max_displacement_mm"] = summarize_physical_errors(
+            "max_displacement_mm", "mm", u_true_list, u_pred_list
+        )
+    if vm_true_list:
+        phys_errs["quadrature_peak_von_mises_mpa"] = summarize_physical_errors(
+            "quadrature_peak_von_mises_mpa", "MPa", vm_true_list, vm_pred_list
+        )
 
     # Default adversarial OOD probes outside parameter box
     if ood_probes is None:
@@ -845,6 +1212,7 @@ def qualify_parametric_3d_bundle(
         mean_displacement_rel_l2=mean_err,
         max_displacement_rel_l2=max_err,
         reason=reason,
+        physical_unit_errors=phys_errs if phys_errs else None,
     )
 
 

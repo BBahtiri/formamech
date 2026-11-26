@@ -1,4 +1,4 @@
-"""Solver-agnostic CAE archive ingestion and physics-aware outlier screening (V3-3)."""
+"""Solver-agnostic CAE archive ingestion, SimOps fabric & outlier screening (V3-3 / V5-3)."""
 
 from piginot.ingest.contracts import (
     CAE_ARCHIVE_SCHEMA,
@@ -22,24 +22,60 @@ from piginot.ingest.readers import (
     resolve_cae_reader,
 )
 from piginot.ingest.screening import screen_cae_archive
+from piginot.ingest.simops_fabric import (
+    SimOpsArchiveEntry,
+    curate_archive_to_sharded_dataset,
+    parse_abaqus_convergence_log,
+    read_abaqus_simops_entry,
+    read_ansys_cdb_and_fields,
+    read_lsdyna_k_and_fields,
+    read_nastran_simops_entry,
+    read_simjeb_sample,
+    require_optional_binary_reader,
+)
+from piginot.ingest.simops_schema import (
+    SIMOPS_CURATION_REPORT_SCHEMA,
+    SIMOPS_RECORD_SCHEMA,
+    BcDescriptorSummary,
+    FailureDisposition,
+    SimOpsCurationReport,
+    SimOpsRecord,
+    SolverProvenance,
+)
 
 __all__ = (
     "CAE_ARCHIVE_SCHEMA",
     "CAE_OUTLIER_SCREEN_SCHEMA",
     "INGEST_PIPELINE_MACHINE",
     "READER_ENTRY_POINT_GROUP",
+    "SIMOPS_CURATION_REPORT_SCHEMA",
+    "SIMOPS_RECORD_SCHEMA",
+    "BcDescriptorSummary",
     "CaeSampleSummary",
     "CaeSourceFormat",
+    "FailureDisposition",
     "IngestPipelineState",
     "OutlierFlag",
     "OutlierReasonCode",
     "OutlierScreeningReport",
     "ParsedCaeSample",
+    "SimOpsArchiveEntry",
+    "SimOpsCurationReport",
+    "SimOpsRecord",
+    "SolverProvenance",
+    "curate_archive_to_sharded_dataset",
+    "parse_abaqus_convergence_log",
     "read_abaqus_inp_and_fields",
+    "read_abaqus_simops_entry",
+    "read_ansys_cdb_and_fields",
     "read_calculix_inp_frd",
+    "read_lsdyna_k_and_fields",
     "read_nastran_bdf_and_fields",
+    "read_nastran_simops_entry",
+    "read_simjeb_sample",
     "read_vtu_or_xdmf",
     "register_cae_reader",
+    "require_optional_binary_reader",
     "resolve_cae_reader",
     "screen_cae_archive",
 )

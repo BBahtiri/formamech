@@ -27,6 +27,7 @@ import time
 from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import StrEnum
+from pathlib import Path
 from typing import Any, Final
 
 import numpy as np
@@ -55,6 +56,7 @@ from piginot.fem.linear_solvers import (
     solve_linear_system,
 )
 from piginot.geometry.mesh3d import CanonicalMesh3D, CellType3D
+from piginot.optimization.dfm_constraints import DfmAuditReport, DfmConstraintSet
 
 FloatArray = NDArray[np.float64]
 IntArray = NDArray[np.int64]
@@ -212,9 +214,11 @@ class TopologyOpt3DResult:
     receipt_sha256: str
     reason: str
     wall_time_s: float
+    dfm_audit: DfmAuditReport | None = None
+    brep_step_path: str | None = None
 
     def document(self) -> dict[str, Any]:
-        return {
+        doc: dict[str, Any] = {
             "schema": TOPOLOGY_OPT_3D_SCHEMA,
             "mesh_id": self.mesh_id,
             "state": self.state.value,
@@ -239,6 +243,11 @@ class TopologyOpt3DResult:
             "reason": self.reason,
             "wall_time_s": float(self.wall_time_s),
         }
+        if self.dfm_audit is not None:
+            doc["dfm_audit"] = self.dfm_audit.document()
+        if self.brep_step_path is not None:
+            doc["brep_step_path"] = self.brep_step_path
+        return doc
 
 
 def _precompute_tet4_linear_elements(
@@ -429,6 +438,8 @@ def optimize_3d_topology_simp(
     dirichlet_bcs: Sequence[DirichletBC3D],
     traction_bcs: Sequence[TractionBC3D],
     config: TopologyOpt3DConfig | None = None,
+    dfm_constraints: DfmConstraintSet | None = None,
+    emit_brep_step_path: Path | str | None = None,
 ) -> TopologyOpt3DResult:
     """Run verified 3D SIMP topology optimization with mandatory final exact FEM check."""
     t0 = time.perf_counter()
@@ -484,8 +495,16 @@ def optimize_3d_topology_simp(
     def _project(r_design: FloatArray) -> tuple[FloatArray, FloatArray]:
         r_tilde = np.asarray(h_filter @ r_design, dtype=np.float64)
         if cfg.use_heaviside:
-            return _heaviside_project(r_tilde, cfg.heaviside_beta, cfg.heaviside_eta)
-        return r_tilde, np.ones_like(r_tilde)
+            r_bar, d_bar = _heaviside_project(
+                r_tilde, cfg.heaviside_beta, cfg.heaviside_eta
+            )
+        else:
+            r_bar, d_bar = r_tilde, np.ones_like(r_tilde)
+        if dfm_constraints is not None:
+            r_bar = dfm_constraints.apply_to_densities(
+                r_bar, centroids, min_density=cfg.min_density
+            )
+        return r_bar, d_bar
 
     for _it in range(cfg.max_iterations):
         rho_phys, d_proj = _project(rho)
@@ -664,6 +683,24 @@ def optimize_3d_topology_simp(
     }
     receipt_sha256 = hashlib.sha256(canonical_json_bytes(receipt_payload)).hexdigest()
 
+    dfm_audit = (
+        None
+        if dfm_constraints is None
+        else dfm_constraints.audit_solid_mask(solid_mask, centroids)
+    )
+    emitted_step: str | None = None
+    if emit_brep_step_path is not None and state is TopologyOpt3DState.CERTIFIED:
+        from piginot.cad.brep_synthesis import synthesize_watertight_brep_step
+
+        brep_res = synthesize_watertight_brep_step(
+            mesh,
+            solid_mask,
+            emit_brep_step_path,
+            verify_roundtrip=True,
+            run_remeshed_fem_check=False,
+        )
+        emitted_step = str(brep_res.step_path)
+
     return TopologyOpt3DResult(
         mesh_id=mesh.mesh_id,
         state=state,
@@ -682,6 +719,8 @@ def optimize_3d_topology_simp(
         receipt_sha256=receipt_sha256,
         reason=reason,
         wall_time_s=time.perf_counter() - t0,
+        dfm_audit=dfm_audit,
+        brep_step_path=emitted_step,
     )
 
 

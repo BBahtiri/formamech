@@ -1,4 +1,4 @@
-"""CAE Archive Ingestion & Experimental ASME V&V 10 Workbench Panel (V3-5)."""
+"""CAE Archive Ingestion, Experimental ASME V&V 10 & Hybrid Sim+Test Panel (V3-5 / V5-2)."""
 
 from __future__ import annotations
 
@@ -6,6 +6,11 @@ import json
 from pathlib import Path
 from typing import Any, cast
 
+from piginot.active.test_planner import (
+    PhysicalTestCandidate,
+    PhysicalTestPlanConfig,
+    recommend_next_physical_tests,
+)
 from piginot.ingest.readers import (
     ParsedCaeSample,
     read_abaqus_inp_and_fields,
@@ -14,10 +19,18 @@ from piginot.ingest.readers import (
     read_vtu_or_xdmf,
 )
 from piginot.ingest.screening import screen_cae_archive
+from piginot.validation.component_test_contracts import (
+    ComponentTestRecord,
+    SensorObservationKind,
+)
 from piginot.validation.contracts import (
     CouponRole,
     ExperimentalCouponDataset,
     ExperimentalTestMode,
+)
+from piginot.validation.hybrid_grounding import (
+    HybridGroundingConfig,
+    ground_simulation_with_experiments,
 )
 from piginot.validation.inverse import (
     CalibrationModelFamily,
@@ -121,10 +134,89 @@ def run_vv10_calibration_summary(
     return dossier.document()
 
 
+def load_component_tests_json(
+    dataset_path: Path,
+) -> tuple[list[ComponentTestRecord], list[PhysicalTestCandidate]]:
+    """Parse a component-level hybrid grounding & test-pool JSON file (V5-2)."""
+    raw = json.loads(Path(dataset_path).read_text(encoding="utf-8"))
+    records: list[ComponentTestRecord] = []
+    for item in raw.get("records", ()):
+        locs_raw = item.get("sensor_locations", ())
+        records.append(
+            ComponentTestRecord(
+                specimen_id=str(item["specimen_id"]),
+                role=CouponRole(str(item["role"])),
+                sensor_kind=SensorObservationKind(str(item["sensor_kind"])),
+                condition_vector=tuple(float(v) for v in item["condition_vector"]),
+                observed_values=tuple(float(v) for v in item["observed_values"]),
+                simulated_prior_values=tuple(
+                    float(v) for v in item["simulated_prior_values"]
+                ),
+                measurement_std=float(item["measurement_std"]),
+                unit=str(item["unit"]),
+                sensor_locations=tuple(tuple(float(x) for x in pt) for pt in locs_raw),
+                metadata={
+                    str(k): str(v) for k, v in dict(item.get("metadata", {})).items()
+                },
+            )
+        )
+    candidates: list[PhysicalTestCandidate] = []
+    for item in raw.get("candidates", ()):
+        candidates.append(
+            PhysicalTestCandidate(
+                candidate_id=str(item["candidate_id"]),
+                role=CouponRole(str(item.get("role", CouponRole.CALIBRATION.value))),
+                condition_vector=tuple(float(v) for v in item["condition_vector"]),
+                sim_uncertainty_eta=float(item.get("sim_uncertainty_eta", 0.0)),
+                test_cost=float(item.get("test_cost", 1.0)),
+                admissible=bool(item.get("admissible", True)),
+                metadata={
+                    str(k): str(v) for k, v in dict(item.get("metadata", {})).items()
+                },
+            )
+        )
+    return records, candidates
+
+
+def run_hybrid_grounding_summary(
+    dataset_path: Path,
+    *,
+    u_num: float = 0.01,
+    u_input: float = 0.0,
+    batch_size: int = 3,
+) -> dict[str, Any]:
+    """Run hybrid sim+test grounding and optional active physical test ranking."""
+    records, candidates = load_component_tests_json(dataset_path)
+    _, dossier = ground_simulation_with_experiments(
+        records,
+        config=HybridGroundingConfig(u_num=float(u_num), u_input=float(u_input)),
+    )
+    out: dict[str, Any] = {
+        "grounding_dossier": dossier.document(),
+        "receipt_sha256": dossier.receipt_sha256,
+    }
+    if candidates:
+        cal_records = [r for r in records if r.role is CouponRole.CALIBRATION]
+        plan = recommend_next_physical_tests(
+            cal_records,
+            candidates,
+            config=PhysicalTestPlanConfig(batch_size=int(batch_size)),
+        )
+        out["physical_test_plan"] = plan.document()
+        out["plan_hash"] = plan.plan_hash
+    return out
+
+
 def render_cae_vv10_mode(st: Any, workspace_root: Path) -> None:
-    """Render the Streamlit CAE Archive Ingest & Experimental V&V 10 mode."""
-    st.title("CAE Archive Ingestion & Experimental ASME V&V 10")
-    tab_ingest, tab_vv10 = st.tabs(["CAE Archive Screening", "Experimental V&V 10"])
+    """Render the Streamlit CAE Archive Ingest, Experimental V&V 10 & Hybrid Grounding mode."""
+    st.title("CAE Archive Ingestion, Experimental V&V 10 & Hybrid Grounding")
+    tab_ingest, tab_vv10, tab_hybrid = st.tabs(
+        [
+            "CAE Archive Screening",
+            "Experimental V&V 10",
+            "Hybrid Sim+Test Grounding & Test Planner",
+        ]
+    )
 
     with tab_ingest:
         arch_str = st.text_input(
@@ -181,11 +273,63 @@ def render_cae_vv10_mode(st: Any, workspace_root: Path) -> None:
                 except Exception as exc:
                     st.error(f"Experimental V&V 10 calibration failed: {exc}")
 
+    with tab_hybrid:
+        hyb_str = st.text_input(
+            "Component Physical-Test & Simulation Prior JSON",
+            value=str(workspace_root / "component_tests.json"),
+            key="wb3d_hybrid_json",
+        )
+        hyb_u_num = float(
+            st.number_input(
+                "Numerical Uncertainty u_num",
+                value=0.01,
+                min_value=0.0,
+                key="wb3d_hybrid_u_num",
+            )
+        )
+        hyb_k = int(
+            st.number_input(
+                "Top-K Next Physical Tests",
+                value=3,
+                min_value=1,
+                max_value=20,
+                key="wb3d_hybrid_k",
+            )
+        )
+        if st.button("Run Hybrid Grounding & Test Plan", type="primary"):
+            hyb_path = Path(hyb_str.strip())
+            if not hyb_path.is_file():
+                st.error(f"Component test JSON not found: {hyb_path}")
+            else:
+                try:
+                    summary = run_hybrid_grounding_summary(
+                        hyb_path, u_num=hyb_u_num, batch_size=hyb_k
+                    )
+                    d = summary["grounding_dossier"]
+                    c1, c2, c3, c4 = st.columns(4)
+                    c1.metric("Experimental Tier", d["experimental_validation_tier"])
+                    raw_r = d.get("raw_sim_holdout_rmse")
+                    grd_r = d.get("grounded_holdout_rmse")
+                    c2.metric(
+                        "Raw Sim RMSE",
+                        f"{raw_r:.4f}" if raw_r is not None else "n/a",
+                    )
+                    c3.metric(
+                        "Grounded RMSE",
+                        f"{grd_r:.4f}" if grd_r is not None else "n/a",
+                    )
+                    c4.metric("ASME u_val", f"{d['u_val']:.4f}")
+                    st.json(summary)
+                except Exception as exc:
+                    st.error(f"Hybrid grounding failed: {exc}")
+
 
 __all__ = (
     "discover_cae_samples",
+    "load_component_tests_json",
     "load_experimental_coupons_json",
     "render_cae_vv10_mode",
     "run_cae_ingest_summary",
+    "run_hybrid_grounding_summary",
     "run_vv10_calibration_summary",
 )

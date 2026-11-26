@@ -2224,6 +2224,514 @@ def _register_v4_fleet_continual_capabilities(reg: CapabilityRegistry) -> None:
     )
 
 
+def _register_v5_capabilities(reg: CapabilityRegistry) -> None:
+    """Register FormaMech v0.5 market-gap production capabilities (V5-1 through V5-5)."""
+
+    def _check_regime_guards_3d(
+        ctx: HarnessContext, args: Mapping[str, Any]
+    ) -> dict[str, Any]:
+        from piginot.certify.regime_guards import (
+            PhysicsRegimeGuard3D,
+            PhysicsRegimeGuardConfig3D,
+        )
+        from piginot.geometry.mesh3d import make_brick_tet4_mesh
+
+        lx = float(args.get("lx_mm", 20.0))
+        ly = float(args.get("ly_mm", 8.0))
+        lz = float(args.get("lz_mm", 8.0))
+        mesh = make_brick_tet4_mesh(lx, ly, lz, nx=2, ny=2, nz=2)
+        cfg = PhysicsRegimeGuardConfig3D(
+            yield_stress_mpa=(
+                None
+                if args.get("yield_stress_mpa") is None
+                else float(args["yield_stress_mpa"])
+            ),
+            min_buckling_margin=(
+                None
+                if args.get("min_buckling_margin") is None
+                else float(args["min_buckling_margin"])
+            ),
+        )
+        guard = PhysicsRegimeGuard3D(cfg)
+        verdict = guard.evaluate(
+            mesh,
+            clamped_face_tags=tuple(
+                str(t) for t in args.get("clamped_face_tags", ("x_min",))
+            ),
+            loaded_face_tags=tuple(
+                str(t) for t in args.get("loaded_face_tags", ("x_max",))
+            ),
+            element_peak_von_mises_mpa=(
+                None
+                if args.get("peak_von_mises_mpa") is None
+                else np.full(
+                    len(mesh.cells), float(args["peak_von_mises_mpa"]), dtype=np.float64
+                )
+            ),
+            buckling_load_factor_override=(
+                None
+                if args.get("buckling_load_factor") is None
+                else float(args["buckling_load_factor"])
+            ),
+        )
+        ctx.set_receipt(verdict.verdict_sha256)
+        return {**verdict.document(), "verdict_sha256": verdict.verdict_sha256}
+
+    reg.register(
+        CapabilitySpec(
+            name="surrogate.check_regime_guards_3d",
+            domain=CapabilityDomain.SURROGATE,
+            summary="Run 3D physics-regime transition guards (yield onset, buckling proximity, BC shift).",
+            description="Fail-closed physical regime checks preventing silent surrogate extrapolations.",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "lx_mm": {"type": "number", "minimum": 1.0},
+                    "ly_mm": {"type": "number", "minimum": 1.0},
+                    "lz_mm": {"type": "number", "minimum": 1.0},
+                    "yield_stress_mpa": {"type": "number", "minimum": 1.0},
+                    "peak_von_mises_mpa": {"type": "number", "minimum": 0.0},
+                    "min_buckling_margin": {"type": "number", "minimum": 0.1},
+                    "buckling_load_factor": {"type": "number"},
+                    "clamped_face_tags": {"type": "array", "items": {"type": "string"}},
+                    "loaded_face_tags": {"type": "array", "items": {"type": "string"}},
+                },
+                "additionalProperties": False,
+            },
+            cost_class=CostClass.ZERO_SOLVE,
+            tags=("regime-guard", "yield", "buckling", "ood", "3d", "v5"),
+        ),
+        _check_regime_guards_3d,
+    )
+
+    def _ground_surrogate_with_tests(
+        ctx: HarnessContext, args: Mapping[str, Any]
+    ) -> dict[str, Any]:
+        from piginot.ui.workbench_3d.vv10_panel import run_hybrid_grounding_summary
+
+        ds_path = ctx.resolve_path(str(args["dataset_json"]))
+        summary = run_hybrid_grounding_summary(
+            ds_path,
+            u_num=float(args.get("u_num", 0.01)),
+            u_input=float(args.get("u_input", 0.0)),
+            batch_size=int(args.get("batch_size", 3)),
+        )
+        ctx.set_receipt(str(summary["receipt_sha256"]))
+        return summary
+
+    reg.register(
+        CapabilitySpec(
+            name="validate.ground_surrogate_with_tests",
+            domain=CapabilityDomain.INGEST_VALIDATE,
+            summary="Fuse simulation priors with physical component tests under ASME V&V 10.",
+            description="Fits Kennedy-O'Hagan discrepancy GP, checks blind physical holdouts, and ranks next tests.",
+            input_schema={
+                "type": "object",
+                "required": ["dataset_json"],
+                "properties": {
+                    "dataset_json": {"type": "string"},
+                    "u_num": {"type": "number", "minimum": 0.0},
+                    "u_input": {"type": "number", "minimum": 0.0},
+                    "batch_size": {"type": "integer", "minimum": 1, "maximum": 20},
+                },
+                "additionalProperties": False,
+            },
+            cost_class=CostClass.ZERO_SOLVE,
+            tags=("hybrid-grounding", "vv10", "dic", "experimental", "v5"),
+        ),
+        _ground_surrogate_with_tests,
+    )
+
+    def _recommend_physical_test(
+        ctx: HarnessContext, args: Mapping[str, Any]
+    ) -> dict[str, Any]:
+        from piginot.active.test_planner import (
+            PhysicalTestPlanConfig,
+            recommend_next_physical_tests,
+        )
+        from piginot.ui.workbench_3d.vv10_panel import load_component_tests_json
+        from piginot.validation.contracts import CouponRole
+
+        ds_path = ctx.resolve_path(str(args["dataset_json"]))
+        records, candidates = load_component_tests_json(ds_path)
+        cal_records = [r for r in records if r.role is CouponRole.CALIBRATION]
+        plan = recommend_next_physical_tests(
+            cal_records,
+            candidates,
+            config=PhysicalTestPlanConfig(
+                batch_size=int(args.get("batch_size", 2)),
+                backend_name=str(args.get("backend", "rbf-gp-mi")),
+            ),
+        )
+        ctx.set_receipt(plan.plan_hash)
+        return {**plan.document(), "plan_hash": plan.plan_hash}
+
+    reg.register(
+        CapabilitySpec(
+            name="active.recommend_physical_test",
+            domain=CapabilityDomain.INGEST_VALIDATE,
+            summary="Recommend highest-information-per-cost next physical laboratory tests.",
+            description="Maximizes GP mutual information + sim uncertainty while refusing holdout/unsafe conditions.",
+            input_schema={
+                "type": "object",
+                "required": ["dataset_json"],
+                "properties": {
+                    "dataset_json": {"type": "string"},
+                    "batch_size": {"type": "integer", "minimum": 1, "maximum": 20},
+                    "backend": {
+                        "type": "string",
+                        "enum": ["rbf-gp-mi", "botorch", "baybe"],
+                    },
+                },
+                "additionalProperties": False,
+            },
+            cost_class=CostClass.ZERO_SOLVE,
+            tags=("active-learning", "test-plan", "bayesian-opt", "v5"),
+        ),
+        _recommend_physical_test,
+    )
+
+    def _estimate_breakeven(
+        ctx: HarnessContext, args: Mapping[str, Any]
+    ) -> dict[str, Any]:
+        from piginot.training.archive_trainer import estimate_archive_breakeven
+
+        del ctx
+        comp = estimate_archive_breakeven(
+            expected_queries=int(args["expected_queries"]),
+            fem_seconds_per_solve=float(args["fem_seconds_per_solve"]),
+            inference_seconds=float(args.get("inference_seconds", 0.01)),
+            from_scratch_solves=int(args.get("from_scratch_solves", 300)),
+            from_scratch_train_s=float(args.get("from_scratch_train_s", 600.0)),
+            lora_target_solves=int(args.get("lora_target_solves", 30)),
+            lora_adapt_s=float(args.get("lora_adapt_s", 60.0)),
+            archive_already_paid=bool(args.get("archive_already_paid", True)),
+        )
+        return comp.document()
+
+    reg.register(
+        CapabilitySpec(
+            name="surrogate.estimate_archive_breakeven",
+            domain=CapabilityDomain.SURROGATE,
+            summary="Pre-flight N* economics gate comparing direct FEM, archive-LoRA, and from-scratch.",
+            description="Prevents negative-ROI surrogate training campaigns before spending compute.",
+            input_schema={
+                "type": "object",
+                "required": ["expected_queries", "fem_seconds_per_solve"],
+                "properties": {
+                    "expected_queries": {"type": "integer", "minimum": 1},
+                    "fem_seconds_per_solve": {"type": "number", "minimum": 0.001},
+                    "inference_seconds": {"type": "number", "minimum": 1e-6},
+                    "from_scratch_solves": {"type": "integer", "minimum": 1},
+                    "from_scratch_train_s": {"type": "number", "minimum": 0.0},
+                    "lora_target_solves": {"type": "integer", "minimum": 1},
+                    "lora_adapt_s": {"type": "number", "minimum": 0.0},
+                    "archive_already_paid": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            cost_class=CostClass.ZERO_SOLVE,
+            tags=("amortization", "roi", "economics", "v5"),
+        ),
+        _estimate_breakeven,
+    )
+
+    def _run_industry_bench(
+        ctx: HarnessContext, args: Mapping[str, Any]
+    ) -> dict[str, Any]:
+        from piginot.benchmarks.industry_suite import (
+            IndustryBenchmarkConfig,
+            run_industry_benchmark_suite,
+        )
+
+        scales = tuple(int(s) for s in args.get("scales", (3, 5, 7)))
+        work_dir = ctx.resolve_path(str(args.get("output_dir", "industry_bench")))
+        cfg = IndustryBenchmarkConfig(
+            dataset_name=str(args.get("dataset_name", "deepjeb")),
+            scales=scales,
+            epochs_per_scale=int(args.get("epochs_per_scale", 6)),
+            hidden_dim=int(args.get("hidden_dim", 16)),
+            allow_noncommercial=bool(args.get("allow_noncommercial", False)),
+            allow_synthetic_fallback=bool(args.get("allow_synthetic_fallback", True)),
+            seed=int(args.get("seed", 0)),
+        )
+        rep = run_industry_benchmark_suite(cfg, work_dir=work_dir)
+        ctx.record_artifact(work_dir / "industry_benchmark.json")
+        ctx.record_artifact(work_dir / "industry_benchmark.md")
+        ctx.set_receipt(rep.report_hash)
+        return rep.document()
+
+    reg.register(
+        CapabilitySpec(
+            name="governance.run_industry_benchmarks",
+            domain=CapabilityDomain.GOVERNANCE,
+            summary="Run neutral multi-scale + BC-shift industry benchmark suite (JSON + Markdown).",
+            description="Reports mean, p95, and worst-case physical-unit errors, OOD AUROC, and N*.",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "dataset_name": {"type": "string"},
+                    "scales": {"type": "array", "items": {"type": "integer"}},
+                    "epochs_per_scale": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 100,
+                    },
+                    "hidden_dim": {"type": "integer", "minimum": 8, "maximum": 128},
+                    "allow_noncommercial": {"type": "boolean"},
+                    "allow_synthetic_fallback": {"type": "boolean"},
+                    "output_dir": {"type": "string"},
+                    "seed": {"type": "integer", "minimum": 0},
+                },
+                "additionalProperties": False,
+            },
+            cost_class=CostClass.TRAINING_JOB,
+            tags=("benchmark", "physicsbench", "bc-shift", "v5"),
+        ),
+        _run_industry_bench,
+    )
+
+    def _synthesize_brep_3d(
+        ctx: HarnessContext, args: Mapping[str, Any]
+    ) -> dict[str, Any]:
+        from piginot.cad.brep_synthesis import (
+            KeepOutDatumFeature,
+            synthesize_watertight_brep_step,
+        )
+        from piginot.geometry.mesh3d import make_brick_tet4_mesh
+
+        lx = float(args.get("lx_mm", 24.0))
+        ly = float(args.get("ly_mm", 12.0))
+        lz = float(args.get("lz_mm", 8.0))
+        mesh = make_brick_tet4_mesh(lx, ly, lz, nx=3, ny=2, nz=2)
+        mask = np.ones(len(mesh.cells), dtype=np.bool_)
+        feats: list[KeepOutDatumFeature] = []
+        if args.get("bore_radius_mm") is not None:
+            feats.append(
+                KeepOutDatumFeature(
+                    name="datum-bore",
+                    kind="cylindrical_bore",
+                    origin_mm=(0.5 * lx, 0.5 * ly, 0.0),
+                    axis=(0.0, 0.0, 1.0),
+                    radius_mm=float(args["bore_radius_mm"]),
+                    length_mm=lz,
+                )
+            )
+        out_step = ctx.resolve_path(str(args.get("output_step", "synthesized.step")))
+        res = synthesize_watertight_brep_step(
+            mesh,
+            mask,
+            out_step,
+            keep_out_features=tuple(feats),
+            verify_roundtrip=True,
+            run_remeshed_fem_check=bool(args.get("run_remeshed_fem_check", True)),
+        )
+        ctx.record_artifact(res.step_path)
+        ctx.set_receipt(res.receipt_sha256)
+        return {**res.document(), "receipt_sha256": res.receipt_sha256}
+
+    reg.register(
+        CapabilitySpec(
+            name="cad.synthesize_brep_3d",
+            domain=CapabilityDomain.CAD,
+            summary="Synthesize watertight OpenCASCADE B-Rep STEP with exact bores & round-trip FEM.",
+            description="Verifies zero open edges, <=0.05 mm bore accuracy, and exact re-meshed 3D FEM.",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "lx_mm": {"type": "number", "minimum": 4.0},
+                    "ly_mm": {"type": "number", "minimum": 4.0},
+                    "lz_mm": {"type": "number", "minimum": 2.0},
+                    "bore_radius_mm": {"type": "number", "minimum": 0.5},
+                    "output_step": {"type": "string"},
+                    "run_remeshed_fem_check": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            cost_class=CostClass.SOLVER_ORACLE,
+            default_fem_solves=1,
+            tags=("brep", "step", "cad", "dfm", "v5"),
+        ),
+        _synthesize_brep_3d,
+    )
+
+    def _record_hitl_signoff(
+        ctx: HarnessContext, args: Mapping[str, Any]
+    ) -> dict[str, Any]:
+        from piginot.governance.hitl_signoff import (
+            HandCalculationSanityCheck,
+            ReviewerRole,
+            create_hitl_signoff,
+        )
+        from piginot.serving.audit_ledger import SignedAuditLedger
+
+        hand_calc = None
+        if args.get("hand_calc_note") is not None:
+            hand_calc = HandCalculationSanityCheck(
+                hand_calc_note=str(args["hand_calc_note"]),
+                hand_calc_value=float(args["hand_calc_value"]),
+                model_predicted_value=float(args["model_predicted_value"]),
+                unit=str(args.get("unit", "MPa")),
+            )
+        ledger = SignedAuditLedger(ctx.resolve_path("hitl-audit-ledger.jsonl"))
+        rec = create_hitl_signoff(
+            artifact_id=str(args["artifact_id"]),
+            artifact_sha256=str(args["artifact_sha256"]),
+            reviewer_id=str(args["reviewer_id"]),
+            reviewer_role=ReviewerRole(
+                str(args.get("reviewer_role", "LEAD_STRESS_ENGINEER"))
+            ),
+            approved=bool(args["approved"]),
+            decision_note=str(args["decision_note"]),
+            hand_calc=hand_calc,
+            audit_ledger=ledger,
+        )
+        ctx.set_receipt(rec.signature_sha256)
+        return rec.document()
+
+    reg.register(
+        CapabilitySpec(
+            name="governance.record_hitl_signoff",
+            domain=CapabilityDomain.GOVERNANCE,
+            summary="Record cryptographically signed senior-engineer HITL release review.",
+            description="Enforces DRAFT -> PENDING_HUMAN_REVIEW -> APPROVED | REJECTED_WITH_FEEDBACK.",
+            input_schema={
+                "type": "object",
+                "required": [
+                    "artifact_id",
+                    "artifact_sha256",
+                    "reviewer_id",
+                    "approved",
+                    "decision_note",
+                ],
+                "properties": {
+                    "artifact_id": {"type": "string"},
+                    "artifact_sha256": {"type": "string"},
+                    "reviewer_id": {"type": "string"},
+                    "reviewer_role": {
+                        "type": "string",
+                        "enum": [
+                            "LEAD_STRESS_ENGINEER",
+                            "VALIDITY_OWNER",
+                            "CHIEF_ENGINEER",
+                        ],
+                    },
+                    "approved": {"type": "boolean"},
+                    "decision_note": {"type": "string"},
+                    "hand_calc_note": {"type": "string"},
+                    "hand_calc_value": {"type": "number"},
+                    "model_predicted_value": {"type": "number"},
+                    "unit": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            cost_class=CostClass.ZERO_SOLVE,
+            tags=("hitl", "signoff", "compliance", "eu-ai-act", "v5"),
+        ),
+        _record_hitl_signoff,
+    )
+
+    def _solve_etm_3d(ctx: HarnessContext, args: Mapping[str, Any]) -> dict[str, Any]:
+        from piginot.cad.electronics_templates_3d import (
+            generate_busway_3d,
+            generate_chiplet_package_3d,
+        )
+        from piginot.fem.backend_3d import DirichletBC3D
+        from piginot.fem.electro_thermal_3d import (
+            VoltageBC3D,
+            solve_3d_electro_thermal_mechanical,
+        )
+        from piginot.fem.thermo_mechanical_3d import ConvectionBC3D, TemperatureBC3D
+
+        template = str(args.get("template", "parametric-chiplet-package-3d"))
+        ctx.consume_fem_solves(1)
+        if template == "parametric-busway-3d":
+            bundle = generate_busway_3d(
+                length_mm=float(args.get("length_mm", 40.0)),
+                width_mm=float(args.get("width_mm", 10.0)),
+                thickness_mm=float(args.get("thickness_mm", 4.0)),
+                nx=4,
+                ny=2,
+                nz=2,
+            )
+            res = solve_3d_electro_thermal_mechanical(
+                bundle.assembly,
+                bundle.etm_materials,
+                dirichlet_bcs=(
+                    DirichletBC3D("fix", ("x_min",), ("x", "y", "z"), (0.0, 0.0, 0.0)),
+                ),
+                voltage_bcs=(
+                    VoltageBC3D("v0", ("x_min",), 0.0),
+                    VoltageBC3D(
+                        "v1", ("x_max",), float(args.get("voltage_drop_v", 0.02))
+                    ),
+                ),
+                temperature_bcs=(TemperatureBC3D("t0", ("x_min",), 293.15),),
+                convection_bcs=(
+                    ConvectionBC3D(
+                        "cool", ("z_max",), h_w_per_mm2_k=0.001, t_ambient_k=293.15
+                    ),
+                ),
+                load_steps=1,
+            )
+        else:
+            bundle = generate_chiplet_package_3d(
+                package_xy_mm=float(args.get("package_xy_mm", 20.0)),
+                chiplet_power_w=float(args.get("chiplet_power_w", 15.0)),
+                nx=3,
+                ny=3,
+            )
+            res = solve_3d_electro_thermal_mechanical(
+                bundle.assembly,
+                bundle.etm_materials,
+                dirichlet_bcs=(
+                    DirichletBC3D(
+                        "mount", ("z_min",), ("x", "y", "z"), (0.0, 0.0, 0.0)
+                    ),
+                ),
+                convection_bcs=(
+                    ConvectionBC3D(
+                        "lid_cool", ("z_max",), h_w_per_mm2_k=0.005, t_ambient_k=298.15
+                    ),
+                ),
+                volumetric_sources=bundle.power_sources,
+                load_steps=1,
+            )
+        return {**res.document(), "template": template}
+
+    reg.register(
+        CapabilitySpec(
+            name="multiphysics.solve_electro_thermal_3d",
+            domain=CapabilityDomain.MULTIPHYSICS,
+            summary="Solve coupled multi-material 3D Electro-Thermal-Mechanical equilibrium.",
+            description="Supports 3D-IC chiplet packages (orthotropic substrate + Si + Cu) and Joule-heated busways.",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "template": {
+                        "type": "string",
+                        "enum": [
+                            "parametric-chiplet-package-3d",
+                            "parametric-busway-3d",
+                        ],
+                    },
+                    "package_xy_mm": {"type": "number", "minimum": 5.0},
+                    "chiplet_power_w": {"type": "number", "minimum": 0.1},
+                    "length_mm": {"type": "number", "minimum": 5.0},
+                    "width_mm": {"type": "number", "minimum": 2.0},
+                    "thickness_mm": {"type": "number", "minimum": 1.0},
+                    "voltage_drop_v": {"type": "number", "minimum": 0.0001},
+                },
+                "additionalProperties": False,
+            },
+            cost_class=CostClass.SOLVER_ORACLE,
+            default_fem_solves=1,
+            tags=("electro-thermal", "chiplet", "joule", "warpage", "3d", "v5"),
+        ),
+        _solve_etm_3d,
+    )
+
+
 def build_default_registry(*, include_plugins: bool = True) -> CapabilityRegistry:
     """Create a populated :class:`CapabilityRegistry` covering all FormaMech domains."""
     reg = CapabilityRegistry()
@@ -2234,6 +2742,7 @@ def build_default_registry(*, include_plugins: bool = True) -> CapabilityRegistr
     _register_v4_physics_capabilities(reg)
     _register_v4_generative_capabilities(reg)
     _register_v4_fleet_continual_capabilities(reg)
+    _register_v5_capabilities(reg)
     if include_plugins:
         reg.load_entry_point_plugins()
     return reg

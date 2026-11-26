@@ -176,6 +176,7 @@ class AgentBudgetSpec:
     max_fem_solves: int = 16
     max_dofs: int = 100_000
     require_qualified_for_export: bool = True
+    require_hitl_signoff: bool = False
 
     def __post_init__(self) -> None:
         if self.max_fem_solves < 1:

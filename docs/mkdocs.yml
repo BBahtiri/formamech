@@ -35,6 +35,7 @@ nav:
       - 3D CAD and nonlinear FEM: workflow_3d.md
       - Industrial 3D scaling & copilot (v0.3): v3-capabilities.md
       - AI-Ready Agent Harness & 3D Production Suite (v0.4): v4-agent-harness.md
+      - Production Trust, Hybrid Grounding & ETM Multiphysics (v0.5): v5-production-gap.md
   - Train with your own inputs:
       - Own 2D CAD: campaigns/own-cad-workflow.md
       - Meshing and FEM convergence: campaigns/own-cad-meshing.md
