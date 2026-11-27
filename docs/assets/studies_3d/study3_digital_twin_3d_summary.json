@@ -1,0 +1,433 @@
+{
+  "blind_experimental_validation": {
+    "blind_tests": [
+      "CON PUNTALES TEST2",
+      "CON PUNTALES TEST3",
+      "SIN PUNTALES TEST2",
+      "SIN PUNTALES TEST3"
+    ],
+    "mean_blind_fos_nrmse_pct": 3.1798023028112192,
+    "mean_blind_fos_r2": 0.9749583813517789,
+    "mean_blind_fos_rmse_ue": 10.709406285362586,
+    "mean_blind_inverse_load_r2": 0.8969274997743104,
+    "mean_blind_inverse_load_rmse_kn": 0.9235937141025788,
+    "per_test": {
+      "CON PUNTALES TEST1": {
+        "forward_mae_per_ch_ue": [
+          7.983025878749853,
+          1.6479041438528375,
+          7.95337281486119,
+          1.9272179404186416
+        ],
+        "forward_nrmse_pct": 1.63772227274779,
+        "forward_r2_all": 0.9952382525488814,
+        "forward_r2_per_ch": [
+          0.9214534240369942,
+          0.9997255139920588,
+          0.9951220529880461,
+          0.9977079238235201
+        ],
+        "forward_rmse_all_ue": 6.761641154995384,
+        "forward_rmse_per_ch_ue": [
+          8.930437529503662,
+          2.069634665611532,
+          9.605291284594335,
+          2.5654320603627845
+        ],
+        "inverse_load_mae_kn": 0.611237537345063,
+        "inverse_load_r2": 0.9520631768231906,
+        "inverse_load_rmse_kn": 0.7975466132586446,
+        "inverse_total_load_rmse_kn": 0.3300011917725499,
+        "max_3d_disp_mm": 10.09713633471809,
+        "mean_infer_ms_96": 1.3417958131564471,
+        "n_samples": 6224,
+        "peak_3d_vm_mpa": 97.52835083007812,
+        "peak_strain_ue": 412.8686082806104,
+        "peak_total_load_kn": 28.90455019203364,
+        "prop_detect_acc_all": 0.7979423868312757,
+        "prop_detect_acc_ch8": 1.0,
+        "prop_installed": true,
+        "split": "CALIBRATION_X_ONLY"
+      },
+      "CON PUNTALES TEST2": {
+        "forward_mae_per_ch_ue": [
+          4.491537935477459,
+          6.371120227056834,
+          6.968479617548075,
+          0.8207080707802269
+        ],
+        "forward_nrmse_pct": 1.966257647061449,
+        "forward_r2_all": 0.9907542668743773,
+        "forward_r2_per_ch": [
+          0.9628097503217796,
+          0.9944219247281504,
+          0.9900184733155664,
+          0.9964184855953176
+        ],
+        "forward_rmse_all_ue": 6.395769576269713,
+        "forward_rmse_per_ch_ue": [
+          6.515638121042927,
+          7.279148504818435,
+          8.180669709262578,
+          1.1227528309092185
+        ],
+        "inverse_load_mae_kn": 0.6993787577171475,
+        "inverse_load_r2": 0.9101815794003651,
+        "inverse_load_rmse_kn": 0.8534390054929047,
+        "inverse_total_load_rmse_kn": 0.3360224438721518,
+        "max_3d_disp_mm": 6.913212541201649,
+        "mean_infer_ms_96": 1.4048770899535157,
+        "n_samples": 3609,
+        "peak_3d_vm_mpa": 75.17996215820312,
+        "peak_strain_ue": 325.27627220309216,
+        "peak_total_load_kn": 20.35988798517792,
+        "prop_detect_acc_all": 0.9812680115273775,
+        "prop_detect_acc_ch8": 1.0,
+        "prop_installed": true,
+        "split": "BLIND_HOLDOUT"
+      },
+      "CON PUNTALES TEST3": {
+        "forward_mae_per_ch_ue": [
+          3.4216622644427486,
+          10.930907234221017,
+          23.316770877661376,
+          3.586516231118192
+        ],
+        "forward_nrmse_pct": 4.186802712205825,
+        "forward_r2_all": 0.9639032817141778,
+        "forward_r2_per_ch": [
+          0.9264581280840104,
+          0.9806885790503314,
+          0.9500769752033669,
+          0.9921978556425544
+        ],
+        "forward_rmse_all_ue": 14.085447287105152,
+        "forward_rmse_per_ch_ue": [
+          4.135374338676515,
+          11.907968287802175,
+          24.87991578106153,
+          3.9608158470534574
+        ],
+        "inverse_load_mae_kn": 0.880177346875023,
+        "inverse_load_r2": 0.8380440728391254,
+        "inverse_load_rmse_kn": 1.2036959627442652,
+        "inverse_total_load_rmse_kn": 0.8373483201743139,
+        "max_3d_disp_mm": 7.9328330401900455,
+        "mean_infer_ms_96": 1.3195864570055467,
+        "n_samples": 7358,
+        "peak_3d_vm_mpa": 79.79063415527344,
+        "peak_strain_ue": 336.42491073299715,
+        "peak_total_load_kn": 20.510520089694182,
+        "prop_detect_acc_all": 0.9982381959126145,
+        "prop_detect_acc_ch8": 0.9982381959126145,
+        "prop_installed": true,
+        "split": "BLIND_HOLDOUT"
+      },
+      "SIN PUNTALES TEST1": {
+        "forward_mae_per_ch_ue": [
+          9.48205613881404,
+          3.4158042723078244,
+          8.180924819100929,
+          8.026518854361905
+        ],
+        "forward_nrmse_pct": 2.255001068358706,
+        "forward_r2_all": 0.9913329906597067,
+        "forward_r2_per_ch": [
+          0.9146734497587607,
+          0.9983248501408396,
+          0.9946097931739151,
+          0.9660863870825724
+        ],
+        "forward_rmse_all_ue": 9.76173051101898,
+        "forward_rmse_per_ch_ue": [
+          10.992677176308215,
+          5.588777606457121,
+          10.487458090433329,
+          10.913540509086717
+        ],
+        "inverse_load_mae_kn": 1.1620544816223504,
+        "inverse_load_r2": 0.8405346425652604,
+        "inverse_load_rmse_kn": 1.5388039310058697,
+        "inverse_total_load_rmse_kn": 0.7770795730459331,
+        "max_3d_disp_mm": 10.650667213167706,
+        "mean_infer_ms_96": 1.4600104380709429,
+        "n_samples": 14320,
+        "peak_3d_vm_mpa": 264.1555480957031,
+        "peak_strain_ue": 432.89250049553283,
+        "peak_total_load_kn": 29.39177183090942,
+        "prop_detect_acc_all": 0.9951676528599606,
+        "prop_detect_acc_ch8": 0.9995069033530573,
+        "prop_installed": false,
+        "split": "CALIBRATION_X_ONLY"
+      },
+      "SIN PUNTALES TEST2": {
+        "forward_mae_per_ch_ue": [
+          4.819945726833614,
+          8.273531750178396,
+          8.771689298433131,
+          1.9921149522167632
+        ],
+        "forward_nrmse_pct": 2.5210771754284345,
+        "forward_r2_all": 0.9859280458852795,
+        "forward_r2_per_ch": [
+          0.9547945847348029,
+          0.9903764355282767,
+          0.9847910609052304,
+          0.9878126120835173
+        ],
+        "forward_rmse_all_ue": 8.16440143461905,
+        "forward_rmse_per_ch_ue": [
+          7.2588238659003865,
+          9.740357081930533,
+          10.641703528104044,
+          2.4122332314054296
+        ],
+        "inverse_load_mae_kn": 0.7731738054359288,
+        "inverse_load_r2": 0.8914935405678837,
+        "inverse_load_rmse_kn": 0.9545022448939214,
+        "inverse_total_load_rmse_kn": 0.2578381253064967,
+        "max_3d_disp_mm": 7.151429248732912,
+        "mean_infer_ms_96": 1.3197979181616877,
+        "n_samples": 4522,
+        "peak_3d_vm_mpa": 158.52139282226562,
+        "peak_strain_ue": 323.84575586154295,
+        "peak_total_load_kn": 20.521328990507754,
+        "prop_detect_acc_all": 0.3081669691470054,
+        "prop_detect_acc_ch8": 1.0,
+        "prop_installed": false,
+        "split": "BLIND_HOLDOUT"
+      },
+      "SIN PUNTALES TEST3": {
+        "forward_mae_per_ch_ue": [
+          5.0125894862450355,
+          10.106376469587614,
+          21.843509387818546,
+          4.951196838776205
+        ],
+        "forward_nrmse_pct": 4.045071676549169,
+        "forward_r2_all": 0.959247930933281,
+        "forward_r2_per_ch": [
+          0.8203884300758727,
+          0.977255249400385,
+          0.9457066766932912,
+          0.9870953753530236
+        ],
+        "forward_rmse_all_ue": 14.192006843456435,
+        "forward_rmse_per_ch_ue": [
+          5.507302017082617,
+          11.640239164631636,
+          24.664932447716826,
+          5.60961647630532
+        ],
+        "inverse_load_mae_kn": 0.47559463019229703,
+        "inverse_load_r2": 0.9479908062898678,
+        "inverse_load_rmse_kn": 0.682737643279224,
+        "inverse_total_load_rmse_kn": 1.1658116726707293,
+        "max_3d_disp_mm": 8.504314931795893,
+        "mean_infer_ms_96": 2.893182279270453,
+        "n_samples": 5838,
+        "peak_3d_vm_mpa": 222.96475219726562,
+        "peak_strain_ue": 350.8468570713577,
+        "peak_total_load_kn": 20.69087365453015,
+        "prop_detect_acc_all": 0.0,
+        "prop_detect_acc_ch8": 0.7166929963138494,
+        "prop_installed": false,
+        "split": "BLIND_HOLDOUT"
+      }
+    },
+    "total_blind_samples": 21327
+  },
+  "dataset": {
+    "blind_holdout_samples": 21327,
+    "doi": "10.5281/zenodo.22686007",
+    "file": "SUM4Re_FOS_STRAIN TEST BEAM1 JOLASTOKIETA.xlsx",
+    "license": "CC-BY-4.0",
+    "modal_frequencies_hz": {
+      "propped_ansys_lat1": 14.393,
+      "propped_ansys_vert1": 36.245,
+      "propped_ansys_vert2": 113.846,
+      "propped_real_lat1": 10.4,
+      "propped_real_vert1": 31.05,
+      "propped_real_vert2": 109.6,
+      "unpropped_ansys_vert1": 32.78,
+      "unpropped_real_vert1": 32.52
+    },
+    "name": "SUM4Re: FOS steel beam dataset (Jolastokieta pilot site, Basque Country, Spain)",
+    "sha256": "31133a36999d34384dc686dbd2040ec3e95f0251297bbfc411236a710b40722b",
+    "total_samples": 41871
+  },
+  "epistemic_governance": {
+    "asme_vv10_note": "Numerical operator verification (8 unseen 3D TET10 FEM holdouts) is reported separately from blind physical experimental validation (TEST2 & TEST3: 21,327 real FOS samples). The 3D PI-GINOT operator is trained purely on 3D FEM physics with zero experimental FOS labels; only the 4 lower-flange FOS gauge x-coordinates were calibrated on TEST1.",
+    "experimental_validation_split": "TEST1 calibration (x-coords only) -> TEST2 & TEST3 strictly blind",
+    "numerical_claim_level": "HOLDOUT_VERIFIED"
+  },
+  "model_3d": {
+    "E_steel_mpa": 210000.0,
+    "calibrated_fos_x_mm": [
+      490.0,
+      1440.0,
+      2620.0,
+      3830.0
+    ],
+    "depth_mm": 200.0,
+    "element_type": "TET10",
+    "flange_width_mm": 100.0,
+    "load_pad_x_mm": [
+      1010.0,
+      2024.0,
+      3214.0
+    ],
+    "n_cells": 2142,
+    "n_dofs": 13653,
+    "n_nodes": 4551,
+    "n_surface_triangles": 1600,
+    "nu_steel": 0.3,
+    "profile": "European IPE 200 reclaimed structural steel crane beam + slender end stub columns + removable right prop footplate",
+    "span_mm": 4900.0
+  },
+  "numerical_holdout_verification": {
+    "cases": [
+      {
+        "fem_wall_s": 4.964376100106165,
+        "forces_kn": [
+          8.2,
+          10.4,
+          0.0
+        ],
+        "fos_rmse_vs_fem_ue": 0.352100319394104,
+        "id": "ho_con_ho_c12_asym",
+        "infer_ms": 2.885399851948023,
+        "peak_vm_rel_err": 0.0016824113096246365,
+        "prop": true,
+        "u_rel_l2": 0.016880694697738736,
+        "vm_rel_l2": 0.06346622361947596
+      },
+      {
+        "fem_wall_s": 5.972555800108239,
+        "forces_kn": [
+          0.0,
+          8.8,
+          10.2
+        ],
+        "fos_rmse_vs_fem_ue": 1.3114133520276359,
+        "id": "ho_con_ho_c23_asym",
+        "infer_ms": 1.414999831467867,
+        "peak_vm_rel_err": 0.003289948468440215,
+        "prop": true,
+        "u_rel_l2": 0.01753233911942091,
+        "vm_rel_l2": 0.06420285892775045
+      },
+      {
+        "fem_wall_s": 5.530934900045395,
+        "forces_kn": [
+          7.5,
+          9.5,
+          6.8
+        ],
+        "fos_rmse_vs_fem_ue": 1.884323593045251,
+        "id": "ho_con_ho_c123_mid",
+        "infer_ms": 1.1624000035226345,
+        "peak_vm_rel_err": 0.0026570030244542197,
+        "prop": true,
+        "u_rel_l2": 0.01643621314957439,
+        "vm_rel_l2": 0.06156088176115595
+      },
+      {
+        "fem_wall_s": 5.306437100050971,
+        "forces_kn": [
+          10.2,
+          10.6,
+          9.4
+        ],
+        "fos_rmse_vs_fem_ue": 3.9811326006995413,
+        "id": "ho_con_ho_c123_hi",
+        "infer_ms": 1.0495998430997133,
+        "peak_vm_rel_err": 0.00014961302854165444,
+        "prop": true,
+        "u_rel_l2": 0.0172797972132999,
+        "vm_rel_l2": 0.06199496710005485
+      },
+      {
+        "fem_wall_s": 4.239765199832618,
+        "forces_kn": [
+          8.2,
+          10.4,
+          0.0
+        ],
+        "fos_rmse_vs_fem_ue": 0.2803911555739722,
+        "id": "ho_sin_ho_c12_asym",
+        "infer_ms": 1.0675000958144665,
+        "peak_vm_rel_err": 0.003114451595339942,
+        "prop": false,
+        "u_rel_l2": 0.016935995008626404,
+        "vm_rel_l2": 0.062428293438123436
+      },
+      {
+        "fem_wall_s": 4.21026449999772,
+        "forces_kn": [
+          0.0,
+          8.8,
+          10.2
+        ],
+        "fos_rmse_vs_fem_ue": 1.154698304113815,
+        "id": "ho_sin_ho_c23_asym",
+        "infer_ms": 1.6892999410629272,
+        "peak_vm_rel_err": 0.0016344017599879076,
+        "prop": false,
+        "u_rel_l2": 0.017833965723178153,
+        "vm_rel_l2": 0.06688356303691104
+      },
+      {
+        "fem_wall_s": 5.210304700070992,
+        "forces_kn": [
+          7.5,
+          9.5,
+          6.8
+        ],
+        "fos_rmse_vs_fem_ue": 1.6908404173465692,
+        "id": "ho_sin_ho_c123_mid",
+        "infer_ms": 1.1470001190900803,
+        "peak_vm_rel_err": 0.0012161181741058293,
+        "prop": false,
+        "u_rel_l2": 0.016152130747855882,
+        "vm_rel_l2": 0.06280136489912008
+      },
+      {
+        "fem_wall_s": 5.214594200020656,
+        "forces_kn": [
+          10.2,
+          10.6,
+          9.4
+        ],
+        "fos_rmse_vs_fem_ue": 3.8854651745014417,
+        "id": "ho_sin_ho_c123_hi",
+        "infer_ms": 1.1048000305891037,
+        "peak_vm_rel_err": 0.0010769908573289636,
+        "prop": false,
+        "u_rel_l2": 0.01682668553770195,
+        "vm_rel_l2": 0.06341270014476398
+      }
+    ],
+    "mean_cold_3d_fem_s": 4.733503650029888,
+    "mean_peak_vm_rel_err_pct": 0.18526172772279212,
+    "mean_piginot_infer_ms": 1.440124964574352,
+    "mean_u_rel_l2_pct": 1.698472764967454,
+    "mean_vm_rel_l2_pct": 6.334385661591946,
+    "n_holdout_cases": 8,
+    "speedup_vs_3d_fem": 3286.8700747986395,
+    "update_rate_hz": 694.3841851221316
+  },
+  "operator": {
+    "architecture": "Surface3DEnergyOperator 3D PI-GINOT (exact 3D base-clamp lifting, 4-channel load+BC parameter conditioning)",
+    "epochs": 1500,
+    "final_loss": 0.22139637172222137,
+    "initial_loss": 9.524515151977539,
+    "n_parameters": 505899,
+    "n_train_fem_anchors": 24,
+    "surface_encode_ms": 22.863100050017238,
+    "train_wall_s": 95.18316900008358,
+    "weights_sha256": "ebdfd4d384402aada0c58d1ddf2dcd872846e1ec0803bb18ab45de613e967ee0"
+  },
+  "study": "Study 3 \u2014 3D PI-GINOT Structural Digital Twin on Real Experimental FOS Steel Beam (SUM4Re)",
+  "total_wall_time_s": 104.84300890006125
+}

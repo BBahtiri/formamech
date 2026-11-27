@@ -37,6 +37,7 @@ nav:
       - AI-Ready Agent Harness & 3D Production Suite (v0.4): v4-agent-harness.md
       - Production Trust, Hybrid Grounding & ETM Multiphysics (v0.5): v5-production-gap.md
       - Real-world experimental validation (V&V 10): real-world-validation.md
+      - Open-source 3D PI-GINOT studies (Studies 1-4): open-source-3d-studies.md
   - Train with your own inputs:
       - Own 2D CAD: campaigns/own-cad-workflow.md
       - Meshing and FEM convergence: campaigns/own-cad-meshing.md

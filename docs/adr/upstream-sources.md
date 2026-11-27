@@ -118,3 +118,31 @@ its stated external-library linking exception.
 [ezdxf is MIT-licensed](https://ezdxf.readthedocs.io/en/stable/introduction.html#license).
 These dependencies are installed separately and are not vendored in this
 project's wheel. Consult their own licence notices when distributing them.
+
+## 4. External open-source benchmark datasets (not redistributed)
+
+Validation and 3D operator study runners under `scripts/` evaluate FormaMech
+against public scientific benchmarks. To preserve a strictly pure-MIT source
+repository, wheel, and sdist:
+
+- **No raw third-party dataset files** (`.npz`, `.zip`, `.xlsx`, `.csv`,
+  `.STEP`, `.pdf`) and **no trained neural weights** derived from external
+  datasets are committed to Git or packaged in any distribution target.
+- Datasets are downloaded on demand by MIT-licensed fetch scripts strictly into
+  the gitignored `.formamech-runs/datasets/` cache and verified via SHA-256
+  digests (`scripts/studies_3d/fetch_open_source_3d_datasets.py`).
+- Aggregate numerical verification summaries (`docs/assets/studies_3d/*_summary.json`)
+  and self-generated figures (`docs/assets/studies_3d/*.png`, `*.gif`) are
+  original visualizations created by FormaMech that credit the upstream authors,
+  DOIs, and `CC-BY-4.0` / `CC0-1.0` licences below and indicate that upstream
+  files are neither redistributed nor modified.
+
+| Benchmark | Authors / Origin | DOI / Source | Upstream Licence | Repository Status |
+| --- | --- | --- | --- | --- |
+| **UARK-NED3 ColdPlate-CFD-2000sims** (Study 1) | University of Arkansas (NED3) | Dryad `10.5061/dryad.k0p2ngfp5`; paper `10.1016/j.aitf.2026.100040` | `CC0-1.0` (Public Domain) | **Not redistributed**; fetched to `.formamech-runs/datasets/coldplate-cht-3d/` |
+| **AgentFEM-Bracket-Elasticity** (Study 2) | Haoming Luo et al. | `https://huggingface.co/datasets/HaomingLuo/AgentFEM-Bracket-Elasticity` | `CC-BY-4.0` | **Not redistributed**; fetched to `.formamech-runs/datasets/agentfem-bracket-3d/` |
+| **AgentFEM-Pipe-Components** (Study 2) | Haoming Luo et al. | `https://huggingface.co/datasets/HaomingLuo/AgentFEM-Pipe-Components` | `CC-BY-4.0` | **Not redistributed**; fetched to `.formamech-runs/datasets/agentfem-pipe-3d/` |
+| **SUM4Re FOS Steel Beam Dataset** (Study 3) | Jose Carlos Jimenez Fernandez & Mikel Ezquerro (EU SUM4Re / MOYUA, Jolastokieta pilot site, Spain) | Zenodo `10.5281/zenodo.22686007` | `CC-BY-4.0` | **Not redistributed**; SHA-256-verified into `.formamech-runs/datasets/sum4re-fos-steel-beam/` |
+| **CARPIUC Concrete/Mortar Fracture Benchmark** (Study 4) | Martin Poncelet & A. Carpiuc-Prisacari (LMT, ENS Paris-Saclay / CNRS UMR 8535) | Zenodo `10.5281/zenodo.3233491` | `CC-BY-4.0` | **Not redistributed**; 6 coupon CSVs SHA-256-verified into `.formamech-runs/datasets/carpiuc-3d-fracture/` |
+| **Attia et al. Fast-Charging Batteries** (V&V 10 Case #1) | Peter M. Attia et al., *Nature* **578**, 397–402 (2020) | `https://github.com/chueh-ermon/battery-fast-charging-optimization` | `CC-BY-4.0` | **Not redistributed**; fetched to `.formamech-runs/datasets/` by `scripts/validate_attia_2020.py` |
+| **NIST AM-Bench 2022 (`AMB2022-01`)** (V&V 10 Case #2) | National Institute of Standards and Technology (NIST) | `10.18434/mds2-2607` (STEP), `10.18434/mds2-2711` (CHESS XRD & CMM) | US Public Domain | **Not redistributed**; fetched to `.formamech-runs/datasets/` by `scripts/validate_nist_ambench_2022.py` |
