@@ -30,6 +30,10 @@ class Surface3DConfig:
     num_blocks: int = 2
     positional_frequencies: int = 3
     decoder_blocks: int = 1
+    adaptive_temperature: bool = False  # V6-R5 Transolver++ locally adaptive slicing
+    anchor_count: int | None = None  # V6-R5 AB-UPT anchor-token subsampling
+    low_rank_query_dim: int | None = None  # V6-R5 LRQ-Solver low-rank query compression
+    decode_chunk_size: int | None = None  # V6-R5 bounded-memory 100K-1M query decoding
 
     def __post_init__(self) -> None:
         if self.hidden_dim <= 0 or self.hidden_dim % self.num_heads != 0:
@@ -42,6 +46,14 @@ class Surface3DConfig:
             raise ValueError("positional_frequencies must be >= 1")
         if self.decoder_blocks < 1:
             raise ValueError("decoder_blocks must be >= 1")
+        if self.anchor_count is not None and self.anchor_count < 1:
+            raise ValueError("anchor_count must be >= 1 when set")
+        if self.low_rank_query_dim is not None and (
+            self.low_rank_query_dim < 1 or self.low_rank_query_dim > self.hidden_dim
+        ):
+            raise ValueError("low_rank_query_dim must lie in [1, hidden_dim]")
+        if self.decode_chunk_size is not None and self.decode_chunk_size < 1:
+            raise ValueError("decode_chunk_size must be >= 1 when set")
 
 
 @dataclass(frozen=True, slots=True)
@@ -85,11 +97,22 @@ class _ExplicitMultiHeadAttention(nn.Module):
 class PhysicsSliceAttention(nn.Module):
     """Transolver++-style O(N * S) linear-complexity physics-slice attention block."""
 
-    def __init__(self, hidden_dim: int, slice_count: int, num_heads: int) -> None:
+    def __init__(
+        self,
+        hidden_dim: int,
+        slice_count: int,
+        num_heads: int,
+        *,
+        adaptive_temperature: bool = False,
+    ) -> None:
         super().__init__()
         self.hidden_dim = hidden_dim
         self.slice_count = slice_count
+        self.adaptive_temperature = adaptive_temperature
         self.slice_weights = nn.Linear(hidden_dim, slice_count)
+        self.temp_proj: nn.Linear | None = (
+            nn.Linear(hidden_dim, 1) if adaptive_temperature else None
+        )
         self.slice_attn = _ExplicitMultiHeadAttention(hidden_dim, num_heads)
         self.norm1 = nn.LayerNorm(hidden_dim)
         self.ffn = nn.Sequential(
@@ -113,6 +136,10 @@ class PhysicsSliceAttention(nn.Module):
         Returns ``(updated_tokens (B, N, D), slice_tokens (B, S, D))``.
         """
         logits = self.slice_weights(tokens)
+        if self.temp_proj is not None:
+            # Transolver++ locally adaptive positive temperature preventing slice collapse
+            tau = torch.nn.functional.softplus(self.temp_proj(tokens)) + 0.25
+            logits = logits / tau
         pi = torch.softmax(logits, dim=-1)
         if token_mask is not None:
             mask_f = token_mask.to(dtype=tokens.dtype).unsqueeze(-1)
@@ -180,7 +207,12 @@ class Surface3DEnergyOperator(nn.Module):
         )
         self.encoder_blocks = nn.ModuleList(
             [
-                PhysicsSliceAttention(d, config.slice_count, config.num_heads)
+                PhysicsSliceAttention(
+                    d,
+                    config.slice_count,
+                    config.num_heads,
+                    adaptive_temperature=config.adaptive_temperature,
+                )
                 for _ in range(config.num_blocks)
             ]
         )
@@ -190,11 +222,19 @@ class Surface3DEnergyOperator(nn.Module):
             nn.GELU(),
             nn.Linear(d, d),
         )
-        self.query_in = nn.Sequential(
-            nn.Linear(pos_dim + d, d),
-            nn.GELU(),
-            nn.Linear(d, d),
-        )
+        if config.low_rank_query_dim is not None:
+            r_dim = config.low_rank_query_dim
+            self.query_in: nn.Sequential = nn.Sequential(
+                nn.Linear(pos_dim + d, r_dim),
+                nn.GELU(),
+                nn.Linear(r_dim, d),
+            )
+        else:
+            self.query_in = nn.Sequential(
+                nn.Linear(pos_dim + d, d),
+                nn.GELU(),
+                nn.Linear(d, d),
+            )
         self.query_cross_attn = _ExplicitMultiHeadAttention(d, config.num_heads)
         self.query_norm = nn.LayerNorm(d)
         self.extra_decoder_blocks = nn.ModuleList(
@@ -252,6 +292,21 @@ class Surface3DEnergyOperator(nn.Module):
             features_eff = features
             weights_eff = area_weights
         x = torch.cat((norm_c, normals_eff, features_eff), dim=-1)
+        # V6-R5 AB-UPT deterministic anchor-token subsampling for huge 3D surfaces
+        if (
+            self.config.anchor_count is not None
+            and x.shape[1] > self.config.anchor_count
+        ):
+            anchor_idx = torch.linspace(
+                0,
+                x.shape[1] - 1,
+                steps=self.config.anchor_count,
+                device=x.device,
+            ).long()
+            x = x[:, anchor_idx, :]
+            weights_eff = weights_eff[:, anchor_idx]
+            if surface_mask is not None:
+                surface_mask = surface_mask[:, anchor_idx]
         h = self.surface_in(x)
         if surface_mask is not None:
             h = h * surface_mask.to(dtype=h.dtype).unsqueeze(-1)
@@ -264,6 +319,28 @@ class Surface3DEnergyOperator(nn.Module):
             )
         return Surface3DEncoding(slice_tokens=slices, origin=origin, extent=extent)
 
+    def _decode_chunk(
+        self,
+        *,
+        encoding: Surface3DEncoding,
+        query_xyz: torch.Tensor,
+        p_emb_single: torch.Tensor,
+    ) -> torch.Tensor:
+        norm_q = (query_xyz - encoding.origin.unsqueeze(1)) / encoding.extent.unsqueeze(
+            1
+        )
+        pos = _fourier_encode_3d(norm_q, self.config.positional_frequencies)
+        p_emb = p_emb_single.expand(-1, query_xyz.shape[1], -1)
+        q_tok = self.query_in(torch.cat((pos, p_emb), dim=-1))
+        cross = self.query_cross_attn(
+            q_tok, encoding.slice_tokens, encoding.slice_tokens
+        )
+        q_tok = self.query_norm(q_tok + cross)
+        for dec_block in self.extra_decoder_blocks:
+            q_tok = dec_block(q_tok, encoding.slice_tokens)
+        raw_u: torch.Tensor = self.decoder_head(q_tok)
+        return raw_u
+
     def displacement(
         self,
         *,
@@ -274,21 +351,26 @@ class Surface3DEnergyOperator(nn.Module):
         lifting_scale: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Predict 3D displacement field ``(B, Q, 3)`` at arbitrary interior query points."""
-        norm_q = (query_xyz - encoding.origin.unsqueeze(1)) / encoding.extent.unsqueeze(
-            1
-        )
-        pos = _fourier_encode_3d(norm_q, self.config.positional_frequencies)
-        p_emb = (
-            self.param_proj(parameters).unsqueeze(1).expand(-1, query_xyz.shape[1], -1)
-        )
-        q_tok = self.query_in(torch.cat((pos, p_emb), dim=-1))
-        cross = self.query_cross_attn(
-            q_tok, encoding.slice_tokens, encoding.slice_tokens
-        )
-        q_tok = self.query_norm(q_tok + cross)
-        for dec_block in self.extra_decoder_blocks:
-            q_tok = dec_block(q_tok, encoding.slice_tokens)
-        raw_u: torch.Tensor = self.decoder_head(q_tok)
+        p_emb_single = self.param_proj(parameters).unsqueeze(1)
+        chunk = self.config.decode_chunk_size
+        if chunk is not None and query_xyz.shape[1] > chunk:
+            parts: list[torch.Tensor] = []
+            for start in range(0, query_xyz.shape[1], chunk):
+                end = min(start + chunk, query_xyz.shape[1])
+                parts.append(
+                    self._decode_chunk(
+                        encoding=encoding,
+                        query_xyz=query_xyz[:, start:end, :],
+                        p_emb_single=p_emb_single,
+                    )
+                )
+            raw_u = torch.cat(parts, dim=1)
+        else:
+            raw_u = self._decode_chunk(
+                encoding=encoding,
+                query_xyz=query_xyz,
+                p_emb_single=p_emb_single,
+            )
         if lifting_scale is not None:
             raw_u = raw_u * lifting_scale
         if lifting_offset is not None:

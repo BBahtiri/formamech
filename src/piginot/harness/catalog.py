@@ -2732,6 +2732,223 @@ def _register_v5_capabilities(reg: CapabilityRegistry) -> None:
     )
 
 
+def _register_v6_robotics_capabilities(reg: CapabilityRegistry) -> None:
+    """Register V6-R1..V6-R6 robotics continuum FEM, tactile, dynamics & control tools."""
+
+    def _solve_follower_3d(
+        _ctx: HarnessContext, args: Mapping[str, Any]
+    ) -> Mapping[str, Any]:
+        from piginot.contracts import MaterialSpec, Quantity, Unit
+        from piginot.fem.backend_3d import DirichletBC3D
+        from piginot.fem.follower_3d import (
+            FollowerPressureBC3D,
+            solve_3d_follower_pressure,
+        )
+        from piginot.geometry.mesh3d import make_brick_tet10_mesh
+
+        mesh = make_brick_tet10_mesh(
+            float(args.get("lx_mm", 20.0)),
+            float(args.get("ly_mm", 8.0)),
+            float(args.get("lz_mm", 4.0)),
+            nx=int(args.get("nx", 3)),
+            ny=int(args.get("ny", 2)),
+            nz=int(args.get("nz", 1)),
+        )
+        mat = MaterialSpec(
+            name="robotics-elastomer",
+            model="compressible_neo_hookean",
+            properties={
+                "elastic_modulus": Quantity(
+                    float(args.get("youngs_modulus_mpa", 2.0)), Unit.MPA
+                ).to_canonical(),
+                "poisson_ratio": Quantity(
+                    float(args.get("poisson_ratio", 0.45)), Unit.ONE
+                ).to_canonical(),
+            },
+        )
+        res = solve_3d_follower_pressure(
+            mesh,
+            mat,
+            dirichlet_bcs=(
+                DirichletBC3D("clamp", ("x_min",), ("x", "y", "z"), (0.0, 0.0, 0.0)),
+            ),
+            follower_bcs=(
+                FollowerPressureBC3D(
+                    "top_pressure",
+                    ("z_max",),
+                    pressure_mpa=float(args.get("pressure_mpa", 0.02)),
+                ),
+            ),
+            load_steps=int(args.get("load_steps", 2)),
+        )
+        return res.summary_document()
+
+    reg.register(
+        CapabilitySpec(
+            name="fem.solve_follower_pressure_3d",
+            domain=CapabilityDomain.FEM,
+            summary="Solve 3D finite-strain TET10 FEM under configuration-dependent follower pressure.",
+            description="Computes exact Nanson's-law 3D follower pressure equilibrium and unsymmetric load stiffness.",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "lx_mm": {"type": "number", "minimum": 2.0},
+                    "ly_mm": {"type": "number", "minimum": 2.0},
+                    "lz_mm": {"type": "number", "minimum": 1.0},
+                    "nx": {"type": "integer", "minimum": 1, "maximum": 8},
+                    "ny": {"type": "integer", "minimum": 1, "maximum": 8},
+                    "nz": {"type": "integer", "minimum": 1, "maximum": 4},
+                    "youngs_modulus_mpa": {"type": "number", "minimum": 0.05},
+                    "poisson_ratio": {
+                        "type": "number",
+                        "minimum": 0.0,
+                        "maximum": 0.49,
+                    },
+                    "pressure_mpa": {"type": "number"},
+                    "load_steps": {"type": "integer", "minimum": 1, "maximum": 10},
+                },
+                "additionalProperties": False,
+            },
+            cost_class=CostClass.SOLVER_ORACLE,
+            default_fem_solves=1,
+            tags=("robotics", "follower-pressure", "soft-robotics", "3d", "v6"),
+        ),
+        _solve_follower_3d,
+    )
+
+    def _solve_tendon_continuum(
+        _ctx: HarnessContext, args: Mapping[str, Any]
+    ) -> Mapping[str, Any]:
+        from piginot.fem.tendon_3d import (
+            CosseratBackboneSpec,
+            solve_3d_tendon_continuum_backbone,
+        )
+
+        spec = CosseratBackboneSpec(
+            length_mm=float(args.get("length_mm", 540.0)),
+            num_disks=int(args.get("num_disks", 9)),
+            youngs_modulus_mpa=float(args.get("youngs_modulus_mpa", 55_000.0)),
+            poisson_ratio=float(args.get("poisson_ratio", 0.33)),
+            outer_radius_mm=float(args.get("outer_radius_mm", 1.1)),
+            inner_radius_mm=float(args.get("inner_radius_mm", 0.6)),
+        )
+        tensions = tuple(
+            float(v) for v in args.get("tendon_tensions_n", [5.0, 0.0, 0.0, 0.0])
+        )
+        res = solve_3d_tendon_continuum_backbone(spec, tensions)
+        return res.summary_document()
+
+    reg.register(
+        CapabilitySpec(
+            name="fem.solve_tendon_continuum_3d",
+            domain=CapabilityDomain.FEM,
+            summary="Solve exact finite-rotation 3D Cosserat tendon-driven continuum backbone.",
+            description="Returns 6-DOF disk poses, FBG bending microstrains, tendon strokes, and base 6D wrench.",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "length_mm": {"type": "number", "minimum": 10.0},
+                    "num_disks": {"type": "integer", "minimum": 2, "maximum": 30},
+                    "youngs_modulus_mpa": {"type": "number", "minimum": 1.0},
+                    "poisson_ratio": {
+                        "type": "number",
+                        "minimum": 0.0,
+                        "maximum": 0.49,
+                    },
+                    "outer_radius_mm": {"type": "number", "minimum": 0.1},
+                    "inner_radius_mm": {"type": "number", "minimum": 0.0},
+                    "tendon_tensions_n": {
+                        "type": "array",
+                        "items": {"type": "number", "minimum": 0.0},
+                        "minItems": 4,
+                        "maxItems": 4,
+                    },
+                },
+                "additionalProperties": False,
+            },
+            cost_class=CostClass.SOLVER_ORACLE,
+            default_fem_solves=1,
+            tags=("robotics", "continuum", "tendon", "cosserat", "fbg", "v6"),
+        ),
+        _solve_tendon_continuum,
+    )
+
+    def _solve_sdf_contact(
+        _ctx: HarnessContext, args: Mapping[str, Any]
+    ) -> Mapping[str, Any]:
+        from piginot.fem.diff_contact_3d import SdfPrimitiveKind
+        from piginot.robotics.tactile import (
+            TactileSensorSpec,
+            simulate_tactile_probe_fem,
+        )
+
+        spec = TactileSensorSpec(
+            youngs_modulus_mpa=float(args.get("youngs_modulus_mpa", 0.25)),
+            poisson_ratio=float(args.get("poisson_ratio", 0.48)),
+            mesh_div_xyz=(3, 4, 1),
+        )
+        sample = simulate_tactile_probe_fem(
+            spec,
+            case_id="harness-probe",
+            probe_x_mm=float(args.get("probe_x_mm", 9.0)),
+            probe_y_mm=float(args.get("probe_y_mm", 12.0)),
+            depth_mm=float(args.get("depth_mm", 0.6)),
+            shear_dx_mm=float(args.get("shear_dx_mm", 0.0)),
+            shear_dy_mm=float(args.get("shear_dy_mm", 0.0)),
+            indenter_radius_mm=float(args.get("indenter_radius_mm", 4.0)),
+            indenter_kind=SdfPrimitiveKind(str(args.get("indenter_kind", "sphere"))),
+            load_steps=2,
+        )
+        return {
+            "case_id": sample.case_id,
+            "wrench_6d": list(sample.wrench_6d),
+            "max_slip_ratio": sample.max_slip_ratio,
+            "peak_von_mises_mpa": sample.peak_von_mises_mpa,
+            "fem_wall_time_s": sample.fem_wall_time_s,
+        }
+
+    reg.register(
+        CapabilitySpec(
+            name="fem.solve_sdf_contact_3d",
+            domain=CapabilityDomain.FEM,
+            summary="Solve 3D TET10 elastomer SDF contact and extract per-taxel wrench & slip ratio.",
+            description="Supports sphere, flat_punch, cylinder_pin, box, and wedge_edge rigid indenters with Coulomb friction.",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "youngs_modulus_mpa": {"type": "number", "minimum": 0.01},
+                    "poisson_ratio": {
+                        "type": "number",
+                        "minimum": 0.0,
+                        "maximum": 0.49,
+                    },
+                    "probe_x_mm": {"type": "number"},
+                    "probe_y_mm": {"type": "number"},
+                    "depth_mm": {"type": "number", "minimum": 0.05, "maximum": 2.5},
+                    "shear_dx_mm": {"type": "number"},
+                    "shear_dy_mm": {"type": "number"},
+                    "indenter_radius_mm": {"type": "number", "minimum": 0.5},
+                    "indenter_kind": {
+                        "type": "string",
+                        "enum": [
+                            "sphere",
+                            "flat_punch",
+                            "cylinder_pin",
+                            "box",
+                            "wedge_edge",
+                        ],
+                    },
+                },
+                "additionalProperties": False,
+            },
+            cost_class=CostClass.SOLVER_ORACLE,
+            default_fem_solves=1,
+            tags=("robotics", "tactile", "sdf-contact", "elastomer", "3d", "v6"),
+        ),
+        _solve_sdf_contact,
+    )
+
+
 def build_default_registry(*, include_plugins: bool = True) -> CapabilityRegistry:
     """Create a populated :class:`CapabilityRegistry` covering all FormaMech domains."""
     reg = CapabilityRegistry()
@@ -2743,6 +2960,7 @@ def build_default_registry(*, include_plugins: bool = True) -> CapabilityRegistr
     _register_v4_generative_capabilities(reg)
     _register_v4_fleet_continual_capabilities(reg)
     _register_v5_capabilities(reg)
+    _register_v6_robotics_capabilities(reg)
     if include_plugins:
         reg.load_entry_point_plugins()
     return reg
