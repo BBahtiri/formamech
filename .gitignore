@@ -38,3 +38,5 @@ S1-iteration8-review.md
 /artifacts/cross-family/
 /artifacts/campaign-compiler/
 /artifacts/release/
+# Local LinkedIn posts & social media GIF kits stay local (not tracked in Git).
+/linkedin_posts/

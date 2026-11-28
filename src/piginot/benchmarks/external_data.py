@@ -306,8 +306,18 @@ DATASET_REGISTRY: Final[Mapping[str, ExternalDatasetSpec]] = {
         url="https://huggingface.co/datasets/facebook/gelsight-force-estimation",
         license_name="CC-BY-NC-4.0",
         license_tier=LicenseTier.TIER_C_NONCOMMERCIAL_OPT_IN,
-        milestones=("V6-R2",),
-        description="GelSight Mini tactile images paired with ATI Nano17 3-axis forces and slip labels (non-commercial opt-in only).",
+        milestones=("V6-R2", "V7-R4"),
+        description="GelSight Mini tactile streams paired with ATI Nano17 3-axis forces and friction-cone slip labels (non-commercial opt-in only).",
+    ),
+    "soft-pneumatic-hysteresis-15584329": ExternalDatasetSpec(
+        name="soft-pneumatic-hysteresis-15584329",
+        title="Hysteresis Modeling of Soft Pneumatic Actuators (Zenodo 15584329)",
+        domain="soft-pneumatic-actuators",
+        url="https://doi.org/10.5281/zenodo.15584329",
+        license_name="CC-BY-4.0",
+        license_tier=LicenseTier.TIER_A_COMMERCIAL_CLEAN,
+        milestones=("V7-R1", "V7-R2"),
+        description="240,001-sample 30 Hz experimental input-output pneumatic actuator hysteresis review dataset.",
     ),
 }
 

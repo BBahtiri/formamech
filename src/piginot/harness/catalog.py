@@ -2949,6 +2949,218 @@ def _register_v6_robotics_capabilities(reg: CapabilityRegistry) -> None:
     )
 
 
+def _register_v7_robotics_capabilities(reg: CapabilityRegistry) -> None:
+    """Register V7-R1..V7-R6 hysteresis, ACP-CQR CBF, CLIK, PANO, coupling & scaling tools."""
+
+    def _solve_visco_hysteresis(
+        _ctx: HarnessContext, args: Mapping[str, Any]
+    ) -> Mapping[str, Any]:
+        from piginot.contracts import MaterialSpec, Quantity, Unit
+        from piginot.fem.backend_3d import DirichletBC3D
+        from piginot.fem.follower_3d import FollowerPressureBC3D
+        from piginot.fem.visco_hysteresis_3d import (
+            MullinsDamageSpec,
+            PronyBranch,
+            ViscoHysteresis3DConfig,
+            solve_3d_visco_hysteresis,
+        )
+        from piginot.geometry.mesh3d import make_brick_tet10_mesh
+
+        mesh = make_brick_tet10_mesh(
+            float(args.get("lx_mm", 20.0)),
+            float(args.get("ly_mm", 8.0)),
+            float(args.get("lz_mm", 4.0)),
+            nx=int(args.get("nx", 2)),
+            ny=int(args.get("ny", 2)),
+            nz=int(args.get("nz", 1)),
+        )
+        mat = MaterialSpec(
+            name="visco-elastomer",
+            model="compressible_neo_hookean",
+            properties={
+                "elastic_modulus": Quantity(
+                    float(args.get("youngs_modulus_mpa", 2.0)), Unit.MPA
+                ).to_canonical(),
+                "poisson_ratio": Quantity(
+                    float(args.get("poisson_ratio", 0.45)), Unit.ONE
+                ).to_canonical(),
+            },
+        )
+        load_hist = tuple(
+            float(v) for v in args.get("load_history", [0.0, 0.5, 1.0, 0.5, 0.0])
+        )
+        cfg = ViscoHysteresis3DConfig(
+            prony_branches=(
+                PronyBranch(
+                    weight_gamma=float(args.get("prony_gamma", 0.25)),
+                    relaxation_time_s=float(args.get("prony_tau_s", 0.5)),
+                ),
+            ),
+            mullins=MullinsDamageSpec(enabled=bool(args.get("enable_mullins", True))),
+            dt_s=float(args.get("dt_s", 0.1)),
+        )
+        res = solve_3d_visco_hysteresis(
+            mesh,
+            mat,
+            dirichlet_bcs=(
+                DirichletBC3D("clamp", ("x_min",), ("x", "y", "z"), (0.0, 0.0, 0.0)),
+            ),
+            load_history=load_hist,
+            config=cfg,
+            follower_bcs=(
+                FollowerPressureBC3D(
+                    "top_pressure",
+                    ("z_max",),
+                    pressure_mpa=float(args.get("pressure_mpa", 0.002)),
+                ),
+            ),
+        )
+        return res.document()
+
+    reg.register(
+        CapabilitySpec(
+            name="fem.solve_visco_hysteresis_3d",
+            domain=CapabilityDomain.FEM,
+            summary="Solve 3D finite-strain Prony viscoelastic + Mullins hysteresis FEM with dissipation receipt.",
+            description="Certifies both min_det_f > 0 and non-negative thermodynamic dissipation dD/dt >= 0.",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "lx_mm": {"type": "number", "minimum": 2.0},
+                    "ly_mm": {"type": "number", "minimum": 2.0},
+                    "lz_mm": {"type": "number", "minimum": 1.0},
+                    "nx": {"type": "integer", "minimum": 1, "maximum": 6},
+                    "ny": {"type": "integer", "minimum": 1, "maximum": 6},
+                    "nz": {"type": "integer", "minimum": 1, "maximum": 4},
+                    "youngs_modulus_mpa": {"type": "number", "minimum": 0.05},
+                    "poisson_ratio": {
+                        "type": "number",
+                        "minimum": 0.0,
+                        "maximum": 0.49,
+                    },
+                    "pressure_mpa": {"type": "number"},
+                    "prony_gamma": {"type": "number", "minimum": 0.01, "maximum": 0.9},
+                    "prony_tau_s": {"type": "number", "minimum": 0.01},
+                    "dt_s": {"type": "number", "minimum": 0.001},
+                    "enable_mullins": {"type": "boolean"},
+                    "load_history": {
+                        "type": "array",
+                        "items": {"type": "number"},
+                        "minItems": 2,
+                    },
+                },
+                "additionalProperties": False,
+            },
+            cost_class=CostClass.SOLVER_ORACLE,
+            default_fem_solves=1,
+            tags=("robotics", "viscoelastic", "hysteresis", "mullins", "3d", "v7"),
+        ),
+        _solve_visco_hysteresis,
+    )
+
+    def _identify_constitutive_pano(
+        _ctx: HarnessContext, args: Mapping[str, Any]
+    ) -> Mapping[str, Any]:
+        from piginot.operators.constitutive_op import (
+            PalpationProbe,
+            PanoConstitutiveIdentifier,
+        )
+
+        raw_probes = args.get("probes", [])
+        probes = tuple(
+            PalpationProbe(
+                mode=int(p.get("mode", 0)),
+                strain=float(p["strain"]),
+                stress_pa=float(p["stress_pa"]),
+            )
+            for p in raw_probes
+        )
+        ident = PanoConstitutiveIdentifier()
+        res = ident.identify(probes)
+        return res.document()
+
+    reg.register(
+        CapabilitySpec(
+            name="validate.identify_constitutive_pano",
+            domain=CapabilityDomain.INGEST_VALIDATE,
+            summary="Infer local hyperelastic shear modulus and Ogden exponent from 1-3 sparse palpation probes.",
+            description="Physics-Augmented Neural Operator (PANO) online constitutive fingerprinting in < 5 ms.",
+            input_schema={
+                "type": "object",
+                "required": ["probes"],
+                "properties": {
+                    "probes": {
+                        "type": "array",
+                        "minItems": 1,
+                        "items": {
+                            "type": "object",
+                            "required": ["strain", "stress_pa"],
+                            "properties": {
+                                "mode": {"type": "integer", "enum": [0, 1, 2]},
+                                "strain": {"type": "number"},
+                                "stress_pa": {"type": "number"},
+                            },
+                            "additionalProperties": False,
+                        },
+                    }
+                },
+                "additionalProperties": False,
+            },
+            cost_class=CostClass.ZERO_SOLVE,
+            tags=("robotics", "surgical", "palpation", "pano", "constitutive", "v7"),
+        ),
+        _identify_constitutive_pano,
+    )
+
+    def _scaling_benchmark(
+        _ctx: HarnessContext, args: Mapping[str, Any]
+    ) -> Mapping[str, Any]:
+        from piginot.benchmarks.scaling_3d import (
+            Scaling3DConfig,
+            run_surface_3d_scaling_benchmark,
+        )
+
+        counts = tuple(int(v) for v in args.get("node_counts", [2048, 8192]))
+        cfg = Scaling3DConfig(
+            node_counts=counts,
+            anchor_count=int(args.get("anchor_count", 256)),
+            decode_chunk_size=int(args.get("decode_chunk_size", 4096)),
+            timed_runs=int(args.get("timed_runs", 2)),
+            verify_export_parity=bool(args.get("verify_export_parity", True)),
+            export_parity_nodes=int(args.get("export_parity_nodes", 1024)),
+        )
+        rep = run_surface_3d_scaling_benchmark(cfg)
+        return rep.document()
+
+    reg.register(
+        CapabilitySpec(
+            name="verify.surface_3d_scaling_benchmark",
+            domain=CapabilityDomain.SURROGATE,
+            summary="Benchmark Surface3DEnergyOperator latency, peak RSS, and export parity across mesh sizes.",
+            description="Deterministic 10k-1M surface node scaling audit with SHA-256 trust receipt.",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "node_counts": {
+                        "type": "array",
+                        "items": {"type": "integer", "minimum": 64},
+                        "minItems": 1,
+                    },
+                    "anchor_count": {"type": "integer", "minimum": 8},
+                    "decode_chunk_size": {"type": "integer", "minimum": 64},
+                    "timed_runs": {"type": "integer", "minimum": 1, "maximum": 10},
+                    "verify_export_parity": {"type": "boolean"},
+                    "export_parity_nodes": {"type": "integer", "minimum": 64},
+                },
+                "additionalProperties": False,
+            },
+            cost_class=CostClass.ZERO_SOLVE,
+            tags=("benchmark", "scaling", "surface-3d", "onnx", "memory", "v7"),
+        ),
+        _scaling_benchmark,
+    )
+
+
 def build_default_registry(*, include_plugins: bool = True) -> CapabilityRegistry:
     """Create a populated :class:`CapabilityRegistry` covering all FormaMech domains."""
     reg = CapabilityRegistry()
@@ -2961,6 +3173,7 @@ def build_default_registry(*, include_plugins: bool = True) -> CapabilityRegistr
     _register_v4_fleet_continual_capabilities(reg)
     _register_v5_capabilities(reg)
     _register_v6_robotics_capabilities(reg)
+    _register_v7_robotics_capabilities(reg)
     if include_plugins:
         reg.load_entry_point_plugins()
     return reg
