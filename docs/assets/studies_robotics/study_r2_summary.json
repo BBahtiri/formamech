@@ -1,0 +1,81 @@
+{
+  "study_id": "study_r2_continuum_tendon_twin",
+  "title": "Continuum & Tendon-Driven Robot Digital Twin (CRL-CTCR + Gotelli 9-Disk Backbone)",
+  "datasets": [
+    {
+      "id": "crl-ctcr-pose",
+      "license": "MIT",
+      "tier": "A",
+      "total_poses": 100000
+    },
+    {
+      "id": "gotelli-continuum-tdcr",
+      "license": "CC-BY-4.0",
+      "tier": "A",
+      "hardware_stls": [
+        "3D print parts/Mark10 mount 1.stl",
+        "3D print parts/Mark10 mount 2.stl",
+        "3D print parts/base disk.stl",
+        "3D print parts/disk.stl",
+        "3D print parts/motor mount.stl",
+        "3D print parts/motor pulley.stl",
+        "3D print parts/pulley holder.stl",
+        "3D print parts/pulley.stl",
+        "3D print parts/robot station.stl",
+        "3D print parts/tip disk.stl",
+        "__MACOSX/3D print parts/._Mark10 mount 1.stl",
+        "__MACOSX/3D print parts/._Mark10 mount 2.stl",
+        "__MACOSX/3D print parts/._base disk.stl",
+        "__MACOSX/3D print parts/._disk.stl",
+        "__MACOSX/3D print parts/._motor mount.stl",
+        "__MACOSX/3D print parts/._motor pulley.stl",
+        "__MACOSX/3D print parts/._pulley holder.stl",
+        "__MACOSX/3D print parts/._pulley.stl",
+        "__MACOSX/3D print parts/._robot station.stl",
+        "__MACOSX/3D print parts/._tip disk.stl"
+      ]
+    }
+  ],
+  "ctcr_real_data_holdout": {
+    "split_protocol": "50 leak-free contiguous trajectory episodes (30 train / 10 dev / 10 blind holdout)",
+    "holdout_poses_evaluated": 5000,
+    "tip_mean_error_mm": 0.71,
+    "tip_rmse_mm": 1.383,
+    "tip_p95_error_mm": 1.443,
+    "mid_tube_mean_error_mm": 0.472,
+    "as6983_target_coverage": 0.9,
+    "as6983_upper_coverage": 0.8832,
+    "as6983_quantile_mm": 0.986,
+    "as6983_certified": true,
+    "median_inference_ms": 0.5268,
+    "p95_inference_ms": 1.0109,
+    "inference_hz": 1898.1,
+    "in_dist_mean_error_mm": 0.709,
+    "high_jump_ood_error_mm": 0.72
+  },
+  "cosserat_9disk_backbone": {
+    "length_mm": 540.0,
+    "num_disks": 9,
+    "pitch_diameter_mm": 37.5,
+    "max_bending_angle_deg": 55.78,
+    "mean_fem_solve_ms": 2165.76,
+    "fbg_inverse_force_true_n": [
+      0.18,
+      -0.24
+    ],
+    "fbg_inverse_force_est_n": [
+      0.18,
+      -0.24
+    ],
+    "fbg_inverse_force_error_n": 0.0003,
+    "fbg_noise_microstrain": 4.0
+  },
+  "solid_3d_tendon_capstan": {
+    "converged": true,
+    "max_displacement_mm": 17.998,
+    "tendon_stroke_mm": 5.423,
+    "capstan_tip_tension_n": 11.332,
+    "min_det_f": 0.9478
+  },
+  "wall_time_s": 111.68
+}

@@ -1,0 +1,142 @@
+{
+  "study_id": "study_r1_tactile_elastomer",
+  "title": "GelSight Mini 3D TET10 Elastomer Contact Digital Twin",
+  "datasets": [
+    {
+      "id": "feats-gelsight-mini",
+      "license": "MIT",
+      "tier": "A"
+    },
+    {
+      "id": "glowtact-gelsight-cnc",
+      "license": "CC-BY-4.0",
+      "tier": "A",
+      "probe_count": 3997
+    }
+  ],
+  "cad_import": {
+    "imported_ok": true,
+    "source_file": "gelsight_mini.step",
+    "source_sha256": "10ae4c1b9891419bdf6a056de24667638c3ff0ab72623112bb58214e41b5fc97",
+    "volume_mm3": 1890.455136118092,
+    "surface_area_mm2": 1304.1161704346591,
+    "face_count": 57,
+    "bbox_mm": [
+      25.25,
+      4.0,
+      20.75
+    ]
+  },
+  "incompressibility_guard": {
+    "poisson_ratio": 0.48,
+    "tet4_refused": true,
+    "tet4_refusal_reason": "TET4 linear tetrahedra are refused for nearly incompressible hyperelasticity (poisson_ratio=0.480 >= 0.45); use TET10 or HEX8.",
+    "tet10_accepted": true,
+    "tet10_nodes": 189,
+    "tet10_cells": 72
+  },
+  "fem_sdf_primitives": {
+    "sphere": {
+      "converged": true,
+      "fz_n_at_1mpa": 4.537991396872912,
+      "active_nodes": 1,
+      "min_det_f": 0.9451091574292938,
+      "newton_iters": 44,
+      "wall_time_s": 2.55795029993169
+    },
+    "flat_punch": {
+      "converged": true,
+      "fz_n_at_1mpa": 4.089290171364322,
+      "active_nodes": 2,
+      "min_det_f": 0.9507852442672298,
+      "newton_iters": 23,
+      "wall_time_s": 1.196227200096473
+    },
+    "box": {
+      "converged": true,
+      "fz_n_at_1mpa": 4.089294634056879,
+      "active_nodes": 2,
+      "min_det_f": 0.9507854431394201,
+      "newton_iters": 23,
+      "wall_time_s": 1.1513092000968754
+    },
+    "wedge_edge": {
+      "converged": true,
+      "fz_n_at_1mpa": 0.014936512920446522,
+      "active_nodes": 1,
+      "min_det_f": 0.9998200277856777,
+      "newton_iters": 5,
+      "wall_time_s": 4.269040199927986
+    }
+  },
+  "diffmjx_cfd_verification": {
+    "separated_forward_force_n": -0.0,
+    "penetrating_forward_force_n": -15.0,
+    "separated_backward_grad": 17.652898329779326,
+    "penetrating_backward_grad": 39.08129187996325
+  },
+  "physical_calibration": {
+    "calibrated_youngs_modulus_mpa": 0.8677,
+    "electronic_noise_std_n": 0.22439,
+    "force_monitor_samples": 14737,
+    "u_exp_probe_n": 0.7486,
+    "contact_onset_z0_mm": 0.44
+  },
+  "asme_vv10_grounding": {
+    "state": "VALIDATED",
+    "experimental_validation_tier": "HOLDOUT_EXPERIMENTALLY_VALIDATED",
+    "numerical_claim_level": "NOT_VERIFIED",
+    "raw_fem_holdout_rmse_n": 2.2663,
+    "grounded_hybrid_holdout_rmse_n": 0.6871,
+    "fitted_prior_scale_rho": 0.9954,
+    "calibration_n": 36,
+    "holdout_n": 48
+  },
+  "active_test_reduction": {
+    "target_holdout_rmse_n": 0.85,
+    "active_tests_needed": 14,
+    "random_mean_tests_needed": 23.2,
+    "tests_saved_pct": 39.7
+  },
+  "surrogate_as6983_holdout": {
+    "holdout_count": 120,
+    "holdout_rmse_n": 1.5943,
+    "holdout_mae_n": 1.1118,
+    "as6983_target_coverage": 0.9,
+    "as6983_two_sided_coverage": 0.9167,
+    "as6983_upper_coverage": 0.95,
+    "as6983_certified": true,
+    "median_inference_ms": 1.257,
+    "p95_inference_ms": 2.299,
+    "inference_hz": 795.5,
+    "mean_fem_solve_s": 1.877,
+    "speedup_factor": 1492.9
+  },
+  "cross_geometry_ood": {
+    "round": {
+      "count": 150,
+      "raw_fem_rmse_n": 2.623676170432579,
+      "mean_bias_n": 0.010121190614135382,
+      "median_force_n": 10.38
+    },
+    "quad": {
+      "count": 150,
+      "raw_fem_rmse_n": 3.259925018125994,
+      "mean_bias_n": -1.0020171700461709,
+      "median_force_n": 9.14
+    },
+    "triangle": {
+      "count": 150,
+      "raw_fem_rmse_n": 7.093300851755587,
+      "mean_bias_n": -6.749620502482424,
+      "median_force_n": 8.615
+    },
+    "five_star": {
+      "count": 150,
+      "raw_fem_rmse_n": 7.3461490601410615,
+      "mean_bias_n": -6.820861700868324,
+      "median_force_n": 10.08
+    }
+  },
+  "wall_time_s": 25.16
+}

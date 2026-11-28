@@ -1,0 +1,61 @@
+{
+  "study_id": "study_r5_nist_assembly_codesign",
+  "title": "REASSEMBLE NIST Assembly Jamming Detection & Verified 3D Compliant Gripper Co-Design",
+  "datasets": [
+    {
+      "id": "nist-reassemble",
+      "license": "CC-BY-4.0",
+      "tier": "A",
+      "total_frames_30hz": 148444,
+      "episodes_loaded": 15,
+      "segments_total": 499
+    }
+  ],
+  "jamming_detection_holdout": {
+    "split_protocol": "15 leak-free physical episodes (9 train / 3 dev / 3 blind holdout)",
+    "holdout_segments": 82,
+    "holdout_failed_segments": 16,
+    "auroc": 0.6193,
+    "recall": 0.5625,
+    "precision": 0.2727,
+    "confusion": {
+      "tp": 9,
+      "fp": 24,
+      "fn": 7,
+      "tn": 42
+    },
+    "alarm_threshold": 0.868
+  },
+  "wrench_bridge_trace": {
+    "source_episode": "nist-ep-002",
+    "trace_sha256": "882cd1c0e533d5c7eecb348aad6cd8c93ea09c7e6ba19f7afc71bff8b318e1c5",
+    "peak_force_n": 35.32,
+    "peak_torque_nm": 3.284
+  },
+  "compliant_gripper_simp_3d": {
+    "state": "CERTIFIED",
+    "claim_level": "SINGLE_POINT_VERIFIED",
+    "target_volume_fraction": 0.58,
+    "achieved_volume_fraction": 0.58,
+    "retained_element_fraction": 0.924,
+    "initial_compliance_mj": 17.3595,
+    "final_simp_compliance_mj": 9.7964,
+    "certified_fem_compliance_mj": 3.5847,
+    "certified_max_displacement_mm": 0.1044,
+    "mass_reduction_pct": 7.6
+  },
+  "brep_and_sim_exports": {
+    "watertight_brep_step": {
+      "synthesized": true,
+      "step_sha256": "b6ade406060d05f40db76f5daf0b95d62af372a67c8dd6b0cd0d3cbfb0bce959",
+      "volume_mm3": 10387.29,
+      "open_boundary_edges": 0,
+      "nonmanifold_edges": 0,
+      "watertight": true
+    },
+    "mujoco_mjcf_sha256": "0b90422d7c3031b8f1d122ed8843656522589c5e341e9db38f762ffcb77496b4",
+    "ros2_manifest_sha256": "7c756f8255ea5b83cbf9cf50cce9e111869aeddd0b64bea44d802267d6824214",
+    "ros2_rate_hz": 120.0
+  },
+  "wall_time_s": 2.16
+}

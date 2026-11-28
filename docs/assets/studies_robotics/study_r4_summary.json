@@ -1,0 +1,80 @@
+{
+  "study_id": "study_r4_surgical_tissue",
+  "title": "Human Brain Ultra-Soft Hyperelastic 3D FEM & AB-UPT/Transolver++ Runtime Surrogate",
+  "datasets": [
+    {
+      "id": "human-brain-hyperelastic",
+      "license": "CC-BY-4.0",
+      "tier": "A",
+      "specimens_parsed": 182
+    },
+    {
+      "id": "hbe-regional-neohooke",
+      "license": "CC-BY-4.0",
+      "tier": "A",
+      "regions": 9
+    }
+  ],
+  "regional_moduli_pa": {
+    "min_corpus_callosum_pa": 85.85,
+    "max_cortex_pa": 434.0,
+    "regions": [
+      {
+        "region": "basal ganglia",
+        "shear_modulus_pa": 386.37
+      },
+      {
+        "region": "brain stem",
+        "shear_modulus_pa": 357.7
+      },
+      {
+        "region": "cortex",
+        "shear_modulus_pa": 434.0
+      },
+      {
+        "region": "cerebellum",
+        "shear_modulus_pa": 302.47
+      },
+      {
+        "region": "corpus callosum",
+        "shear_modulus_pa": 85.85
+      },
+      {
+        "region": "corona radiata",
+        "shear_modulus_pa": 248.3
+      },
+      {
+        "region": "hippocampus",
+        "shear_modulus_pa": 272.31
+      },
+      {
+        "region": "midbrain",
+        "shear_modulus_pa": 330.64
+      },
+      {
+        "region": "amygdala",
+        "shear_modulus_pa": 409.67
+      }
+    ]
+  },
+  "asme_vv10_donor_holdout": {
+    "state": "REJECTED",
+    "experimental_validation_tier": "COUPON_CALIBRATED",
+    "raw_fem_holdout_rmse_pa": 237.13,
+    "grounded_hybrid_holdout_rmse_pa": 210.54,
+    "exp_10pct_median_stress_pa": 239.0,
+    "fem_cortex_10pct_stress_pa": 189.08
+  },
+  "abupt_transolver_surrogate": {
+    "architecture": "Surface3DEnergyOperator (V6-R5 AB-UPT anchors=32, adaptive_temperature=True, low_rank=16)",
+    "export_format": "torchscript",
+    "export_parity_max_err": 0.0,
+    "export_sha256": "f66c16e238f28871a351d911774a29c7bd38f79bc91f802ac69186cda8bcb8cf",
+    "holdout_mean_disp_rel_l2_pct": 31.06,
+    "as6983_upper_coverage": 1.0,
+    "as6983_certified": true,
+    "median_inference_ms": 1.882,
+    "mean_fem_solve_s": 0.652
+  },
+  "wall_time_s": 47.6
+}

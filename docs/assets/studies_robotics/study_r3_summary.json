@@ -1,0 +1,111 @@
+{
+  "study_id": "study_r3_pneumatic_soft_mpc",
+  "title": "Soft Pneumatic Follower-Pressure FEM & Real-Time Port-Hamiltonian QP-MPC + Conformal CBF",
+  "datasets": [
+    {
+      "id": "joshi-paik-soft-actuator",
+      "license": "CC-BY-4.0",
+      "tier": "A"
+    },
+    {
+      "id": "sponge-soft-robot",
+      "license": "CC-BY-SA-4.0",
+      "tier": "B-eval-only",
+      "hygiene_note": "Evaluated locally only; zero raw data or derived weights exported to Git."
+    }
+  ],
+  "joshi_follower_fem_vv10": {
+    "pressure_range_kpa": [
+      0,
+      200
+    ],
+    "replicates_per_pressure": 3,
+    "state": "REJECTED",
+    "experimental_validation_tier": "COUPON_CALIBRATED",
+    "raw_fem_holdout_rmse_n": 3.233,
+    "grounded_hybrid_holdout_rmse_n": 1.296,
+    "max_fem_tip_disp_mm": 15.658,
+    "min_det_f": 0.959
+  },
+  "sponge_port_hamiltonian_eval": {
+    "passivity_verified": true,
+    "min_dissipation_eig": 0.00013,
+    "min_mass_inv_eig": 0.00126,
+    "in_dist_0deg_0g_rmse_deg": 0.729,
+    "ood_regimes": [
+      {
+        "regime": "0deg_0g",
+        "orientation_deg": 0,
+        "payload_g": 0,
+        "rollout_0p2s_rmse_deg": 0.729,
+        "is_ood_shift": false
+      },
+      {
+        "regime": "0deg_50g",
+        "orientation_deg": 0,
+        "payload_g": 50,
+        "rollout_0p2s_rmse_deg": 1.528,
+        "is_ood_shift": true
+      },
+      {
+        "regime": "0deg_100g",
+        "orientation_deg": 0,
+        "payload_g": 100,
+        "rollout_0p2s_rmse_deg": 0.577,
+        "is_ood_shift": true
+      },
+      {
+        "regime": "0deg_200g",
+        "orientation_deg": 0,
+        "payload_g": 200,
+        "rollout_0p2s_rmse_deg": 0.877,
+        "is_ood_shift": true
+      },
+      {
+        "regime": "45deg_0g",
+        "orientation_deg": 45,
+        "payload_g": 0,
+        "rollout_0p2s_rmse_deg": 0.952,
+        "is_ood_shift": true
+      },
+      {
+        "regime": "45deg_100g",
+        "orientation_deg": 45,
+        "payload_g": 100,
+        "rollout_0p2s_rmse_deg": 0.892,
+        "is_ood_shift": true
+      },
+      {
+        "regime": "90deg_0g",
+        "orientation_deg": 90,
+        "payload_g": 0,
+        "rollout_0p2s_rmse_deg": 0.956,
+        "is_ood_shift": true
+      },
+      {
+        "regime": "90deg_200g",
+        "orientation_deg": 90,
+        "payload_g": 200,
+        "rollout_0p2s_rmse_deg": 1.131,
+        "is_ood_shift": true
+      }
+    ]
+  },
+  "qp_mpc_conformal_cbf": {
+    "horizon_steps": 10,
+    "dt_s": 0.02,
+    "median_step_ms": 0.467,
+    "p95_step_ms": 0.701,
+    "control_rate_hz": 2142.2,
+    "pinn_nmpc_reference_hz": 47.0,
+    "q1_safety_limit_rad": 0.145,
+    "conformal_margin_rad": 0.015,
+    "cbf_barrier_violations": 0,
+    "unfiltered_mpc_violations": 24,
+    "cbf_modified_steps": 31,
+    "safe_hold_ood_steps": 7,
+    "max_q1_safe_rad": 0.1124,
+    "max_q1_unfiltered_rad": 0.1776
+  },
+  "wall_time_s": 24.62
+}
