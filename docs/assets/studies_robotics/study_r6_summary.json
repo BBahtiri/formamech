@@ -1,0 +1,158 @@
+{
+  "study_id": "study_r6_dynamic_tactile_slip",
+  "title": "Dynamic 3-Axis Tactile Force & Friction-Cone Slip-Onset Control (V6-R2 + V7-R4)",
+  "datasets": [
+    {
+      "id": "sparsh-gelsight-force",
+      "license": "CC-BY-NC-4.0",
+      "tier": "C-noncommercial-eval-only",
+      "hygiene_note": "Evaluated locally only; zero raw data or derived weights exported to Git.",
+      "trajectories_total": 1513,
+      "frames_total": 102628,
+      "slip_frames": 28104
+    }
+  ],
+  "fem_3d_coupled_normal_shear": [
+    {
+      "indenter": "sphere",
+      "depth_mm": 0.45,
+      "shear_dx_mm": 0.0,
+      "fx_n": -0.0377,
+      "fy_n": -0.0241,
+      "fz_n": 0.8704,
+      "max_slip_ratio": 0.1714,
+      "peak_vm_mpa": 0.0404,
+      "wall_time_s": 1.256
+    },
+    {
+      "indenter": "sphere",
+      "depth_mm": 0.5,
+      "shear_dx_mm": 0.35,
+      "fx_n": 0.457,
+      "fy_n": 0.0577,
+      "fz_n": 1.1812,
+      "max_slip_ratio": 1.2999,
+      "peak_vm_mpa": 0.0417,
+      "wall_time_s": 1.814
+    },
+    {
+      "indenter": "sphere",
+      "depth_mm": 0.65,
+      "shear_dx_mm": 0.5,
+      "fx_n": 0.7547,
+      "fy_n": 0.0804,
+      "fz_n": 1.6375,
+      "max_slip_ratio": 1.5451,
+      "peak_vm_mpa": 0.0544,
+      "wall_time_s": 2.735
+    },
+    {
+      "indenter": "flat",
+      "depth_mm": 0.45,
+      "shear_dx_mm": 0.0,
+      "fx_n": -0.0,
+      "fy_n": -0.0,
+      "fz_n": 3.7154,
+      "max_slip_ratio": 0.0,
+      "peak_vm_mpa": 0.0416,
+      "wall_time_s": 1.483
+    },
+    {
+      "indenter": "flat",
+      "depth_mm": 0.5,
+      "shear_dx_mm": 0.35,
+      "fx_n": 1.0598,
+      "fy_n": 0.1404,
+      "fz_n": 4.8819,
+      "max_slip_ratio": 1.0012,
+      "peak_vm_mpa": 0.0502,
+      "wall_time_s": 4.267
+    },
+    {
+      "indenter": "flat",
+      "depth_mm": 0.65,
+      "shear_dx_mm": 0.5,
+      "fx_n": 1.5213,
+      "fy_n": 0.1822,
+      "fz_n": 6.7252,
+      "max_slip_ratio": 1.0013,
+      "peak_vm_mpa": 0.0671,
+      "wall_time_s": 4.075
+    },
+    {
+      "indenter": "sharp",
+      "depth_mm": 0.45,
+      "shear_dx_mm": 0.0,
+      "fx_n": -0.0734,
+      "fy_n": -0.0,
+      "fz_n": 0.0789,
+      "max_slip_ratio": 3.0988,
+      "peak_vm_mpa": 0.0068,
+      "wall_time_s": 4.481
+    },
+    {
+      "indenter": "sharp",
+      "depth_mm": 0.5,
+      "shear_dx_mm": 0.35,
+      "fx_n": 0.1668,
+      "fy_n": -0.0051,
+      "fz_n": 0.0663,
+      "max_slip_ratio": 8.3982,
+      "peak_vm_mpa": 0.0094,
+      "wall_time_s": 1.179
+    },
+    {
+      "indenter": "sharp",
+      "depth_mm": 0.65,
+      "shear_dx_mm": 0.5,
+      "fx_n": 0.2704,
+      "fy_n": -0.0127,
+      "fz_n": 0.0762,
+      "max_slip_ratio": 11.8394,
+      "peak_vm_mpa": 0.0154,
+      "wall_time_s": 1.295
+    }
+  ],
+  "blind_holdout_metrics": {
+    "split_protocol": "Leak-free trajectory split (908 train / 303 dev / 302 blind holdout)",
+    "holdout_frames": 19727,
+    "rmse_3axis_n": 0.0451,
+    "rmse_fx_n": 0.0457,
+    "rmse_fy_n": 0.049,
+    "rmse_fz_n": 0.0401,
+    "rmse_force_mag_n": 0.0528,
+    "slip_onset_auroc": 0.9998,
+    "slip_recall_at_10pct_dev_fpr": 0.9996,
+    "slip_fpr_holdout": 0.0205,
+    "physics_cone_ratio_auroc": 0.9945,
+    "per_indenter_shape": {
+      "sphere": {
+        "frames": 12953,
+        "rmse_3axis_n": 0.0303,
+        "slip_auroc": 1.0
+      },
+      "flat": {
+        "frames": 2421,
+        "rmse_3axis_n": 0.0723,
+        "slip_auroc": 0.9982
+      },
+      "sharp": {
+        "frames": 4353,
+        "rmse_3axis_n": 0.0596,
+        "slip_auroc": 0.9992
+      }
+    },
+    "as6983_upper_coverage": 0.9518,
+    "as6983_conformal_shift_n": 0.0763,
+    "median_inference_ms": 0.4209,
+    "p95_inference_ms": 0.7663,
+    "control_rate_hz": 2376.1
+  },
+  "pass_gates": {
+    "force_rmse_lt_0p5n": true,
+    "slip_auroc_ge_0p90": true,
+    "inference_lt_2ms": true,
+    "as6983_coverage_ge_95pct": true
+  },
+  "wall_time_s": 59.45
+}

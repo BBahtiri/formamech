@@ -1,0 +1,82 @@
+{
+  "study_id": "study_r5_v2_contact_diagnostics",
+  "title": "REASSEMBLE 36D Port-Hamiltonian & Temporal-Bundle Jamming Estimator (V7-R4)",
+  "datasets": [
+    {
+      "id": "nist-reassemble",
+      "license": "CC-BY-4.0",
+      "tier": "A",
+      "shards_loaded": 3,
+      "total_frames_30hz": 428683,
+      "episodes_loaded": 45,
+      "segments_total": 1463,
+      "v6_file000_frames_30hz": 148444
+    }
+  ],
+  "split_protocol": "Strict leak-free physical episode split (seed=29): 45-ep (27/9/9) primary + 15-ep file-000 (9/3/3) v0.6 parity",
+  "v6_baseline_holdout": {
+    "auroc": 0.6193,
+    "recall": 0.5625,
+    "fpr": 0.3636,
+    "precision": 0.2727
+  },
+  "v7_r4_segment_holdout": {
+    "ensemble_linear_weight": 0.0,
+    "train_segments": 862,
+    "dev_segments": 305,
+    "holdout_segments": 296,
+    "holdout_failed_segments": 35,
+    "dev_auroc": 0.9771,
+    "dev_recall": 0.9286,
+    "dev_fpr": 0.057,
+    "decision_threshold": 0.2775,
+    "auroc": 0.9084,
+    "recall": 0.8,
+    "fpr": 0.0996,
+    "precision": 0.5185,
+    "recall_at_exact_10pct_holdout_fpr": 0.7714,
+    "confusion": {
+      "tp": 28,
+      "fp": 26,
+      "fn": 7,
+      "tn": 235
+    },
+    "auroc_gain_vs_v6": 0.2891,
+    "per_segment_inference_ms": 0.019
+  },
+  "v7_r4_identical_15ep_holdout": {
+    "ensemble_linear_weight": 0.75,
+    "train_segments": 292,
+    "dev_segments": 125,
+    "holdout_segments": 82,
+    "holdout_failed_segments": 16,
+    "dev_auroc": 0.9582,
+    "dev_recall": 0.8571,
+    "dev_fpr": 0.027,
+    "decision_threshold": 0.2853,
+    "auroc": 0.8788,
+    "recall": 0.6875,
+    "fpr": 0.1667,
+    "precision": 0.5,
+    "recall_at_exact_10pct_holdout_fpr": 0.6875,
+    "confusion": {
+      "tp": 11,
+      "fp": 11,
+      "fn": 5,
+      "tn": 55
+    },
+    "auroc_gain_vs_v6": 0.2595,
+    "per_segment_inference_ms": 0.0669
+  },
+  "v7_r4_frame_realtime_30hz": {
+    "dev_auroc": 0.5251,
+    "per_frame_inference_ms": 0.0047,
+    "receipt_sha256": "1d0ab8bba99c04d687176b5a253a7f20ed70c875a8b250349db817ecdbbc319e"
+  },
+  "pass_gates": {
+    "auroc_ge_0p85": true,
+    "recall_ge_80pct": true,
+    "fpr_le_10pct": true
+  },
+  "wall_time_s": 18.92
+}

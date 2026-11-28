@@ -43,11 +43,12 @@ DATASET_FILES: dict[str, dict[str, Any]] = {
         },
     },
     "r3_soft_pneumatic": {
-        "license": "CC-BY-4.0 (Joshi & Paik Zenodo 3627901) + CC-BY-SA-4.0 eval-only (SPONGE RepoLUH 19854)",
+        "license": "CC-BY-4.0 (Joshi & Paik Zenodo 3627901 + Pneumatic Hysteresis Zenodo 15584329) + CC-BY-SA-4.0 eval-only (SPONGE RepoLUH 19854)",
         "tier": "TIER_A_AND_TIER_B_EVAL_ONLY",
         "files": {
             "joshi_pulling_force.zip": "https://zenodo.org/api/records/3627901/files/Raw%20Data%20-%20Pulling%20Force.zip/content",
             "joshi_tip_force.zip": "https://zenodo.org/api/records/3627901/files/Raw%20Data%20-%20Tip%20Force.zip/content",
+            "hysteresis_zenodo_15584329.csv": "https://zenodo.org/api/records/15584329/files/data.csv/content",
             "sponge_5dof.zip": "https://repo.uni-hannover.de/server/api/core/bitstreams/0fe7fa2e-ad9d-494b-9b24-a000e215b81c/content",
         },
     },

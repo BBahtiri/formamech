@@ -1,0 +1,158 @@
+{
+  "study_id": "study_r7_physcore_twoway_coupling",
+  "title": "Real-to-Sim Deformable Manipulation & Live Two-Way Coupling (PhysCoRe + V7-R1 + V7-R5)",
+  "datasets": [
+    {
+      "id": "physcore-phystwin",
+      "license": "MIT (PhysTwin) + CC-BY-4.0 (PhysCoRe)",
+      "tier": "A",
+      "episodes_evaluated": 8
+    }
+  ],
+  "tet10_visco_fem_calibration": {
+    "converged": true,
+    "thermodynamically_admissible": true,
+    "min_det_f": 0.9994,
+    "effective_stiffness_n_per_mm": 1.5516,
+    "receipt_sha256": "9d580c0833dee3c2405d8bc4eeb0605d6ba033ef56f09c4bcfd0af72d1c10097"
+  },
+  "physcore_blind_holdout_tracking": {
+    "episodes_count": 8,
+    "rollout_horizon_steps": 3,
+    "rollout_horizon_ms": 100.0,
+    "mean_visco_chamfer_mm": 3.635,
+    "median_visco_chamfer_mm": 2.853,
+    "mean_elastic_chamfer_mm": 5.517,
+    "chamfer_improvement_vs_elastic_pct": 34.11,
+    "per_episode": [
+      {
+        "case": "double_stretch_plastic",
+        "source": "physcore-CC-BY-4.0",
+        "frames_total": 154,
+        "holdout_windows": 9,
+        "horizon_ms": 100.0,
+        "visco_chamfer_mm": 1.341,
+        "visco_keypoint_rmse_mm": 1.689,
+        "elastic_chamfer_mm": 1.272,
+        "twoway_vs_oneway_mean_tool_div_mm": 114.941,
+        "twoway_vs_oneway_max_tool_div_mm": 335.784,
+        "twoway_vs_oneway_mean_obj_div_mm": 26.457,
+        "coupling_step_ms": 3.889
+      },
+      {
+        "case": "double_squeeze_plastic",
+        "source": "physcore-CC-BY-4.0",
+        "frames_total": 211,
+        "holdout_windows": 9,
+        "horizon_ms": 100.0,
+        "visco_chamfer_mm": 1.94,
+        "visco_keypoint_rmse_mm": 2.786,
+        "elastic_chamfer_mm": 2.98,
+        "twoway_vs_oneway_mean_tool_div_mm": 12.443,
+        "twoway_vs_oneway_max_tool_div_mm": 30.815,
+        "twoway_vs_oneway_mean_obj_div_mm": 1.813,
+        "coupling_step_ms": 4.414
+      },
+      {
+        "case": "single_push_rope",
+        "source": "physcore-CC-BY-4.0",
+        "frames_total": 213,
+        "holdout_windows": 9,
+        "horizon_ms": 100.0,
+        "visco_chamfer_mm": 1.991,
+        "visco_keypoint_rmse_mm": 2.39,
+        "elastic_chamfer_mm": 2.016,
+        "twoway_vs_oneway_mean_tool_div_mm": 6.294,
+        "twoway_vs_oneway_max_tool_div_mm": 21.621,
+        "twoway_vs_oneway_mean_obj_div_mm": 0.492,
+        "coupling_step_ms": 4.738
+      },
+      {
+        "case": "single_lift_rope",
+        "source": "physcore-CC-BY-4.0",
+        "frames_total": 75,
+        "holdout_windows": 10,
+        "horizon_ms": 100.0,
+        "visco_chamfer_mm": 3.562,
+        "visco_keypoint_rmse_mm": 4.751,
+        "elastic_chamfer_mm": 3.511,
+        "twoway_vs_oneway_mean_tool_div_mm": 2.523,
+        "twoway_vs_oneway_max_tool_div_mm": 6.26,
+        "twoway_vs_oneway_mean_obj_div_mm": 0.061,
+        "coupling_step_ms": 4.793
+      },
+      {
+        "case": "double_fold_rope",
+        "source": "physcore-CC-BY-4.0",
+        "frames_total": 106,
+        "holdout_windows": 10,
+        "horizon_ms": 100.0,
+        "visco_chamfer_mm": 4.885,
+        "visco_keypoint_rmse_mm": 7.287,
+        "elastic_chamfer_mm": 5.568,
+        "twoway_vs_oneway_mean_tool_div_mm": 0.847,
+        "twoway_vs_oneway_max_tool_div_mm": 1.943,
+        "twoway_vs_oneway_mean_obj_div_mm": 0.0,
+        "coupling_step_ms": 4.618
+      },
+      {
+        "case": "single_lift_cloth",
+        "source": "physcore-CC-BY-4.0",
+        "frames_total": 164,
+        "holdout_windows": 10,
+        "horizon_ms": 100.0,
+        "visco_chamfer_mm": 4.842,
+        "visco_keypoint_rmse_mm": 5.595,
+        "elastic_chamfer_mm": 4.765,
+        "twoway_vs_oneway_mean_tool_div_mm": 1.169,
+        "twoway_vs_oneway_max_tool_div_mm": 3.386,
+        "twoway_vs_oneway_mean_obj_div_mm": 0.017,
+        "coupling_step_ms": 5.364
+      },
+      {
+        "case": "single_clift_cloth",
+        "source": "physcore-CC-BY-4.0",
+        "frames_total": 90,
+        "holdout_windows": 9,
+        "horizon_ms": 100.0,
+        "visco_chamfer_mm": 2.144,
+        "visco_keypoint_rmse_mm": 3.527,
+        "elastic_chamfer_mm": 11.872,
+        "twoway_vs_oneway_mean_tool_div_mm": 2.831,
+        "twoway_vs_oneway_max_tool_div_mm": 6.012,
+        "twoway_vs_oneway_mean_obj_div_mm": 0.0,
+        "coupling_step_ms": 5.485
+      },
+      {
+        "case": "double_lift_sloth",
+        "source": "phystwin-MIT",
+        "frames_total": 62,
+        "holdout_windows": 8,
+        "horizon_ms": 100.0,
+        "visco_chamfer_mm": 8.378,
+        "visco_keypoint_rmse_mm": 10.436,
+        "elastic_chamfer_mm": 12.152,
+        "twoway_vs_oneway_mean_tool_div_mm": 3.557,
+        "twoway_vs_oneway_max_tool_div_mm": 5.512,
+        "twoway_vs_oneway_mean_obj_div_mm": 0.0,
+        "coupling_step_ms": 5.024
+      }
+    ]
+  },
+  "twoway_vs_oneway_coupling_v7_r5": {
+    "mean_tool_trajectory_divergence_mm": 18.076,
+    "max_tool_trajectory_divergence_mm": 335.784,
+    "mean_coupling_step_ms": 4.791,
+    "c_abi_callback_rc": 0,
+    "c_abi_max_abs_diff": 0.0,
+    "stop_grad_wrench_match": true,
+    "stop_grad_jacobian_isolated": true,
+    "coupling_receipt_sha256": "60e6035982f35fdbd0b41cb685f4d8be1a7ddeaee7e92527556dd0d3a9089e60"
+  },
+  "pass_gates": {
+    "blind_chamfer_lt_5mm": true,
+    "twoway_divergence_quantified": true,
+    "c_abi_zero_copy_verified": true
+  },
+  "wall_time_s": 14.6
+}

@@ -1,0 +1,79 @@
+{
+  "study_id": "study_r3_v2_hysteresis_acp_cbf",
+  "title": "Soft Pneumatic Prony/Mullins Hysteresis (V7-R1) & Online ACP-CQR CBF (V7-R2)",
+  "datasets": [
+    {
+      "id": "soft-pneumatic-hysteresis-15584329",
+      "license": "CC-BY-4.0",
+      "tier": "A",
+      "total_samples_30hz": 240001,
+      "cycles": 4
+    },
+    {
+      "id": "joshi-paik-soft-actuator",
+      "license": "CC-BY-4.0",
+      "tier": "A"
+    },
+    {
+      "id": "sponge-soft-robot",
+      "license": "CC-BY-SA-4.0",
+      "tier": "B-eval-only"
+    }
+  ],
+  "visco_mullins_3d_fem": {
+    "converged": true,
+    "min_det_f": 0.9785,
+    "min_mullins_eta": 0.6386,
+    "cumulative_dissipation_n_mm": 0.47864,
+    "step_dissipation_nonnegative": true,
+    "thermodynamically_admissible": true,
+    "midpoint_hysteresis_gap_mm": 1.3919,
+    "receipt_sha256": "00c0669dbe68bc70abb2297ba14738dbef272a0c6e3af7695291e98c0951872a"
+  },
+  "zenodo_15584329_hysteresis_vv10": {
+    "split_protocol": "Cycles 1-2 train / Cycle 3 dev / Cycle 4 blind holdout",
+    "elastic_holdout_rmse_mm": 0.5124,
+    "elastic_holdout_max_err_mm": 1.0552,
+    "elastic_vv10_state": "VALIDATED",
+    "v7_hysteresis_dev_rmse_mm": 0.2093,
+    "v7_hysteresis_holdout_rmse_mm": 0.2473,
+    "v7_hysteresis_holdout_max_err_mm": 0.4703,
+    "rmse_reduction_vs_elastic_pct": 51.74,
+    "v7_vv10_state": "VALIDATED",
+    "v7_experimental_tier": "HOLDOUT_EXPERIMENTALLY_VALIDATED",
+    "dissipation_nonnegative": true,
+    "cumulative_dissipation": 0.1455,
+    "operator_receipt_sha256": "fb5aee34217e3bfa0592c97f8ff5d6131262d26c9cbbf5117fed40764ed5278e"
+  },
+  "joshi_paik_v7_vv10": {
+    "v6_state": "REJECTED",
+    "v6_grounded_rmse_n": 1.296,
+    "v7_state": "VALIDATED",
+    "v7_experimental_tier": "HOLDOUT_EXPERIMENTALLY_VALIDATED",
+    "v7_grounded_rmse_n": 1.1344
+  },
+  "acp_cqr_vs_static_cbf_sponge": {
+    "payload_shift_protocol": "0g (steps 0-69) -> 200g step disturbance (steps 70-139)",
+    "q1_safety_limit_rad": 0.145,
+    "static_margin_rad": 0.036,
+    "adaptive_margin_calm_mean_rad": 0.0088,
+    "adaptive_margin_shift_mean_rad": 0.0189,
+    "unfiltered_violations": 63,
+    "static_cbf_violations": 0,
+    "adaptive_cbf_violations": 0,
+    "static_mean_braking_gap_rad": 0.0695,
+    "adaptive_mean_braking_gap_rad": 0.0463,
+    "braking_distance_reduction_pct": 33.46,
+    "static_safe_hold_steps": 70,
+    "adaptive_safe_hold_steps": 0,
+    "adaptive_filter_median_ms": 0.472
+  },
+  "pass_gates": {
+    "hysteresis_vv10_validated": true,
+    "joshi_vv10_validated": true,
+    "dissipation_nonnegative": true,
+    "braking_reduction_ge_25pct": true,
+    "zero_barrier_violations": true
+  },
+  "wall_time_s": 82.36
+}

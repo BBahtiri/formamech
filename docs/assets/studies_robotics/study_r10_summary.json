@@ -1,0 +1,155 @@
+{
+  "study_id": "study_r10_stress_ood_scaling_audit",
+  "title": "Adversarial Stress, OOD Refusal & 1M-Node Surface3DEnergyOperator Scaling Audit (V7-R6)",
+  "adversarial_fem_falsification": {
+    "cases_tested": 5,
+    "refusal_recall": 1.0,
+    "cases": [
+      {
+        "case": "dirichlet_element_inversion_detF_neg",
+        "expected": "REFUSED",
+        "refused": true,
+        "min_det_f": 0.0,
+        "reason": "3D Newton did not converge at load factor 0.500 (res=4.356e+02)"
+      },
+      {
+        "case": "extreme_compression_96pct_strain",
+        "expected": "REFUSED_OR_DETF_POS",
+        "refused": true,
+        "min_det_f": 0.0,
+        "reason": "3D Newton did not converge at load factor 0.500 (res=9.641e+01)"
+      },
+      {
+        "case": "follower_pressure_100x_burst",
+        "expected": "REFUSED",
+        "refused": true,
+        "min_det_f": 0.1118,
+        "reason": "Newton did not converge at step 1 (res=1.209e+03)"
+      },
+      {
+        "case": "visco_hysteresis_burst_inadmissible",
+        "expected": "REFUSED",
+        "refused": true,
+        "min_det_f": 1.0,
+        "reason": "visco-hysteresis Newton failed at step 1 (min_det_f=0.3307)"
+      },
+      {
+        "case": "stiff_contact_through_penetration_impact",
+        "expected": "REFUSED",
+        "refused": true,
+        "min_det_f": 0.9478,
+        "reason": "Newton did not converge (res=5.441e+00)"
+      }
+    ]
+  },
+  "ood_refusal_audit": {
+    "in_distribution_cases": 20,
+    "severe_ood_cases": 20,
+    "severe_ood_refusal_recall": 1.0,
+    "in_distribution_false_refusal_rate": 0.0,
+    "soft_shift_margin_expanded_cases": "8/8"
+  },
+  "surface_3d_scaling_10k_to_1m": {
+    "device": "cpu",
+    "cpu_threads": 8,
+    "scaling_exponent_latency": 0.842,
+    "max_chunk_drift": 2.7939677238464355e-09,
+    "max_export_parity_diff": 0.0,
+    "all_parity_passed": true,
+    "report_sha256": "70abe050fc4182bcfee86c40df6681259f33eae40f64b0100ed6279464e0838c",
+    "points": [
+      {
+        "node_count": 10000,
+        "encode_ms": 7.15,
+        "decode_p50_ms": 9.94,
+        "decode_p99_ms": 12.51,
+        "total_p50_ms": 17.01,
+        "total_p99_ms": 20.82,
+        "nodes_per_sec": 587810.0,
+        "rss_peak_mb": 309.1,
+        "tracemalloc_peak_mb": 0.03,
+        "chunk_drift": 2.7939677238464355e-09,
+        "export_format": "torchscript",
+        "export_max_abs_diff": 0.0
+      },
+      {
+        "node_count": 100000,
+        "encode_ms": 14.6,
+        "decode_p50_ms": 73.66,
+        "decode_p99_ms": 88.2,
+        "total_p50_ms": 88.01,
+        "total_p99_ms": 103.28,
+        "nodes_per_sec": 1136234.5,
+        "rss_peak_mb": 344.4,
+        "tracemalloc_peak_mb": 0.03,
+        "chunk_drift": 2.7939677238464355e-09,
+        "export_format": "torchscript",
+        "export_max_abs_diff": 0.0
+      },
+      {
+        "node_count": 500000,
+        "encode_ms": 49.65,
+        "decode_p50_ms": 363.96,
+        "decode_p99_ms": 365.09,
+        "total_p50_ms": 407.49,
+        "total_p99_ms": 414.62,
+        "nodes_per_sec": 1227036.3,
+        "rss_peak_mb": 367.7,
+        "tracemalloc_peak_mb": 0.03,
+        "chunk_drift": 1.862645149230957e-09,
+        "export_format": "torchscript",
+        "export_max_abs_diff": 0.0
+      },
+      {
+        "node_count": 1000000,
+        "encode_ms": 91.22,
+        "decode_p50_ms": 731.45,
+        "decode_p99_ms": 740.02,
+        "total_p50_ms": 831.42,
+        "total_p99_ms": 832.55,
+        "nodes_per_sec": 1202766.0,
+        "rss_peak_mb": 454.6,
+        "tracemalloc_peak_mb": 0.03,
+        "chunk_drift": 1.6298145055770874e-09,
+        "export_format": "torchscript",
+        "export_max_abs_diff": 0.0
+      }
+    ],
+    "anchor_chunk_ablation_100k": [
+      {
+        "anchor_count": 256,
+        "decode_chunk_size": 16384,
+        "encode_ms": 24.1,
+        "decode_p50_ms": 114.41,
+        "total_p50_ms": 138.5,
+        "rss_peak_mb": 351.9,
+        "chunk_drift": 1.5133991837501526e-09
+      },
+      {
+        "anchor_count": 512,
+        "decode_chunk_size": 32768,
+        "encode_ms": 17.22,
+        "decode_p50_ms": 81.52,
+        "total_p50_ms": 98.73,
+        "rss_peak_mb": 340.8,
+        "chunk_drift": 2.7939677238464355e-09
+      },
+      {
+        "anchor_count": 1024,
+        "decode_chunk_size": 65536,
+        "encode_ms": 16.5,
+        "decode_p50_ms": 76.97,
+        "total_p50_ms": 93.48,
+        "rss_peak_mb": 359.0,
+        "chunk_drift": 2.3283064365386963e-09
+      }
+    ]
+  },
+  "pass_gates": {
+    "adversarial_fem_refusal_100pct": true,
+    "severe_ood_refusal_100pct": true,
+    "export_parity_le_1e5": true,
+    "scaled_to_1m_nodes": true
+  },
+  "wall_time_s": 12.12
+}

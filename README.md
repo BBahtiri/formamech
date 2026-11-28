@@ -41,7 +41,8 @@ flowchart LR
 | Train one reusable surrogate across a parametric CAD family & run FEM-guarded optimization | [Parametric CAD exploration guide](docs/parametric_cad.md) |
 | Import 3D STEP solids, solve dual nonlinear 3D `TET10` FEM & train 3D PI-GINOT operators | [3D CAD & nonlinear FEM guide](docs/workflow_3d.md) |
 | Reproduce 4 open-source 3D PI-GINOT studies (CHT multiphysics, cross-geometry CAD, real FOS digital twin & 3D phase-field warm-start) | [Open-source 3D PI-GINOT studies (Studies 1–4)](docs/open-source-3d-studies.md) |
-| Run v0.6 Robotics Physics AI (3D SDF contact, Cosserat tendons, follower pressure, Port-Hamiltonian QP-MPC + Conformal CBF) & 5 real-data studies | [Robotics Physics AI (v0.6)](docs/v6-robotics.md) · [Robotics Validation Studies (R1–R5)](docs/robotics-studies.md) |
+| Run v0.6 Robotics Physics AI (3D SDF contact, Cosserat tendons, follower pressure, Port-Hamiltonian QP-MPC + Conformal CBF) | [Robotics Physics AI (v0.6)](docs/v6-robotics.md) |
+| Run v0.7 Adaptive Hysteresis, ACP-CQR CBF, Operator CLIK, 2-Probe PANO Tissue ID, Live Two-Way Coupling & 1M-Node Scaling (`R1`–`R10`) | [Robotics Physics AI (v0.7)](docs/v7-robotics.md) · [Robotics Validation Studies (R1–R10)](docs/robotics-studies.md) |
 
 ## Installation
 

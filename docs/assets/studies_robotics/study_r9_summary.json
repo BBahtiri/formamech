@@ -1,0 +1,47 @@
+{
+  "study_id": "study_r9_continuum_clik_cbf",
+  "title": "Closed-Loop Soft Continuum Shape Control: Redundant Operator CLIK + Obstacle ACP-CQR CBF (V7-R2 + V7-R3)",
+  "datasets": [
+    {
+      "id": "gotelli-continuum-tdcr",
+      "license": "CC-BY-4.0",
+      "tier": "A",
+      "length_mm": 540.0,
+      "num_disks": 9,
+      "sections": 2,
+      "actuation_dofs": 5
+    },
+    {
+      "id": "crl-ctcr-pose",
+      "license": "MIT",
+      "tier": "A",
+      "workspace_span_mm": 189.81
+    }
+  ],
+  "cosserat_fem_distillation": {
+    "fem_anchor_solves": 4,
+    "mean_cosserat_fem_s": 2.225,
+    "calibrated_moment_to_curv_per_mm_n": 0.000169,
+    "neural_operator_blind_tip_rmse_mm": 1.282
+  },
+  "closed_loop_clik_cbf": {
+    "steps": 64,
+    "fbg_noise_microstrain": 4.0,
+    "equivalent_tip_noise_std_mm": 0.102,
+    "unknown_tip_load_disturbance_n": 0.25,
+    "closed_loop_tip_rmse_mm": 0.231,
+    "closed_loop_tip_max_mm": 0.702,
+    "backbone_obstacle_collisions": 0,
+    "min_backbone_clearance_mm": 15.02,
+    "cbf_modified_steps": 0,
+    "median_iter_ms": 0.985,
+    "p95_iter_ms": 1.606,
+    "control_rate_hz": 1014.9
+  },
+  "pass_gates": {
+    "tip_tracking_lt_1p5mm": true,
+    "zero_backbone_collisions": true,
+    "iter_latency_lt_2ms": true
+  },
+  "wall_time_s": 16.49
+}

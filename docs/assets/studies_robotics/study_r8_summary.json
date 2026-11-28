@@ -1,0 +1,55 @@
+{
+  "study_id": "study_r8_adaptive_surgical_palpation",
+  "title": "Online 2-Probe PANO/CANO Surgical Tissue Identification & Shallow-Inclusion Palpation (V7-R3)",
+  "datasets": [
+    {
+      "id": "human-brain-hyperelastic",
+      "license": "CC-BY-4.0",
+      "tier": "A",
+      "total_specimens_used": 181,
+      "train_donors": "HBE_01..HBE_04",
+      "holdout_donors": "HBE_05..HBE_07",
+      "holdout_specimens": 76
+    }
+  ],
+  "donor_split_comparison": {
+    "v6_r4_global_modulus_rmse_pa": 210.5,
+    "v6_r4_vv10_state": "REJECTED",
+    "local_global_baseline_rmse_pa": 174.63,
+    "v7_pano_2probe_blind_donor_rmse_pa": 20.11,
+    "v7_pano_full_curve_rmse_pa": 10.78,
+    "rmse_reduction_vs_v6_pct": 90.45,
+    "v7_vv10_state": "VALIDATED",
+    "v7_vv10_experimental_tier": "HOLDOUT_EXPERIMENTALLY_VALIDATED",
+    "v7_vv10_hybrid_holdout_rmse_pa": 13.73,
+    "pano_2probe_median_ms": 0.463,
+    "pano_2probe_p95_ms": 1.012,
+    "identified_mu_range_pa": [
+      78.6,
+      2460.5
+    ],
+    "as6983_tearing_bound_coverage": 1.0,
+    "as6983_tearing_shift_pa": 185.6
+  },
+  "liver_phantom_inclusion_palpation_3d_fem": {
+    "fem_converged": true,
+    "fem_min_det_f": 0.948,
+    "true_tumor_center_xy_mm": [
+      11.0,
+      9.5
+    ],
+    "estimated_tumor_center_xy_mm": [
+      10.98,
+      9.58
+    ],
+    "localization_error_mm": 0.09,
+    "stiffness_contrast_ratio": 2.82
+  },
+  "pass_gates": {
+    "blind_donor_rmse_lt_45pa": true,
+    "asme_vv10_validated": true,
+    "as6983_coverage_100pct": true,
+    "pano_id_lt_10ms": true
+  },
+  "wall_time_s": 5.87
+}

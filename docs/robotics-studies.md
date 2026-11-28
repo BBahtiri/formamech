@@ -1,12 +1,18 @@
-# Real-Data Robotics Validation Studies (Studies R1–R5)
+# Real-Data Robotics Validation Studies (Studies R1–R10)
 
-This report documents five reproducible, real-data engineering validation studies
-exercising **FormaMech v0.6** (`V6-R1` – `V6-R6`) across tactile elastomers,
-continuum surgical robots, soft pneumatic actuators & real-time MPC/CBF control,
-ultra-soft human brain tissue, and contact-rich industrial robotic assembly.
+This report documents twelve reproducible, real-data engineering validation and
+falsification studies exercising **FormaMech v0.6 (`V6-R1`–`V6-R6`, Studies `R1`–`R5`)**
+and **FormaMech v0.7 (`V7-R1`–`V7-R6`, Studies `R3-v2`, `R5-v2`, and `R6`–`R10`)** across
+tactile elastomers, dynamic friction-cone slip control, continuum surgical robots &
+closed-loop CLIK, soft pneumatic hysteresis & online ACP-CQR CBF, real-to-sim deformable
+manipulation & live two-way coupling, online patient-specific surgical tissue
+identification, contact-rich industrial assembly jamming detection, and 1M-node scaling.
 
 Every figure and live animation below is rendered directly from the real physical
-study outputs using **D3.js + custom SVG + Playwright** (`scripts/studies_robotics/render_d3_visuals.mjs` and `scripts/studies_robotics/render_linkedin_gifs.mjs`).
+study outputs using **D3.js + custom SVG + Playwright**
+(`scripts/studies_robotics/render_d3_visuals.mjs`,
+`scripts/studies_robotics/render_d3_v7_visuals.mjs`, and
+`scripts/studies_robotics/render_linkedin_gifs.mjs`).
 
 ![FormaMech v0.6 Robotics Physics AI 5-in-1 Showcase — Touch, Continuum, Safe Soft Arm, Brain Tissue, and Robotic Assembly](assets/studies_robotics/linkedin/linkedin_hero_5in1.gif)
 
@@ -107,22 +113,138 @@ study outputs using **D3.js + custom SVG + Playwright** (`scripts/studies_roboti
 
 ---
 
-## Reproducing All Five Studies & D3.js Visuals
+## FormaMech v0.7 Validation & Stress-Test Scorecard (`R3-v2`, `R5-v2`, `R6`–`R10`)
+
+FormaMech v0.7 directly closes every physical and statistical gap surfaced by `R1`–`R5`
+and passes **26 / 26** target gates across seven real-data and adversarial studies:
+
+| Study | Physical Dataset(s) & License | Core FormaMech v0.7 Capabilities | Key Quantitative Physical Result | Gate Verdict & Speed |
+| --- | --- | --- | --- | --- |
+| **R3-v2 — Hysteresis & ACP-CQR** *(Upgrade)* | Soft Pneumatic Hysteresis (`Zenodo 15584329`, **240,001 samples @ 30 Hz**, `CC-BY-4.0`) + Joshi & Paik (`Zenodo 3627901`) + `SPONGE` (`CC-BY-SA-4.0`, Tier B Eval-Only) | `V7-R1` 3D `TET10` Prony + Mullins FEM ($\dot{\mathcal{D}} \ge 0$), `VelocityResidualHysteresisOperator`; `V7-R2` online `AdaptiveConformalCbfFilter` (`ConformalQuantileRegressor` + Gibbs–Candès ACP) | Blind Cycle-4 hysteresis RMSE cut **`51.7%`** (`0.512 -> 0.247 mm`); Joshi & Paik upgraded **`REJECTED -> VALIDATED`** (`1.134 N`); `SPONGE` `0g->200g` shift cuts braking gap **`33.5%`** at **`0` violations** & **`0` `SAFE_HOLD_OOD` trips** (vs. `70` static) | **5 / 5 PASS** · **`0.47 ms` (`2,118 Hz`)** · **ASME V&V 10 `VALIDATED`** |
+| **R5-v2 — Energy-Residual Jamming** *(Upgrade)* | `REASSEMBLE` NIST Task Board #1 (`robot-lev/reassemble`, **428,683 frames @ 30 Hz**, 45 episodes, 1,463 segments, `CC-BY-4.0`, Tier A) | `V7-R4` `EnergyResidualContactEstimator` (36D joint-vs-EE Port-Hamiltonian power dissipation + Whitney moment + Coulomb slip + multi-scale Temporal-Bundle 1D-Conv, strict leak-free episode split) | Blind holdout **AUROC `0.619 -> 0.908`** (`+0.289` on 45-ep; **`0.879`** on identical 15-ep v0.6 split!), **Recall `56.3% -> 80.0%`**, **FPR `36.4% -> 9.96%`**, Precision doubled (`27.3% -> 51.9%`) | **3 / 3 PASS** · **`0.019 ms` / seg** (`0.0047 ms` / 30 Hz frame) |
+| **R6 — Dynamic Tactile Slip** | Meta Sparsh TacBench (`facebook/gelsight-force-estimation`, **102,628 frames**, 1,513 trajectories, `CC-BY-NC-4.0`, Tier C Noncommercial Eval-Only) | `V6-R2` 3D `TET10` coupled normal+shear contact FEM (`SPHERE`, `FLAT_PUNCH`, `WEDGE_EDGE`) + `V7-R4` Coulomb friction-cone slip-onset estimator + AS6983 conformal bounds | Blind holdout (`19,727` frames / `302` unseen trajectories): 3-axis force RMSE **`0.0451 N`** (`< 0.5 N`), slip-onset **AUROC `0.9998`** (physics cone alone `0.9945`), **AS6983 `95.18%` coverage** | **4 / 4 PASS** · **`0.421 ms` (`2,376 Hz` CPU)** |
+| **R7 — Real-to-Sim Deformable Coupling** | `GeorgiaTech/PhysCoRe` & `PhysTwin` (8 real 3-camera RGB-D tracked manipulation episodes, `MIT` + `CC-BY-4.0`, Tier A) | `V7-R1` 3D `TET10` Prony+Mullins FEM calibration + multi-hand SE(3) viscoelastic spring-mesh twin + `V7-R5` `LiveSimulatorCoupler` (zero-copy C-ABI + `stop_grad_residual`) | Blind holdout mean 3D symmetric Chamfer **`3.635 mm`** (median **`2.853 mm`**, `-34.1%` vs. elastic `5.517 mm`); two-way vs. one-way tool divergence **`18.1 mm` mean / `335.8 mm` max**; C-ABI parity **`0.0` exact** | **3 / 3 PASS** · **`4.79 ms` / step** · `stop_grad` verified |
+| **R8 — Online Surgical Palpation** | Hyperelastic Human Brain 1–7 (`Zenodo 8095559 + 21793225`, **181 real specimens**, 7 donors, `CC-BY-4.0`, Tier A) + 3D `TET10` liver phantom | `V7-R3` online 2-probe `PanoConstitutiveIdentifier` + multiplicative log-stress AS6983 tearing bounds + `localize_shallow_inclusion` | Blind unseen donors (`HBE_05–07`, `n=76`): stress RMSE slashed **`90.45%` (`210.5 -> 20.11 Pa`**, hybrid V&V 10 **`13.73 Pa`**), upgraded **`REJECTED -> VALIDATED`**, **`100.0%` AS6983 coverage**; liver tumor localized to **`0.09 mm`** | **4 / 4 PASS** · **`0.463 ms` 2-probe ID** (`1.012 ms` P95) |
+| **R9 — Closed-Loop Continuum CLIK** | Gotelli 9-disk 2-section 5-DOF Nitinol geometry (`L=540 mm`, `CC-BY-4.0`) + `CRL-CTCR` workspace (`MIT`) | `V7-R3` `OperatorClikController` (Cosserat-FEM-distilled neural shape Jacobian + nullspace obstacle repulsion) + `V7-R2` ACP-CQR CBF under `4 µε` FBG noise & `0.25 N` unknown tip load | Closed-loop 3D figure-8 tip tracking RMSE **`0.231 mm`** (max `0.702 mm`, `< 1.5 mm` gate), **`0` backbone collisions** (`min clearance 15.02 mm`) | **3 / 3 PASS** · **`0.985 ms` (`1,015 Hz` CPU)** |
+| **R10 — Adversarial Stress & 1M Scaling** | Injected `det(F)<=0`, `96%` crush, `100×` follower/visco bursts, stiff impact, cross-domain OOD, `10k -> 1,000,000`-node 3D surface meshes | `V7-R6` `run_surface_3d_scaling_benchmark` (`Surface3DEnergyOperator` AB-UPT + Transolver++ + LRQ), `onnx_export_3d`, fail-closed FEM & ACP-CQR refusal contracts | **`5/5 = 100%`** adversarial FEM refusal; **`20/20 = 100%`** severe OOD refusal (`0%` false refusals, `8/8` soft-shift expansions); **`1M` nodes in `831.4 ms`** (`1.20M` nodes/s, Peak RSS **`454.6 MB`**, slope **`0.842`**, TorchScript diff **`0.0`**) | **4 / 4 PASS** · **Chunk drift `2.79e-9`** |
+
+---
+
+### Study R3-v2 — Rate-Dependent Pneumatic Hysteresis (`V7-R1`) & Online ACP-CQR CBF (`V7-R2`)
+
+- **Gap closed:** In v0.6, Study R3 returned an honest `REJECTED / COUPON_CALIBRATED` verdict on Joshi & Paik because elastic follower-pressure FEM cannot model loading/unloading hysteresis, and static split-conformal CBF forced binary `SAFE_HOLD_OOD` trips under `200g` payload shifts.
+- **Physical verification highlights:**
+  - Full 3D `TET10` Prony viscoelastic + Ogden–Roxburgh Mullins FEM (`solve_3d_visco_hysteresis`) converges across a complete loading/unloading follower-pressure cycle (`min_det_f = 0.9785`, `min_eta = 0.6386`, `1.392 mm` midpoint hysteresis loop gap) with certified nonnegative thermodynamic dissipation ($\dot{\mathcal{D}}_k \ge 0$ at every step, $\sum \Delta \mathcal{D} = 0.47864\ \mathrm{N{\cdot}mm}$).
+  - On **Zenodo 15584329** (`240,001` real 30 Hz pneumatic samples across 4 cycles; strict temporal split Cycles 1–2 train / Cycle 3 dev / Cycle 4 blind holdout), `VelocityResidualHysteresisOperator` cuts blind Cycle-4 RMSE **`51.74%`** (`0.5124 -> 0.2473 mm`) and reaches **ASME V&V 10 `VALIDATED` (`HOLDOUT_EXPERIMENTALLY_VALIDATED`)**; **Joshi & Paik (`Zenodo 3627901`)** upgrades from `REJECTED` (`1.296 N`) to **`VALIDATED` (`1.1344 N`)**.
+  - On **SPONGE 5-DoF** under a `0g -> 200g` step payload shift (Tier B local evaluation only), `AdaptiveConformalCbfFilter` (`ConformalQuantileRegressor` + Gibbs–Candès ACP) tightens calm-regime margin to `0.0088 rad` (vs. static `0.036 rad`) and dynamically expands to `0.0189 rad` upon payload shift — cutting conservative braking distance by **`33.46%`** at **`0` barrier violations** (vs. `63` unfiltered) and **`0` `SAFE_HOLD_OOD` trips** (vs. `70` for static CBF) at **`0.472 ms` (`2,118 Hz`)**.
+
+![Study R3-v2 — Pneumatic Prony/Mullins Hysteresis (V7-R1) & Online ACP-CQR CBF (V7-R2)](assets/studies_robotics/fig_r3_v2_hysteresis_acp_cbf.png)
+
+![Study R3-v2 Live Animation — Cycle-4 Hysteresis Loop & Online ACP-CQR Margin Expansion Under 0g->200g Shift](assets/studies_robotics/study_r3_v2_hysteresis_acp_cbf_live.gif)
+
+---
+
+### Study R5-v2 — Port-Hamiltonian Power-Residual & Temporal-Bundle Jamming Estimator (`V7-R4`)
+
+- **Gap closed:** v0.6's 5-scalar chatter threshold achieved `0.619` AUROC and `56.3%` recall at `36.4%` FPR because raw force/torque spikes confuse nominal snap-fit seating with mechanical jamming.
+- **Physical verification highlights:**
+  - Unpacks the full 36D Franka proprioceptive state (`joint_pos`, `joint_vel`, `joint_efforts`, `gripper`, `ee_pose`, `ee_twist`) + 6-axis F/T + commanded `action` across **3 shards (`428,683` 30 Hz frames, `45` physical episodes, `1,463` segments)** of `robot-lev/reassemble` (`CC-BY-4.0`).
+  - Computes exact segment-tared joint-vs-EE mechanical power dissipation $r_P(t) = \tau_J^\top \dot{q} - (F_c^\top v + \tau_c^\top \omega)$, Whitney peg-in-hole jamming moment ratios $\Vert M_{xy} \Vert / |F_z|$, Coulomb friction-cone ratios $\Vert F_t \Vert / (\mu |F_n|)$, and causal phase+tail wrench-velocity-power bundles inside a multi-scale 1D-Conv + Port-Hamiltonian ensemble calibrated strictly on DEV episodes.
+  - On the leak-free **45-episode split (`27 train / 9 dev / 9 blind holdout`, 296 holdout segments)**, blind holdout **AUROC jumps from `0.6193 -> 0.9084` (`+0.289`)**, **Recall lifts `56.3% -> 80.0%`**, and **FPR drops `3.65×` (`36.4% -> 9.96%`)** at `0.019 ms`/segment (`0.0047 ms`/frame for live 30 Hz PHNN monitoring). Evaluated on the **identical 15-episode `file-000` v0.6 split (`148,444` frames)**, blind holdout AUROC jumps **`0.6193 -> 0.8788` (`+0.260`)**.
+
+![Study R5-v2 — REASSEMBLE Port-Hamiltonian & Multi-Scale Temporal-Bundle Jamming Estimator (V7-R4)](assets/studies_robotics/fig_r5_v2_contact_diagnostics.png)
+
+---
+
+### Study R6 — Dynamic 3-Axis Tactile Force & Friction-Cone Slip-Onset Control (`V6-R2` + `V7-R4`)
+
+- **Real dataset:** Meta Sparsh TacBench (`facebook/gelsight-force-estimation`, `CC-BY-NC-4.0`, **Tier C noncommercial local evaluation only** — `102,628` frames across `1,513` coupled normal+shear trajectories covering `sphere`, `flat`, and `sharp` indenters; zero raw files or trained weights committed).
+- **Physical verification highlights:**
+  - All `9` 3D `TET10` coupled normal+shear contact FEM probes (`SPHERE`, `FLAT_PUNCH`, `WEDGE_EDGE`) converge with Coulomb stick-slip traction tracking.
+  - On a strict leak-free trajectory split (`908 train / 303 dev / 302 blind holdout = 19,727 unseen frames`), FormaMech achieves **`0.0451 N` 3-axis force RMSE** (`Fx 0.0457 N`, `Fy 0.0490 N`, `Fz 0.0401 N` — `11×` better than the `< 0.50 N` gate), **`0.9998` blind slip-onset AUROC** (`99.96%` recall @ `2.05%` FPR; pure Coulomb cone ratio alone achieves `0.9945`), **`95.18%` AS6983 upper coverage** (`+0.0763 N` shift), at **`0.421 ms` median latency (`2,376 Hz` CPU)**.
+
+![Study R6 — Dynamic 3-Axis Tactile Force & Friction-Cone Slip-Onset Control](assets/studies_robotics/fig_r6_dynamic_tactile_slip.png)
+
+![Study R6 Live Animation — Live Coulomb Friction Cone & Incipient Slip Detection at 2,376 Hz](assets/studies_robotics/study_r6_tactile_slip_live.gif)
+
+---
+
+### Study R7 — Real-to-Sim Deformable Manipulation & Live Two-Way Coupling (`V7-R1` + `V7-R5`)
+
+- **Real dataset:** `GeorgiaTech/PhysCoRe` & `PhysTwin` (`MIT` + `CC-BY-4.0`, Tier A — 8 real 3-camera RGB-D tracked 3D deformable manipulation episodes spanning elastomers, ropes, cloth, and plush toys).
+- **Physical verification highlights:**
+  - Calibrates a 3D `TET10` Prony viscoelastic + Mullins FEM stiffness baseline (`min_det_f = 0.9994`, $\dot{\mathcal{D}} \ge 0$) and fits a multi-hand `SE(3)` Kabsch + Prony viscoelastic spring-mesh twin strictly on the `[0:70%]` episode prefix.
+  - Across all 8 real manipulation episodes, blind holdout 3D symmetric Chamfer error averages **`3.635 mm`** (median **`2.853 mm`**, `< 5.0 mm` gate; **`1.34 mm`** on `double_stretch_plastic`, **`1.94 mm`** on `double_squeeze_plastic`, **`1.99 mm`** on `single_push_rope`) — **`34.11%` better** than the undamped pure-elastic baseline (`5.517 mm`).
+  - Exercises `LiveSimulatorCoupler` (`V7-R5`) directly on real PhysCoRe manipulation trajectories, explicitly quantifying two-way reaction+stiffness coupled vs. one-way trajectory divergence (**`18.08 mm` mean / `335.78 mm` max**) while verifying **exact `0.0` zero-copy C-ABI callback parity** and **`stop_grad_residual=True` Jacobian isolation**.
+
+![Study R7 — PhysCoRe Deformable Manipulation & Live Two-Way Coupling](assets/studies_robotics/fig_r7_physcore_twoway_coupling.png)
+
+![Study R7 Live Animation — 3D Deformable Elastomer Twin & Two-Way Reaction-Wrench Divergence](assets/studies_robotics/study_r7_physcore_twoway_live.gif)
+
+---
+
+### Study R8 — Online Adaptive 2-Probe Surgical Palpation & Regional Tissue ID (`V7-R3`)
+
+- **Real dataset:** Hyperelastic Human Brain 1–7 (`Zenodo 8095559` + `21793225`, `CC-BY-4.0`, Tier A — **181 real human brain specimens** across 7 donors and 9 anatomical regions spanning `85.85–434.0 Pa`) plus a 3D `TET10` liver phantom with a shallow stiff tumor inclusion.
+- **Physical verification highlights:**
+  - Resolves Study R4's honest `REJECTED` donor split (`210.5 Pa` global modulus RMSE across unlabeled brain regions) by running **2 online palpation probes** (`2%` & `5%` strain) through `PanoConstitutiveIdentifier` in **`0.463 ms` median (`1.012 ms` P95, `< 10 ms` gate)** to infer patient- and site-specific Ogden parameters $(\mu, \alpha)$ spanning `78.6–2,460.5 Pa`.
+  - On the strictly blind unseen donors (`HBE_05–HBE_07`, `n = 76` specimens), 10%-strain stress RMSE drops **`90.45%` (`210.5 -> 20.11 Pa`**, full-curve RMSE **`10.78 Pa`**), **ASME V&V 10 upgrades from `REJECTED` to `VALIDATED` (`HOLDOUT_EXPERIMENTALLY_VALIDATED`, `13.73 Pa`)**, and multiplicative log-stress **AS6983 tearing-bound coverage reaches `100.0%` (`76/76`)**.
+  - On the 3D `TET10` liver phantom (`converged=True`, `min_det_f = 0.948`), robotic 5×5 palpation localizes the embedded shallow tumor to **`0.09 mm`** accuracy (`2.82×` stiffness contrast).
+
+![Study R8 — Online 2-Probe PANO/CANO Surgical Tissue Identification (V7-R3)](assets/studies_robotics/fig_r8_adaptive_surgical_palpation.png)
+
+---
+
+### Study R9 — Closed-Loop Soft Continuum Shape Control: Operator CLIK + Obstacle CBF (`V7-R3` + `V7-R2`)
+
+- **Real geometry & workspace:** Gotelli 9-disk 2-section redundant 5-DOF Nitinol continuum robot (`L = 540 mm`, `CC-BY-4.0`, anchored to exact `SE(3)` Cosserat FEM) cross-checked against `CRL-Dataset-CTCR-Pose` (`MIT`, `189.8 mm` workspace span).
+- **Physical verification highlights:**
+  - Distills exact Cosserat FEM equilibrium solutions (`2.225 s` / solve) into a smooth neural shape operator (`1.282 mm` open-loop blind tip RMSE) and closes the shape-space Jacobian loop with `OperatorClikController` + nullspace spherical-obstacle repulsion (`optic_nerve`, `aorta_branch`) + `AdaptiveConformalCbfFilter`.
+  - Under simulated `4 µε` FBG optical noise (`0.102 mm` equivalent tip noise) and an unmodeled `0.25 N` lateral tip disturbance, closed-loop 3D figure-8 tip tracking achieves **`0.231 mm` RMSE** (`0.702 mm` peak, `< 1.5 mm` gate), **`0` mid-backbone obstacle collisions** (`min clearance 15.02 mm`), at **`0.985 ms` median latency (`1,015 Hz` CPU, `< 2 ms` gate)**.
+
+![Study R9 — Continuum Operator CLIK + Obstacle CBF Control (V7-R3 + V7-R2)](assets/studies_robotics/fig_r9_continuum_clik_cbf.png)
+
+![Study R9 Live Animation — 9-Disk 2-Section Continuum Backbone Tracking Figure-8 Around Obstacles at 1,015 Hz](assets/studies_robotics/study_r9_continuum_clik_live.gif)
+
+---
+
+### Study R10 — Adversarial Stress, OOD Refusal & 1M-Node Scaling Audit (`V7-R6`)
+
+- **Purpose:** Dedicated falsification and industrial-scaling audit proving that FormaMech fails safely (`REFUSED` / `SAFE_HOLD_OOD`) rather than silently extrapolating, and documenting exact CPU latency and peak RSS scaling up to **1,000,000 3D surface nodes**.
+- **Audit highlights:**
+  - **Adversarial FEM falsification (`5 / 5 = 100%` refusal recall):** Cleanly refuses inverted elements (`det(F) <= 0`), `96%` extreme crush, `100×` follower-pressure burst, visco-hysteresis inadmissible burst, and stiff through-penetration contact impact.
+  - **Cross-domain OOD refusal (`20 / 20 = 100%` recall, `0.0%` false refusal):** Refuses all 20 severe OOD queries via fail-closed `SAFE_HOLD_OOD`, accepts all 20 nominal ID cases, and dynamically expands margins on `8 / 8` soft-shift regimes.
+  - **10k → 1,000,000-node `Surface3DEnergyOperator` scaling (8-thread CPU):** Scales from `17.01 ms` (`309.1 MB` RSS @ `10k`) → `88.01 ms` (`344.4 MB` @ `100k`) → `407.49 ms` (`367.7 MB` @ `500k`) → **`831.42 ms` (`1.20M` nodes/s, Peak RSS `454.6 MB` @ `1,000,000` nodes)** — adding only **`+145.5 MB` RSS for a `100×` mesh scale increase** (sub-linear log-log latency slope **`0.842`**, chunk consistency drift **`2.79e-9`**, TorchScript runtime parity **`0.0` exact**).
+
+![Study R10 — Adversarial Stress, OOD Refusal & 1M-Node Surface3DEnergyOperator Scaling Audit (V7-R6)](assets/studies_robotics/fig_r10_stress_ood_scaling.png)
+
+---
+
+## Reproducing All v0.6 & v0.7 Studies & D3.js Visuals
 
 ```bash
 # 1. Fetch all real open-source physical datasets on demand (into gitignored .formamech-runs/)
 python scripts/studies_robotics/fetch_robotics_datasets.py
 
-# 2. Run all five physical validation studies (CPU-only, ~3 min total)
+# 2. Run v0.6 studies (R1-R5) and v0.7 studies (R3-v2, R5-v2, R6-R10) on CPU
 python scripts/studies_robotics/study_r1_tactile_elastomer.py
 python scripts/studies_robotics/study_r2_continuum_tendon_twin.py
 python scripts/studies_robotics/study_r3_pneumatic_soft_mpc.py
 python scripts/studies_robotics/study_r4_surgical_tissue.py
 python scripts/studies_robotics/study_r5_nist_assembly_codesign.py
+python scripts/studies_robotics/study_r3_v2_hysteresis_acp_cbf.py
+python scripts/studies_robotics/study_r5_v2_contact_diagnostics.py
+python scripts/studies_robotics/study_r6_dynamic_tactile_slip.py
+python scripts/studies_robotics/study_r7_physcore_twoway_coupling.py
+python scripts/studies_robotics/study_r8_adaptive_surgical_palpation.py
+python scripts/studies_robotics/study_r9_continuum_clik_cbf.py
+python scripts/studies_robotics/study_r10_stress_ood_scaling_audit.py
 
 # 3. Render publication PNGs and animated GIFs via D3.js + custom SVG + Playwright
 node scripts/studies_robotics/render_d3_visuals.mjs
 python scripts/studies_robotics/build_gifs.py
+node scripts/studies_robotics/render_d3_v7_visuals.mjs
+python scripts/studies_robotics/build_v7_gifs.py
 ```
 
 Canonical scrubbed result summaries are tracked under `docs/assets/studies_robotics/study_r*_summary.json`.
