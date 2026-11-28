@@ -4,7 +4,7 @@ Zero-heavy-dependency pure-Python adapters allowing:
 1. Importing contact wrench and joint trajectories logged from Newton, MuJoCo,
    Genesis, or ROS 2 into FormaMech for certified FEM stress, fatigue, and
    hardware co-design verification.
-2. Exporting verified FormaMech soft-link, tactile, or compliant-gripper
+2. Exporting verified FormaMech soft-link, tactile, or compliant end-effector
    surrogates as MuJoCo MJCF compliance fragments, ROS 2 safety/wrench node
    contracts, and FMI 3.0 robotics co-simulation manifests.
 """
